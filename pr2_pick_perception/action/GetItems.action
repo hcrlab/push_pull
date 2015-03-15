@@ -1,0 +1,5 @@
+int32 bin_id
+---
+pr2_pick_msgs/Item[] items
+---
+

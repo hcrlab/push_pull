@@ -4,7 +4,13 @@ project(pr2_pick_perception)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED
+  actionlib_msgs
+  message_generation
+  pr2_pick_msgs
+)
+
+set(CMAKE_CXX_FLAGS "-std=c++0x")
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -54,17 +60,17 @@ find_package(catkin REQUIRED)
 # )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+  FILES
+  GetItems.action
+)
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  actionlib_msgs
+  pr2_pick_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -78,7 +84,7 @@ find_package(catkin REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES perception_tools
-#  CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS actionlib_msgs pr2_pick_msgs
 #  DEPENDS system_lib
 )
 
@@ -88,24 +94,24 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(include)
 
 ## Declare a cpp library
-# add_library(perception_tools
-#   src/${PROJECT_NAME}/perception_tools.cpp
-# )
+add_library(mock_perception
+  src/mock_perception.cpp
+)
 
 ## Declare a cpp executable
 # add_executable(perception_tools_node src/perception_tools_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(perception_tools_node perception_tools_generate_messages_cpp)
+add_dependencies(mock_perception mock_perception_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(perception_tools_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(mock_perception
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
