@@ -48,6 +48,10 @@ flags = [
 '/usr/local/include',
 '-I',
 '/opt/ros/hydro/include',
+'-I',
+'../../devel/include',
+'-I',
+'pr2_pick_perception/include'
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the
