@@ -47,11 +47,11 @@ int main(int argc, char** argv) {
   Item index_card;
   index_card.id = "mead_index_cards";
   index_card.pose.header.frame_id="base_footprint";
-  index_card.pose.pose.position.x = 0.423;
-  index_card.pose.pose.position.y = -0.116;
-  index_card.pose.pose.position.z = 1.157;
-  mock_perception.SetItems(6, {index_card});
   index_card.pose.pose.position.x = 0.56;
+  index_card.pose.pose.position.y = 0.31;
+  index_card.pose.pose.position.z = 1.143;
+  mock_perception.SetItems(6, {index_card});
+  index_card.pose.pose.position.x = 0.6;
   index_card.pose.pose.position.y = 0.0243;
   index_card.pose.pose.position.z = 1.43;
   mock_perception.SetItems(7, {index_card});
