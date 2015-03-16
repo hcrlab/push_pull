@@ -20,7 +20,7 @@ class EasyBoxesAction {
 
  public:
   EasyBoxesAction(const std::string& name,
-                       const MockPerception& mock_perception):
+                  const MockPerception& mock_perception):
       nh_(name),
       as_(nh_, name, boost::bind(&EasyBoxesAction::executeCB, this, _1),
           false),
@@ -47,13 +47,17 @@ int main(int argc, char** argv) {
   Item index_card;
   index_card.id = "mead_index_cards";
   index_card.pose.header.frame_id="base_footprint";
-  index_card.pose.pose.position.x = -0.3;
-  index_card.pose.pose.position.y = 0.6;
-  index_card.pose.pose.position.z = 1.092;
+  index_card.pose.pose.position.x = 0.423;
+  index_card.pose.pose.position.y = -0.116;
+  index_card.pose.pose.position.z = 1.157;
   mock_perception.SetItems(6, {index_card});
-  index_card.pose.pose.position.x = 0;
+  index_card.pose.pose.position.x = 0.465;
+  index_card.pose.pose.position.y = -0.142;
+  index_card.pose.pose.position.z = 0.998;
   mock_perception.SetItems(7, {index_card});
-  index_card.pose.pose.position.x = 0.3;
+  index_card.pose.pose.position.x = 0.496;
+  index_card.pose.pose.position.y = -0.378;
+  index_card.pose.pose.position.z = 0.977;
   mock_perception.SetItems(8, {index_card});
   EasyBoxesAction m(ros::this_node::getName(), mock_perception);
   ros::spin();
