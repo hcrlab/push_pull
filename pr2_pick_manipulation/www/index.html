@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+
+<script type="text/javascript" type="text/javascript">
+  var ros = new ROSLIB.Ros({
+    url : 'ws://walle.cs.washington.edu:9090'
+  });
+
+  var tfClient = new ROSLIB.TFClient({
+    ros : ros,
+    fixedFrame : 'base_footprint',
+    angularThres : 0.01,
+    transThres : 0.01
+  });
+
+  function handleTfCallback(tf) {
+    document.querySelector('#pos_x').innerHTML = tf.translation.x;
+    document.querySelector('#pos_y').innerHTML = tf.translation.y;
+    document.querySelector('#pos_z').innerHTML = tf.translation.z;
+    document.querySelector('#ori_x').innerHTML = tf.rotation.x;
+    document.querySelector('#ori_y').innerHTML = tf.rotation.y;
+    document.querySelector('#ori_z').innerHTML = tf.rotation.z;
+    document.querySelector('#ori_w').innerHTML = tf.rotation.w;
+  }
+
+  var clientSubscribed = false;
+
+  function toggleState() {
+    if (clientSubscribed) {
+      tfClient.unsubscribe('r_wrist_roll_link', handleTfCallback);
+      document.querySelector('#toggleButton').innerHTML = 'Start';
+      clientSubscribed = false;
+    } else {
+      tfClient.subscribe('r_wrist_roll_link', handleTfCallback);
+      document.querySelector('#toggleButton').innerHTML = 'Pause';
+      clientSubscribed = true;
+    }
+  }
+
+  //tfClient.subscribe('r_wrist_roll_link', handleTfCallback);
+
+  ros.on('connection', function() {
+    console.log('Connected to websocket server.');
+  });
+
+  ros.on('error', function(error) {
+    console.log('Error connecting to websocket server: ', error);
+  });
+
+  ros.on('close', function() {
+    console.log('Connection to websocket server closed.');
+  });
+
+  function init() {
+    toggleState();
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>r_wrist_roll_link relative to base_footprint</h1>
+  <button type="button" id="toggleButton" onclick="toggleState()">Pause</button><br />
+  p.pose.position.x = <span id="pos_x">?</span>;<br />
+  p.pose.position.y = <span id="pos_y">?</span>;<br />
+  p.pose.position.z = <span id="pos_z">?</span>;<br />
+  p.pose.orientation.x = <span id="ori_x">?</span>;<br />
+  p.pose.orientation.y = <span id="ori_y">?</span>;<br />
+  p.pose.orientation.z = <span id="ori_z">?</span>;<br />
+  p.pose.orientation.w = <span id="ori_w">?</span>;<br />
+</body>
+</html>

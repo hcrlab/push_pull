@@ -51,7 +51,9 @@ flags = [
 '-I',
 '../../devel/include',
 '-I',
-'pr2_pick_perception/include'
+'pr2_pick_perception/include',
+'-I',
+'pr2_pick_manipulation/include'
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the
