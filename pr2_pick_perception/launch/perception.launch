@@ -31,7 +31,6 @@
     <remap from="cloud_filtered" to="/tilt_scan_cloud"/>
     <param name="target_frame" type="string" value="base_footprint"/>
     <param name="incident_angle_correction" value="false"/>
-    <rosparam command="load" file="$(find collect_bag)/config/shadow_filter.yaml" />
   </node>
 
   <!-- Self filter laser scans -->
@@ -40,7 +39,6 @@
     <remap from="cloud_out" to="/tilt_scan_cloud_filtered2" />
     <param name="sensor_frame" type="string" value="laser_tilt_link" />
     <param name="subsample_value" type="double" value=".01"/>
-    <rosparam command="load" file="$(find collect_bag)/config/self_filter_right_left.yaml" />
   </node-->
 
   <!-- Self filter Kinect points -->
@@ -50,6 +48,5 @@
     <remap from="cloud_out" to="/$(arg kinect_camera_name)/rgb/points_filtered" />
     <param name="sensor_frame" type="string" value="$(arg kinect_frame_prefix)_rgb_optical_frame" />
     <param name="subsample_value" type="double" value=".02"/>
-    <rosparam command="load" file="$(find collect_bag)/config/self_filter_right_left.yaml" />
   </node-->
 </launch>
