@@ -19,7 +19,7 @@ import json
 import numpy as np
 import trajoptpy.kin_utils as ku
 from joint_states_listener.srv import ReturnJointStates
-from point_cloud_listener.srv import ReturnPointCloud
+#from point_cloud_listener.srv import ReturnPointCloud
 import time
 import sys
 from sensor_msgs.msg import JointState, PointCloud2
