@@ -55,7 +55,7 @@ class Arm:
         for waypoint in waypoints:
             point = JointTrajectoryPoint()
             point.positions = waypoint
-            point.time_from_start = rospy.Duration(1 + time_offset)
+            point.time_from_start = rospy.Duration(1.5 + time_offset*1.5)
             goal.trajectory.points.append(point)
             time_offset = time_offset + 1
             
@@ -92,7 +92,7 @@ def navigate(req):
     env.Load("robots/pr2-beta-static.zae")
     #env.Load("../data/table.xml")
     robot = env.GetRobots()[0]
-    env.SetViewer('qtcoin')
+    #env.SetViewer('qtcoin')
 
     trajoptpy.SetInteractive(args.interactive) # pause every iteration, until you press 'p'. Press escape to disable further plotting
 
@@ -120,20 +120,19 @@ def navigate(req):
 
     dof_vals = robot.GetDOFValues()
 
-    grabber=cloudprocpy.CloudGrabber()
-
-
-    xyzrgb = None
-    point_cloud = None
-    xyzrgb = grabber.getXYZRGB()
-    
-    #time.sleep(5)
+        #time.sleep(5)
 
     print "Before making mesh"
     
-    if xyzrgb != None:
-	print "Point cloud from grabber"
     if req.new_cloud:
+        grabber=cloudprocpy.CloudGrabber()
+
+
+        xyzrgb = None
+        point_cloud = None
+        xyzrgb = grabber.getXYZRGB()
+    
+
      	xyzrgb.save("cloud.pcd")
     point_cloud = cloudprocpy.readPCDXYZ("cloud.pcd")
     
@@ -148,7 +147,7 @@ def navigate(req):
 
     print "Joint start: " + str(joint_start)
     robot.SetDOFValues(joint_start) # robot.GetManipulator('rightarm').GetArmIndices())
-    time.sleep(3)
+    #time.sleep(3)
 
     quat_target = [req.goal.pose.orientation.w, req.goal.pose.orientation.x, req.goal.pose.orientation.y, req.goal.pose.orientation.z] # wxyz
     xyz_target = [req.goal.pose.position.x, req.goal.pose.position.y, req.goal.pose.position.z]
@@ -157,10 +156,10 @@ def navigate(req):
     # BEGIN ik
     init_joint_target = None
     manip = robot.GetManipulator("rightarm")
-    init_joint_target = ku.ik_for_link(hmat_target, manip, "r_gripper_tool_frame",
-            filter_options = openravepy.IkFilterOptions.CheckEnvCollisions)
+    init_joint_target = ku.ik_for_link(hmat_target, manip, "r_gripper_tool_frame")
 
     tries = 0
+    """
     while ((init_joint_target == None) and (tries < 100)):
         tries = tries + 1
         xyz_target[0] = xyz_target[0] + random.uniform(-0.05, 0.05)
@@ -168,6 +167,7 @@ def navigate(req):
         xyz_target[2] = xyz_target[2] + random.uniform(-0.05, 0.05)
         init_joint_target = ku.ik_for_link(hmat_target, manip, "r_gripper_tool_frame",
             filter_options = openravepy.IkFilterOptions.CheckEnvCollisions)
+    """
 
     print "Final target: " + str(xyz_target) + " Took " + str(tries) + " tries."
     # END ik
@@ -177,7 +177,7 @@ def navigate(req):
         return TrajoptNavigateResponse(False)
 
     robot.SetDOFValues(init_joint_target, robot.GetManipulator('rightarm').GetArmIndices())
-    time.sleep(3)
+    #time.sleep(3)
 
     # NOw set the start position again to start planning
     robot.SetDOFValues(joint_start)
@@ -244,10 +244,10 @@ def navigate(req):
     #assert traj_is_safe(result.GetTraj(), robot) # Check that trajectory is collision free
 
     # Replay the trajectory on OpenRAVE
-    time.sleep(2)
-    for position in result.GetTraj():
-        robot.SetDOFValues(position, robot.GetManipulator('rightarm').GetArmIndices())
-        time.sleep(1)
+    #time.sleep(2)
+    #for position in result.GetTraj():
+    #    robot.SetDOFValues(position, robot.GetManipulator('rightarm').GetArmIndices())
+    #    time.sleep(1)
 
     # Now we'll check to see that the final constraint was satisfied
     #robot.SetActiveDOFValues(result.GetTraj()[-1])
@@ -263,9 +263,9 @@ def navigate(req):
     sum_costs = 0
     for cost in result.GetCosts():
         sum_costs = sum_costs + cost[1]
-    if sum_costs < 50:
+    if sum_costs < 70:
         arm = Arm('r_arm')
-        #arm.move(result.GetTraj())
+        arm.move(result.GetTraj())
     else:
         print "Cost of " + str(sum_costs) + " is too big."
         return TrajoptNavigateResponse(False)
