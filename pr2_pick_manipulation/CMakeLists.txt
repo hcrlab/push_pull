@@ -7,6 +7,8 @@ project(pr2_pick_manipulation)
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
+  geometry_msgs
+  move_base_msgs
   moveit_core
   moveit_ros_planning
   moveit_ros_planning_interface
@@ -14,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   pr2_pick_msgs
   pr2_pick_perception
   roscpp
+  std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -104,20 +108,39 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(gripper
   src/gripper.cpp
 )
+add_library(driver
+  src/driver.cpp
+)
+add_library(arm_navigator
+  src/arm_navigator.cpp
+)
 
 ## Declare a cpp executable
 add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(easy_boxes_demo gripper ${pr2_pick_manipulation_EXPORTED_TARGETS})
+add_dependencies(easy_boxes_demo
+  gripper
+  driver
+  arm_navigator
+  ${pr2_pick_manipulation_EXPORTED_TARGETS}
+)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(easy_boxes_demo
   gripper
+  driver
+  arm_navigator
   ${catkin_LIBRARIES}
 )
 target_link_libraries(gripper
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(driver
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(arm_navigator
   ${catkin_LIBRARIES}
 )
 
