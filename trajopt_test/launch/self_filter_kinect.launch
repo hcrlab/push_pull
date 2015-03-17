@@ -1,0 +1,11 @@
+<!-- self filter Kinect points -->
+<launch>
+<node pkg="robot_self_filter" type="self_filter" respawn="true" name="stereo_self_filter" 
+output="screen">
+    <remap from="cloud_in" to="/head_mount_kinect/depth_registered/points" />
+    <remap from="cloud_out" to="/head_mount_kinect/depth_registered/points_filtered" />
+    <param name="sensor_frame" type="string" value="/head_mount_kinect_rgb_optical_frame"/>
+    <!-- <param name="subsample_value" type="double" value=".02"/> -->
+    <rosparam command="load" file="$(find pr2_arm_navigation_perception)/config/self_filter_right_left.yaml" />
+</node>
+</launch>
