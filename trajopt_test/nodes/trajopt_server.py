@@ -172,6 +172,10 @@ def navigate(req):
     print "Final target: " + str(xyz_target) + " Took " + str(tries) + " tries."
     # END ik
     print "Target: " + str(init_joint_target)
+
+    if init_joint_target == None:
+        return TrajoptNavigateResponse(False)
+
     robot.SetDOFValues(init_joint_target, robot.GetManipulator('rightarm').GetArmIndices())
     time.sleep(3)
 
@@ -264,9 +268,9 @@ def navigate(req):
         #arm.move(result.GetTraj())
     else:
         print "Cost of " + str(sum_costs) + " is too big."
+        return TrajoptNavigateResponse(False)
 
-
-    return
+    return TrajoptNavigateResponse(True)
     
 
 if __name__ == "__main__":

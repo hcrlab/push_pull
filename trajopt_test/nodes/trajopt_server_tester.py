@@ -14,7 +14,7 @@ if __name__ == "__main__":
         goal.pose.position.y = -0.2
         goal.pose.position.z = 0.5
         goal.pose.orientation.w = 1
-        s(goal, True)
-        print "Yay!"
+        b = s(goal, True)
+        print "Yay: " + str(b)
     except rospy.ServiceException, e:
         print "Service call failed: %s"%e
