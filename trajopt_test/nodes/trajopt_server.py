@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--interactive", action="store_true")
+parser.add_argument("--position_only", action="store_true")
+args = parser.parse_args()
+
+
 from trajopt_test.srv import *
 import os, os.path as osp
 import subprocess
@@ -55,21 +62,21 @@ class Arm:
         self.jta.send_goal_and_wait(goal)
 
 
-def generate_mesh(cloud):
+def generate_mesh(cloud, T_w_k):
     #cloud = cloudprocpy.medianFilter(cloud, 15, .05) # smooth out the depth image
-    cloud = remove_floor(cloud) # remove points with low height (in world frame)
+    cloud = remove_floor(cloud, T_w_k) # remove points with low height (in world frame)
     big_mesh = cloudprocpy.meshOFM(cloud, 3, .1) # use pcl OrganizedFastMesh to make mesh
     simple_mesh = cloudprocpy.quadricSimplifyVTK(big_mesh, .02) # decimate mesh with VTK function
     return simple_mesh
 
-def get_xyz_world_frame(cloud):
+def get_xyz_world_frame(cloud, T_w_k):
     xyz1 = cloud.to2dArray()
     xyz1[:,3] = 1
     return xyz1.dot(T_w_k.T)[:,:3]
 
 
-def remove_floor(cloud):
-    notfloor = get_xyz_world_frame(cloud)[:,2] > .1
+def remove_floor(cloud, T_w_k):
+    notfloor = get_xyz_world_frame(cloud, T_w_k)[:,2] > .1
     cloud = cloudprocpy.maskFilter(cloud, notfloor, True)
     return cloud
 
@@ -87,7 +94,7 @@ def navigate(req):
     robot = env.GetRobots()[0]
     env.SetViewer('qtcoin')
 
-    trajoptpy.SetInteractive(False) # pause every iteration, until you press 'p'. Press escape to disable further plotting
+    trajoptpy.SetInteractive(args.interactive) # pause every iteration, until you press 'p'. Press escape to disable further plotting
 
     rospy.wait_for_service("return_joint_states")
 
@@ -127,12 +134,12 @@ def navigate(req):
     if xyzrgb != None:
 	print "Point cloud from grabber"
     if req.new_cloud:
-    	xyzrgb.save("cloud.pcd")
+     	xyzrgb.save("cloud.pcd")
     point_cloud = cloudprocpy.readPCDXYZ("cloud.pcd")
     
 
-    mesh = generate_mesh(point_cloud)
-    mesh_body = mk.create_trimesh(env, get_xyz_world_frame(mesh.getCloud()), np.array(mesh.getFaces()), name="simple_mesh")
+    mesh = generate_mesh(point_cloud, T_w_k)
+    mesh_body = mk.create_trimesh(env, get_xyz_world_frame(mesh.getCloud(), T_w_k), np.array(mesh.getFaces()), name="simple_mesh")
     mesh_body.SetUserData("bt_use_trimesh", True) # Tell collision checker to use the trimesh rather than the convex hull of it
     print "After making mesh"
 
@@ -218,7 +225,7 @@ def navigate(req):
       # END init
     }
 
-    #if args.position_only: request["constraints"][0]["params"]["rot_coeffs"] = [0,0,0]
+    if args.position_only: request["constraints"][0]["params"]["rot_coeffs"] = [0,0,0]
 
     s = json.dumps(request) # convert dictionary into json-formatted string
 
@@ -254,7 +261,7 @@ def navigate(req):
         sum_costs = sum_costs + cost[1]
     if sum_costs < 50:
         arm = Arm('r_arm')
-        arm.move(result.GetTraj())
+        #arm.move(result.GetTraj())
     else:
         print "Cost of " + str(sum_costs) + " is too big."
 

@@ -10,9 +10,10 @@ if __name__ == "__main__":
     try:
         s = rospy.ServiceProxy('trajopt_navigate', TrajoptNavigate)
         goal = PoseStamped()
-        goal.pose.position.x = 0.6
-        goal.pose.position.x = 0.024
-        goal.pose.position.x = 1.43
+        goal.pose.position.x = 0.5
+        goal.pose.position.y = -0.2
+        goal.pose.position.z = 0.5
+        goal.pose.orientation.w = 1
         s(goal, True)
         print "Yay!"
     except rospy.ServiceException, e:
