@@ -79,7 +79,7 @@ def navigate(req):
 
     print "Navigating!"
 
-    rospy.init_node('trajopt_no_pcl')
+    #rospy.init_node('trajopt_no_pcl')
     env = openravepy.Environment()
     env.StopSimulation()
     env.Load("robots/pr2-beta-static.zae")
@@ -87,7 +87,7 @@ def navigate(req):
     robot = env.GetRobots()[0]
     env.SetViewer('qtcoin')
 
-    trajoptpy.SetInteractive(args.interactive) # pause every iteration, until you press 'p'. Press escape to disable further plotting
+    trajoptpy.SetInteractive(False) # pause every iteration, until you press 'p'. Press escape to disable further plotting
 
     rospy.wait_for_service("return_joint_states")
 
@@ -218,7 +218,7 @@ def navigate(req):
       # END init
     }
 
-    if args.position_only: request["constraints"][0]["params"]["rot_coeffs"] = [0,0,0]
+    #if args.position_only: request["constraints"][0]["params"]["rot_coeffs"] = [0,0,0]
 
     s = json.dumps(request) # convert dictionary into json-formatted string
 
