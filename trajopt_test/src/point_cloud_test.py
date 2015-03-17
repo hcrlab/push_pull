@@ -6,8 +6,7 @@ args = parser.parse_args()
 
 
 import os, os.path as osp
-import subprocess
-import shlex
+
 import openravepy
 import trajoptpy
 import cloudprocpy
@@ -16,12 +15,12 @@ import json
 import numpy as np
 import trajoptpy.kin_utils as ku
 from joint_states_listener.srv import ReturnJointStates
-from point_cloud_listener.srv import ReturnPointCloud
+#from point_cloud_listener.srv import ReturnPointCloud
 import time
 import sys
 from sensor_msgs.msg import JointState, PointCloud2
 import threading
-from control_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
+from pr2_controllers_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectoryPoint
 import actionlib
 import rospy
@@ -66,7 +65,7 @@ def point_cloud_callback(msg):
    #self.lock.release()
 
 def generate_mesh(cloud):
-    #cloud = cloudprocpy.medianFilter(cloud, 15, .05) # smooth out the depth image
+    cloud = cloudprocpy.fastBilateralFilter(cloud, 15, .05) # smooth out the depth image
     cloud = remove_floor(cloud) # remove points with low height (in world frame)
     big_mesh = cloudprocpy.meshOFM(cloud, 3, .1) # use pcl OrganizedFastMesh to make mesh
     simple_mesh = cloudprocpy.quadricSimplifyVTK(big_mesh, .02) # decimate mesh with VTK function
@@ -126,44 +125,54 @@ if __name__ == '__main__':
     except rospy.ServiceException, e:
         print "error when calling return_point_cloud: %s"%e
         sys.exit(1)
-    
     """
-    
+
+    #for (ind, joint_name) in enumerate(joint_names):
+    #    if(not resp.found[ind]):
+    #        print "joint %s not found!"%joint_name
+
+
+    #scene_dir = osp.join(trajoptpy.bigdata_dir, args.scene_name)
+    #if not args.dry_run: os.mkdir(scene_dir)
+
+
     listener = tf.TransformListener()
     listener.waitForTransform("/base_footprint","/head_mount_kinect_rgb_optical_frame", rospy.Time(0),rospy.Duration(1))
     (x,y,z), (qx,qy,qz,qw) = listener.lookupTransform("/base_footprint","/head_mount_kinect_rgb_optical_frame", rospy.Time(0))
     T_w_k = openravepy.matrixFromPose([qw,qx,qy,qz,x,y,z])
+    #if not args.dry_run: np.savetxt(osp.join(scene_dir, "kinect_frame.txt"), T_w_k)
 
     dof_vals = robot.GetDOFValues()
+    #if not args.dry_run: np.savetxt(osp.join(scene_dir,"dof_vals.txt"), dof_vals)
+
 
     grabber=cloudprocpy.CloudGrabber()
 
 
     xyzrgb = None
     xyzrgb = grabber.getXYZRGB()
+    #if not args.dry_run: xyzrgb.save(osp.join(scene_dir,"cloud.pcd"))
+
     
     #time.sleep(5)
 
     print "Before making mesh"
     
     if xyzrgb != None:
-	print "Point cloud from grabber"
+    	print "Point cloud from grabber"
         xyzrgb.save("cloud.pcd")
-        point_cloud = cloudprocpy.readPCDXYZ("cloud.pcd")
-    
-    #if point_cloud_2 != None:
-    #env_variable = os.environ.copy()
-    #proc1 = subprocess.Popen(shlex.split("rosrun pcl_ros pointcloud_to_pcd input:=/head_mount_kinect/depth_registered/points_filtered"), shell=False )
-    #time.sleep(1)
-    #proc1.kill()
-    #proc2 = subprocess.Popen("mv *.pcd cloud.pcd", shell=True)
-    #point_cloud = cloudprocpy.readPCDXYZ("cloud.pcd")
-
+    point_cloud = cloudprocpy.readPCDXYZ("cloud.pcd")
+    """
+    elif (point_cloud == None) and (point_cloud_2 == None):
+        print "No point cloud"
+    elif point_cloud_2 != None:
+        point_cloud = point_cloud_2
+    """
     #print "Point Cloud ROS: "
     #print point_cloud_2
 
-    #print "Cloud Grabber: "
-    #print xyzrgb
+    print "Cloud Grabber: "
+    print xyzrgb
 
     #cloud_orig = cloudprocpy.readPCDXYZ("cloud.pcd") 
     mesh = generate_mesh(point_cloud)
@@ -179,11 +188,11 @@ if __name__ == '__main__':
     time.sleep(3)
 
     roll = 0.0
-    pitch = 0
+    pitch = 0.0
     yaw = 0
     quat = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
     quat_target = [quat[3], quat[0], quat[1], quat[2]] # wxyz
-    xyz_target = [0.6, 0.024, 1.193]
+    xyz_target = [0.5, -0.2, 0.5]
     hmat_target = openravepy.matrixFromPose( np.r_[quat_target, xyz_target] )
 
     # BEGIN ik
@@ -260,10 +269,7 @@ if __name__ == '__main__':
     if args.position_only: request["constraints"][0]["params"]["rot_coeffs"] = [0,0,0]
 
     s = json.dumps(request) # convert dictionary into json-formatted string
-
-    print "Before constructing problem"
     prob = trajoptpy.ConstructProblem(s, env) # create object that stores optimization problem
-    print "Constructing problem"
     result = trajoptpy.OptimizeProblem(prob) # do optimization
     print result
 
@@ -291,9 +297,9 @@ if __name__ == '__main__':
     sum_costs = 0
     for cost in result.GetCosts():
         sum_costs = sum_costs + cost[1]
-    if sum_costs < 50:
+    if sum_costs < 20:
         arm = Arm('r_arm')
-        arm.move(result.GetTraj())
+        #arm.move(result.GetTraj())
     else:
         print "Cost of " + str(sum_costs) + " is too big."
 
