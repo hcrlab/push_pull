@@ -15,7 +15,7 @@ Gripper::Gripper(const std::string& action_name) {
   }
 }
 
-Gripper::~Gripper(){
+Gripper::~Gripper() {
   delete gripper_client_;
 }
 

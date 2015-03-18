@@ -1,3 +1,10 @@
+// A C++ action client for opening and closing the grippers.
+//
+// Sample usage:
+//   Gripper right_gripper("r_gripper_controller/gripper_action");
+//   right_gripper.open();
+//   right_gripper.close();
+
 #include <actionlib/client/simple_action_client.h>
 #include <pr2_controllers_msgs/Pr2GripperCommandAction.h>
 #include <ros/ros.h>
@@ -9,11 +16,11 @@ namespace pr2_pick_manipulation {
 typedef actionlib::SimpleActionClient<
   pr2_controllers_msgs::Pr2GripperCommandAction> GripperClient;
 
-class Gripper{
-private:
+class Gripper {
+ private:
   GripperClient* gripper_client_;  
 
-public:
+ public:
   // Constructor that takes the name of the action server to use. For the PR2,
   // this is "r_gripper_controller/gripper_action" or
   // "l_gripper_controller/gripper_action".
