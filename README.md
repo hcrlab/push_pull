@@ -15,3 +15,8 @@ The main state machine for the picking challenge.
 
 ### pr2_pick_msgs
 Contains common message types for the picking challenge.
+
+### pr2_pick_manipulation
+- Contains demo code for picking 3 items out of the bin.
+- Contains gripper open/close C++ client
+- Contains base movement / odometry C++ client
