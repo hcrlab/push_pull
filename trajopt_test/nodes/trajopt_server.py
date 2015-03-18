@@ -55,7 +55,7 @@ class Arm:
         for waypoint in waypoints:
             point = JointTrajectoryPoint()
             point.positions = waypoint
-            point.time_from_start = rospy.Duration(1.5 + time_offset*1.5)
+            point.time_from_start = rospy.Duration(1 + time_offset*1)
             goal.trajectory.points.append(point)
             time_offset = time_offset + 1
             
@@ -176,7 +176,10 @@ def navigate(req):
     if init_joint_target == None:
         return TrajoptNavigateResponse(False)
 
-    robot.SetDOFValues(init_joint_target, robot.GetManipulator('rightarm').GetArmIndices())
+    #robot.SetDOFValues(init_joint_target, robot.GetManipulator('rightarm').GetArmIndices())
+    init_joint_target = ku.ik_for_link(hmat_target, manip, "r_gripper_tool_frame",
+            filter_options = openravepy.IkFilterOptions.CheckEnvCollisions)
+
     #time.sleep(3)
 
     # NOw set the start position again to start planning
