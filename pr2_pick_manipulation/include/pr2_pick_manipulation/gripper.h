@@ -1,9 +1,10 @@
 // A C++ action client for opening and closing the grippers.
 //
 // Sample usage:
-//   Gripper right_gripper("r_gripper_controller/gripper_action");
-//   right_gripper.open();
-//   right_gripper.close();
+//  pr2_pick_manipulation::Gripper right_gripper(
+//    "r_gripper_controller/gripper_action");
+//  right_gripper.open();
+//  right_gripper.close();
 
 #include <actionlib/client/simple_action_client.h>
 #include <pr2_controllers_msgs/Pr2GripperCommandAction.h>
