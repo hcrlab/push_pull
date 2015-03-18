@@ -1,0 +1,14 @@
+<launch>
+
+  <node name="move_group_interface_tutorial" pkg="pr2_pick_manipulation" type="push_away.py" respawn="false" output="screen">
+  </node>
+
+  <!--
+  <arg name="debug" default="false" />
+  <include file="$(find pr2_moveit_config)/launch/moveit_rviz.launch">
+    <arg name="config" value="true"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include> 
+  -->
+
+</launch>

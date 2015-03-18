@@ -1,0 +1,5 @@
+geometry_msgs/Pose start
+# true for left hand, false for right
+bool left_hand
+---
+bool success

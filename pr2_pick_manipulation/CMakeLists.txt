@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
   geometry_msgs
+  message_generation
   move_base_msgs
   moveit_core
   moveit_ros_planning
@@ -16,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   pr2_pick_msgs
   pr2_pick_perception
   roscpp
+  rospy
   std_msgs
   tf
 )
@@ -58,14 +60,13 @@ find_package(Boost REQUIRED COMPONENTS system)
 #   FILES
 #   Message1.msg
 #   Message2.msg
-# )
+#)
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  PushAway.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -75,10 +76,11 @@ find_package(Boost REQUIRED COMPONENTS system)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+  std_msgs  # Or other packages containing msgs
+)
 
 ###################################
 ## catkin specific configuration ##

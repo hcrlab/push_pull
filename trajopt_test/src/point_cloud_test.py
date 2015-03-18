@@ -299,7 +299,7 @@ if __name__ == '__main__':
         sum_costs = sum_costs + cost[1]
     if sum_costs < 20:
         arm = Arm('r_arm')
-        #arm.move(result.GetTraj())
+        arm.move(result.GetTraj())
     else:
         print "Cost of " + str(sum_costs) + " is too big."
 
