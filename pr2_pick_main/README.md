@@ -17,5 +17,5 @@ Running:
 ```
 roslaunch pr2_pick_perception perception.launch
 roslaunch pr2_moveit_config move_group.launch
-roslaunch pr2_pick_main easy_boxes_demo.launch
+roslaunch pr2_pick_main easy_boxes_demo.launch --screen
 ```
