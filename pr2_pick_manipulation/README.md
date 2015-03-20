@@ -2,6 +2,8 @@
 
 Contains code for PR2 manipulation and robot control.
 
+For documentation, see .h files.
+
 ## Libraries
 ### gripper.h
 C++ action client wrapper for opening and closing the gripper.
@@ -32,4 +34,14 @@ base_cmd.linear.y = 0.125;
 // Drive until the robot has been displaced 0.25 meters from its starting
 // position.
 driver.Drive(base_cmd, 0.25);
+```
+
+### arm_navigator.h
+Interface and implementations for moving the arm using motion planning.
+
+Sample usage:
+```cpp
+MoveGroup group("right_arm");
+ArmNavigatorInterface* right_arm = new MoveItArmNavigator(group);
+right_arm.MoveToPoseGoal(pose, false);
 ```
