@@ -17,6 +17,7 @@ A metapackage for all the other packages.
 A package that contains the main state machine runner for the picking challenge, as well as other end-to-end demos.
 Test programs for specific components might be in other packages, but end-to-end integration stuff should go here.
 
+- Contains a template of the main state machine.
 - Contains demo code for picking 3 items out of the bin.
 
 ### pr2_pick_manipulation
