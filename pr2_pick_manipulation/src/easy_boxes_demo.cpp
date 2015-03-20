@@ -186,7 +186,8 @@ int main(int argc, char** argv) {
     "mock_perception_action_server", true);  
   mock_perception.waitForServer();
 
-  pr2_pick_manipulation::RobotDriver driver(node_handle);
+  ros::Publisher cmd_vel_pub = node_handle.advertise<geometry_msgs::Twist>("base_controller/command", 1);
+  pr2_pick_manipulation::RobotDriver driver(cmd_vel_pub);
   pub = node_handle.advertise<std_msgs::String>("google_tts", 10);
 
   // Grab the first 2 objects on the right.

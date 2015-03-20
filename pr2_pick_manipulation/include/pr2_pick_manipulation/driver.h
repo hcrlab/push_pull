@@ -24,12 +24,11 @@
 namespace pr2_pick_manipulation {
 class RobotDriver {
  private:
-  ros::NodeHandle nh_;
   ros::Publisher cmd_vel_pub_;
   tf::TransformListener listener_;
 
  public:
-  RobotDriver(const ros::NodeHandle& nh);
+  RobotDriver(const ros::Publisher& cmd_vel_pub);
 
   // Drive with the velocities given in base_cmd.linear.x (+x forward),
   // base_cmd.linear.y (+y left), and base_cmd.angular.z (+z clockwise), with
