@@ -3,7 +3,9 @@
 //
 // Sample usage:
 //  ros::NodeHandle node_handle;
-//  pr2_pick_manipulation::RobotDriver driver(node_handle);  
+//  ros::Publisher cmd_vel_pub = node_handle.advertise<geometry_msgs::Twist>(
+//    "base_controller/command", 1);
+//  pr2_pick_manipulation::RobotDriver driver(cmd_vel_pub);
 //
 //  // Specify the speed in the x and y direction in meters/second as well as
 //  // the angular velocity in radians/second.
