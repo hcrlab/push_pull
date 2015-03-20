@@ -23,6 +23,7 @@ Test programs for specific components might be in other packages, but end-to-end
 - Contains gripper open/close C++ client
 - Contains base movement / odometry C++ client
 - Contains arm navigation C++ interface, and implementations using MoveIt and trajopt.
+- Contains a tool for reading the current end-effector pose, using your phone.
 
 ### pr2_pick_msgs
 Contains common message types for the picking challenge.
