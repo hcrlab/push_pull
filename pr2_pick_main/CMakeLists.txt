@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pr2_pick_manipulation)
+project(pr2_pick_main)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -8,20 +8,18 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
   geometry_msgs
-  move_base_msgs
   moveit_core
   moveit_ros_planning
   moveit_ros_planning_interface
-  pr2_controllers_msgs
+  pr2_pick_manipulation
   pr2_pick_msgs
   pr2_pick_perception
   roscpp
   std_msgs
-  tf
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+# find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -77,7 +75,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   pr2_pick_msgs
 # )
 
 ###################################
@@ -91,8 +89,8 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES gripper driver arm_navigator
-  CATKIN_DEPENDS tf
+#  LIBRARIES pr2_pick_main
+#  CATKIN_DEPENDS actionlib moveit_core pr2_pick_manipulation pr2_pick_msgs pr2_pick_perception roscpp
 #  DEPENDS system_lib
 )
 
@@ -102,39 +100,25 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS})
+# include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
-add_library(gripper
-  src/gripper.cpp
-)
-add_library(driver
-  src/driver.cpp
-)
-add_library(arm_navigator
-  src/arm_navigator.cpp
-)
+# add_library(pr2_pick_main
+#   src/${PROJECT_NAME}/pr2_pick_main.cpp
+# )
 
 ## Declare a cpp executable
-#add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
+add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-#add_dependencies(easy_boxes_demo
-#  gripper
-#  driver
-#  arm_navigator
-#  ${pr2_pick_manipulation_EXPORTED_TARGETS}
-#)
+# add_dependencies(pr2_pick_main_node pr2_pick_main_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(gripper
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(driver
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(arm_navigator
+target_link_libraries(easy_boxes_demo
   ${catkin_LIBRARIES}
 )
 
@@ -153,7 +137,7 @@ target_link_libraries(arm_navigator
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS pr2_pick_manipulation pr2_pick_manipulation_node
+# install(TARGETS pr2_pick_main pr2_pick_main_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -178,7 +162,7 @@ target_link_libraries(arm_navigator
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_pr2_pick_manipulation.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_pr2_pick_main.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
