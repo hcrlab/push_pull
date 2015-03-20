@@ -19,14 +19,14 @@ using actionlib::SimpleActionClient;
 using geometry_msgs::PoseStamped;
 using pr2_pick_msgs::Item;
 using pr2_pick_manipulation::Gripper;
-using pr2_pick_manipulation::ArmNavigator;
+using pr2_pick_manipulation::ArmNavigatorInterface;
 using ros::Publisher;
 
-bool MoveToPoseGoal(ArmNavigator& navigator, const PoseStamped& pose,
+bool MoveToPoseGoal(ArmNavigatorInterface& navigator, const PoseStamped& pose,
                     const bool refresh_point_cloud);
-bool Pick(ArmNavigator& navigator, Gripper& gripper, const Item& item);
-bool DropOff(ArmNavigator& navigator, Gripper& gripper);
-bool CenterArm(ArmNavigator& group);
+bool Pick(ArmNavigatorInterface& navigator, Gripper& gripper, const Item& item);
+bool DropOff(ArmNavigatorInterface& navigator, Gripper& gripper);
+bool CenterArm(ArmNavigatorInterface& group);
 void Say(std::string text);
 
 ros::Publisher pub;
@@ -37,12 +37,12 @@ void Say(std::string text) {
   pub.publish(str);
 }
 
-bool MoveToPoseGoal(ArmNavigator& navigator, const PoseStamped& pose,
+bool MoveToPoseGoal(ArmNavigatorInterface& navigator, const PoseStamped& pose,
                     const bool refresh_point_cloud) {
   return navigator.MoveToPoseGoal(pose, refresh_point_cloud);
 }
 
-bool CenterArm(ArmNavigator& navigator) {
+bool CenterArm(ArmNavigatorInterface& navigator) {
   PoseStamped pose;
   pose.header.frame_id = "base_footprint";
   pose.pose.position.x = 0.3135;
@@ -71,7 +71,7 @@ bool CenterArm(ArmNavigator& navigator) {
   return true;
 }
 
-bool DropOff(ArmNavigator& navigator, Gripper& gripper) {
+bool DropOff(ArmNavigatorInterface& navigator, Gripper& gripper) {
   PoseStamped pose;
   pose.header.frame_id = "base_footprint";
   pose.pose.position.x = 0.0806;
@@ -97,7 +97,7 @@ bool DropOff(ArmNavigator& navigator, Gripper& gripper) {
 // the gripper opening horizontally.
 // Assumes that the item's position refers to the center of the item.
 // Assumes that items are approximately 10 cm long in the x dimension.
-bool Pick(ArmNavigator& navigator, Gripper& gripper, const Item& item) {
+bool Pick(ArmNavigatorInterface& navigator, Gripper& gripper, const Item& item) {
   PoseStamped pose = item.pose;
 
   bool success = false;
@@ -172,10 +172,10 @@ int main(int argc, char** argv) {
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
-  //ArmNavigator navigator(node_handle, pr2_pick_manipulation::kRight);
+  //ArmNavigatorInterface navigator(node_handle, pr2_pick_manipulation::kRight);
   // Set up MoveIt.
   moveit::planning_interface::MoveGroup group("right_arm");
-  ArmNavigator navigator(group);
+  pr2_pick_manipulation::ArmNavigatorInterface* navigator = new pr2_pick_manipulation::MoveItArmNavigator(group);
   //group.setGoalPositionTolerance(0.05);
   //group.setGoalOrientationTolerance(0.2);
 
@@ -206,11 +206,11 @@ int main(int argc, char** argv) {
     pr2_pick_msgs::Item item = result->items[0];
 
     bool success = false;
-    success = Pick(navigator, right_gripper, item);
+    success = Pick(*navigator, right_gripper, item);
     if (!success) {
       ROS_ERROR("Failed to pick item.");
       Say("Failed to pick item.");
-      CenterArm(navigator);
+      CenterArm(*navigator);
       ROS_ERROR("Driving to the right");
       Say("Driving to the right");
       base_cmd.linear.x = base_cmd.linear.y = base_cmd.angular.z = 0;
@@ -224,14 +224,14 @@ int main(int argc, char** argv) {
     base_cmd.linear.y = -0.125;
     driver.Drive(base_cmd, distance);
 
-    success = DropOff(navigator, right_gripper);
+    success = DropOff(*navigator, right_gripper);
     if (!success) {
       ROS_ERROR("Failed to drop off item.");
       Say("Failed to drop off item.");
       break;
     }
 
-    CenterArm(navigator);
+    CenterArm(*navigator);
   }
 
   right_gripper.open();

@@ -1,36 +1,37 @@
 #include "geometry_msgs/PoseStamped.h"
+#include "moveit/move_group_interface/move_group.h"
 #include "pr2_pick_manipulation/arm_navigator.h"
 #include "ros/ros.h"
 #include "trajopt_test/TrajoptNavigate.h"
-#include "moveit/move_group_interface/move_group.h"
 
+using geometry_msgs::PoseStamped;
+using moveit::planning_interface::MoveGroup;
 using pr2_pick_manipulation::ArmId;
+using ros::ServiceClient;
 
 namespace pr2_pick_manipulation {
-//ArmNavigator::ArmNavigator(const ros::NodeHandle& node_handle, const ArmId arm_id):
-//    node_handle_(node_handle),
-//    arm_id_(arm_id) {
-//  navigate_client_ = node_handle_.serviceClient<trajopt_test::TrajoptNavigate>("trajopt_navigate");
-//};
-//
-//bool ArmNavigator::MoveToPoseGoal(const geometry_msgs::PoseStamped& pose,
-//                                  const bool refresh_point_cloud) {
-//  trajopt_test::TrajoptNavigateRequest request;
-//  request.goal = pose;
-//  request.new_cloud = refresh_point_cloud;
-//  trajopt_test::TrajoptNavigateResponse response;
-//  navigate_client_.call(request, response);
-//  return response.success;
-//}
+MoveItArmNavigator::MoveItArmNavigator(MoveGroup& group): group_(group) {
+}
 
-ArmNavigator::ArmNavigator(moveit::planning_interface::MoveGroup& group):
-    group_(group) {
-};
-
-bool ArmNavigator::MoveToPoseGoal(const geometry_msgs::PoseStamped& pose,
-                                  const bool refresh_point_cloud) {
+bool MoveItArmNavigator::MoveToPoseGoal(const PoseStamped& pose,
+                                        const bool refresh_point_cloud) {
   group_.setPoseTarget(pose);
   return group_.move();
 }
 
+TrajOptArmNavigator::TrajOptArmNavigator(const ArmId arm_id,
+                                         const ServiceClient& client)
+    : arm_id_(arm_id),
+      client_(client) {
+}
+
+bool TrajOptArmNavigator::MoveToPoseGoal(const PoseStamped& pose,
+                                         const bool refresh_point_cloud) {
+  trajopt_test::TrajoptNavigateRequest request;
+  request.goal = pose;
+  request.new_cloud = refresh_point_cloud;
+  trajopt_test::TrajoptNavigateResponse response;
+  client_.call(request, response);
+  return response.success;
+}
 };  // namespace pr2_pick_manipulation
