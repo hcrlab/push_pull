@@ -1,4 +1,4 @@
-# Main
+# Main program runners
 This package contains the main state machine for the picking challenge.
 It also contains other end-to-end demos that integrate multiple parts.
 
