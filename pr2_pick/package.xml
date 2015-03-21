@@ -8,6 +8,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>google_tts</run_depend>
   <run_depend>joint_states_listener</run_depend>
+  <run_depend>pr2_pick_contest</run_depend>
   <run_depend>pr2_pick_main</run_depend>
   <run_depend>pr2_pick_manipulation</run_depend>
   <run_depend>pr2_pick_msgs</run_depend>

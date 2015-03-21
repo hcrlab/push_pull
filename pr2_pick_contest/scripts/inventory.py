@@ -36,38 +36,38 @@ class Inventory(object):
         '''
         Get the items currently believed to be in the specified bin
         @param request - a ros GetItems request
-            request.bin is a bin name in the form 'bin_*' where * is
-                a capital letter A-L
+            request.bin is a capital letter A-L
         @return a list of items
         '''
-        print self.bin_contents[request.bin]
-        return GetItemsResponse(self.bin_contents[request.bin])
+        bin_name = 'bin_' + request.bin
+        print self.bin_contents[bin_name]
+        return GetItemsResponse(self.bin_contents[bin_name])
 
     def get_target_items(self, request):
         '''
         Get a list of target items which originated in the specified bin
         @param request - a ros GetItems request
-            request.bin is a bin name in the form 'bin_*' where * is
-                a capital letter A-L
+            request.bin is a capital letter A-L
         @return a list of items
         '''
-        print self.target_items[request.bin]
-        return GetItemsResponse(self.target_items[request.bin])
+        bin_name = 'bin_' + request.bin
+        print self.target_items[bin_name]
+        return GetItemsResponse(self.target_items[bin_name])
 
     def set_items(self, request):
         '''
         Set the list of items currently believed to be in the specified bin
         @param request - a ros SetItems request
-            request.bin is a bin name in the form 'bin_*' where * is
-                a capital letter A-L
+            request.bin is a capital letter A-L
             request.items is a list of items
         '''
+        bin_name = 'bin_' + request.bin
         print 'changing contents of {} from {} to {}'.format(
             request.bin,
-            self.bin_contents[request.bin],
+            self.bin_contents[bin_name],
             request.items,
         )
-        self.bin_contents[request.bin] = request.items
+        self.bin_contents[bin_name] = request.items
         return True
 
 
