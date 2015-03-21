@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+A node providing inventory management services, e.g. what items are in what
+bins. On startup, it takes in a filename specifying a file that contains
+the contest json.
+'''
+
 import argparse
 import copy
 import json
