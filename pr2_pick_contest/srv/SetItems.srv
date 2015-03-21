@@ -1,0 +1,4 @@
+string[] items
+string bin
+---
+bool success
