@@ -11,7 +11,8 @@ import copy
 import json
 import sys
 
-from pr2_pick_contest.srv import GetItems, GetItemsResponse, SetItems
+from pr2_pick_contest.srv import GetItems, GetItemsResponse, GetTargetItems, \
+    GetTargetItemsResponse, SetItems
 import rospy
 
 
@@ -40,7 +41,7 @@ class Inventory(object):
         @return a list of items
         '''
         bin_name = 'bin_' + request.bin
-        print self.bin_contents[bin_name]
+        print '{} contains {}'.format(bin_name, self.bin_contents[bin_name])
         return GetItemsResponse(self.bin_contents[bin_name])
 
     def get_target_items(self, request):
@@ -51,8 +52,11 @@ class Inventory(object):
         @return a list of items
         '''
         bin_name = 'bin_' + request.bin
-        print self.target_items[bin_name]
-        return GetItemsResponse(self.target_items[bin_name])
+        print 'target items of {} are {}'.format(
+            bin_name,
+            self.target_items[bin_name]
+        )
+        return GetTargetItemsResponse(self.target_items[bin_name])
 
     def set_items(self, request):
         '''
@@ -63,7 +67,7 @@ class Inventory(object):
         '''
         bin_name = 'bin_' + request.bin
         print 'changing contents of {} from {} to {}'.format(
-            request.bin,
+            bin_name,
             self.bin_contents[bin_name],
             request.items,
         )
@@ -86,7 +90,7 @@ if __name__ == "__main__":
     # start node and services
     rospy.init_node('inventory')
     rospy.Service('get_items', GetItems, inventory.get_items)
-    rospy.Service('get_target_items', GetItems, inventory.get_target_items)
+    rospy.Service('get_target_items', GetTargetItems, inventory.get_target_items)
     rospy.Service('set_items', SetItems, inventory.set_items)
 
     rospy.spin()

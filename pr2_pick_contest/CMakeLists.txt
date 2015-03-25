@@ -54,6 +54,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   GetItems.srv
+  GetTargetItems.srv
   SetItems.srv
 )
 
