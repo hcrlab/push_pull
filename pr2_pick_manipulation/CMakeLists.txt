@@ -93,7 +93,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES gripper driver arm_navigator
+  LIBRARIES arm_navigator driver gripper torso
   CATKIN_DEPENDS tf
 #  DEPENDS system_lib
 )
@@ -107,14 +107,17 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp library
-add_library(gripper
-  src/gripper.cpp
+add_library(arm_navigator
+  src/arm_navigator.cpp
 )
 add_library(driver
   src/driver.cpp
 )
-add_library(arm_navigator
-  src/arm_navigator.cpp
+add_library(gripper
+  src/gripper.cpp
+)
+add_library(torso
+  src/torso.cpp
 )
 
 ## Declare a cpp executable
@@ -130,13 +133,16 @@ add_library(arm_navigator
 #)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(gripper
+target_link_libraries(arm_navigator
   ${catkin_LIBRARIES}
 )
 target_link_libraries(driver
   ${catkin_LIBRARIES}
 )
-target_link_libraries(arm_navigator
+target_link_libraries(gripper
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(torso
   ${catkin_LIBRARIES}
 )
 

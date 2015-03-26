@@ -112,6 +112,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
+add_executable(torso_demo src/torso_demo.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -119,6 +120,9 @@ add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(easy_boxes_demo
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(torso_demo
   ${catkin_LIBRARIES}
 )
 
