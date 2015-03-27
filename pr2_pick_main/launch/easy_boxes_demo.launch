@@ -1,6 +1,6 @@
 <launch>
   <node name="mock_perception_action_server" pkg="pr2_pick_perception" type="mock_perception_easy_boxes" />
   <node name="easy_boxes_demo" pkg="pr2_pick_manipulation" type="easy_boxes_demo" required="true" />
-  <node name="google_tts" pkg="google_tts" type="speak.py" />
+  <node name="festival_tts" pkg="festival_tts" type="speak.py" />
   <!--include file="$(find pr2_moveit_config)/launch/demo.launch"></include-->
 </launch>
