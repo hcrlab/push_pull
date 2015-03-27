@@ -14,8 +14,24 @@ int main(int argc, char **argv) {
 
   Torso torso;
 
-  printf("Setting height to 0.1\n");
-  torso.SetHeight(0.1);
+  double zero = 0.000000000000000;
+  if (zero < 0) {
+    printf("float error. variable zero is %f\n", zero);
+    return 1;
+  }
+
+  // Why does this hang? What's the actual lower limit?
+  // printf("Setting height to 0.0\n");
+  // torso.SetHeight(zero);
+
+  printf("Setting height to 0.2\n");
+  torso.SetHeight(0.2);
+
+  printf("Setting height to 0.3\n");
+  torso.SetHeight(0.3);
+
+  printf("Setting height to 0.33\n");
+  torso.SetHeight(0.330000);
 
   printf("Setting height to max (%f)\n", Torso::kMaxHeight);
   torso.SetHeight(Torso::kMaxHeight);

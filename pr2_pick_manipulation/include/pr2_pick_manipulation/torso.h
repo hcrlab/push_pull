@@ -34,7 +34,7 @@ class Torso {
   TorsoClient* torso_client_;
 
  public:
-  static const double kMaxHeight = 0.200;
+  static const double kMaxHeight = 0.330;
   static const double kMinHeight = 0.000;
 
   Torso();

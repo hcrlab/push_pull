@@ -23,7 +23,7 @@ Torso::~Torso() {
 
 bool Torso::SetHeight(double height) {
   // ## make sure height is in range
-  // if (height > 0.2 || height < 0.0) {
+  // if (height > Torso::kMaxHeight || height < Torso::kMinHeight) {
   //   printf("Height %f is not in range [0.0, 0.2]\n", height);
   //   return false;
   //  }
