@@ -1,0 +1,4 @@
+bool safe
+trooper_msgs/JointRequest[] joint_requests
+---
+trooper_msgs/ManipulationPlan manip_plan

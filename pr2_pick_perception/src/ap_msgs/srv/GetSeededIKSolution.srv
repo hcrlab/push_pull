@@ -1,0 +1,27 @@
+#
+# A request / response pair for the central IK manager.
+#
+# This variant allows for the specification of a seed or starting robot state
+# which is used for teleop - allowing us to use the teleop robot position
+# rather than the real robot position.
+#
+
+# this variant only allows for a pose request, also no KDL allowed
+trooper_msgs/PoseRequest pose_request
+
+# the robot seeed state
+moveit_msgs/RobotState robot_state
+
+---
+
+# the error code returned by the IK solver used
+moveit_msgs/MoveItErrorCodes error_code
+
+# an explanation of the error code
+string reason
+
+# each response encapsulates joint names and positons
+# one result for pose or direction request
+# <n> for trajectory request of size n
+trooper_msgs/JointRequest[] solutions
+

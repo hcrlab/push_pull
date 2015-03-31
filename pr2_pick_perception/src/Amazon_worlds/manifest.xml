@@ -1,0 +1,15 @@
+<package>
+  <description brief="Amazon_worlds">
+
+     amazon_worlds
+
+  </description>
+  <author>Luis</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://</url>
+  <depend package="Amazon_models"/>
+
+</package>
+
+

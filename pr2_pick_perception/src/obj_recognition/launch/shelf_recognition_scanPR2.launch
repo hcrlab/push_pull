@@ -1,0 +1,28 @@
+<!-- Launch -->
+
+<launch>
+
+  <node ns="ap_ms" pkg="trooper_obj_recognition" type="obj_detection_pc" name="shelf_obj_detector" respawn="true" output="screen">
+   <param name="db" value="$(find trooper_obj_recognition)/config/db_shelf.txt"/>
+   <param name="iter" value="70"/>
+   <param name="MinClusterSize" value="350"/>
+   <param name="RadiusSearch" value=".015"/>
+   <param name="MinNeighborsInRadius" value="10"/>
+
+   <param name="PlanesegThres" value="0.03"/>   <!-- was 0.05 for non-hose, to remove wall behind valve -->
+   <param name="PlaneSize" value="4000"/> <!-- WAS 4500,50000 -->
+   <param name="highplane" value="-110.02" /> <!-- TODO: set lower or remove -->
+   <param name="only_yaw" value="false" />
+
+   <param name="RobotReference" value="/base_link" />
+   <param name="WorldReference" value="/map" />
+	
+   <param name="ManualSegmentation" value="true" />
+   <param name="pca_alignment" value="false"/>
+   <remap from="/image" to="/head_mount_kinect/rgb/image_rect_color" />
+   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" />
+   <remap from="/ap/detected_object" to="/rwm/add_detected_object" />
+  </node>
+  
+   
+</launch>

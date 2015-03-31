@@ -1,0 +1,36 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Launches atlas perception system -->
+<launch>
+
+  <arg name="use_sim_robot" default="true" />
+
+
+
+  <!-- convert lidar scan to point cloud when running simulation (doesn't publish points2) -->
+  <!-- when running on real hardware we use MS driver's points2 directly (has more knowledge about spindle positions, hence more accurate unwarping of lidar scan) -->
+  <!-- TODO: this can be removed once (if ever ..) drcsim provides the points2 topic -->
+  <group if="$(arg use_sim_robot)">
+    <node pkg="laser_filters" type="scan_to_cloud_filter_chain" output="screen" name="scan_to_cloud_filter_chain">
+        <remap from="scan" to="multisense_sl/laser/scan"/>
+        <remap from="cloud_filtered" to="multisense_sl/laser/points2"/>
+        <param name="high_fidelity" value="false"/> <!-- gazebo doesn't distort lidar scans, so this needs to be disabled, otherwise the interpolation would potentially cause a distortion -->
+        <param name="target_frame" value="/left_camera_optical_frame"/><!--same frame as MS driver's points2 topic which is used on the real robot-->
+    </node>
+  </group>
+
+  <!-- laser scan assembler -->
+  <node pkg="laser_assembler" type="point_cloud2_assembler" name="point_cloud_assembler" respawn="true" output="screen">
+     <remap from="cloud" to="multisense_sl/laser/points2" />
+     <param name="max_clouds" value="250"/> <!-- 250 is approx. 1 turn of the hokuyo at 1 rad/s -->
+     <param name="fixed_frame" value="map"/>
+  </node>
+
+  <!-- periodic snapshotter (currently publishes based on time, change to current angle if possible with sensor head API) -->
+  <node pkg="trooper_multisense" type="laser_snapshotter" name="point_cloud_snapshotter" respawn="true" output="screen">
+  <!--  <remap from="assembled_cloud" to="head_scan"/> -->
+     <param name="assembler_service" value="assemble_scans2"/>
+     <param name="freq" value="1.0" />
+     <param name="fixed_frame" value="map"/> <!-- FIXME: needs to be a fixed frame in the world, but setting it to map causes octomap not to extend as the points have world coordinates then - solve when switching to collider -->
+  </node>
+
+</launch>

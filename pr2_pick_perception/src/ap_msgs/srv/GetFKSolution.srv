@@ -1,0 +1,25 @@
+#
+# A request / response pair for the central FK manager. Reuses the
+# joint request message and returns a set of poses from the solver.
+#
+
+# REQUIRED - describes the joint names and positions to solve for
+trooper_msgs/JointRequest joints
+
+# OPTIONAL - what frame should the result pose be represented in, default to 'map'
+string frame_id
+
+# OPTIONAL - set the robot state the FK is calculated in
+moveit_msgs/RobotState robot_state
+
+---
+
+# the error code returned by the IK solver used
+moveit_msgs/MoveItErrorCodes error_code
+
+# a reason for an error (returning false)
+string reason
+
+# the actual response body with poses (if they exist, empty if none)
+geometry_msgs/PoseStamped[] poses
+
