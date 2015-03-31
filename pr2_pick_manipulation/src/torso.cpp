@@ -22,27 +22,24 @@ Torso::~Torso() {
 }
 
 bool Torso::SetHeight(double height) {
-  // ## make sure height is in range
-  // if (height > Torso::kMaxHeight || height < Torso::kMinHeight) {
-  //   printf("Height %f is not in range [0.0, 0.2]\n", height);
-  //   return false;
-  //  }
+  if (height > Torso::kMaxHeight || height < Torso::kMinHeight) {
+    printf("Height %0.3f is not in range [%0.3f, %0.3f]\n",
+           height, Torso::kMinHeight, Torso::kMaxHeight);
+    return false;
+   }
 
   pr2_controllers_msgs::SingleJointPositionGoal goal;
   goal.position = height;
 
   torso_client_->sendGoal(goal);
-  printf("Sent goal %f\n", height);
+  printf("Sent goal %0.3f\n", height);
 
   torso_client_->waitForResult();
-  printf("Got result\n");
 
   if (torso_client_->getState() == SimpleClientGoalState::SUCCEEDED) {
-    printf("Success\n");
     return true;
   }
   else {
-    printf("Failure\n");
     return false;
   }
 }

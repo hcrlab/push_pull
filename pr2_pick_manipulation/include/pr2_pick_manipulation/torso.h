@@ -35,7 +35,7 @@ class Torso {
 
  public:
   static const double kMaxHeight = 0.330;
-  static const double kMinHeight = 0.000;
+  static const double kMinHeight = 0.015;
 
   Torso();
   ~Torso();

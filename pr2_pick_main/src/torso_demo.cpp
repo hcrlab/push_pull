@@ -14,30 +14,27 @@ int main(int argc, char **argv) {
 
   Torso torso;
 
-  double zero = 0.000000000000000;
-  if (zero < 0) {
-    printf("float error. variable zero is %f\n", zero);
-    return 1;
+  double positions[] = {0.1, 0.2, 0.3};
+  bool status;
+
+  for(int i = 0; i < sizeof(positions) / sizeof(double); i++) {
+    printf("Setting height to to %0.3f\n", positions[i]);
+    status = torso.SetHeight(positions[i]);
+    printf("status %d\n", status);
   }
 
-  // Why does this hang? What's the actual lower limit?
-  // printf("Setting height to 0.0\n");
-  // torso.SetHeight(zero);
-
-  printf("Setting height to 0.2\n");
-  torso.SetHeight(0.2);
-
-  printf("Setting height to 0.3\n");
-  torso.SetHeight(0.3);
-
-  printf("Setting height to 0.33\n");
-  torso.SetHeight(0.330000);
-
   printf("Setting height to max (%f)\n", Torso::kMaxHeight);
-  torso.SetHeight(Torso::kMaxHeight);
+  status = torso.SetHeight(Torso::kMaxHeight);
+  printf("status %d\n", status);
 
   printf("Setting height to min (%f)\n", Torso::kMinHeight);
-  torso.SetHeight(Torso::kMinHeight);
+  status = torso.SetHeight(Torso::kMinHeight);
+  printf("status %d\n", status);
+
+  double height = -0.2;
+  printf("Setting height outside of range (%0.2f)\n", height);
+  status = torso.SetHeight(height);
+  printf("status %d\n", status);
 
   return 0;
 }
