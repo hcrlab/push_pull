@@ -1,0 +1,17 @@
+## Check the robot state validity from group name and joint values for the group
+
+
+# REQUIRED, the group name
+string group
+
+# REQUIRED, the joint values of that group
+float64[] joints
+
+# OPTIONAL, the state that validity is checked in
+moveit_msgs/RobotState robot_state
+
+---
+
+# Returns whether the state is valid or not
+bool isvalid
+

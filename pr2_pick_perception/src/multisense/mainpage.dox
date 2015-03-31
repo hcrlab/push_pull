@@ -1,0 +1,9 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b trooper_multisense 
+
+Package for multisense-based processing specific to trooper.
+
+*/

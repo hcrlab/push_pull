@@ -2,10 +2,9 @@
 This is the main code repository for the UW Amazon Picking Challenge team.
 
 ## Packages
-### google_tts
+### festival_tts
 A text-to-speech node.
 It's useful for debugging purposes to have the robot say stuff aloud as it works.
-In the future, it will need to be replaced with a text-to-speech system that works offline.
 
 ### joint_states_listener
 A service that gets the most recent joint states message.

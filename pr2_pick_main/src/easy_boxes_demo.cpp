@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
 
   ros::Publisher cmd_vel_pub = node_handle.advertise<geometry_msgs::Twist>("base_controller/command", 1);
   pr2_pick_manipulation::RobotDriver driver(cmd_vel_pub);
-  pub = node_handle.advertise<std_msgs::String>("google_tts", 10);
+  pub = node_handle.advertise<std_msgs::String>("festival_tts", 10);
 
   // Grab the first 2 objects on the right.
   for (int i=0; i<3; ++i) {

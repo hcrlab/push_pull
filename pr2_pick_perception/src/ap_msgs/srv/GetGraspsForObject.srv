@@ -1,0 +1,5 @@
+#GetGraspsForObject.srv
+string object_type
+string hand_type
+---
+trooper_msgs/Grasp[] grasps
