@@ -1,0 +1,7 @@
+[submodule "pr2_pretouch_optical_dist"]
+	path = pr2_pretouch_optical_dist
+	url = git@bitbucket.org:uwsensors/pr2_pretouch_optical_dist.git
+[submodule "pr2_ethercat_drivers"]
+	path = pr2_ethercat_drivers
+	url = git@bitbucket.org:uwsensors/pr2_ethercat_drivers.git
+  branch = hydro-fingersensors
