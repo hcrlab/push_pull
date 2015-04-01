@@ -17,14 +17,6 @@
 #ifndef _PR2_PICK_MANIPULATION_TORSO_H_
 #define _PR2_PICK_MANIPULATION_TORSO_H_
 
-/*
- Next:
-- Find the actual max and min height
-  - figure out how urdf files work to constrain these
-  - gazebo versus real robot
-  - could moveit be blocked on artifically conservative joint constraints?
-*/
-
 namespace pr2_pick_manipulation {
 typedef actionlib::SimpleActionClient<
   pr2_controllers_msgs::SingleJointPositionAction> TorsoClient;
@@ -41,7 +33,7 @@ class Torso {
   ~Torso();
 
   // Return true if torso height set successfully, false if not
-  // height should be in the range [0.0, 0.2]
+  // height should be in the range [kMinHeight, kMaxHeight]
   bool SetHeight(double height);
 };
 };  // namespace pr2_pick_manipulation
