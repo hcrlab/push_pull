@@ -1,6 +1,8 @@
 # Amazon Picking Challenge
 This is the main code repository for the UW Amazon Picking Challenge team.
 
+Clone this repository with `git clone --recursive` to get all the subrepos.
+
 ## Packages
 ### festival_tts
 A text-to-speech node.
@@ -8,6 +10,9 @@ It's useful for debugging purposes to have the robot say stuff aloud as it works
 
 ### joint_states_listener
 A service that gets the most recent joint states message.
+
+### pr2_ethercat_drivers
+- Contains firmware for the fingertip optical sensor.
 
 ### pr2_pick
 A metapackage for all the other packages.
@@ -33,5 +38,18 @@ Contains common message types for the picking challenge.
 - Contains a script for recording point cloud data.
 - Contains a "mock perception" class for testing purposes.
 
+### pr2_pretouch_optical_dist
+- Contains a launch file for running the fingertip optical sensor.
+- Contains a visualizer for the fingertip optical sensor data.
+
 ### trajopt_test
 - Contains a service that uses trajopt to do motion planning and trajectory execution.
+
+## Fingertip optical sensor
+We have installed an optical sensor on one of the PR2's fingertips.
+[Full documentation for the fingertip sensor](https://bitbucket.org/uwsensors/pr2_pretouch_optical_dist/wiki/Publishing%20Distance%20Data).
+
+- Must use Hydro.
+- Whenever the robot is power-cycled, you must re-upload some firmware to the robot.
+- This launch file starts the optical distance publisher: `roslaunch pr2_pretouch_optical_dist optical_dist.launch`
+- The data can be visualized using `rosrun pr2_pretouch_optical_dist visualizer.py`
