@@ -23,7 +23,7 @@ Torso::~Torso() {
 
 bool Torso::SetHeight(double height) {
   if (height > Torso::kMaxHeight || height < Torso::kMinHeight) {
-    printf("Height %0.3f is not in range [%0.3f, %0.3f]\n",
+    ROS_ERROR("Torso height %0.3f not in allowed range [%0.3f, %0.3f]",
            height, Torso::kMinHeight, Torso::kMaxHeight);
     return false;
    }
@@ -32,7 +32,7 @@ bool Torso::SetHeight(double height) {
   goal.position = height;
 
   torso_client_->sendGoal(goal);
-  printf("Sent goal %0.3f\n", height);
+  ROS_INFO("Sent torso goal %0.3f", height);
 
   torso_client_->waitForResult();
 
