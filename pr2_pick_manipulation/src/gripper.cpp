@@ -19,31 +19,33 @@ Gripper::~Gripper() {
   delete gripper_client_;
 }
 
-bool Gripper::open() {
-  pr2_controllers_msgs::Pr2GripperCommandGoal open;
-  open.command.position = 0.08;
-  open.command.max_effort = -1.0;  // Do not limit effort (negative)
-  
-  gripper_client_->sendGoal(open);
+bool Gripper::setPosition(double position, double effort) {
+  if (position > Gripper::kOpen || position < Gripper::kClosed) {
+    ROS_ERROR("Gripper position %0.3f not in allowed range [%0.3f, %0.3f]",
+              position, Gripper::kOpen, Gripper::kClosed);
+    return false;
+  }
+
+  pr2_controllers_msgs::Pr2GripperCommandGoal goal;
+  goal.command.position = position;
+  goal.command.max_effort = effort;
+
+  gripper_client_->sendGoal(goal);
   gripper_client_->waitForResult();
-  if(gripper_client_->getState() == SimpleClientGoalState::SUCCEEDED) {
+  SimpleClientGoalState state = gripper_client_->getState();
+  if(state == SimpleClientGoalState::SUCCEEDED) {
     return true;
   } else {
+    ROS_ERROR("Gripper goal state: %s\n", state.toString().c_str());
     return false;
   }
 }
 
-bool Gripper::close() {
-  pr2_controllers_msgs::Pr2GripperCommandGoal squeeze;
-  squeeze.command.position = 0.0;
-  squeeze.command.max_effort = -1.0;  
+bool Gripper::open() {
+  return Gripper::setPosition(0.08, -1.0);
+}
 
-  gripper_client_->sendGoal(squeeze);
-  gripper_client_->waitForResult();
-  if(gripper_client_->getState() == SimpleClientGoalState::SUCCEEDED) {
-    return true;
-  } else {
-    return false;
-  }
+bool Gripper::close() {
+  return Gripper::setPosition(0.00, -1.0);
 }
 };  // namespace pr2_pick_manipulation

@@ -43,6 +43,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>actionlib</build_depend>
   <build_depend>moveit_core</build_depend>
+  <build_depend>pr2_controllers_msgs</build_depend>
   <build_depend>pr2_pick_manipulation</build_depend>
   <build_depend>pr2_pick_msgs</build_depend>
   <build_depend>pr2_pick_perception</build_depend>
@@ -51,6 +52,7 @@
   <build_depend>smach</build_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>moveit_core</run_depend>
+  <run_depend>pr2_controllers_msgs</run_depend>
   <run_depend>pr2_pick_manipulation</run_depend>
   <run_depend>pr2_pick_msgs</run_depend>
   <run_depend>pr2_pick_perception</run_depend>
