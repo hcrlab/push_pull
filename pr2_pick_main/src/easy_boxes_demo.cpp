@@ -193,10 +193,7 @@ int main(int argc, char** argv) {
   for (int i=0; i<3; ++i) {
     double distance = 0.2921 * i;
     Say("Driving to the left");
-    geometry_msgs::Twist base_cmd;
-    base_cmd.linear.x = base_cmd.linear.y = base_cmd.angular.z = 0;
-    base_cmd.linear.y = 0.125;
-    driver.Drive(base_cmd, distance);
+    driver.DriveLinear(0, 0.125, distance);
 
     pr2_pick_perception::GetItemsGoal goal;
     goal.bin_id = 6 + i;
@@ -213,16 +210,12 @@ int main(int argc, char** argv) {
       CenterArm(*navigator);
       ROS_ERROR("Driving to the right");
       Say("Driving to the right");
-      base_cmd.linear.x = base_cmd.linear.y = base_cmd.angular.z = 0;
-      base_cmd.linear.y = -0.25;
-      driver.Drive(base_cmd, distance);
+      driver.DriveLinear(0, -0.25, distance);
       break;
     }
 
     Say("Driving to the right");
-    base_cmd.linear.x = base_cmd.linear.y = base_cmd.angular.z = 0;
-    base_cmd.linear.y = -0.125;
-    driver.Drive(base_cmd, distance);
+    driver.DriveLinear(0, -0.125, distance);
 
     success = DropOff(*navigator, right_gripper);
     if (!success) {

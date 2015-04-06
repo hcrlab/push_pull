@@ -13,28 +13,61 @@ int main(int argc, char **argv) {
 
   RobotDriver driver;
 
-  // Specify the speed in the x and y direction in meters/second as well as
-  // the angular velocity in radians/second.
-  geometry_msgs::Twist base_cmd;
-  base_cmd.linear.x = base_cmd.linear.y = base_cmd.angular.z = 0;
-
+  // Specify the speed in the x and y direction in meters/second.
+  // Specify the rotation speed in radians / second.
+  
+  double dx, dy, dt;
   bool status;
+  double rotation_speed = 5 * 2 * M_PI / 60.0; // 5 rotations / minute
+  double angle = M_PI / 4.0; // 45 degrees
   double speed = 0.125;
   double distance = 0.25;
 
   // Drive right.
-  base_cmd.linear.y = -speed;
+  dx = 0;
+  dy = -speed;
   printf("Translating along y-axis at %f meters/second to a distance %f meters\n",
-    base_cmd.linear.y, distance);
-  status = driver.Drive(base_cmd, distance);
+    dy, distance);
+  status = driver.DriveLinear(dx, dy, distance);
   printf("status %d\n", status);
 
   // Drive left, back to the starting position.
-  base_cmd.linear.y = speed;
+  dx = 0;
+  dy = speed;
   printf("Translating along y-axis at %f meters/second to a distance %f meters\n",
-    base_cmd.linear.y, distance);
-  status = driver.Drive(base_cmd, distance);
+    dy, distance);
+  status = driver.DriveLinear(dx, dy, distance);
   printf("status %d\n", status);
 
+  // Drive backward.
+  dx = -speed;
+  dy = 0;
+  printf("Translating along y-axis at %f meters/second to a distance %f meters\n",
+    dy, distance);
+  status = driver.DriveLinear(dx, dy, distance);
+  printf("status %d\n", status);
+
+  // Drive forward, back to the starting position.
+  dx = speed;
+  dy = 0;
+  printf("Translating along y-axis at %f meters/second to a distance %f meters\n",
+    dy, distance);
+  status = driver.DriveLinear(dx, dy, distance);
+  printf("status %d\n", status);
+
+  // Rotate clockwise
+  dt = rotation_speed;
+  printf("Rotating clockwise at %f radians/second to an angle of %f radians\n",
+    dt, angle);
+  status = driver.DriveAngular(dt, angle);
+  printf("status %d\n", status);
+
+  // Rotate counter-clockwise
+  dt = -rotation_speed;
+  printf("Rotating clockwise at %f radians/second to an angle of %f radians\n",
+    dt, angle);
+  status = driver.DriveAngular(dt, angle);
+  printf("status %d\n", status);
+  
   return 0;
 }
