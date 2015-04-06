@@ -55,9 +55,9 @@ int main(int argc, char **argv) {
   status = driver.DriveLinear(dx, dy, distance);
   printf("status %d\n", status);
 
-  // Rotate clockwise
+  // Rotate counter-clockwise
   dt = rotation_speed;
-  printf("Rotating clockwise at %f radians/second to an angle of %f radians\n",
+  printf("Rotating counter-clockwise at %f radians/second to an angle of %f radians\n",
     dt, angle);
   status = driver.DriveAngular(dt, angle);
   printf("status %d\n", status);
