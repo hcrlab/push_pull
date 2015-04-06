@@ -2,10 +2,7 @@
 // odometry.
 //
 // Sample usage:
-//  ros::NodeHandle node_handle;
-//  ros::Publisher cmd_vel_pub = node_handle.advertise<geometry_msgs::Twist>(
-//    "base_controller/command", 1);
-//  pr2_pick_manipulation::RobotDriver driver(cmd_vel_pub);
+//  pr2_pick_manipulation::RobotDriver driver();
 //
 //  // Specify the speed in the x and y direction in meters/second as well as
 //  // the angular velocity in radians/second.
@@ -26,11 +23,12 @@
 namespace pr2_pick_manipulation {
 class RobotDriver {
  private:
+  ros::NodeHandle node_handle_;
   ros::Publisher cmd_vel_pub_;
   tf::TransformListener listener_;
 
  public:
-  RobotDriver(const ros::Publisher& cmd_vel_pub);
+  RobotDriver();
 
   // Drive with the velocities given in base_cmd.linear.x (+x forward),
   // base_cmd.linear.y (+y left), and base_cmd.angular.z (+z clockwise), with

@@ -20,10 +20,7 @@ Library for driving the robot using the low-level base controller and odometry.
 
 Sample usage:
 ```cpp
-ros::NodeHandle node_handle;
-ros::Publisher cmd_vel_pub = node_handle.advertise<geometry_msgs::Twist>(
-  "base_controller/command", 1);
-pr2_pick_manipulation::RobotDriver driver(cmd_vel_pub);
+pr2_pick_manipulation::RobotDriver driver();
 
 // Specify the speed in the x and y direction in meters/second as well as
 // the angular velocity in radians/second.

@@ -4,9 +4,11 @@
 #include "pr2_pick_manipulation/driver.h"
 
 namespace pr2_pick_manipulation {
-RobotDriver::RobotDriver(const ros::Publisher& cmd_vel_pub)
-    : cmd_vel_pub_(cmd_vel_pub),
+RobotDriver::RobotDriver()
+    : node_handle_(),
       listener_() {
+  cmd_vel_pub_ = node_handle_.advertise<geometry_msgs::Twist>(
+    "base_controller/command", 1);
 }
 
 bool RobotDriver::Drive(geometry_msgs::Twist base_cmd, double distance) {
