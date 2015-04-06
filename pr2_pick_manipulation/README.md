@@ -22,11 +22,11 @@ Sample usage:
 ```cpp
 pr2_pick_manipulation::RobotDriver driver();
 
-//  RobotDriver driver;
-//  // Drive left for 0.25 meters at 0.125 m/s
-//  driver.DriveLinear(0, 0.125, 0.25);
-//  // Rotate clockwise 90 degrees.
-//  driver.DriveAngular(-0.5, M_PI/2);
+RobotDriver driver;
+// Drive left for 0.25 meters at 0.125 m/s
+driver.DriveLinear(0, 0.125, 0.25);
+// Rotate clockwise 90 degrees.
+driver.DriveAngular(-0.5, M_PI/2);
 ```
 
 ### arm_navigator.h
