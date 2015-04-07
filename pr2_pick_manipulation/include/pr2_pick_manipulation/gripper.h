@@ -3,10 +3,15 @@
 // Sample usage:
 //  pr2_pick_manipulation::Gripper right_gripper(
 //    "r_gripper_controller/gripper_action");
-//  right_gripper.open();
-//  right_gripper.close();
+//  right_gripper.Open();
+//  right_gripper.Close();
 //
-// Note: The gripper does not work quite right in Gazebo
+// Notes:
+// 1. The gripper does not work quite right in Gazebo
+// 2. Return value is based on whether the gripper reached the target position.
+//    So, if the gripper is closing around an object, Close() will typically
+//    return false because the object stalls the gripper before it reaches
+//    the goal position.
 
 #include <actionlib/client/simple_action_client.h>
 #include <pr2_controllers_msgs/Pr2GripperCommandAction.h>
@@ -24,9 +29,8 @@ class Gripper {
   GripperClient* gripper_client_;
 
  public:
-  // Canonical "open" position. The gripper may be able to open as wide is 0.087,
-  // but we are limiting it to 0.08 for this client.
-  static const double kOpen = 0.08;
+  // Canonical "open" position.
+  static const double kOpen = 0.09;
   // Canonical "closed" position.
   static const double kClosed = 0.00;
 
@@ -41,15 +45,17 @@ class Gripper {
   // otherwise.
   // @param position - how wide to open or close the gripper
   // @param effort - now much force to exert, negative is full force
-  bool setPosition(double position, double effort = -1.0);
+  bool SetPosition(double position, double effort = 50.0);
 
   // Opens the gripper. Returns true if the gripper opened successfully, false
-  // otherwise. Uses default effort.
-  bool open();
+  // otherwise.
+  // @param effort - defaults to -1.0, to open with unlimited effort
+  bool Open(double effort = -1.0);
 
   // Closes the gripper. Returns true if the gripper opened successfully, false
-  // otherwise. Uses default effort.
-  bool close();
+  // otherwise.
+  // @param effort - defaults to 50.0 to close gently
+  bool Close(double effort = 50.0);
 };
 };  // namespace pr2_pick_manipulation
 

@@ -89,7 +89,7 @@ bool DropOff(ArmNavigatorInterface& navigator, Gripper& gripper) {
     Say("Failed to move to drop off location.");
     return false;
   }
-  success = gripper.open();
+  success = gripper.Open();
   return success;
 }
 
@@ -102,7 +102,7 @@ bool Pick(ArmNavigatorInterface& navigator, Gripper& gripper, const Item& item) 
 
   bool success = false;
   // Open gripper.
-  gripper.open();  
+  gripper.Open();  
 
   // Move to a pose 10 cm in front of the item.
   PoseStamped goal = pose;
@@ -130,7 +130,7 @@ bool Pick(ArmNavigatorInterface& navigator, Gripper& gripper, const Item& item) 
   }
   
   // Close gripper
-  gripper.close();
+  gripper.Close();
 
   // Move to a pose 5 cm up.
   goal.pose.position.z = item.pose.pose.position.z + 0.04;
@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
     CenterArm(*navigator);
   }
 
-  right_gripper.open();
+  right_gripper.Open();
 
   sleep(5.0);
   Say("Shutting down demo.");

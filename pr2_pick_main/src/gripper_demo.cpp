@@ -20,16 +20,18 @@ int main(int argc, char **argv) {
 
   for(int i = 0; i < sizeof(positions) / sizeof(double); i++) {
     printf("Setting gripper position to %0.3f\n", positions[i]);
-    status = gripper.setPosition(positions[i]);
+    status = gripper.SetPosition(positions[i]);
     printf("Status: %s\n", status ? "succeeded" : "failed");
   }
 
   printf("Opening gripper (kOpen = %0.3f)\n", Gripper::kOpen);
-  status = gripper.open();
+  status = gripper.Open();
   printf("Status: %s\n", status ? "succeeded" : "failed");
 
+  return 0;
+
   printf("Closing gripper (kClosed = %0.3f)\n", Gripper::kClosed);
-  status = gripper.close();
+  status = gripper.Close();
   printf("Status: %s\n", status ? "succeeded" : "failed");
 
   return 0;

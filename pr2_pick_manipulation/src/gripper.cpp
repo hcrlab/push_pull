@@ -19,7 +19,7 @@ Gripper::~Gripper() {
   delete gripper_client_;
 }
 
-bool Gripper::setPosition(double position, double effort) {
+bool Gripper::SetPosition(double position, double effort) {
   if (position > Gripper::kOpen || position < Gripper::kClosed) {
     ROS_ERROR("Gripper position %0.3f not in allowed range [%0.3f, %0.3f]",
               position, Gripper::kOpen, Gripper::kClosed);
@@ -41,11 +41,11 @@ bool Gripper::setPosition(double position, double effort) {
   }
 }
 
-bool Gripper::open() {
-  return Gripper::setPosition(0.08, -1.0);
+bool Gripper::Open(double effort) {
+  return Gripper::SetPosition(Gripper::kOpen, effort);
 }
 
-bool Gripper::close() {
-  return Gripper::setPosition(0.00, -1.0);
+bool Gripper::Close(double effort) {
+  return Gripper::SetPosition(Gripper::kClosed, effort);
 }
 };  // namespace pr2_pick_manipulation
