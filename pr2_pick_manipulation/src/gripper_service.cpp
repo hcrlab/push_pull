@@ -15,14 +15,14 @@ GripperService::GripperService()
 bool GripperService::Callback(Grippers::Request& request,
                               Grippers::Response& response) {
   if (request.open_left) {
-    left_.open();
+    left_.Open(-1);
   } else {
-    left_.close(); 
+    left_.Close(-1); 
   }
   if (request.open_right) {
-    right_.open();
+    right_.Open(-1);
   } else {
-    right_.close(); 
+    right_.Close(-1); 
   }
   response.success = true;
   return true;
