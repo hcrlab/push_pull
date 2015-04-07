@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 """The main state machine for the picking challenge.
-
 """
 
 import outcomes
