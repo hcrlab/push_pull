@@ -1,3 +1,5 @@
+// Run this node to start the gripper service.
+
 #include <ros/ros.h>
 #include "pr2_pick_manipulation/gripper_service.h"
 

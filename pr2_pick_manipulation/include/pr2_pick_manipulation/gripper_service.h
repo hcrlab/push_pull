@@ -23,9 +23,6 @@ class GripperService {
   bool Callback(Grippers::Request& request, Grippers::Response& response);
 
  public:
-  // Constructor that takes the name of the action server to use. For the PR2,
-  // this is "r_gripper_controller/gripper_action" or
-  // "l_gripper_controller/gripper_action".
   GripperService();
 };
 };  // namespace pr2_pick_manipulation

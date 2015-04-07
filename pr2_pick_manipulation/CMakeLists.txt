@@ -131,6 +131,7 @@ add_library(gripper_service
 
 ## Declare a cpp executable
 add_executable(driver_service_node src/driver_service_node.cpp)
+add_executable(gripper_service_node src/gripper_service_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -164,6 +165,11 @@ target_link_libraries(driver_service_node
 )
 target_link_libraries(gripper_service
   ${catkin_LIBRARIES}
+  gripper
+)
+target_link_libraries(gripper_service_node
+  ${catkin_LIBRARIES}
+  gripper_service
 )
 
 #############
