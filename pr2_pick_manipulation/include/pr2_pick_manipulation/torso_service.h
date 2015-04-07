@@ -1,11 +1,11 @@
 // A service for moving the torso.
 //
 // Sample usage (Python):
-// from pr2_pick_manipulation.srv import MoveTorso
+// from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
 // rospy.wait_for_service('torso_service')
-// move_torso = rospy.ServiceProxy('torso_service', Torso)
+// move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
 // move_torso(0.1) # Move torso to position 10 cm up.
-// move_torso(Torso.MAX_HEIGHT) # Move torso to maximum height.
+// move_torso(MoveTorsoRequest.MAX_HEIGHT) # Move torso to maximum height.
 
 #include "pr2_pick_manipulation/MoveTorso.h"
 #include "pr2_pick_manipulation/torso.h"

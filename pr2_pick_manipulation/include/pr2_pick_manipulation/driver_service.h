@@ -6,11 +6,11 @@
 // drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
 // drive_linear(0, 0.1, 0.2) # Drive left at 0.1 meters / second for 20 cm.
 //
-// from pr2_pick_manipulation.srv import DriveAngular
+// from pr2_pick_manipulation.srv import DriveAngular, DriveAngularRequest
 // rospy.wait_for_service('drive_angular_service')
 // drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
 // # Turn right 90 degrees at 0.1 radians / second
-// drive_angular(0.1, DriveAngular.RIGHT_90) 
+// drive_angular(0.1, DriveAngularRequest.RIGHT_90) 
 
 #include "pr2_pick_manipulation/driver.h"
 #include "pr2_pick_manipulation/DriveAngular.h"
