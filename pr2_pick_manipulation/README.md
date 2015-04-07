@@ -11,8 +11,19 @@ C++ action client wrapper for opening and closing the gripper.
 Sample usage:
 ```cpp
 Gripper right_gripper("r_gripper_controller/gripper_action");
-right_gripper.open();
-right_gripper.close();
+right_gripper.Open();
+right_gripper.Close();
+```
+
+### torso.h
+C++ action client wrapper for moving the torso up and down
+
+Sample usage:
+```cpp
+Torso torso;
+torso.SetHeight(0.1);
+torso.SetHeight(Torso::kMaxHeight);
+torso.SetHeight(Torso::kMinHeight);
 ```
 
 ### driver.h
