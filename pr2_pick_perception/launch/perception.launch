@@ -33,6 +33,8 @@
     <param name="incident_angle_correction" value="false"/>
   </node>
 
+  <include file="$(find pr2_pretouch_optical_dist)/launch/optical_dist.launch" />
+
   <!-- Self filter laser scans -->
   <!--node pkg="robot_self_filter" type="self_filter" respawn="true" name="laser_self_filter" output="screen" machine="c2">
     <remap from="cloud_in" to="/tilt_scan_cloud" />
