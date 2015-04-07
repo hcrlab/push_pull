@@ -1,0 +1,5 @@
+# Open left or right gripper if true, close otherwise.
+bool open_left
+bool open_right
+---
+bool success
