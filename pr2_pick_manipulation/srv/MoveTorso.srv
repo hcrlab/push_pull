@@ -1,0 +1,5 @@
+float64 MIN_HEIGHT=0.015
+float64 MAX_HEIGHT=0.330
+float64 height # Height in meters to raise the torso.
+---
+bool success
