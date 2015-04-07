@@ -5,7 +5,7 @@
 //  RobotDriver driver;
 //  // Drive left for 0.25 meters at 0.125 m/s
 //  driver.DriveLinear(0, 0.125, 0.25);
-//  // Rotate clockwise 90 degrees.
+//  // Rotate counter-clockwise 90 degrees.
 //  driver.DriveAngular(-0.5, M_PI/2);
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
