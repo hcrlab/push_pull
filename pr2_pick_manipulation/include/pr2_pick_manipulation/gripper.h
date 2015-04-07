@@ -45,7 +45,7 @@ class Gripper {
   // otherwise.
   // @param position - how wide to open or close the gripper
   // @param effort - now much force to exert, negative is full force
-  bool SetPosition(double position, double effort = 50.0);
+  bool SetPosition(double position, double effort = -1.0);
 
   // Opens the gripper. Returns true if the gripper opened successfully, false
   // otherwise.
@@ -55,7 +55,7 @@ class Gripper {
   // Closes the gripper. Returns true if the gripper opened successfully, false
   // otherwise.
   // @param effort - defaults to 50.0 to close gently
-  bool Close(double effort = 50.0);
+  bool Close(double effort = -1.0);
 };
 };  // namespace pr2_pick_manipulation
 
