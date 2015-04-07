@@ -69,6 +69,7 @@ add_service_files(
   Grippers.srv
   DriveLinear.srv
   DriveAngular.srv
+  MoveTorso.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -128,10 +129,14 @@ add_library(driver_service
 add_library(gripper_service
   src/gripper_service.cpp
 )
+add_library(torso_service
+  src/torso_service.cpp
+)
 
 ## Declare a cpp executable
 add_executable(driver_service_node src/driver_service_node.cpp)
 add_executable(gripper_service_node src/gripper_service_node.cpp)
+add_executable(torso_service_node src/torso_service_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -170,6 +175,14 @@ target_link_libraries(gripper_service
 target_link_libraries(gripper_service_node
   ${catkin_LIBRARIES}
   gripper_service
+)
+target_link_libraries(torso_service
+  ${catkin_LIBRARIES}
+  torso
+)
+target_link_libraries(torso_service_node
+  ${catkin_LIBRARIES}
+  torso_service
 )
 
 #############
