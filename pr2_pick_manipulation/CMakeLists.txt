@@ -67,6 +67,8 @@ add_service_files(
   FILES
   PushAway.srv
   Grippers.srv
+  DriveLinear.srv
+  DriveAngular.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -120,12 +122,15 @@ add_library(gripper
 add_library(torso
   src/torso.cpp
 )
+add_library(driver_service
+  src/driver_service.cpp
+)
 add_library(gripper_service
   src/gripper_service.cpp
 )
 
 ## Declare a cpp executable
-#add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
+add_executable(driver_service_node src/driver_service_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -148,6 +153,14 @@ target_link_libraries(gripper
 )
 target_link_libraries(torso
   ${catkin_LIBRARIES}
+)
+target_link_libraries(driver_service
+  ${catkin_LIBRARIES}
+  driver
+)
+target_link_libraries(driver_service_node
+  ${catkin_LIBRARIES}
+  driver_service
 )
 target_link_libraries(gripper_service
   ${catkin_LIBRARIES}

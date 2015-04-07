@@ -1,0 +1,7 @@
+# Service that moves the robot relative to the /base_footprint frame.
+float64 vel_x # Velocity to the left.
+float64 vel_y # Velocity
+float64 displacement # Total displacement to drive.
+---
+# This service generally should not fail. If it does, it's due to bad tf.
+bool success
