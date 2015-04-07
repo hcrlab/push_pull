@@ -66,6 +66,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_service_files(
   FILES
   PushAway.srv
+  Grippers.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -93,7 +94,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES arm_navigator driver gripper torso
+  LIBRARIES arm_navigator driver gripper torso gripper_service
   CATKIN_DEPENDS tf
 #  DEPENDS system_lib
 )
@@ -119,6 +120,9 @@ add_library(gripper
 add_library(torso
   src/torso.cpp
 )
+add_library(gripper_service
+  src/gripper_service.cpp
+)
 
 ## Declare a cpp executable
 #add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
@@ -143,6 +147,9 @@ target_link_libraries(gripper
   ${catkin_LIBRARIES}
 )
 target_link_libraries(torso
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(gripper_service
   ${catkin_LIBRARIES}
 )
 

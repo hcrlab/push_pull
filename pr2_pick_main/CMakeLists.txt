@@ -114,6 +114,7 @@ include_directories(
 add_executable(easy_boxes_demo src/easy_boxes_demo.cpp)
 add_executable(gripper_demo src/gripper_demo.cpp)
 add_executable(torso_demo src/torso_demo.cpp)
+add_executable(driver_demo src/driver_demo.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -127,6 +128,9 @@ target_link_libraries(gripper_demo
   ${catkin_LIBRARIES}
 )
 target_link_libraries(torso_demo
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(driver_demo
   ${catkin_LIBRARIES}
 )
 

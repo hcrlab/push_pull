@@ -45,6 +45,11 @@ Contains common message types for the picking challenge.
 ### trajopt_test
 - Contains a service that uses trajopt to do motion planning and trajectory execution.
 
+## Style guides
+These are just suggested:
+- [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.html)
+- [Python PEP8](https://www.python.org/dev/peps/pep-0008/)
+
 ## Fingertip optical sensor
 We have installed an optical sensor on one of the PR2's fingertips.
 [Full documentation for the fingertip sensor](https://bitbucket.org/uwsensors/pr2_pretouch_optical_dist/wiki/Publishing%20Distance%20Data).
