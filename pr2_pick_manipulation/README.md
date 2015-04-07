@@ -44,7 +44,7 @@ Opens or closes the grippers.
 from pr2_pick_manipulation.srv import SetGrippers
 rospy.wait_for_service('gripper_service')
 set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
-set_grippers(false, true) # Close left hand and open right hand.
+set_grippers(False, True) # Close left hand and open right hand.
 ```
 
 ### TuckArms
@@ -53,7 +53,7 @@ Tucks or untucks the arms.
 from pr2_pick_manipulation.srv import TuckArms
 rospy.wait_for_service('tuck_arms_service')
 tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
-tuck_arms(false, true) # Tuck the left arm and untuck the right arm.
+tuck_arms(False, True) # Tuck the left arm and untuck the right arm.
 ```
 
 ## Libraries
