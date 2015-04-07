@@ -1,6 +1,6 @@
 #include <obj_recognition/detect_pc_xtion.h>
 #include <math.h>
-#define DEBUG //debugging output
+//#define DEBUG //debugging output
 
 #include <vtkTransform.h>
 
@@ -883,7 +883,7 @@ bool ObjDetector::loadModels(const std::string& db_file)
         return false;
     }
 
-    std::string db_path = ros::package::getPath("trooper_obj_recognition")+"/models/";
+    std::string db_path = ros::package::getPath("obj_recognition")+"/models/";
     
     
     enum LINE_DESCR {TYPE = 0, BOUNDS = 1, SAMPLESIZE = 2, CLUSTER_TOLERANCE = 3, ON_TABLE = 4, MODEL_VIEW_BEGIN};

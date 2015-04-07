@@ -1,9 +1,8 @@
 <!-- Launches colseg  -->
 
 <launch>
-<param name="/use_sim_time" value="true"/>
-  <node ns="ap_xtion" pkg="trooper_obj_recognition" type="obj_detection_xtion" name="shelf_obj_detector" respawn="true" output="screen">
-   <param name="db" value="$(find trooper_obj_recognition)/config/db_shelf.txt"/>
+  <node ns="ap_xtion" pkg="obj_recognition" type="obj_detection_xtion" name="shelf_obj_detector" respawn="true" output="screen">
+   <param name="db" value="$(find obj_recognition)/config/db_shelf.txt"/>
 
    <param name="iter" value="70"/>
    <param name="minClusterSize" value="350"/>
