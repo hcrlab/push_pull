@@ -1,28 +1,28 @@
-CHALLENGE_SUCCESS = 'challenge_complete'
-CHALLENGE_FAILURE = 'challenge_failure'
+CHALLENGE_SUCCESS = 'complete'
+CHALLENGE_FAILURE = 'failure'
 
-START_POSE_SUCCESS = 'start_pose_success'
-START_POSE_FAILURE = 'start_pose_failure'
+START_POSE_SUCCESS = 'success'
+START_POSE_FAILURE = 'failure'
 
-FIND_SHELF_SUCCESS = 'find_shelf_success'
-FIND_SHELF_FAILURE = 'find_shelf_failure'
+FIND_SHELF_SUCCESS = 'success'
+FIND_SHELF_FAILURE = 'failure'
 
-UPDATE_PLAN_NEXT_OBJECT = 'update_plan_next_object'
-UPDATE_PLAN_NO_MORE_OBJECTS = 'update_plan_no_more_objects'
-UPDATE_PLAN_FAILURE = 'update_plan_failure'
+UPDATE_PLAN_NEXT_OBJECT = 'next_object'
+UPDATE_PLAN_NO_MORE_OBJECTS = 'no_more_objects'
+UPDATE_PLAN_FAILURE = 'failure'
 
-PREPARE_SENSING_SUCCESS = 'prepare_sensing_success'
-PREPARE_SENSING_FAILURE = 'prepare_sensing_failure'
+PREPARE_SENSING_SUCCESS = 'success'
+PREPARE_SENSING_FAILURE = 'failure'
 
-SENSE_BIN_SUCCESS = 'sense_bin_success'
-SENSE_BIN_NO_OBJECTS = 'sense_bin_no_objects'
-SENSE_BIN_FAILURE = 'sense_bin_failure'
+SENSE_BIN_SUCCESS = 'success'
+SENSE_BIN_NO_OBJECTS = 'no_objects'
+SENSE_BIN_FAILURE = 'failure'
 
-PREPARE_MANIPULATION_SUCCESS = 'prepare_manipulation_success'
-PREPARE_MANIPULATION_FAILURE = 'prepare_manipulation_failure'
+PREPARE_MANIPULATION_SUCCESS = 'success'
+PREPARE_MANIPULATION_FAILURE = 'failure'
 
-MANIPULATE_OBJECT_SUCCESS = 'manipulate_object_success'
-MANIPULATE_OBJECT_FAILURE = 'manipulate_object_failure'
+MANIPULATE_OBJECT_SUCCESS = 'success'
+MANIPULATE_OBJECT_FAILURE = 'failure'
 
-DROP_OFF_OBJECT_SUCCESS = 'drop_off_object_success'
-DROP_OFF_OBJECT_FAILURE = 'drop_off_object_failure'
+DROP_OFF_OBJECT_SUCCESS = 'success'
+DROP_OFF_OBJECT_FAILURE = 'failure'
