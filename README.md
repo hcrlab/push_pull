@@ -17,6 +17,9 @@ A service that gets the most recent joint states message.
 ### pr2_pick
 A metapackage for all the other packages.
 
+### pr2_pick_contest
+Contest interface, inventory management, and strategy.
+
 ### pr2_pick_main
 A package that contains the main state machine runner for the picking challenge, as well as other end-to-end demos.
 Test programs for specific components might be in other packages, but end-to-end integration stuff should go here.
