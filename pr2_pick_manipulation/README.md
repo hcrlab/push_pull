@@ -20,20 +20,13 @@ Library for driving the robot using the low-level base controller and odometry.
 
 Sample usage:
 ```cpp
-ros::NodeHandle node_handle;
-ros::Publisher cmd_vel_pub = node_handle.advertise<geometry_msgs::Twist>(
-  "base_controller/command", 1);
-pr2_pick_manipulation::RobotDriver driver(cmd_vel_pub);
+pr2_pick_manipulation::RobotDriver driver();
 
-// Specify the speed in the x and y direction in meters/second as well as
-// the angular velocity in radians/second.
-geometry_msgs::Twist base_cmd;
-base_cmd.linear.x = base_cmd.linear.y = base_cmd.angular.z = 0;
-base_cmd.linear.y = 0.125;
-
-// Drive until the robot has been displaced 0.25 meters from its starting
-// position.
-driver.Drive(base_cmd, 0.25);
+RobotDriver driver;
+// Drive left for 0.25 meters at 0.125 m/s
+driver.DriveLinear(0, 0.125, 0.25);
+// Rotate clockwise 90 degrees.
+driver.DriveAngular(-0.5, M_PI/2);
 ```
 
 ### arm_navigator.h

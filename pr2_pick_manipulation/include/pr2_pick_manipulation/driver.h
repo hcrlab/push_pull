@@ -2,20 +2,11 @@
 // odometry.
 //
 // Sample usage:
-//  ros::NodeHandle node_handle;
-//  ros::Publisher cmd_vel_pub = node_handle.advertise<geometry_msgs::Twist>(
-//    "base_controller/command", 1);
-//  pr2_pick_manipulation::RobotDriver driver(cmd_vel_pub);
-//
-//  // Specify the speed in the x and y direction in meters/second as well as
-//  // the angular velocity in radians/second.
-//  geometry_msgs::Twist base_cmd;
-//  base_cmd.linear.x = base_cmd.linear.y = base_cmd.angular.z = 0;
-//  base_cmd.linear.y = 0.125;
-//
-//  // Drive until the robot has been displaced 0.25 meters from its starting
-//  // position.
-//  driver.Drive(base_cmd, 0.25);
+//  RobotDriver driver;
+//  // Drive left for 0.25 meters at 0.125 m/s
+//  driver.DriveLinear(0, 0.125, 0.25);
+//  // Rotate clockwise 90 degrees.
+//  driver.DriveAngular(-0.5, M_PI/2);
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <tf/transform_listener.h>
@@ -26,22 +17,27 @@
 namespace pr2_pick_manipulation {
 class RobotDriver {
  private:
+  ros::NodeHandle node_handle_;
   ros::Publisher cmd_vel_pub_;
   tf::TransformListener listener_;
 
  public:
-  RobotDriver(const ros::Publisher& cmd_vel_pub);
+  RobotDriver();
 
-  // Drive with the velocities given in base_cmd.linear.x (+x forward),
-  // base_cmd.linear.y (+y left), and base_cmd.angular.z (+z clockwise), with
-  // units of meters/second and radians/second.
+  // Drives the robot in a straight line.
+  //
+  // dx and dy are linear velocities (+dx forward, +dy left) in meters/second
   //
   // Stops driving once the robot has been displaced by the given distance from
   // its starting position.
+  bool DriveLinear(double dx, double dy, double distance);
+
+  // Rotates the robot.
   //
-  // Note that this method is mostly suited for driving linearly. If you give it
-  // just an angular velocity, then it will spin around forever.
-  bool Drive(geometry_msgs::Twist base_cmd, double distance);
+  // dt is an angular velocity (+dt counter-clockwise) in radians/second
+  //
+  // Stops rotating once the robot has rotated the specified number of radians.
+  bool DriveAngular(double dt, double radians);
 };
 };  // namespace pr2_pick_manipulation
 #endif
