@@ -43,7 +43,7 @@ Opens or closes the grippers.
 ```py
 from pr2_pick_manipulation.srv import SetGrippers
 rospy.wait_for_service('gripper_service')
-set_grippers = rospy.ServiceProxy('gripper_service', Grippers)
+set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
 set_grippers(false, true) # Close left hand and open right hand.
 ```
 
