@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""The main state machine for the picking challenge.
+
+"""
+
 import outcomes
 import rospy
 import smach
@@ -13,6 +17,8 @@ def main():
         outcomes.CHALLENGE_SUCCESS,
         outcomes.CHALLENGE_FAILURE
     ])
+
+    # The set of bins we have already attempted to pick from.
     sm.userdata.last_bin_id = None
 
     with sm:
