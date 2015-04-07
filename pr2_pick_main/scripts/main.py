@@ -31,6 +31,14 @@ def main():
             }
         )
         smach.StateMachine.add(
+            states.ReadContestFile.name,
+            states.ReadContestFile(),
+            transitions={
+                outcomes.READ_CONTEST_SUCCESS: states.FindShelf.name,
+                outcomes.READ_CONTEST_FAILURE: outcomes.CHALLENGE_FAILURE
+            }
+        )
+        smach.StateMachine.add(
             states.FindShelf.name,
             states.FindShelf(),
             transitions={
@@ -42,52 +50,52 @@ def main():
             states.UpdatePlan.name,
             states.UpdatePlan(),
             transitions={
-                outcomes.UPDATE_PLAN_NEXT_OBJECT: states.PrepareSensing.name,
+                outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
                 outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
             }
         )
         smach.StateMachine.add(
-            states.PrepareSensing.name,
-            states.PrepareSensing(),
+            states.MoveToBin.name,
+            states.MoveToBin(),
             transitions={
-                outcomes.PREPARE_SENSING_SUCCESS: states.SenseBin.name,
-                outcomes.PREPARE_SENSING_FAILURE: outcomes.CHALLENGE_FAILURE
+                outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
+                outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
             }
         )
         smach.StateMachine.add(
             states.SenseBin.name,
             states.SenseBin(),
             transitions={
-                outcomes.SENSE_BIN_SUCCESS: states.PrepareManipulation.name,
+                outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
                 outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,
                 outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
             }
         )
         smach.StateMachine.add(
-            states.PrepareManipulation.name,
-            states.PrepareManipulation(),
+            states.Grasp.name,
+            states.Grasp(),
             transitions={
-                outcomes.PREPARE_MANIPULATION_SUCCESS: states.ManipulateObject.name,
-                outcomes.PREPARE_MANIPULATION_FAILURE: (
+                outcomes.GRASP_SUCCESS: states.ExtractItem.name,
+                outcomes.GRASP_FAILURE: (
                     outcomes.CHALLENGE_FAILURE
                 )
             }
         )
         smach.StateMachine.add(
-            states.ManipulateObject.name,
-            states.ManipulateObject(),
+            states.ExtractItem.name,
+            states.ExtractItem(),
             transitions={
-                outcomes.MANIPULATE_OBJECT_SUCCESS: states.DropOffObject.name,
-                outcomes.MANIPULATE_OBJECT_FAILURE: states.UpdatePlan.name
+                outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
+                outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
             }
         )
         smach.StateMachine.add(
-            states.DropOffObject.name,
-            states.DropOffObject(),
+            states.DropOffItem.name,
+            states.DropOffItem(),
             transitions={
-                outcomes.DROP_OFF_OBJECT_SUCCESS: states.UpdatePlan.name,
-                outcomes.DROP_OFF_OBJECT_FAILURE: states.UpdatePlan.name
+                outcomes.DROP_OFF_ITEM_SUCCESS: states.UpdatePlan.name,
+                outcomes.DROP_OFF_ITEM_FAILURE: states.UpdatePlan.name
             }
         )
 
