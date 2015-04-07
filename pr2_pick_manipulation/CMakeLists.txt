@@ -66,7 +66,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_service_files(
   FILES
   PushAway.srv
-  Grippers.srv
+  SetGrippers.srv
   DriveLinear.srv
   DriveAngular.srv
   MoveTorso.srv

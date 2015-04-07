@@ -12,8 +12,8 @@ GripperService::GripperService()
       right_("r_gripper_controller/gripper_action") {
 }
 
-bool GripperService::Callback(Grippers::Request& request,
-                              Grippers::Response& response) {
+bool GripperService::Callback(SetGrippers::Request& request,
+                              SetGrippers::Response& response) {
   if (request.open_left) {
     left_.Open(-1);
   } else {
