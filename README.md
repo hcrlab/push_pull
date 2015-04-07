@@ -1,7 +1,14 @@
 # Amazon Picking Challenge
 This is the main code repository for the UW Amazon Picking Challenge team.
 
-Clone this repository with `git clone --recursive` to get all the subrepos.
+## Getting started
+```
+cd ~/catkin_ws_hydro/src
+git clone --recursive git@gitlab.cs.washington.edu:amazon-picking-challenge-2015/pr2_pick.git
+cd ~/catkin_ws
+rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
+catkin_make
+```
 
 ## Packages
 ### festival_tts
