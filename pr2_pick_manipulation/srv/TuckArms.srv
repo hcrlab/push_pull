@@ -1,0 +1,5 @@
+# If true, the arm will be tucked. Otherwise, it will be deployed out in a V-shape.
+bool tuck_left
+bool tuck_right
+---
+bool success

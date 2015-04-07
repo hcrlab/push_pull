@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_ros_planning
   moveit_ros_planning_interface
+  pr2_common_action_msgs
   pr2_controllers_msgs
   pr2_pick_msgs
   pr2_pick_perception
@@ -70,6 +71,7 @@ add_service_files(
   DriveLinear.srv
   DriveAngular.srv
   MoveTorso.srv
+  TuckArms.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -97,7 +99,15 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES arm_navigator driver gripper torso gripper_service
+  LIBRARIES
+    arm_navigator
+    driver
+    gripper
+    torso
+    driver_service
+    gripper_service
+    torso_service
+    tuck_arms_service
   CATKIN_DEPENDS tf
 #  DEPENDS system_lib
 )
@@ -132,11 +142,15 @@ add_library(gripper_service
 add_library(torso_service
   src/torso_service.cpp
 )
+add_library(tuck_arms_service
+  src/tuck_arms_service.cpp
+)
 
 ## Declare a cpp executable
 add_executable(driver_service_node src/driver_service_node.cpp)
 add_executable(gripper_service_node src/gripper_service_node.cpp)
 add_executable(torso_service_node src/torso_service_node.cpp)
+add_executable(tuck_arms_service_node src/tuck_arms_service_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -183,6 +197,13 @@ target_link_libraries(torso_service
 target_link_libraries(torso_service_node
   ${catkin_LIBRARIES}
   torso_service
+)
+target_link_libraries(tuck_arms_service
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(tuck_arms_service_node
+  ${catkin_LIBRARIES}
+  tuck_arms_service
 )
 
 #############
