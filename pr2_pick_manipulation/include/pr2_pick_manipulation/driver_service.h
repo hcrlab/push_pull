@@ -17,8 +17,8 @@
 #include "pr2_pick_manipulation/DriveLinear.h"
 #include <ros/ros.h>
 
-#ifndef _PR2_PICK_MANIPULATION_GRIPPER_SERVICE_H_
-#define _PR2_PICK_MANIPULATION_GRIPPER_SERVICE_H_
+#ifndef _PR2_PICK_MANIPULATION_DRIVER_SERVICE_H_
+#define _PR2_PICK_MANIPULATION_DRIVER_SERVICE_H_
 
 namespace pr2_pick_manipulation {
 class DriverService {
