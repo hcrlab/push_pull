@@ -1,0 +1,9 @@
+# Service that moves the robot relative to the /base_footprint frame.
+float64 LEFT_90=0.78539816339
+float64 TURN_180=1.57079632679
+float64 RIGHT_90=-0.78539816339
+float64 vel_ccw # Counter-clockwise velocity, in radians / second.
+float64 radians # Total number of radians to turn.
+---
+# This service generally should not fail. If it does, it's due to bad tf.
+bool success
