@@ -28,9 +28,9 @@ Test programs for specific components might be in other packages, but end-to-end
 - Contains demo code for picking 3 items out of the bin.
 
 ### pr2_pick_manipulation
-- Contains gripper open/close C++ client
-- Contains base movement / odometry C++ client
-- Contains arm navigation C++ interface, and implementations using MoveIt and trajopt.
+- Contains services for controlling the robot (torso, base, grippers, etc.)
+- Contains a launch file for the above services.
+- Contains C++ libraries for controlling the robot.
 - Contains a tool for reading the current end-effector pose, using your phone.
 
 ### pr2_pick_msgs
