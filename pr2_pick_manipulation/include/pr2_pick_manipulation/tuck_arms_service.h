@@ -5,7 +5,7 @@
 // from pr2_pick_manipulation.srv import TuckArms
 // rospy.wait_for_service('tuck_arms_service')
 // tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
-// tuck_arms(false, true) # Tuck the left arm and untuck the right arm.
+// tuck_arms(False, True) # Tuck the left arm and untuck the right arm.
 
 #include "pr2_common_action_msgs/TuckArmsAction.h"
 #include "pr2_pick_manipulation/TuckArms.h"

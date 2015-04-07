@@ -4,7 +4,7 @@
 // from pr2_pick_manipulation.srv import SetGrippers
 // rospy.wait_for_service('gripper_service')
 // set_grippers = rospy.ServiceProxy('gripper_service', Grippers)
-// set_grippers(false, true) # Close left hand and open right hand.
+// set_grippers(False, True) # Close left hand and open right hand.
 
 #include "pr2_pick_manipulation/gripper.h"
 #include "pr2_pick_manipulation/SetGrippers.h"
