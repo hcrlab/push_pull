@@ -6,6 +6,7 @@
 import outcomes
 import rospy
 import smach
+import smach_ros
 import states
 
 
@@ -90,7 +91,13 @@ def main():
             }
         )
 
+    sis = smach_ros.IntrospectionServer('state_machine_introspection_server',
+                                        sm,
+                                        '/')
+    sis.start()
     outcome = sm.execute()
+    rospy.spin()
+    sis.stop()
 
 
 if __name__ == '__main__':
