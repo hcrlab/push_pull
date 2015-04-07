@@ -19,3 +19,7 @@ roslaunch pr2_pick_perception perception.launch
 roslaunch pr2_moveit_config move_group.launch
 roslaunch pr2_pick_main easy_boxes_demo.launch --screen
 ```
+
+## Manipulation client demos
+Demonstrations and example code for the usage of the gripper, torso, and other
+clients.
