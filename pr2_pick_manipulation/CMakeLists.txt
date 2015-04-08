@@ -72,6 +72,7 @@ add_service_files(
   DriveAngular.srv
   MoveTorso.srv
   TuckArms.srv
+  MoveHead.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -108,6 +109,7 @@ catkin_package(
     gripper_service
     torso_service
     tuck_arms_service
+    move_head_service
   CATKIN_DEPENDS tf
 #  DEPENDS system_lib
 )
@@ -145,12 +147,16 @@ add_library(torso_service
 add_library(tuck_arms_service
   src/tuck_arms_service.cpp
 )
+add_library(move_head_service
+  src/move_head_service.cpp
+)
 
 ## Declare a cpp executable
 add_executable(driver_service_node src/driver_service_node.cpp)
 add_executable(gripper_service_node src/gripper_service_node.cpp)
 add_executable(torso_service_node src/torso_service_node.cpp)
 add_executable(tuck_arms_service_node src/tuck_arms_service_node.cpp)
+add_executable(move_head_service_node src/move_head_service_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -204,6 +210,13 @@ target_link_libraries(tuck_arms_service
 target_link_libraries(tuck_arms_service_node
   ${catkin_LIBRARIES}
   tuck_arms_service
+)
+target_link_libraries(move_head_service
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(move_head_service_node
+  ${catkin_LIBRARIES}
+  move_head_service
 )
 
 #############

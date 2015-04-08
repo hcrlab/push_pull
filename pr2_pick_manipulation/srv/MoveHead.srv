@@ -1,0 +1,8 @@
+# x, y, z specify coordinates of a point at which the head should look, relative to frame.
+# returns true if the head is sucessfully pointed at that frame
+float64 x
+float64 y
+float64 z
+string frame
+---
+bool success
