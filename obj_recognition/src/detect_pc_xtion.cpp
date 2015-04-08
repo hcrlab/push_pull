@@ -1,6 +1,6 @@
 #include <obj_recognition/detect_pc_xtion.h>
 #include <math.h>
-//#define DEBUG //debugging output
+#define DEBUG //debugging output
 
 #include <vtkTransform.h>
 
@@ -422,7 +422,7 @@ void ObjDetector::detectCallback(const adaptive_perception_msgs::ObjectDetection
         static int visMatchedModelCounter = 0;
         visMatchName << obj_type_ << visMatchedModelCounter++;
         ROS_ERROR("loading  %s for cluster %d", obj_type_.c_str(),i);
-        std::string plyModel = ros::package::getPath("trooper_obj_recognition")+"/models/"+obj_type_+"/"+obj_type_+".ply";
+        std::string plyModel = ros::package::getPath("obj_recognition")+"/models/"+obj_type_+"/"+obj_type_+".ply";
         vis->addModelFromPLYFile(plyModel, vtkTrans, visMatchName.str());
         
         //ROS_ERROR("added valve for cluster %d", i);
