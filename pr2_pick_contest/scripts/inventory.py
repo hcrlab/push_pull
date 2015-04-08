@@ -90,8 +90,8 @@ if __name__ == "__main__":
     inventory = Inventory(json.load(open(args.filename, 'r')))
 
     # start node and services
-    rospy.Service('get_items', GetItems, inventory.get_items)
-    rospy.Service('get_target_items', GetTargetItems, inventory.get_target_items)
-    rospy.Service('set_items', SetItems, inventory.set_items)
+    rospy.Service('inventory/get_items', GetItems, inventory.get_items)
+    rospy.Service('inventory/get_target_items', GetTargetItems, inventory.get_target_items)
+    rospy.Service('inventory/set_items', SetItems, inventory.set_items)
 
     rospy.spin()
