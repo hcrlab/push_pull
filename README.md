@@ -11,7 +11,11 @@ catkin_make
 ```
 
 ## Shelf detection
-Documentation TBD.
+Improved documentation TBD.
+```
+roslaunch obj_recognition shelf_recognition_KinPR2.launch
+roslaunch multisense crop_image_PR2.launch --screen
+```
 
 ## Packages
 ### festival_tts
