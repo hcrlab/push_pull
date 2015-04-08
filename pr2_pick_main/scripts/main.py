@@ -31,14 +31,6 @@ def main():
             }
         )
         smach.StateMachine.add(
-            states.ReadContestFile.name,
-            states.ReadContestFile(),
-            transitions={
-                outcomes.READ_CONTEST_SUCCESS: states.FindShelf.name,
-                outcomes.READ_CONTEST_FAILURE: outcomes.CHALLENGE_FAILURE
-            }
-        )
-        smach.StateMachine.add(
             states.FindShelf.name,
             states.FindShelf(),
             transitions={
