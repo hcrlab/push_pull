@@ -3,7 +3,6 @@ from .ExtractItem import ExtractItem
 from .FindShelf import FindShelf
 from .Grasp import Grasp
 from .MoveToBin import MoveToBin
-from .ReadContestFile import ReadContestFile
 from .SenseBin import SenseBin
 from .StartPose import StartPose
 from .UpdatePlan import UpdatePlan
