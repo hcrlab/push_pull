@@ -76,19 +76,20 @@ class Inventory(object):
 
 
 if __name__ == "__main__":
+    rospy.init_node('inventory')
+
     # get the filename from the command line
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'filename', metavar='FILE', type=str,
         help='json file specifying bin contents'
     )
-    args = parser.parse_args()
+    args = parser.parse_args(args=rospy.myargv()[1:])
 
     # create inventory from file
     inventory = Inventory(json.load(open(args.filename, 'r')))
 
     # start node and services
-    rospy.init_node('inventory')
     rospy.Service('get_items', GetItems, inventory.get_items)
     rospy.Service('get_target_items', GetTargetItems, inventory.get_target_items)
     rospy.Service('set_items', SetItems, inventory.set_items)
