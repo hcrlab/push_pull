@@ -4,9 +4,6 @@ CHALLENGE_FAILURE = 'failure'
 START_POSE_SUCCESS = 'success'
 START_POSE_FAILURE = 'failure'
 
-READ_CONTEST_SUCCESS = 'success'
-READ_CONTEST_FAILURE = 'failure'
-
 FIND_SHELF_SUCCESS = 'success'
 FIND_SHELF_FAILURE = 'failure'
 
