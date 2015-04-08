@@ -10,6 +10,9 @@ rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
 catkin_make
 ```
 
+## Shelf detection
+Documentation TBD.
+
 ## Packages
 ### festival_tts
 A text-to-speech node.
