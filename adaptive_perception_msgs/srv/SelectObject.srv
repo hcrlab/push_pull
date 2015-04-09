@@ -1,7 +1,0 @@
-# The input to this service is a empty string.
-# The service returns the gray scale image and the H-channel image to select the object to be detected from the image
-std_msgs/String input
----
-sensor_msgs/Image grayImage
-sensor_msgs/Image HImage
-sensor_msgs/Image mask

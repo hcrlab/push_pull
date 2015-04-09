@@ -1,8 +1,7 @@
-<!-- Launches colseg  -->
-
 <launch>
-  <node ns="ap_xtion" pkg="obj_recognition" type="obj_detection_xtion" name="shelf_obj_detector" respawn="true" output="screen">
-   <param name="db" value="$(find obj_recognition)/config/db_shelf.txt"/>
+  <arg name="debug" default="false" /> <!-- Whether to show debug visualizations. -->
+  <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node" name="shelf_obj_detector" respawn="true" output="screen">
+   <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
 
    <param name="iter" value="70"/>
    <param name="minClusterSize" value="350"/>
@@ -16,16 +15,15 @@
  
   <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
 
-   <param name="RobotReference" value="/base_link" />  
-   <param name="WorldReference" value="/map" />  
+   <param name="RobotReference" value="/base_footprint" />  
+   <param name="WorldReference" value="/map" /> <!-- Will default to base_footprint if there's no map. -->
 
    <param name="manual_segmentation" value="false" />
    <param name="pca_alignment" value="false"/>
+   <param name="debug" value="$(arg debug)"/>
    
    <remap from="/image" to="/head_mount_kinect/rgb/image_rect_color" />
    <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" />
-   <remap from="/ap/detected_object" to="/rwm/add_detected_object" />
-   
    <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
   </node>
 

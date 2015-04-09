@@ -1,5 +1,5 @@
-#ifndef DETECT_OBJECTS_H_
-#define DETECT_OBJECTS_H_
+#ifndef DETECT_OBJECTS_XTION_H_
+#define DETECT_OBJECTS_XTION_H_
 
 //////// std includes ////////
 #include <stdio.h>
@@ -21,6 +21,8 @@
 #include <sensor_msgs/Image.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <ros/package.h>
+#include <ros/time.h>
+
 #include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/exact_time.h>
@@ -43,7 +45,6 @@
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <pcl/point_types.h>
 #include <pcl/visualization/cloud_viewer.h>
-
 /////// PCL ///////
 #include <pcl/console/parse.h>
 #include <pcl/io/pcd_io.h>
@@ -53,11 +54,10 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/ros/conversions.h>
 
+
 #include <pcl/common/time.h>
 
-
 #include <pcl/features/normal_3d_omp.h>
-// #include <pcl/features/our_cvfh.h>
 #include <pcl/keypoints/uniform_sampling.h>
 
 #include <pcl/filters/filter.h>
@@ -72,28 +72,22 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 
-// #include <pcl/recognition/cg/correspondence_grouping.h>
-// #include <pcl/recognition/cg/geometric_consistency.h>
-// #include <pcl/recognition/cg/hough_3d.h>
-// #include <pcl/recognition/cg/geometric_consistency.h>
-
-// #include <pcl/recognition/hv/hv_papazov.h>
-// #include <pcl/recognition/hv/hv_go.h>
-// #include <pcl/recognition/hv/greedy_verification.h>
 
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/registration.h>
 #include <pcl/registration/icp.h>
-// #include <trooper_obj_recognition/icpscale.h>
-// #include <pcl/registration/gicp.h> //generalized icp extension
+
+ #include <pcl/registration/gicp.h> //generalized icp extension
 // #include <pcl/registration/icp_nl.h> //Levenberg-Marquardt icp 
 
-/////// TROOPER includes ///////
-#include <trooper_msgs/ObjectList.h>
-#include <trooper_adaptive_perception_msgs/ObjectDetectionRequest.h>
-#include <trooper_msgs/Object.h>
-#include <trooper_msgs/WorldModelOperation.h>
+
+#include <pr2_pick_perception/ObjectList.h>
+#include <pr2_pick_perception/ObjectDetectionRequest.h>
+#include <pr2_pick_perception/Object.h>
+#include <pr2_pick_perception/LocalizeShelf.h>
+//#include <pr2_pick_perception/WorldModelOperation.h>
+
 
 
 typedef pcl::PointXYZ PointT; //NOTE: this is bad! (typedef in header file and not even a namespace)
@@ -151,9 +145,13 @@ public:
   
      
 private:
+    ros::NodeHandle nh_;
     ros::ServiceClient client_;
     ros::Publisher pub_;
     ros::Subscriber trigger_sub_;
+    ros::Subscriber pc_sub_;
+    ros::ServiceServer server_;
+    
     /// stereo to world transform 
     tf::StampedTransform stereo2world_;
     /// cloud to robot transform
@@ -162,6 +160,10 @@ private:
     tf::StampedTransform robot_to_camera_;
     /// robot to world transform
     tf::StampedTransform robot_to_world_;
+    /// robot to model transform
+    tf::StampedTransform  cloud_to_model_;
+
+    bool debug_;
     
     
     /// name of colored point cloud
@@ -176,8 +178,10 @@ private:
     std::string stereo_ref_system_;
     /// lidar reference system
     std::string cloud_frame_id_;
-    /// camera reference system
+    /// camera reference system    
     std::string camera_frame_id_;
+    /// model reference system
+    std::string model_frame_id_;
     
     /// refence transform listener
     tf::TransformListener tf_;
@@ -195,11 +199,15 @@ private:
     /// stereo PC params
     bool gotPCstereo_;
     bool image_ready_;
+    bool pc_ready_;
     
-    boost::mutex stereo_mtx_; 
+    boost::mutex xtion_mtx_; 
     boost::mutex image_mtx_; 
     
-    pcl::PointCloud<PointT> stereoPC_;
+    pcl::PointCloud<PointT> xtionPC_;
+    sensor_msgs::PointCloud2Ptr xtionPC2ptr_;
+    ros::Time pc_timestamp_;
+    
     image_geometry::PinholeCameraModel leftcamproj_; 
     
     sensor_msgs::ImageConstPtr l_image_msg_;    
@@ -228,8 +236,9 @@ private:
     
     ///pca alingment for non-fixed objects
     bool pca_alignment_;
-    ///return only yaw + xyz
+   ///return only yaw + xyz
     bool only_yaw_;
+   
     //window to show to the user
     const char* src_window_; 
    
@@ -250,18 +259,16 @@ private:
     //Eigen::Matrix4f cloud_to_robotE_;
     
     ///callback for receiving detection commands
-    void detectCallback(const trooper_adaptive_perception_msgs::ObjectDetectionRequestConstPtr &cmd);
+    bool detectCallback(pr2_pick_perception::LocalizeShelfRequest &request, pr2_pick_perception::LocalizeShelfResponse& response);
     
-    /// callback for stereo point cloud
-    void stereoPCcallback(const sensor_msgs::PointCloud2ConstPtr &stereocloud);
+    /// callback for stereo point cloud   
+    void xtionPCcallback(const sensor_msgs::PointCloud2ConstPtr &pcloud);
+    
     /// Image callback
-    void processImage(const sensor_msgs::ImageConstPtr &l_image_msg, const sensor_msgs::CameraInfoConstPtr& l_info_msg);
+    void processImage(const sensor_msgs::ImageConstPtr &l_image_msg, const sensor_msgs::CameraInfoConstPtr& l_info_msg);    
     
-    
-    ///extract clusters from scene assuming ground plane
-    void extractClusters(const pcl::PointCloud<PointT>::ConstPtr &scene, std::vector<pcl::PointCloud<PointT>::Ptr> *clusters, const pcl::visualization::PCLVisualizer::Ptr &visu);
     ///extract clusters based on color   
-    void extractClustersColor(const pcl::PointCloud<PointT>::ConstPtr &scene, std::vector<pcl::PointCloud<PointT>::Ptr> *clusters);
+    void extractClusters(const pcl::PointCloud<PointT>::ConstPtr &scene, std::vector<pcl::PointCloud<PointT>::Ptr> *clusters);
     
     
     
@@ -306,5 +313,4 @@ private:
         const Eigen::MatrixXd &target_pc, const Eigen::Vector4d & centroid_tgt, Eigen::Matrix4d &transformation_matrix);
     
 };
-
 #endif

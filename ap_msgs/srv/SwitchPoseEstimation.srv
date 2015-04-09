@@ -1,7 +1,0 @@
-uint8 NONE=0
-uint8 GROUND_TRUTH=1
-uint8 BDI=2
-uint8 VISUAL_ODOMETRY=3
-uint8 FOOTSTEP_ODOMETRY=4
-uint8 pose_estimation_type
----
