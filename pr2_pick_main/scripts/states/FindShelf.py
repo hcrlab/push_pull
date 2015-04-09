@@ -1,4 +1,3 @@
-from pr2_pick_perception.msg import Object
 from geometry_msgs.msg import TransformStamped
 import outcomes
 import rospy
@@ -31,11 +30,13 @@ class FindShelf(smach.State):
         rospy.loginfo('Finding shelf.')
         self._localize_shelf.wait_for_service()
         response = self._localize_shelf()
-        if len(response.objects) == 0:
+        if len(response.locations.objects) == 0:
             return outcomes.FIND_SHELF_FAILURE
-        shelf = response.objects[0]
+        shelf = response.locations.objects[0]
+
+        # TODO(jstn): Transform the pose to odom_combined first.
         transform = TransformStamped()
-        transform.header = shelf.header
+        transform.header.frame_id = 'odom_combined'
         transform.header.stamp = rospy.Time.now()
         transform.transform.translation = shelf.pose.position
         transform.transform.rotation = shelf.pose.orientation
