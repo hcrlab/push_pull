@@ -1,4 +1,5 @@
 from std_msgs.msg import String
+from bin_data import BinData
 import outcomes
 import rospy
 import smach
@@ -34,9 +35,9 @@ class UpdatePlan(smach.State):
         for bin_id in self._preferred_order:
             if not userdata.bin_data[bin_id].visited:
                 userdata.next_bin = bin_id
-                bin_data = userdata.bin_data[bin_id]
-                bin_data.visited = True
-                userdata.output_bin_data.put(bin_id, bin_data)
+                bin_data = userdata.bin_data.copy()
+                bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
+                userdata.output_bin_data = bin_data
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         for bin_id in self._preferred_order:

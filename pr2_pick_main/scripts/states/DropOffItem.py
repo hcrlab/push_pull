@@ -14,11 +14,14 @@ class DropOffItem(smach.State):
                 outcomes.DROP_OFF_ITEM_SUCCESS,
                 outcomes.DROP_OFF_ITEM_FAILURE
             ],
-            input_keys=['bin_id'],
-            output_keys=['bin_data']
+            input_keys=['bin_id', 'bin_data'],
+            output_keys=['output_bin_data']
         )
 
     def execute(self, userdata):
         rospy.loginfo('Dropping off item from bin {}'.format(userdata.bin_id))
-        userdata.bin_data[bin_id].succeeded = True
+        bin_id = userdata.bin_id
+        bin_data = userdata.bin_data.copy()
+        bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
+        userdata.output_bin_data = bin_data
         return outcomes.DROP_OFF_ITEM_SUCCESS

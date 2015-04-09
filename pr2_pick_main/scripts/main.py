@@ -3,23 +3,12 @@
 """The main state machine for the picking challenge.
 """
 
-from collections import namedtuple
+from bin_data import BinData
 import outcomes
 import rospy
 import smach
 import smach_ros
 import states
-
-
-# Bin data structure.
-#   id: string, 'A' - 'L' according to the diagram on the contest website.
-#   visited: boolean, true if the robot has tried to pick an item from this bin
-#     at least once, false otherwise.
-#   succeeded: boolean, true if the robot successfully picked an item from this
-#     bin, false otherwise. succeeded = false either means that there was an
-#     unsuccessful attempt, or it hasn't been tried yet, check visited to
-#     distinguish between these two cases.
-BinData = namedtuple('BinData', ['id', 'visited', 'succeeded'])
 
 
 def main():
@@ -125,7 +114,8 @@ def main():
             },
             remapping={
                 'bin_id': 'current_bin',
-                'bin_data': 'bin_data'
+                'bin_data': 'bin_data',
+                'output_bin_data': 'bin_data',
             }
         )
 
