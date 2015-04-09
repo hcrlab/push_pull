@@ -2,6 +2,7 @@ from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
+from pr2_pick_manipulation.srv import MoveArm
 from std_msgs.msg import String
 import mock
 import outcomes
@@ -18,7 +19,8 @@ def real_robot():
     move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
     set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
     move_head = rospy.ServiceProxy('move_head_service', MoveHead)
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head)
+    moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
+    return build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm)
 
 
 def side_effect(name):
@@ -61,10 +63,15 @@ def mock_robot():
     move_head = rospy.ServiceProxy('move_head_service', MoveHead)
     move_head.wait_for_service = mock.Mock(return_value=None)
     move_head.call = mock.Mock(side_effect=side_effect('move_head'))
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head)
+
+    moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
+    moveit_move_arm.wait_for_service = mock.Mock(return_value=None)
+    moveit_move_arm.call = mock.Mock(side_effect=side_effect('moveit_move_arm'))
+
+    return build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm)
 
 
-def build(tts, tuck_arms, move_torso, set_grippers, move_head):
+def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -138,7 +145,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head):
         )
         smach.StateMachine.add(
             states.Grasp.name,
-            states.Grasp(set_grippers, tuck_arms),
+            states.Grasp(set_grippers, tuck_arms, moveit_move_arm),
             transitions={
                 outcomes.GRASP_SUCCESS: states.ExtractItem.name,
                 outcomes.GRASP_FAILURE: (
@@ -151,7 +158,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head):
         )
         smach.StateMachine.add(
             states.ExtractItem.name,
-            states.ExtractItem(),
+            states.ExtractItem(moveit_move_arm),
             transitions={
                 outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
                 outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
