@@ -3,4 +3,5 @@
   <node name="festival_tts" pkg="festival_tts" type="speak.py" />
   <node name="pr2_pick_inventory" pkg="pr2_pick_contest" type="inventory.py" args="$(find pr2_pick_contest)/config/milestone_1.json" />
   <include file="$(find pr2_pick_manipulation)/launch/manipulation.launch" />
+  <include file="$(find pr2_pick_perception)/launch/perception.launch" />
 </launch>
