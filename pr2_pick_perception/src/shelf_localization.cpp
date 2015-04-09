@@ -1,5 +1,4 @@
 #include "pr2_pick_perception/shelf_localization.h"
-#define DEBUG //debugging output
 
 #include <vtkTransform.h>
 
@@ -662,18 +661,18 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
       
       
       
-#ifdef DEBUG
+    if (debug_) {
       //pcl::PointCloud <PointTc>::Ptr colored_cloud = ec.reg.getColoredCloud ();
-    pcl::visualization::CloudViewer viewer ("Cluster viewer");     
-//     viewer.showCloud (rgbpc_sampled_cropped, "cloud cropped");
-    viewer.showCloud (scene_filtered, "scene_filtered");
-    
-    std::cout << "Starting visualization " << std::endl;
+      pcl::visualization::CloudViewer viewer ("Cluster viewer");     
+//       viewer.showCloud (rgbpc_sampled_cropped, "cloud cropped");
+      viewer.showCloud (scene_filtered, "scene_filtered");
+      
+      std::cout << "Starting visualization " << std::endl;
 
-    while (!viewer.wasStopped ()){
-        boost::this_thread::sleep (boost::posix_time::microseconds (1000));
+      while (!viewer.wasStopped ()){
+          boost::this_thread::sleep (boost::posix_time::microseconds (1000));
+      }
     }
-#endif
   
     
 }
