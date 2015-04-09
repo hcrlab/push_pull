@@ -44,7 +44,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head):
         )
         smach.StateMachine.add(
             states.UpdatePlan.name,
-            states.UpdatePlan(),
+            states.UpdatePlan(tts),
             transitions={
                 outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,

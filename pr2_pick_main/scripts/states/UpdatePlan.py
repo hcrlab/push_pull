@@ -1,4 +1,3 @@
-from std_msgs.msg import String
 from bin_data import BinData
 import outcomes
 import rospy
@@ -15,7 +14,12 @@ class UpdatePlan(smach.State):
     """
     name = 'UPDATE_PLAN'
 
-    def __init__(self):
+    def __init__(self, tts):
+        """Constructor for this state.
+
+        Args:
+          tts: The text to speech publisher.
+        """
         smach.State.__init__(
             self,
             outcomes=[
@@ -26,7 +30,7 @@ class UpdatePlan(smach.State):
             input_keys=['bin_data'],
             output_keys=['output_bin_data', 'next_bin']
         )
-        self._tts = rospy.Publisher('/festival_tts', String)
+        self._tts = tts
         self._preferred_order = 'JKLGHIDEFABC'
 
     def execute(self, userdata):
