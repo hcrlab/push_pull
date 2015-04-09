@@ -1,4 +1,4 @@
-from std_msgs.msg import String
+from bin_data import BinData
 import outcomes
 import rospy
 import smach
@@ -14,7 +14,12 @@ class UpdatePlan(smach.State):
     """
     name = 'UPDATE_PLAN'
 
-    def __init__(self):
+    def __init__(self, tts):
+        """Constructor for this state.
+
+        Args:
+          tts: The text to speech publisher.
+        """
         smach.State.__init__(
             self,
             outcomes=[
@@ -25,7 +30,7 @@ class UpdatePlan(smach.State):
             input_keys=['bin_data'],
             output_keys=['output_bin_data', 'next_bin']
         )
-        self._tts = rospy.Publisher('/festival_tts', String)
+        self._tts = tts
         self._preferred_order = 'JKLGHIDEFABC'
 
     def execute(self, userdata):
@@ -34,9 +39,9 @@ class UpdatePlan(smach.State):
         for bin_id in self._preferred_order:
             if not userdata.bin_data[bin_id].visited:
                 userdata.next_bin = bin_id
-                bin_data = userdata.bin_data[bin_id]
-                bin_data.visited = True
-                userdata.output_bin_data.put(bin_id, bin_data)
+                bin_data = userdata.bin_data.copy()
+                bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
+                userdata.output_bin_data = bin_data
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         for bin_id in self._preferred_order:
