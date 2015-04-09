@@ -86,6 +86,7 @@ class ExtractItem(smach.State):
         # Lift item to clear bin lip
         rospy.loginfo("Lift")
         pose_target = geometry_msgs.msg.PoseStamped()
+        pose_target.header.frame_id = "base_footprint";
         pose_target.pose.orientation.w = 1
         pose_target.pose.position.x = grasp_dist + item_pose.position.x
         pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
@@ -104,17 +105,18 @@ class ExtractItem(smach.State):
         rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
         
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target)
+        #self._moveit_move_arm.wait_for_service()
+        #self._moveit_move_arm(pose_target)
        
-        #group.set_pose_target(pose_target)
-        #plan = group.plan()
-        #group.go(wait=True)
+        group.set_pose_target(pose_target)
+        plan = group.plan()
+        group.go(wait=True)
 
         # Pull item out of bin
 
         rospy.loginfo("Extract")
         pose_target = geometry_msgs.msg.PoseStamped()
+        pose_target.header.frame_id = "base_footprint";
         pose_target.pose.orientation.w = 1
         pose_target.pose.position.x = extract_dist + item_pose.position.x
         pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
@@ -130,15 +132,15 @@ class ExtractItem(smach.State):
         pose_target.orientation.w = 0.03447236011320723;
         """
 
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target)
+        #self._moveit_move_arm.wait_for_service()
+        #self._moveit_move_arm(pose_target)
 
-       rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
+        rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
          
-        #group.set_pose_target(pose_target)
-        #plan = group.plan()
-        #group.go(wait=True)
+        group.set_pose_target(pose_target)
+        plan = group.plan()
+        group.go(wait=True)
 
 
 

@@ -17,8 +17,11 @@ public:
 
   bool move_arm(pr2_pick_manipulation::MoveArm::Request  &req,
          pr2_pick_manipulation::MoveArm::Response &res) {
+    ROS_INFO("Received service call");
     group_.setPoseTarget(req.goal);
-    res.success = group_.move();
+    group_.move();
+    res.success = true;
+    ROS_INFO("Moved arm");
     return true;
     //return true;
   }

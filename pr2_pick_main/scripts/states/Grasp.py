@@ -95,6 +95,7 @@ class Grasp(smach.State):
 
         rospy.loginfo("Center Arm")
         pose = geometry_msgs.msg.PoseStamped()
+        pose.header.frame_id = "base_footprint";
         pose.pose.position.x = 0.3135;
         pose.pose.position.y = -0.4665;
         pose.pose.position.z = 0.6905;
@@ -103,17 +104,18 @@ class Grasp(smach.State):
         pose.pose.orientation.z = -0.4802;
         pose.pose.orientation.w = -0.2458;
 
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose)
+        #self._moveit_move_arm.wait_for_service()
+        #self._moveit_move_arm(pose)
 
-        #group.set_pose_target(pose)
-        #plan = group.plan()
-        #group.go(wait=True)
+        group.set_pose_target(pose)
+        plan = group.plan()
+        group.go(wait=True)
 
         # Pose in front of bin
 
         rospy.loginfo("Pre-grasp:")
         pose_target = geometry_msgs.msg.PoseStamped()
+        pose_target.header.frame_id = "base_footprint";
         pose_target.pose.orientation.w = 1
         pose_target.pose.position.x = pre_grasp_dist + item_pose.position.x
         pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y
@@ -131,12 +133,12 @@ class Grasp(smach.State):
         rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
         
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target)
+        #self._moveit_move_arm.wait_for_service()
+        #self._moveit_move_arm(pose_target)
 
-       #group.set_pose_target(pose_target)
-        #plan = group.plan()
-        #group.go(wait=True)
+        group.set_pose_target(pose_target)
+        plan = group.plan()
+        group.go(wait=True)
 
         # Open Hand
 
@@ -148,6 +150,7 @@ class Grasp(smach.State):
 
         rospy.loginfo("Grasp")
         pose_target = geometry_msgs.msg.PoseStamped()
+        pose_target.header.frame_id = "base_footprint";
         pose_target.pose.orientation.w = 1
         pose_target.pose.position.x = grasp_dist + item_pose.position.x
         pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
@@ -163,15 +166,15 @@ class Grasp(smach.State):
         pose_target.orientation.w = 0.012263485183839965
         """
 
-         rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
+        rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target)
+        #self._moveit_move_arm.wait_for_service()
+        #self._moveit_move_arm(pose_target)
 
-        #group.set_pose_target(pose_target)
-        #plan = group.plan()
-        #group.go(wait=True)
+        group.set_pose_target(pose_target)
+        plan = group.plan()
+        group.go(wait=True)
 
         # Close hand
 
