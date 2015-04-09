@@ -138,7 +138,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head):
         )
         smach.StateMachine.add(
             states.Grasp.name,
-            states.Grasp(),
+            states.Grasp(set_grippers, tuck_arms),
             transitions={
                 outcomes.GRASP_SUCCESS: states.ExtractItem.name,
                 outcomes.GRASP_FAILURE: (
