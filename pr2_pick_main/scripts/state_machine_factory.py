@@ -1,8 +1,11 @@
-from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
+from pr2_pick_manipulation.srv import MoveTorso
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from pr2_pick_manipulation.srv import MoveArm
+from pr2_pick_perception.srv import LocalizeShelf
+from pr2_pick_perception.srv import SetStaticTransform
+from pr2_pick_perception.srv import DeleteStaticTransform
 from std_msgs.msg import String
 import mock
 import outcomes
@@ -20,7 +23,12 @@ def real_robot():
     set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
     move_head = rospy.ServiceProxy('move_head_service', MoveHead)
     moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm)
+    localize_shelf = rospy.ServiceProxy('perception/localize_shelf',
+                                        LocalizeShelf)
+    set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
+                                       SetStaticTransform)
+    return build(tts, tuck_arms, move_torso, set_grippers, move_head,
+                 moveit_move_arm, localize_shelf, set_static_tf)
 
 
 def side_effect(name):
@@ -66,12 +74,27 @@ def mock_robot():
 
     moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
     moveit_move_arm.wait_for_service = mock.Mock(return_value=None)
-    moveit_move_arm.call = mock.Mock(side_effect=side_effect('moveit_move_arm'))
+    moveit_move_arm.call = mock.Mock(
+        side_effect=side_effect('moveit_move_arm'))
 
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm)
+    localize_shelf = rospy.ServiceProxy('perception/localize_shelf',
+                                        LocalizeShelf)
+    localize_shelf.wait_for_service = mock.Mock(return_value=None)
+    localize_shelf.call = mock.Mock(
+        side_effect=side_effect('localize_shelf'))
+
+    set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
+                                        SetStaticTransform)
+    set_static_tf.wait_for_service = mock.Mock(return_value=None)
+    set_static_tf.call = mock.Mock(
+        side_effect=side_effect('set_static_tf'))
+
+    return build(tts, tuck_arms, move_torso, set_grippers, move_head,
+                 moveit_move_arm, localize_shelf, set_static_tf)
 
 
-def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm):
+def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
+          localize_shelf, set_static_tf):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -100,7 +123,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm):
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(),
+            states.FindShelf(localize_shelf, set_static_tf),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
