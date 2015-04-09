@@ -4,6 +4,10 @@ import smach
 import moveit_commander
 import geometry_msgs.msg
 
+import json
+import os
+from pr2_pick_manipulation.srv import SetGrippers
+
 
 class Grasp(smach.State):
     """Grasps an item in the bin.
@@ -21,6 +25,18 @@ class Grasp(smach.State):
         )
 
     def execute(self, userdata):
+
+
+        # Get fake object locations
+
+        current_dir = os.path.dirname(__file__)
+        relative_path = "../../config/milestone_1_fake_object_locations.json"
+        file_path = os.path.join(current_dir, relative_path)
+
+        with open(file_path) as config_file:
+            object_data = json.load(config_file)
+
+
         rospy.loginfo('Grasping item in bin {}'.format(userdata.bin_id))
 
         robot = moveit_commander.RobotCommander()
@@ -30,69 +46,56 @@ class Grasp(smach.State):
         rospy.wait_for_service('gripper_service')
         self._set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
 
-        # Poses for each bin
+        # Parameters
 
-        bin_dict = {}
-        bin_dict["A"]["pre-grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["A"]["pre-grasp"].orientation.w = 1;
-        bin_dict["A"]["pre-grasp"].position.x = 0.2;
-        bin_dict["A"]["pre-grasp"].position.y = 0.0;
-        bin_dict["A"]["pre-grasp"].position.z = 1.9;
+        # Assuming MoveToBin centers itself on the leftmost wall of each bin 
+        # If this is not true, set offset
+        robot_centered_offset = 0 
+        pre_grasp_dist = 0.20
+        grasp_dist = 0.35
+        grasp_height = 0.05
 
-        bin_dict["A"]["grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["A"]["grasp"].orientation.w = 1;
-        bin_dict["A"]["grasp"].position.x = 0.35;
-        bin_dict["A"]["grasp"].position.y = 0.0;
-        bin_dict["A"]["grasp"].position.z = 1.9;
+        shelf_height_a_c = 1.55
+        shelf_height_d_f = 1.32
+        shelf_height_g_i = 1.09
+        shelf_height_j_l = 0.84
 
-        bin_dict["D"]["pre-grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["D"]["pre-grasp"].orientation.w = 1;
-        bin_dict["D"]["pre-grasp"].position.x = 0.2;
-        bin_dict["D"]["pre-grasp"].position.y = 0.0;
-        bin_dict["D"]["pre-grasp"].position.z = 1.6;
+        shelf_heights = {"A": shelf_height_a_c,
+                            "B": shelf_height_a_c,
+                            "C": shelf_height_a_c,
+                            "D": shelf_height_d_f,
+                            "E": shelf_height_d_f,
+                            "F": shelf_height_d_f,
+                            "G": shelf_height_g_i,
+                            "H": shelf_height_g_i,
+                            "I": shelf_height_g_i,
+                            "J": shelf_height_j_l,
+                            "K": shelf_height_j_l,
+                            "L": shelf_height_j_l}
 
-        bin_dict["D"]["grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["D"]["grasp"].orientation.w = 1;
-        bin_dict["D"]["grasp"].position.x = 0.35;
-        bin_dict["D"]["grasp"].position.y = 0.0;
-        bin_dict["D"]["grasp"].position.z = 1.6;
+        shelf_height = shelf_heights[userdata.bin_id]
+        
+        # Get object info from work order
 
-        bin_dict["G"]["pre-grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["G"]["pre-grasp"].orientation.w = 1;
-        bin_dict["G"]["pre-grasp"].position.x = 0.2;
-        bin_dict["G"]["pre-grasp"].position.y = 0.0;
-        bin_dict["G"]["pre-grasp"].position.z = 1.3;
+        item_pose = geometry_msgs.msg.Pose()
 
-        bin_dict["G"]["grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["G"]["grasp"].orientation.w = 1;
-        bin_dict["G"]["grasp"].position.x = 0.35;
-        bin_dict["G"]["grasp"].position.y = 0.0;
-        bin_dict["G"]["grasp"].position.z = 1.3;
-
-        bin_dict["J"]["pre-grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["J"]["pre-grasp"].orientation.w = 1;
-        bin_dict["J"]["pre-grasp"].position.x = 0.2;
-        bin_dict["J"]["pre-grasp"].position.y = 0.0;
-        bin_dict["J"]["pre-grasp"].position.z = 1.0;
-
-        bin_dict["J"]["grasp"] = geometry_msgs.msg.Pose()
-        bin_dict["J"]["grasp"].orientation.w = 1;
-        bin_dict["J"]["grasp"].position.x = 0.35;
-        bin_dict["J"]["grasp"].position.y = 0.0;
-        bin_dict["J"]["grasp"].position.z = 1.0;
-
-        bin_dict["B"] = bin_dict["C"] = bin_dict["A"]
-
-        bin_dict["E"] = bin_dict["F"] = bin_dict["D"]
-
-        bin_dict["H"] = bin_dict["I"] = bin_dict["G"]
-
-        bin_dict["K"] = bin_dict["L"] = bin_dict["J"]
+        for shelf_bin in object_data["work_order"]:
+            if (shelf_bin["bin"] == "bin_" + str(userdata.bin_id) ):
+                item_pose.position.x = shelf_bin["pose"]["x"]
+                item_pose.position.y = shelf_bin["pose"]["y"]
+                item_pose.position.z = shelf_bin["pose"]["z"]
+                break
 
 
         # Pose in front of bin
+
+        pose_target = geometry_msgs.msg.Pose()
+        pose_target.orientation.w = 1;
+        pose_target.position.x = pre_grasp_dist + item_pose.position.x;
+        pose_target.position.y = robot_centered_offset + item_pose.position.y;
+        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z;
             
-        group.set_pose_target(bin_dict[userdata.bin_id]["pre-grasp"])
+        group.set_pose_target(pose_target)
         plan = group.plan()
         group.go(wait=True)
 
@@ -102,7 +105,13 @@ class Grasp(smach.State):
 
         # Move into bin
 
-        group.set_pose_target(bin_dict[userdata.bin_id]["grasp"])
+        pose_target = geometry_msgs.msg.Pose()
+        pose_target.orientation.w = 1;
+        pose_target.position.x = grasp_dist + item_pose.position.x;
+        pose_target.position.y = robot_centered_offset + item_pose.position.y;
+        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z;
+
+        group.set_pose_target(pose_target)
         plan = group.plan()
         group.go(wait=True)
 
