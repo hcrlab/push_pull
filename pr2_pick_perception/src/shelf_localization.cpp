@@ -258,9 +258,9 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     
     //visualize scene
     pcl::visualization::PCLVisualizer::Ptr vis;
+    pcl::visualization::PointCloudColorHandlerGenericField<PointT> scene_handler(scene, "x");//100, 100, 200);
     if (debug_) {
       vis.reset(new pcl::visualization::PCLVisualizer("Amchallenge -- Debug"));
-      pcl::visualization::PointCloudColorHandlerGenericField<PointT> scene_handler(scene, "x");//100, 100, 200);
       vis->addPointCloud(scene, scene_handler, "scene");
       vis->addCoordinateSystem();
       vis->setCameraPosition(-10,2,4,10,2,0,0,0,1);
