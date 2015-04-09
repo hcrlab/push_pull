@@ -4,16 +4,21 @@
 """
 
 from bin_data import BinData
+import argparse
 import rospy
 import smach
 import smach_ros
-import states
 import state_machine_factory
+import states
 
 
-def main():
+def main(mock=False):
     rospy.init_node('pr2_pick_state_machine')
-    sm = state_machine_factory.real_robot()
+    sm = None
+    if mock:
+        sm = state_machine_factory.mock_robot()
+    else:
+        sm = state_machine_factory.real_robot()
 
     # The current bin being attempted.
     sm.userdata.current_bin = None
@@ -37,4 +42,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--mock', action='store_true',
+        help=('True if you want to create a state machine with mock robot'
+            ' components.')
+    )
+    args = parser.parse_args(args=rospy.myargv()[1:])
+    main(args.mock)
