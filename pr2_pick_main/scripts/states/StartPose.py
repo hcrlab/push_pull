@@ -2,7 +2,6 @@ from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
-from std_msgs.msg import String
 import outcomes
 import rospy
 import smach
@@ -14,6 +13,15 @@ class StartPose(smach.State):
     name = 'START_POSE'
 
     def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head):
+        """Constructor for this state.
+
+        Args:
+          tts: A publisher for the TTS node
+          tuck_arms: The tuck arms service proxy.
+          move_torso: The torso service proxy.
+          set_grippers: The grippers service proxy.
+          move_head: The head service proxy.
+        """
         smach.State.__init__(self,
             outcomes=[
                 outcomes.START_POSE_SUCCESS,
