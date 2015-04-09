@@ -27,7 +27,8 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head):
     with sm:
         smach.StateMachine.add(
             states.StartPose.name,
-            states.StartPose(),
+            states.StartPose(tts, tuck_arms, move_torso, set_grippers,
+                             move_head),
             transitions={
                 outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE

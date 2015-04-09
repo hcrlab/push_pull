@@ -13,41 +13,41 @@ class StartPose(smach.State):
     """
     name = 'START_POSE'
 
-    def __init__(self):
+    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head):
         smach.State.__init__(self,
             outcomes=[
                 outcomes.START_POSE_SUCCESS,
                 outcomes.START_POSE_FAILURE
             ]
         )
-        self._tts = rospy.Publisher('/festival_tts', String)
-        rospy.wait_for_service('tuck_arms_service')
-        self._tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
-        rospy.wait_for_service('torso_service')
-        self._move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
-        rospy.wait_for_service('gripper_service')
-        self._set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
-        rospy.wait_for_service('move_head_service')
-        self._move_head = rospy.ServiceProxy('move_head_service', MoveHead)
+        self._tts = tts
+        self._tuck_arms = tuck_arms
+        self._move_torso = move_torso
+        self._set_grippers = set_grippers
+        self._move_head = move_head
 
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
 
+        self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, True)
         if not tuck_success:
             rospy.logerr('StartPose: TuckArms failed')
             self._tts.publish('Failed to tuck arms.')
 
+        self._move_torso.wait_for_service()
         torso_success = self._move_torso(MoveTorsoRequest.MIN_HEIGHT)
         if not torso_success:
             rospy.logerr('StartPose: MoveTorso failed')
             self._tts.publish('Failed to set torso.')
         
+        self._set_grippers.wait_for_service()
         grippers_success = self._set_grippers(False, False)
         if not grippers_success:
             rospy.logerr('StartPose: SetGrippers failed')
             self._tts.publish('Failed to close grippers.')
 
+        self._move_head.wait_for_service()
         move_head_success = self._move_head(1.5, -0.5, 1.5, 'base_footprint')
         if not grippers_success:
             rospy.logerr('StartPose: MoveHead failed')
