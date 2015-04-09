@@ -50,10 +50,11 @@ class Grasp(smach.State):
 
         # Assuming MoveToBin centers itself on the leftmost wall of each bin 
         # If this is not true, set offset
-        robot_centered_offset = 0 
-        pre_grasp_dist = 0.20
-        grasp_dist = 0.35
-        grasp_height = 0.05
+        robot_centered_offset = -0.3 
+        pre_grasp_dist = 0.41
+        grasp_dist = 0.55
+        grasp_height = 0.025
+        pre_grasp_height = grasp_height + 0.01
 
         shelf_height_a_c = 1.55
         shelf_height_d_f = 1.32
@@ -89,11 +90,12 @@ class Grasp(smach.State):
 
         # Pose in front of bin
 
+        rospy.loginfo("Pre-grasp")
         pose_target = geometry_msgs.msg.Pose()
-        pose_target.orientation.w = 1;
-        pose_target.position.x = pre_grasp_dist + item_pose.position.x;
-        pose_target.position.y = robot_centered_offset + item_pose.position.y;
-        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z;
+        pose_target.orientation.w = 1
+        pose_target.position.x = pre_grasp_dist + item_pose.position.x
+        pose_target.position.y = robot_centered_offset #+ item_pose.position.y
+        pose_target.position.z = shelf_height + grasp_height + pre_grasp_height + item_pose.position.z
             
         group.set_pose_target(pose_target)
         plan = group.plan()
@@ -101,16 +103,18 @@ class Grasp(smach.State):
 
         # Open Hand
 
+        rospy.loginfo("Open Hand")
         self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(True, True)
 
         # Move into bin
 
+        rospy.loginfo("Grasp")
         pose_target = geometry_msgs.msg.Pose()
-        pose_target.orientation.w = 1;
-        pose_target.position.x = grasp_dist + item_pose.position.x;
-        pose_target.position.y = robot_centered_offset + item_pose.position.y;
-        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z;
+        pose_target.orientation.w = 1
+        pose_target.position.x = grasp_dist + item_pose.position.x
+        pose_target.position.y = robot_centered_offset #+ item_pose.position.y;
+        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z
 
         group.set_pose_target(pose_target)
         plan = group.plan()
@@ -118,6 +122,7 @@ class Grasp(smach.State):
 
         # Close hand
 
+        rospy.loginfo("Close Hand")
         self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(False, False)
 

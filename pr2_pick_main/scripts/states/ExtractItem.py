@@ -43,11 +43,11 @@ class ExtractItem(smach.State):
 
         # Assuming MoveToBin centers itself on the leftmost wall of each bin 
         # If this is not true, set offset
-        robot_centered_offset = 0 
-        extract_dist = 0.20
-        grasp_dist = 0.35
-        grasp_height = 0.05
         lift_height = 0.03
+        robot_centered_offset = -0.3 
+        extract_dist = 0.41
+        grasp_dist = 0.55
+        grasp_height = 0.025
 
         shelf_height_a_c = 1.55
         shelf_height_d_f = 1.32
@@ -82,12 +82,12 @@ class ExtractItem(smach.State):
 
 
         # Lift item to clear bin lip
-            
+        rospy.loginfo("Lift")
         pose_target = geometry_msgs.msg.Pose()
-        pose_target.orientation.w = 1;
-        pose_target.position.x = grasp_dist + item_pose.position.x;
-        pose_target.position.y = robot_centered_offset + item_pose.position.y;
-        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height;
+        pose_target.orientation.w = 1
+        pose_target.position.x = grasp_dist + item_pose.position.x
+        pose_target.position.y = robot_centered_offset #+ item_pose.position.y;
+        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height
             
         group.set_pose_target(pose_target)
         plan = group.plan()
@@ -95,11 +95,12 @@ class ExtractItem(smach.State):
 
         # Pull item out of bin
 
+        rospy.loginfo("Extract")
         pose_target = geometry_msgs.msg.Pose()
-        pose_target.orientation.w = 1;
-        pose_target.position.x = grasp_dist + item_pose.position.x - extract_dist;
-        pose_target.position.y = robot_centered_offset + item_pose.position.y;
-        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z;
+        pose_target.orientation.w = 1
+        pose_target.position.x = grasp_dist + item_pose.position.x - extract_dist
+        pose_target.position.y = robot_centered_offset #+ item_pose.position.y;
+        pose_target.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height
 
         group.set_pose_target(bin_dict[userdata.bin_id]["extract"])
         plan = group.plan()
