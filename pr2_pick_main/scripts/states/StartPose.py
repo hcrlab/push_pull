@@ -1,6 +1,7 @@
 from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
+from pr2_pick_manipulation.srv import MoveHead
 from std_msgs.msg import String
 import outcomes
 import rospy
@@ -26,6 +27,8 @@ class StartPose(smach.State):
         self._move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
         rospy.wait_for_service('gripper_service')
         self._set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
+        rospy.wait_for_service('move_head_service')
+        self._move_head = rospy.ServiceProxy('move_head_service', MoveHead)
 
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
@@ -44,8 +47,14 @@ class StartPose(smach.State):
         if not grippers_success:
             rospy.logerr('StartPose: SetGrippers failed')
             self._tts.publish('Failed to close grippers.')
+
+        move_head_success = self._move_head(1.5, -0.5, 1.5, 'base_footprint')
+        if not grippers_success:
+            rospy.logerr('StartPose: MoveHead failed')
+            self._tts.publish('Failed to move head.')
         
-        if tuck_success and torso_success and grippers_success:
+        if (tuck_success and torso_success and grippers_success
+                and move_head_success):
             return outcomes.START_POSE_SUCCESS
         else:
             self._tts.publish('Start pose failed.')
