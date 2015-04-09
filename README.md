@@ -3,6 +3,9 @@ This is the main code repository for the UW Amazon Picking Challenge team.
 
 ## Getting started
 ```
+sudo pip install mock
+sudo apt-get install ros-hydro-cmake-modules
+
 cd ~/catkin_ws_hydro/src
 git clone --recursive git@gitlab.cs.washington.edu:amazon-picking-challenge-2015/pr2_pick.git
 cd ~/catkin_ws

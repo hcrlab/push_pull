@@ -3,12 +3,16 @@ from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from std_msgs.msg import String
+import mock
 import outcomes
 import rospy
 import smach
 import states
 
+
 def real_robot():
+    """State machine builder for the real robot.
+    """
     tts = rospy.Publisher('/festival_tts', String)
     tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
     move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
@@ -16,10 +20,63 @@ def real_robot():
     move_head = rospy.ServiceProxy('move_head_service', MoveHead)
     return build(tts, tuck_arms, move_torso, set_grippers, move_head)
 
+
+def side_effect(name):
+    """A side effect for mock functions.
+
+    Causes all wrapped functions to return True, and logs their arguments.
+    """
+    def wrapped(*args, **kwargs):
+        rospy.loginfo('Calling {}{}'.format(name, args))
+        return True
+    return wrapped
+
+
 def mock_robot():
-    pass
+    """Mock robot state machine builder.
+
+    This will cause all services and publishers to do nothing. Their arguments
+    will be printed to the screen, and all service calls will succeed.  This is
+    useful for when the robot is being used by someone else, but you want to
+    run the state machine and test the logic of your code at the same time.
+
+    To change the behavior for a particular state, you can just instantiate
+    real publishers or services for the state you're testing.
+    """
+    tts = rospy.Publisher('/festival_tts', String)
+    tts.publish = mock.Mock(side_effect=side_effect('tts'))
+
+    tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
+    tuck_arms.wait_for_service = mock.Mock(return_value=None)
+    tuck_arms.call = mock.Mock(side_effect=side_effect('tuck_arms'))
+
+    move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
+    move_torso.wait_for_service = mock.Mock(return_value=None)
+    move_torso.call = mock.Mock(side_effect=side_effect('move_torso'))
+
+    set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
+    set_grippers.wait_for_service = mock.Mock(return_value=None)
+    set_grippers.call = mock.Mock(side_effect=side_effect('set_grippers'))
+
+    move_head = rospy.ServiceProxy('move_head_service', MoveHead)
+    move_head.wait_for_service = mock.Mock(return_value=None)
+    move_head.call = mock.Mock(side_effect=side_effect('move_head'))
+    return build(tts, tuck_arms, move_torso, set_grippers, move_head)
+
 
 def build(tts, tuck_arms, move_torso, set_grippers, move_head):
+    """Builds the main state machine.
+
+    You probably want to call either real_robot() or mock_robot() to build a
+    state machine instead of this method.
+
+    Args:
+      tts: A text-to-speech publisher.
+      tuck_arms: The tuck arms service proxy.
+      move_torso: The torso service proxy.
+      set_grippers: The grippers service proxy.
+      move_head: The head service proxy.
+    """
     sm = smach.StateMachine(outcomes=[
         outcomes.CHALLENGE_SUCCESS,
         outcomes.CHALLENGE_FAILURE
