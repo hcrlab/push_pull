@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -73,6 +74,7 @@ add_service_files(
   MoveTorso.srv
   TuckArms.srv
   MoveHead.srv
+  MoveArm.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -157,7 +159,7 @@ add_executable(gripper_service_node src/gripper_service_node.cpp)
 add_executable(torso_service_node src/torso_service_node.cpp)
 add_executable(tuck_arms_service_node src/tuck_arms_service_node.cpp)
 add_executable(move_head_service_node src/move_head_service_node.cpp)
-
+add_executable(moveit_service_node src/moveit_service_node.cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 #add_dependencies(easy_boxes_demo
@@ -218,7 +220,9 @@ target_link_libraries(move_head_service_node
   ${catkin_LIBRARIES}
   move_head_service
 )
-
+target_link_libraries(moveit_service_node
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
