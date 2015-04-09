@@ -1,0 +1,6 @@
+# The input to this service is a rectangular region within an image that is produced
+# by the robot's camera.  The service returns the subset of the available point cloud that
+# intersects with the cone that is projected from the robot's camera through the 2D region.
+ROI2d region
+---
+sensor_msgs/PointCloud2 cloud

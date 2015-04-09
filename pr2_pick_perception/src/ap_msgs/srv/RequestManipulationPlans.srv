@@ -1,0 +1,8 @@
+trooper_msgs/HandPlan[] plans
+bool safe
+
+---
+#Return whether or not the planner was successful in publishing plans.
+bool success
+
+trooper_msgs/ManipulationPlan[] manip_plans

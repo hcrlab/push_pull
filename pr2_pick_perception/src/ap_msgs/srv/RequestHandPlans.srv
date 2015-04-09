@@ -1,0 +1,17 @@
+# Limb to be used for manipulation
+ManipulationLimb limb
+
+# Action to be performed
+ManipulationAction action
+
+# World Model ID of the object to be manipulated
+string obj_id
+
+# Flag whether or not collision checking should be performed
+bool safe
+
+---
+#Return whether or not the planner was successful in publishing plans.
+#TODO: Return an error code.
+bool success
+HandPlan[] plans
