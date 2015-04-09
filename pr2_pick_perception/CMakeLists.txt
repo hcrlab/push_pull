@@ -16,6 +16,8 @@ find_package(catkin REQUIRED
   pcl_ros
   pr2_pick_msgs
   roscpp
+  tf
+  tf2
 )
 
 ## System dependencies are found with CMake's conventions
@@ -80,6 +82,8 @@ add_message_files(
 add_service_files(
   FILES
   LocalizeShelf.srv
+  SetStaticTransform.srv
+  DeleteStaticTransform.srv
 )
 
 ## Generate actions in the 'action' folder
