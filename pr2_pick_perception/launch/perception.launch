@@ -39,6 +39,8 @@
     <arg name="debug" value="$(arg debug_shelf)" />
   </include>
 
+  <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" />
+
   <!-- Self filter laser scans -->
   <!--node pkg="robot_self_filter" type="self_filter" respawn="true" name="laser_self_filter" output="screen" machine="c2">
     <remap from="cloud_in" to="/tilt_scan_cloud" />
