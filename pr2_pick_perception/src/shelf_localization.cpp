@@ -81,6 +81,7 @@ bool ObjDetector::initialize()
     nh_local.param("pca_alignment",pca_alignment_,false);
     
     nh_local.param("only_yaw",only_yaw_,false);
+    nh_local.param("debug", debug_, false);
     
     //load db
     std::string db_file = "";
