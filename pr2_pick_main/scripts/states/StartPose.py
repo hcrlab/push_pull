@@ -29,7 +29,6 @@ class StartPose(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
-        self._tts.publish('Setting start pose.')
 
         tuck_success = self._tuck_arms(True, True)
         if not tuck_success:
@@ -47,7 +46,6 @@ class StartPose(smach.State):
             self._tts.publish('Failed to close grippers.')
         
         if tuck_success and torso_success and grippers_success:
-            self._tts.publish('Start pose succeeded.')
             return outcomes.START_POSE_SUCCESS
         else:
             self._tts.publish('Start pose failed.')
