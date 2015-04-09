@@ -7,16 +7,36 @@ project(pr2_pick_perception)
 find_package(catkin REQUIRED
   actionlib
   actionlib_msgs
+  cv_bridge
+  geometry_msgs
+  image_geometry
+  image_transport
+  laser_assembler
   message_generation
+  pcl_ros
   pr2_pick_msgs
   roscpp
 )
 
-set(CMAKE_CXX_FLAGS "-std=c++0x")
-
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost 1.46.1 REQUIRED COMPONENTS signals regex system thread filesystem)
+find_package(OpenCV)
+find_package(PCL REQUIRED)
+find_package(cmake_modules REQUIRED)
+find_package(Eigen REQUIRED)
 
+MESSAGE( STATUS "PCL: " ${PCL_LIBRARY_DIRS} )
+MESSAGE( STATUS "Boost: "  ${Boost_LIBRARIES} )
+
+include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+link_directories(${catkin_LIBRARY_DIRS} ${PCL_LIBRARY_DIRS})
+link_libraries(${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
+find_package(OpenMP REQUIRED)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=c++0x")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -48,18 +68,19 @@ set(CMAKE_CXX_FLAGS "-std=c++0x")
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  Object.msg
+  ObjectList.msg
+  ObjectDetectionRequest.msg
+  ROI2d.msg
+)
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  LocalizeShelf.srv
+)
 
 ## Generate actions in the 'action' folder
 add_action_files(
@@ -71,6 +92,7 @@ add_action_files(
 generate_messages(
   DEPENDENCIES
   actionlib_msgs
+  geometry_msgs
   pr2_pick_msgs
 )
 
@@ -86,8 +108,24 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mock_perception
-  CATKIN_DEPENDS actionlib_msgs pr2_pick_msgs
-#  DEPENDS system_lib
+  CATKIN_DEPENDS
+    actionlib_msgs
+    cv_bridge
+    geometry_msgs
+    image_geometry
+    image_transport
+    laser_assembler
+    pcl_ros
+    pr2_pick_msgs
+    roscpp
+  DEPENDS
+    eigen
+    boost
+    opencv
+    PCL
+    libqhull
+    libvtk
+    libvtk-qt
 )
 
 ###########
@@ -102,6 +140,9 @@ include_directories(include)
 add_library(mock_perception
   src/mock_perception.cpp
 )
+add_executable(shelf_localization_service_node
+  src/shelf_localization.cpp
+)
 
 ## Declare a cpp executable
 add_executable(mock_perception_easy_boxes src/mock_perception_easy_boxes.cpp)
@@ -110,7 +151,11 @@ add_executable(mock_perception_easy_boxes src/mock_perception_easy_boxes.cpp)
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(mock_perception
   pr2_pick_msgs_generate_messages_cpp
-  mock_perception_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+add_dependencies(shelf_localization_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
 )
 add_dependencies(mock_perception_easy_boxes
   mock_perception
@@ -121,6 +166,12 @@ add_dependencies(mock_perception_easy_boxes
 target_link_libraries(mock_perception ${catkin_LIBRARIES})
 target_link_libraries(mock_perception_easy_boxes
   mock_perception
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(shelf_localization_service_node
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
 

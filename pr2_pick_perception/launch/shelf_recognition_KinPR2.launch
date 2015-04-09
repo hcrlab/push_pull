@@ -1,0 +1,36 @@
+<launch>
+  <arg name="debug" default="false" /> <!-- Whether to show debug visualizations. -->
+  <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node" name="shelf_obj_detector" respawn="true" output="screen">
+   <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
+
+   <param name="iter" value="70"/>
+   <param name="minClusterSize" value="350"/>
+   <param name="radius_search" value="0.015"/>
+
+   <param name="DistanceThreshold" value="0.05"/>
+   <param name="MinClusterSize" value="250"/> 
+   <param name="PlanesegThres" value="0.03"/>   <!-- was 0.05 for non-hose, to remove wall behind valve -->
+   <param name="PlaneSize" value="10000"/> <!-- WAS 4500,50000 -->
+   <param name="highplane" value="2.5" /> <!-- removes points further than this limit -->
+ 
+  <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
+
+   <param name="RobotReference" value="/base_footprint" />  
+   <param name="WorldReference" value="/map" /> <!-- Will default to base_footprint if there's no map. -->
+
+   <param name="manual_segmentation" value="false" />
+   <param name="pca_alignment" value="false"/>
+   <param name="debug" value="$(arg debug)"/>
+   
+   <remap from="/image" to="/head_mount_kinect/rgb/image_rect_color" />
+   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" />
+   <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
+  </node>
+
+
+  <arg name="tf_rate" default="20"/>
+
+  <!--   params are "x y z yaw pitch roll parent child rate" -->
+    <!--   <node pkg="tf" type="static_transform_publisher" name="cam_left_pub" args="0.0 0.0 0.0   1.5708 3.14159  1.5708  /model_frame /camera_rgb_optical_frame  $(arg tf_rate)"/> -->
+</launch> 
+
