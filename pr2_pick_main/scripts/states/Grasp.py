@@ -14,7 +14,7 @@ class Grasp(smach.State):
     """
     name = 'GRASP'
 
-    def __init__(self):
+    def __init__(self, set_grippers):
         smach.State.__init__(
             self,
             outcomes=[
@@ -23,6 +23,8 @@ class Grasp(smach.State):
             ],
             input_keys=['bin_id']
         )
+
+        self._set_grippers = set_grippers
 
     def execute(self, userdata):
 
@@ -43,8 +45,6 @@ class Grasp(smach.State):
 
         group = moveit_commander.MoveGroupCommander("right_arm")
 
-        rospy.wait_for_service('gripper_service')
-        self._set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
 
         # Parameters
 
@@ -101,6 +101,7 @@ class Grasp(smach.State):
 
         # Open Hand
 
+        self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(True, True)
 
         # Move into bin
@@ -117,6 +118,7 @@ class Grasp(smach.State):
 
         # Close hand
 
+        self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(False, False)
 
 

@@ -6,7 +6,6 @@ import geometry_msgs.msg
 
 import json
 import os
-from pr2_pick_manipulation.srv import SetGrippers
 
 class ExtractItem(smach.State):
     """Extracts the target item from the bin.
@@ -39,9 +38,6 @@ class ExtractItem(smach.State):
         robot = moveit_commander.RobotCommander()
 
         group = moveit_commander.MoveGroupCommander("right_arm")
-
-        rospy.wait_for_service('gripper_service')
-        self._set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
 
         # Parameters
 
