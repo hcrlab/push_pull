@@ -4,7 +4,6 @@ import smach
 import tf
 
 import outcomes
-from pr2_pick_manipulation.srv import DriveLinear, MoveTorso
 
 
 class MoveToBin(smach.State):
@@ -12,7 +11,7 @@ class MoveToBin(smach.State):
     name = 'MOVE_TO_BIN'
 
 
-    def __init__(self):
+    def __init__(self, drive_linear, move_torso):
         smach.State.__init__(
             self,
             outcomes=[
@@ -21,6 +20,8 @@ class MoveToBin(smach.State):
             ],
             input_keys=['bin_id', 'base_to_shelf_tf']
         )
+        self.drive_linear = drive_linear
+        self.move_torso = move_torso
 
         self.torso_height_by_bin = \
             {letter: 0.33 for letter in ('A', 'B', 'C')}
@@ -57,14 +58,14 @@ class MoveToBin(smach.State):
         y_velocity = velocity * (y_distance / distance)
         rospy.loginfo('Moving a distance of {} with x_velocity {} and y_velocity {}'
                       .format(distance, x_velocity, y_velocity))
-        drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
+        drive_linear.wait_for_service()
         result = drive_linear(x_velocity, y_velocity, distance)
 
         if not result:
             return outcomes.MOVE_TO_BIN_FAILURE
 
         # set torso height for the given shelf
-        move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
+        move_torso.wait_for_service()
         result = move_torso(self.torso_height_by_bin[userdata.bin_id])
 
         if not result:
