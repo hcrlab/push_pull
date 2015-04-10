@@ -49,6 +49,7 @@ Contains common message types for the picking challenge.
 ### pr2_pick_perception
 - Contains a launch file which starts the Kinect, shelf localization, and fingertip sensor.
 - Contains a shelf localization service.
+- Contains a static tf transform publisher.
 - Contains a script for recording point cloud data.
 - Contains a "mock perception" class for testing purposes.
 
