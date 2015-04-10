@@ -78,7 +78,7 @@ class Grasp(smach.State):
                             "K": shelf_height_j_l,
                             "L": shelf_height_j_l}
 
-        shelf_height = shelf_heights["A"]
+        shelf_height = shelf_heights[userdata.bin_id]
         
         # Get object info from work order
 
