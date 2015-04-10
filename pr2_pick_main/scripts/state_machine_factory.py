@@ -58,26 +58,6 @@ def real_robot_services():
      }
 
 
-# def real_robot():
-#     """State machine builder for the real robot.
-#     """
-#     tts = rospy.Publisher('/festival_tts', String)
-#     tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
-#     move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
-#     set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
-#     move_head = rospy.ServiceProxy('move_head_service', MoveHead)
-#     moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
-#     localize_shelf = rospy.ServiceProxy('perception/localize_shelf',
-#                                         LocalizeShelf)
-#     set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
-#                                        SetStaticTransform)
-#     drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
-#     drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
-#     return build(tts, tuck_arms, move_torso, set_grippers, move_head,
-#                  moveit_move_arm, localize_shelf, set_static_tf, drive_linear,
-#                  drive_angular)
-
-
 def side_effect(name, return_value=True):
     """A side effect for mock functions.
 
