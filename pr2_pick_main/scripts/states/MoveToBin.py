@@ -64,6 +64,7 @@ class MoveToBin(smach.State):
             rospy.Duration(5)
         )
         target_in_robot_frame = listener.transformPoint('base_link', target_in_shelf_frame)
+        rospy.loginfo('target_in_robot_frame.point {}'.format(target_in_robot_frame.point))
 
         # calculate x and y velocity components to drive diagonally
         x_distance = target_in_robot_frame.point.x
