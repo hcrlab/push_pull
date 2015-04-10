@@ -8,6 +8,8 @@ from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_perception.srv import LocalizeShelf
 from pr2_pick_perception.srv import SetStaticTransform
 from pr2_pick_perception.srv import DeleteStaticTransform
+from pr2_pick_perception.srv import LocalizeShelfResponse
+from pr2_pick_perception.msg import Object
 from std_msgs.msg import String
 import mock
 import outcomes
@@ -36,14 +38,14 @@ def real_robot():
                  drive_angular)
 
 
-def side_effect(name):
+def side_effect(name, return_value=True):
     """A side effect for mock functions.
 
     Causes all wrapped functions to return True, and logs their arguments.
     """
     def wrapped(*args, **kwargs):
         rospy.loginfo('Calling {}{}'.format(name, args))
-        return True
+        return return_value
     return wrapped
 
 
@@ -82,11 +84,17 @@ def mock_robot():
     moveit_move_arm.call = mock.Mock(
         side_effect=side_effect('moveit_move_arm'))
 
+
+    shelf_response = LocalizeShelfResponse()
+    shelf_obj = Object()
+    shelf_obj.header.frame_id = 'odom_combined'
+    shelf_response.locations.objects.append(shelf_obj)
     localize_shelf = rospy.ServiceProxy('perception/localize_shelf',
                                         LocalizeShelf)
     localize_shelf.wait_for_service = mock.Mock(return_value=None)
     localize_shelf.call = mock.Mock(
-        side_effect=side_effect('localize_shelf'))
+        side_effect=side_effect('localize_shelf',
+                                return_value=shelf_response))
 
     set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
                                         SetStaticTransform)
