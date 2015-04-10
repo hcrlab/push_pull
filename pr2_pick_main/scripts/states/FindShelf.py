@@ -36,6 +36,7 @@ class FindShelf(smach.State):
         if len(response.locations.objects) == 0:
             return outcomes.FIND_SHELF_FAILURE
         shelf = response.locations.objects[0]
+        rospy.loginfo(shelf)
         shelf_ps = PoseStamped()
         shelf_ps.pose = shelf.pose
         shelf_ps.header = shelf.header
