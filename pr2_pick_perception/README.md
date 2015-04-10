@@ -6,6 +6,8 @@ This contains a launch file called perception.launch, which starts the Kinect, t
 
 ## Services
 ### Shelf localization
+Localizes the shelf by fitting it to a shelf model.
+The coordinate frame for the shelf is at the bottom center (?)
 ```
 roslaunch pr2_pick_perception perception.launch
 rosservice call /perception/localize_shelf
