@@ -45,9 +45,9 @@ class Grasp(smach.State):
 
         rospy.loginfo('Grasping item in bin {}'.format(userdata.bin_id))
 
-        robot = moveit_commander.RobotCommander()
+        #robot = moveit_commander.RobotCommander()
 
-        group = moveit_commander.MoveGroupCommander("right_arm")
+        #group = moveit_commander.MoveGroupCommander("right_arm")
 
 
         # Parameters
@@ -104,12 +104,12 @@ class Grasp(smach.State):
         pose.pose.orientation.z = -0.4802;
         pose.pose.orientation.w = -0.2458;
 
-        #self._moveit_move_arm.wait_for_service()
-        #self._moveit_move_arm(pose)
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(pose, 0, "right")
 
-        group.set_pose_target(pose)
-        plan = group.plan()
-        group.go(wait=True)
+        #group.set_pose_target(pose)
+        #plan = group.plan()
+        #group.go(wait=True)
 
         # Pose in front of bin
 
@@ -133,12 +133,12 @@ class Grasp(smach.State):
         rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
         
-        #self._moveit_move_arm.wait_for_service()
-        #self._moveit_move_arm(pose_target)
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(pose_target, 0, "right")
 
-        group.set_pose_target(pose_target)
-        plan = group.plan()
-        group.go(wait=True)
+        #group.set_pose_target(pose_target)
+        #plan = group.plan()
+        #group.go(wait=True)
 
         # Open Hand
 
@@ -169,12 +169,12 @@ class Grasp(smach.State):
         rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
-        #self._moveit_move_arm.wait_for_service()
-        #self._moveit_move_arm(pose_target)
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(pose_target, 0, "right")
 
-        group.set_pose_target(pose_target)
-        plan = group.plan()
-        group.go(wait=True)
+        #group.set_pose_target(pose_target)
+        #plan = group.plan()
+        #group.go(wait=True)
 
         # Close hand
 
