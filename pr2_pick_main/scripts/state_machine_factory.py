@@ -84,7 +84,6 @@ def mock_robot():
     moveit_move_arm.call = mock.Mock(
         side_effect=side_effect('moveit_move_arm'))
 
-
     shelf_response = LocalizeShelfResponse()
     shelf_obj = Object()
     shelf_obj.header.frame_id = 'odom_combined'
