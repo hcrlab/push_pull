@@ -31,8 +31,8 @@ def real_robot():
                                         LocalizeShelf)
     set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
                                        SetStaticTransform)
-    drive_linear = rospy.ServiceProxy('drive_linear', DriveLinear)
-    drive_angular = rospy.ServiceProxy('drive_angular', DriveAngular)
+    drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
+    drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
     return build(tts, tuck_arms, move_torso, set_grippers, move_head,
                  moveit_move_arm, localize_shelf, set_static_tf, drive_linear,
                  drive_angular)
