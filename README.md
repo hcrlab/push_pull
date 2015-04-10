@@ -13,6 +13,12 @@ rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
 catkin_make
 ```
 
+If you have a problem with catkin not finding `pr2_pretouch_optical_dist`, then from the root of the repository, run:
+```
+git submodule init
+git submodule update
+```
+
 ## Packages
 ### festival_tts
 A text-to-speech node.
