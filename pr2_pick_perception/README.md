@@ -6,9 +6,32 @@ This contains a launch file called perception.launch, which starts the Kinect, t
 
 ## Services
 ### Shelf localization
+Localizes the shelf by fitting it to a shelf model.
+The coordinate frame for the shelf is at the bottom center (?)
 ```
 roslaunch pr2_pick_perception perception.launch
 rosservice call /perception/localize_shelf
+```
+
+### Static transform publisher
+There's a service for broadcasting static transforms.
+Use `SetStaticTransform` to add or update a static transform.
+Use `DeleteStaticTransform` to delete a static transform.
+
+Sample code:
+```py
+from pr2_pick_perception.srv import SetStaticTransform
+
+transform = TransformStamped()
+transform.header.frame_id = 'odom_combined' # Parent ("from this frame") frame. Make sure it's a fixed frame.
+transform.header.stamp = rospy.Time.now()
+transform.transform.translation = ...
+transform.transform.rotation = ...
+transform.child_frame_id = 'shelf'
+
+set_static_tf = rospy.ServiceProxy('perception/set_static_transform', SetStaticTransform)
+set_static_tf.wait_for_service()
+set_static_tf(transform)
 ```
 
 #### Debugging
@@ -29,10 +52,6 @@ There are scripts for recording various topics in the scripts folder.
 roslaunch pr2_pick_perception perception.launch
 ./record_kinect.sh # Records 2 seconds of Kinect data.
 ```
-
-## Actions
-### GetItems
-Given a bin ID (0-11), return a list of items, where each item includes a 6D pose.
 
 ## Libraries
 ### mock_perception.h

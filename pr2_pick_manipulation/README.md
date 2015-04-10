@@ -12,8 +12,8 @@ Use manipulation.launch to launch all these services.
 Rotates the robot. It's recommended to only use the constants `RIGHT_90`, `LEFT_90`, and `TURN_180` for the 2nd parameter.
 ```py
 from pr2_pick_manipulation.srv import DriveAngular, DriveAngularRequest
-rospy.wait_for_service('drive_angular_service')
 drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
+drive_angular.wait_for_service()
 # Turn right 90 degrees at 0.1 radians / second
 drive_angular(0.1, DriveAngularRequest.RIGHT_90)
 ```
@@ -23,8 +23,8 @@ Drives the robot in a straight line.
 
 ```py
 from pr2_pick_manipulation.srv import DriveLinear
-rospy.wait_for_service('drive_linear_service')
 drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
+drive_linear.wait_for_service()
 drive_linear(0, 0.1, 0.2) # Drive left at 0.1 meters / second for 20 cm.
 ```
 
@@ -32,8 +32,8 @@ drive_linear(0, 0.1, 0.2) # Drive left at 0.1 meters / second for 20 cm.
 Sets the robot's torso height.
 ```py
 from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
-rospy.wait_for_service('torso_service')
 move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
+move_torso.wait_for_service()
 move_torso(0.1) # Move torso to position 10 cm up.
 move_torso(MoveTorsoRequest.MAX_HEIGHT) # Move torso to maximum height.
 ```
@@ -42,8 +42,8 @@ move_torso(MoveTorsoRequest.MAX_HEIGHT) # Move torso to maximum height.
 Opens or closes the grippers.
 ```py
 from pr2_pick_manipulation.srv import SetGrippers
-rospy.wait_for_service('gripper_service')
 set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
+set_grippers.wait_for_service()
 set_grippers(False, True) # Close left hand and open right hand.
 ```
 
@@ -51,8 +51,8 @@ set_grippers(False, True) # Close left hand and open right hand.
 Tucks or untucks the arms.
 ```py
 from pr2_pick_manipulation.srv import TuckArms
-rospy.wait_for_service('tuck_arms_service')
 tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
+tuck_arms.wait_for_service()
 tuck_arms(False, True) # Tuck the left arm and untuck the right arm.
 ```
 
