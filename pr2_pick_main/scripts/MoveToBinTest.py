@@ -8,7 +8,7 @@ import tf
 # Simple test to execute the MoveToBin state for a hard coded bin
 # How to run:
 # > rosrun pr2_pick_manipulation torso_service_node
-# > rosrun pr2_pick_manipulatn driver_service_node
+# > rosrun pr2_pick_manipulation driver_service_node
 # > rosrun pr2_pick_main mock_shelf_position.py
 # > rosrun pr2_pick_main MoveToBinTest.py
 
