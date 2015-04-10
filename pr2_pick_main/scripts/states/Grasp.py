@@ -3,11 +3,11 @@ import rospy
 import smach
 import moveit_commander
 import geometry_msgs.msg
-
+import tf
 import json
 import os
 from pr2_pick_manipulation.srv import SetGrippers
-
+import rospkg
 
 class Grasp(smach.State):
     """Grasps an item in the bin.
@@ -49,6 +49,34 @@ class Grasp(smach.State):
 
         #group = moveit_commander.MoveGroupCommander("right_arm")
 
+        scene = moveit_commander.PlanningSceneInterface()
+        scene.remove_world_object("shelf")
+
+    
+
+        shelf_pose = geometry_msgs.msg.PoseStamped()
+        shelf_pose.header.frame_id = "/shelf"
+        shelf_pose.pose.position.x = 0.0
+        shelf_pose.pose.position.y = 0.0
+        shelf_pose.pose.position.z = 0.0
+        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
+        shelf_pose.pose.orientation.x = q[0]
+        shelf_pose.pose.orientation.y = q[1]
+        shelf_pose.pose.orientation.z = q[2]
+        shelf_pose.pose.orientation.w = q[3]
+        # get an instance of RosPack with the default search paths
+        rospack = rospkg.RosPack()
+
+        # list all packages, equivalent to rospack list
+        #rospack.list_pkgs() 
+
+        # get the file path for rospy_tutorials
+        path = rospack.get_path('pr2_pick_contest')
+
+
+        #self.scene = moveit_commander.PlanningSceneInterface()
+        shelf_mesh = path + "/config/kiva_pod/meshes/pod_lowres.stl" # or better, use find_package()
+        scene.add_mesh("shelf", shelf_pose, shelf_mesh)
 
         # Parameters
 
