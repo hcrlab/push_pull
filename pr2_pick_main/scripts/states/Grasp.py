@@ -76,7 +76,7 @@ class Grasp(smach.State):
 
         #self.scene = moveit_commander.PlanningSceneInterface()
         shelf_mesh = path + "/config/kiva_pod/meshes/pod_lowres.stl" # or better, use find_package()
-        scene.add_mesh("shelf", shelf_pose, shelf_mesh)
+        #scene.add_mesh("shelf", shelf_pose, shelf_mesh)
 
         # Parameters
 
