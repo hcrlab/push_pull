@@ -38,7 +38,7 @@ class MoveToBin(smach.State):
 
     name = 'MOVE_TO_BIN'
 
-    def __init__(self, drive_linear, move_torso):
+    def __init__(self, tts, drive_linear, move_torso):
         '''
         @param drive_linear - service proxy for the drive_linear service
         @param move_torso - service proxy for the move_torso service
@@ -51,6 +51,7 @@ class MoveToBin(smach.State):
             ],
             input_keys=['bin_id', 'base_to_shelf_tf']
         )
+        self._tts = tts
         self.drive_linear = drive_linear
         self.move_torso = move_torso
 
@@ -72,6 +73,7 @@ class MoveToBin(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
+        self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
 
         # find the target point in robot coordinates
         listener = tf.TransformListener()

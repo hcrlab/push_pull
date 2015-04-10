@@ -36,6 +36,7 @@ class StartPose(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
+        self._tts.publish('Setting start pose.')
 
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, True)
