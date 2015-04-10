@@ -26,7 +26,7 @@ def real_robot():
 
 def test_move_to_bin():
     '''
-    Minimal state machine to test move_to_bin service, using real
+    Minimal state machine to test MoveToBin state, using real
     robot services
     '''
     all_services = real_robot_services()
