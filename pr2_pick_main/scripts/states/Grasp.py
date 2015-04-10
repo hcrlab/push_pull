@@ -78,7 +78,7 @@ class Grasp(smach.State):
                             "K": shelf_height_j_l,
                             "L": shelf_height_j_l}
 
-        shelf_height = shelf_heights[userdata.bin_id]
+        shelf_height = shelf_heights["A"]
         
         # Get object info from work order
 
@@ -105,7 +105,7 @@ class Grasp(smach.State):
         pose.pose.orientation.w = -0.2458;
 
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose, 0, "right")
+        self._moveit_move_arm(pose, 0, "right_arm")
 
         #group.set_pose_target(pose)
         #plan = group.plan()
@@ -134,7 +134,7 @@ class Grasp(smach.State):
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
         
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, "right")
+        self._moveit_move_arm(pose_target, 0, "right_arm")
 
         #group.set_pose_target(pose_target)
         #plan = group.plan()
@@ -170,7 +170,7 @@ class Grasp(smach.State):
         rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, "right")
+        self._moveit_move_arm(pose_target, 0, "right_arm")
 
         #group.set_pose_target(pose_target)
         #plan = group.plan()

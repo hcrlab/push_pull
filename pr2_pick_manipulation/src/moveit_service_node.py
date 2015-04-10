@@ -24,12 +24,9 @@ class ArmMover:
         plan = None
         success = False
 
-        rospy.loginfo("Requested to move arm")
-        if req.arm == "left":
-            self._group = moveit_commander.MoveGroupCommander("left_arm")
+        rospy.loginfo("Requested to move: " + req.group)
+        self._group = moveit_commander.MoveGroupCommander(req.group)
 
-        else:
-            self._group = moveit_commander.MoveGroupCommander("right_arm")
 
         self._group.set_pose_target(req.goal)
 
