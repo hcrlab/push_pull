@@ -1,6 +1,8 @@
+from geometry_msgs.msg import Point, PointStamped
 import math
 import rospy
 import smach
+from std_msgs.msg import Header
 import tf
 
 import outcomes
@@ -12,6 +14,10 @@ class MoveToBin(smach.State):
 
 
     def __init__(self, drive_linear, move_torso):
+        '''
+        @param drive_linear - service proxy for the drive_linear service
+        @param move_torso - service proxy for the move_torso service
+        '''
         smach.State.__init__(
             self,
             outcomes=[
@@ -33,40 +39,60 @@ class MoveToBin(smach.State):
             {letter: 0.015 for letter in ('J', 'K', 'L')})
 
         self.strafe_by_bin = \
-            {letter: 0.3 for letter in ('A', 'D', 'G', 'J')}
+            {letter: 0.53 for letter in ('A', 'D', 'G', 'J')}
         self.strafe_by_bin.update(
-            {letter: 0.0 for letter in ('B', 'E', 'H', 'K')})
+            {letter: 0.23 for letter in ('B', 'E', 'H', 'K')})
         self.strafe_by_bin.update(
-            {letter: -0.3 for letter in ('C', 'F', 'I', 'L')})
+            {letter: -0.07 for letter in ('C', 'F', 'I', 'L')})
 
     def execute(self, userdata):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
 
         # get transform from base_link to shelf
-        (translation, rotation) = userdata.base_to_shelf_tf
-        rospy.loginfo('base to shelf translation: {} rotation: {}'
-                      .format(translation, rotation))
+        # (translation, rotation) = userdata.base_to_shelf_tf
+        # rospy.loginfo('base to shelf translation: {} rotation: {}'
+        #               .format(translation, rotation))
 
+        # x_distance = translation[0] - 0.9
+        # y_distance = translation[1] + self.strafe_by_bin[userdata.bin_id]
 
-        # move roughly to shelf
-        # center of robot's base should be 90 cm from center of shelf's base
-        x_distance = translation[0] - 0.9
-        y_distance = translation[1] + self.strafe_by_bin[userdata.bin_id]
+        # find the target point in robot coordinates
+        listener = tf.TransformListener()
+        target_in_shelf_frame = PointStamped(
+            header=Header(frame_id='shelf'),
+            point=Point(x=-1.1,
+                        y=self.strafe_by_bin[userdata.bin_id],
+                        z=0.0)
+        )
+        rospy.loginfo('Waiting for tf...')
+        listener.waitForTransform(
+            'base_link',
+            'shelf',
+            rospy.Time(0),
+            rospy.Duration(5)
+        )
+        target_in_robot_frame = listener.transformPoint('base_link', target_in_shelf_frame)
+
+        # calculate x and y velocity components to drive diagonally
+        x_distance = target_in_robot_frame.point.x
+        y_distance = target_in_robot_frame.point.y
         velocity = 0.1  # meters per second - go slow so as not to overshoot
         distance = math.sqrt(pow(x_distance, 2) + pow(y_distance, 2))
         x_velocity = velocity * (x_distance / distance)
         y_velocity = velocity * (y_distance / distance)
+
+        # go there
         rospy.loginfo('Moving a distance of {} with x_velocity {} and y_velocity {}'
                       .format(distance, x_velocity, y_velocity))
-        drive_linear.wait_for_service()
-        result = drive_linear(x_velocity, y_velocity, distance)
+        self.drive_linear.wait_for_service()
+        result = self.drive_linear(x_velocity, y_velocity, distance)
 
         if not result:
             return outcomes.MOVE_TO_BIN_FAILURE
 
         # set torso height for the given shelf
-        move_torso.wait_for_service()
-        result = move_torso(self.torso_height_by_bin[userdata.bin_id])
+        self.move_torso.wait_for_service()
+        result = self.move_torso(self.torso_height_by_bin[userdata.bin_id])
 
         if not result:
             return outcomes.MOVE_TO_BIN_FAILURE

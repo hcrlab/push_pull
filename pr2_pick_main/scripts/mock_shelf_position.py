@@ -17,7 +17,7 @@ if __name__ == "__main__":
             (2.3, -0.4, 0),
             tf.transformations.quaternion_from_euler(0, 0, 0),
             rospy.Time.now(),
-            'robot_shelf_position',
+            'shelf',
             'odom_combined'
         )
         rospy.sleep(rospy.Duration(0.05))
