@@ -19,23 +19,43 @@ import states
 
 
 def real_robot():
-    """State machine builder for the real robot.
-    """
-    tts = rospy.Publisher('/festival_tts', String)
-    tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
-    move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
-    set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
-    move_head = rospy.ServiceProxy('move_head_service', MoveHead)
-    moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
-    localize_shelf = rospy.ServiceProxy('perception/localize_shelf',
-                                        LocalizeShelf)
-    set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
-                                       SetStaticTransform)
-    drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
-    drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head,
-                 moveit_move_arm, localize_shelf, set_static_tf, drive_linear,
-                 drive_angular)
+    ''' State machine builder for the real robot. '''
+    services = real_robot_services()
+    return build(**services)
+
+
+def test_move_to_bin():
+    '''
+    Minimal state machine to test MoveToBin state, using real
+    robot services
+    '''
+    all_services = real_robot_services()
+    services = {
+        key: all_services[key]
+        for key in {
+            'tts', 'tuck_arms', 'move_torso', 'set_grippers',
+            'move_head', 'drive_linear', 'localize_shelf',
+            'set_static_tf'
+        }
+    }
+    return build_for_move_to_bin(**services)
+
+
+def real_robot_services():
+    return {
+        'tts': rospy.Publisher('/festival_tts', String),
+        'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
+        'move_torso': rospy.ServiceProxy('torso_service', MoveTorso),
+        'set_grippers': rospy.ServiceProxy('gripper_service', SetGrippers),
+        'move_head': rospy.ServiceProxy('move_head_service', MoveHead),
+        'moveit_move_arm': rospy.ServiceProxy('moveit_service', MoveArm),
+        'localize_shelf': rospy.ServiceProxy('perception/localize_shelf',
+                                        LocalizeShelf),
+        'set_static_tf': rospy.ServiceProxy('perception/set_static_transform',
+                                       SetStaticTransform),
+        'drive_linear': rospy.ServiceProxy('drive_linear_service', DriveLinear),
+        'drive_angular': rospy.ServiceProxy('drive_angular_service', DriveAngular),
+     }
 
 
 def side_effect(name, return_value=True):
@@ -222,6 +242,59 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
                 'bin_id': 'current_bin',
                 'bin_data': 'bin_data',
                 'output_bin_data': 'bin_data',
+            }
+        )
+    return sm
+
+
+def build_for_move_to_bin(tts, tuck_arms, move_torso, drive_linear,
+                          set_grippers, move_head, localize_shelf,
+                          set_static_tf):
+    sm = smach.StateMachine(outcomes=[
+        outcomes.CHALLENGE_SUCCESS,
+        outcomes.CHALLENGE_FAILURE
+    ])
+    with sm:
+        smach.StateMachine.add(
+            states.StartPose.name,
+            states.StartPose(tts, tuck_arms, move_torso, set_grippers,
+                             move_head),
+            transitions={
+                outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
+            }
+        )
+        smach.StateMachine.add(
+            states.FindShelf.name,
+            states.FindShelf(localize_shelf, set_static_tf),
+            transitions={
+                outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
+                outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+            }
+        )
+        smach.StateMachine.add(
+            states.UpdatePlan.name,
+            states.UpdatePlan(tts),
+            transitions={
+                outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
+                outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
+                outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
+            },
+            remapping={
+                'bin_data': 'bin_data',
+                'output_bin_data': 'bin_data',
+                'next_bin': 'current_bin'
+            }
+        )
+        smach.StateMachine.add(
+            states.MoveToBin.name,
+            states.MoveToBin(drive_linear, move_torso),
+            transitions={
+                outcomes.MOVE_TO_BIN_SUCCESS: states.UpdatePlan.name,
+                outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+            },
+            remapping={
+                'bin_id': 'current_bin'
             }
         )
     return sm

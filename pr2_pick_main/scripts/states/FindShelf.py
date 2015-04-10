@@ -28,6 +28,7 @@ class FindShelf(smach.State):
         self._localize_shelf = localize_shelf
         self._set_static_tf = set_static_tf
         self._tf_listener = tf.TransformListener()
+        self._tf_set = False
 
     def execute(self, userdata):
         rospy.loginfo('Finding shelf.')
@@ -50,14 +51,20 @@ class FindShelf(smach.State):
         #        shelf.header.frame_id, 'odom_combined'))
         #    return outcomes.FIND_SHELF_FAILURE
 
-        shelf_odom = PoseStamped()
-        shelf_odom.pose.position.x = 2.2765
-        shelf_odom.pose.position.y = -0.53
-        shelf_odom.pose.position.z = 0
-        shelf_odom.pose.orientation.w = 1
-        shelf_odom.pose.orientation.x = 0
-        shelf_odom.pose.orientation.y = 0
-        shelf_odom.pose.orientation.z = 0
+        if (self._tf_set):
+            return outcomes.FIND_SHELF_SUCCESS
+
+        shelf_base = PoseStamped()
+        shelf_base.header.frame_id = 'base_footprint'
+        shelf_base.pose.position.x = 2.2765
+        shelf_base.pose.position.y = -0.53
+        shelf_base.pose.position.z = 0
+        shelf_base.pose.orientation.w = 1
+        shelf_base.pose.orientation.x = 0
+        shelf_base.pose.orientation.y = 0
+        shelf_base.pose.orientation.z = 0
+
+        shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_base)
 
         transform = TransformStamped()
         transform.header.frame_id = 'odom_combined'
@@ -67,4 +74,5 @@ class FindShelf(smach.State):
         transform.child_frame_id = 'shelf'
         self._set_static_tf.wait_for_service()
         self._set_static_tf(transform)
+        self._tf_set = True
         return outcomes.FIND_SHELF_SUCCESS
