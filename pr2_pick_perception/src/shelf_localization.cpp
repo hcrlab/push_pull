@@ -70,7 +70,7 @@ bool ObjDetector::initialize()
     nh_local.param("manual_segmentation", manual_segmentation_,false);
     
     nh_local.param("RobotReference", robot_frame_id_,std::string("/base_footprint"));
-    nh_local.param("WorldReference", world_frame_id_,std::string("/map"));
+    nh_local.param("WorldReference", world_frame_id_,std::string("/odom_combined"));
     nh_local.param("ModelReference", model_frame_id_,std::string("/model_frame"));
     
     
@@ -212,7 +212,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     else
     {
       ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
-            cloud_frame_id_.c_str(),robot_frame_id_.c_str());
+            cloud_frame_id_.c_str(), robot_frame_id_.c_str());
       ROS_DEBUG("Transform error: %s", error_msg.c_str());
       cloud_to_robot_.setIdentity();
     }
@@ -223,7 +223,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     else
     {
       ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
-            camera_frame_id_.c_str(),robot_frame_id_.c_str());
+            camera_frame_id_.c_str(), robot_frame_id_.c_str());
       ROS_DEBUG("Transform error: %s", error_msg.c_str());
       robot_to_camera_.setIdentity();
     }
@@ -234,9 +234,10 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     else
     {
       ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
-            world_frame_id_.c_str(),robot_frame_id_.c_str());
+            world_frame_id_.c_str(), robot_frame_id_.c_str());
       ROS_DEBUG("Transform error: %s", error_msg.c_str());
       robot_to_world_.setIdentity();
+      world_frame_id_ = robot_frame_id_;
     }
     
    if (tf_.canTransform(model_frame_id_, cloud_frame_id_,ros::Time::now(), &error_msg)){
@@ -245,7 +246,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     else
     {
       ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
-            world_frame_id_.c_str(),robot_frame_id_.c_str());
+            model_frame_id_.c_str(), cloud_frame_id_.c_str());
       ROS_DEBUG("Transform error: %s", error_msg.c_str());
       cloud_to_model_.setIdentity();
     }
