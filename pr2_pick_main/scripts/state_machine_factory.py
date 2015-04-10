@@ -164,7 +164,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(localize_shelf, set_static_tf),
+            states.FindShelf(tts, localize_shelf, set_static_tf),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -186,7 +186,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.MoveToBin.name,
-            states.MoveToBin(drive_linear, move_torso),
+            states.MoveToBin(tts, drive_linear, move_torso),
             transitions={
                 outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
                 outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -197,7 +197,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.SenseBin.name,
-            states.SenseBin(),
+            states.SenseBin(tts),
             transitions={
                 outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
                 outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,
@@ -209,7 +209,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.Grasp.name,
-            states.Grasp(set_grippers, tuck_arms, moveit_move_arm),
+            states.Grasp(tts, set_grippers, tuck_arms, moveit_move_arm),
             transitions={
                 outcomes.GRASP_SUCCESS: states.ExtractItem.name,
                 outcomes.GRASP_FAILURE: (
@@ -222,7 +222,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.ExtractItem.name,
-            states.ExtractItem(moveit_move_arm),
+            states.ExtractItem(tts, moveit_move_arm),
             transitions={
                 outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
                 outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
@@ -233,7 +233,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.DropOffItem.name,
-            states.DropOffItem(),
+            states.DropOffItem(tts),
             transitions={
                 outcomes.DROP_OFF_ITEM_SUCCESS: states.UpdatePlan.name,
                 outcomes.DROP_OFF_ITEM_FAILURE: states.UpdatePlan.name

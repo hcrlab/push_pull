@@ -12,7 +12,7 @@ class ExtractItem(smach.State):
     """
     name = 'EXTRACT_ITEM'
 
-    def __init__(self, moveit_move_arm):
+    def __init__(self, tts, moveit_move_arm):
         smach.State.__init__(
             self,
             outcomes=[
@@ -23,9 +23,11 @@ class ExtractItem(smach.State):
         )
 
         self._moveit_move_arm = moveit_move_arm
+        self._tts = tts
 
     def execute(self, userdata):
         rospy.loginfo('Extracting item in bin {}'.format(userdata.bin_id))
+        self._tts.publish('Extracting item in bin {}'.format(userdata.bin_id))
 
 
         # Get fake object locations

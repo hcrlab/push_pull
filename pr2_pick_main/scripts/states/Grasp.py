@@ -14,7 +14,7 @@ class Grasp(smach.State):
     """
     name = 'GRASP'
 
-    def __init__(self, set_grippers, tuck_arms, moveit_move_arm):
+    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm):
         smach.State.__init__(
             self,
             outcomes=[
@@ -27,8 +27,10 @@ class Grasp(smach.State):
         self._set_grippers = set_grippers
         self._tuck_arms = tuck_arms
         self._moveit_move_arm = moveit_move_arm
+        self._tts = tts
 
     def execute(self, userdata):
+        self._tts.publish('Grasping item')
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(False, False)
 

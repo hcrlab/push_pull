@@ -11,7 +11,7 @@ class FindShelf(smach.State):
     """
     name = 'FIND_SHELF'
 
-    def __init__(self, localize_shelf, set_static_tf):
+    def __init__(self, tts, localize_shelf, set_static_tf):
         """Constructor for this state.
 
         Args:
@@ -29,9 +29,11 @@ class FindShelf(smach.State):
         self._set_static_tf = set_static_tf
         self._tf_listener = tf.TransformListener()
         self._tf_set = False
+        self._tts = tts
 
     def execute(self, userdata):
         rospy.loginfo('Finding shelf.')
+        self._tts.publish('Finding shelf.')
         # TODO(jstn): Localization is not very precise yet.
         #self._localize_shelf.wait_for_service()
         #response = self._localize_shelf()
