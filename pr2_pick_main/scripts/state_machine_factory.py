@@ -1,8 +1,15 @@
-from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
+from pr2_pick_manipulation.srv import DriveAngular
+from pr2_pick_manipulation.srv import DriveLinear
+from pr2_pick_manipulation.srv import MoveArm
+from pr2_pick_manipulation.srv import MoveHead
+from pr2_pick_manipulation.srv import MoveTorso
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
-from pr2_pick_manipulation.srv import MoveHead
-from pr2_pick_manipulation.srv import MoveArm
+from pr2_pick_perception.srv import LocalizeShelf
+from pr2_pick_perception.srv import SetStaticTransform
+from pr2_pick_perception.srv import DeleteStaticTransform
+from pr2_pick_perception.srv import LocalizeShelfResponse
+from pr2_pick_perception.msg import Object
 from std_msgs.msg import String
 import mock
 import outcomes
@@ -20,17 +27,25 @@ def real_robot():
     set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
     move_head = rospy.ServiceProxy('move_head_service', MoveHead)
     moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm)
+    localize_shelf = rospy.ServiceProxy('perception/localize_shelf',
+                                        LocalizeShelf)
+    set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
+                                       SetStaticTransform)
+    drive_linear = rospy.ServiceProxy('drive_linear', DriveLinear)
+    drive_angular = rospy.ServiceProxy('drive_angular', DriveAngular)
+    return build(tts, tuck_arms, move_torso, set_grippers, move_head,
+                 moveit_move_arm, localize_shelf, set_static_tf, drive_linear,
+                 drive_angular)
 
 
-def side_effect(name):
+def side_effect(name, return_value=True):
     """A side effect for mock functions.
 
     Causes all wrapped functions to return True, and logs their arguments.
     """
     def wrapped(*args, **kwargs):
         rospy.loginfo('Calling {}{}'.format(name, args))
-        return True
+        return return_value
     return wrapped
 
 
@@ -66,12 +81,41 @@ def mock_robot():
 
     moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
     moveit_move_arm.wait_for_service = mock.Mock(return_value=None)
-    moveit_move_arm.call = mock.Mock(side_effect=side_effect('moveit_move_arm'))
+    moveit_move_arm.call = mock.Mock(
+        side_effect=side_effect('moveit_move_arm'))
 
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm)
+    shelf_response = LocalizeShelfResponse()
+    shelf_obj = Object()
+    shelf_obj.header.frame_id = 'odom_combined'
+    shelf_response.locations.objects.append(shelf_obj)
+    localize_shelf = rospy.ServiceProxy('perception/localize_shelf',
+                                        LocalizeShelf)
+    localize_shelf.wait_for_service = mock.Mock(return_value=None)
+    localize_shelf.call = mock.Mock(
+        side_effect=side_effect('localize_shelf',
+                                return_value=shelf_response))
+
+    set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
+                                        SetStaticTransform)
+    set_static_tf.wait_for_service = mock.Mock(return_value=None)
+    set_static_tf.call = mock.Mock(
+        side_effect=side_effect('set_static_tf'))
+
+    drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
+    drive_linear.wait_for_service = mock.Mock(return_value=None)
+    drive_linear.call = mock.Mock(side_effect=side_effect('drive_linear'))
+
+    drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
+    drive_angular.wait_for_service = mock.Mock(return_value=None)
+    drive_angular.call = mock.Mock(side_effect=side_effect('drive_angular'))
+
+    return build(tts, tuck_arms, move_torso, set_grippers, move_head,
+                 moveit_move_arm, localize_shelf, set_static_tf, drive_linear,
+                 drive_angular)
 
 
-def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm):
+def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
+          localize_shelf, set_static_tf, drive_linear, drive_angular):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -100,7 +144,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm):
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(),
+            states.FindShelf(localize_shelf, set_static_tf),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -122,7 +166,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm):
         )
         smach.StateMachine.add(
             states.MoveToBin.name,
-            states.MoveToBin(),
+            states.MoveToBin(drive_linear, move_torso),
             transitions={
                 outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
                 outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
