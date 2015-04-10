@@ -12,11 +12,13 @@ import state_machine_factory
 import states
 
 
-def main(mock=False):
+def main(mock=False, test_move_to_bin=False):
     rospy.init_node('pr2_pick_state_machine')
     sm = None
     if mock:
         sm = state_machine_factory.mock_robot()
+    elif test_move_to_bin:
+        sm = state_machine_factory.test_move_to_bin()
     else:
         sm = state_machine_factory.real_robot()
 
@@ -43,10 +45,16 @@ def main(mock=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         '--mock', action='store_true',
         help=('True if you want to create a state machine with mock robot'
             ' components.')
     )
+    group.add_argument(
+        '--test_move_to_bin', action='store_true',
+        help=('True to create a minimal state machine for testing the'
+              'MoveToBin state.')
+    )
     args = parser.parse_args(args=rospy.myargv()[1:])
-    main(args.mock)
+    main(args.mock, args.test_move_to_bin)

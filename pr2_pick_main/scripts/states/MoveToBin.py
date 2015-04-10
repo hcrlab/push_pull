@@ -48,14 +48,6 @@ class MoveToBin(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
 
-        # get transform from base_link to shelf
-        # (translation, rotation) = userdata.base_to_shelf_tf
-        # rospy.loginfo('base to shelf translation: {} rotation: {}'
-        #               .format(translation, rotation))
-
-        # x_distance = translation[0] - 0.9
-        # y_distance = translation[1] + self.strafe_by_bin[userdata.bin_id]
-
         # find the target point in robot coordinates
         listener = tf.TransformListener()
         target_in_shelf_frame = PointStamped(
