@@ -57,7 +57,7 @@ class StartPose(smach.State):
             self._tts.publish('Failed to close grippers.')
 
         self._move_head.wait_for_service()
-        move_head_success = self._move_head(1.5, -0.2, 1.1, 'base_footprint')
+        move_head_success = self._move_head(1.5, -0.35, 1.1, 'base_footprint')
         if not grippers_success:
             rospy.logerr('StartPose: MoveHead failed')
             self._tts.publish('Failed to move head.')

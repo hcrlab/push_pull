@@ -1,4 +1,5 @@
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import TransformStamped
 from visualization_msgs.msg import Marker
 import outcomes
@@ -35,41 +36,57 @@ class FindShelf(smach.State):
         self._markers = markers
 
     def execute(self, userdata):
-        rospy.loginfo('Finding shelf.')
-        self._tts.publish('Finding shelf.')
-        # TODO(jstn): Localization is not very precise yet.
-        #self._localize_shelf.wait_for_service()
-        #response = self._localize_shelf()
-        #if len(response.locations.objects) == 0:
-        #    return outcomes.FIND_SHELF_FAILURE
-        #shelf = response.locations.objects[0]
-        #rospy.loginfo(shelf)
-        #shelf_ps = PoseStamped()
-        #shelf_ps.pose = shelf.pose
-        #shelf_ps.header = shelf.header
-        #
-        #shelf_odom = None
-        #try:
-        #    shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_ps)
-        #except:
-        #    rospy.logerr('No transform between {} and {} in FindShelf'.format(
-        #        shelf.header.frame_id, 'odom_combined'))
-        #    return outcomes.FIND_SHELF_FAILURE
-
         if (self._tf_set):
             return outcomes.FIND_SHELF_SUCCESS
 
-        shelf_base = PoseStamped()
-        shelf_base.header.frame_id = 'base_footprint'
-        shelf_base.pose.position.x = 2.27
-        shelf_base.pose.position.y = -0.61
-        shelf_base.pose.position.z = 0
-        shelf_base.pose.orientation.w = 1
-        shelf_base.pose.orientation.x = 0
-        shelf_base.pose.orientation.y = 0
-        shelf_base.pose.orientation.z = 0
+        rospy.loginfo('Finding shelf.')
+        self._tts.publish('Finding shelf.')
 
-        shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_base)
+        # TODO(jstn): Localization is not very precise yet.
+        self._localize_shelf.wait_for_service()
+        response = self._localize_shelf()
+        if len(response.locations.objects) == 0:
+            return outcomes.FIND_SHELF_FAILURE
+        shelf = response.locations.objects[0]
+        rospy.loginfo(shelf)
+        shelf_ps = PoseStamped()
+        shelf_ps.pose = shelf.pose
+        rospy.loginfo('Shelf data came in the {} frame'.format(shelf.pose))
+        shelf_ps.header = shelf.header
+        
+        shelf_odom = None
+        try:
+            shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_ps)
+        except:
+            rospy.logerr('No transform between {} and {} in FindShelf'.format(
+                shelf.header.frame_id, 'odom_combined'))
+            return outcomes.FIND_SHELF_FAILURE
+
+        # Project onto the floor.
+        #shelf_odom.pose.position.z = 0
+        #quaternion_angles = (shelf_odom.pose.orientation.w,
+        #                     shelf_odom.pose.orientation.x,
+        #                     shelf_odom.pose.orientation.y,
+        #                     shelf_odom.pose.orientation.z)
+        #                    
+        #_, _, yaw = tf.transformations.euler_from_quaternion(quaternion_angles)
+        #po = Quaternion()
+        #po.w, po.x, po.y, po.z = tf.transformations.quaternion_from_euler(0, 0, yaw)
+        #shelf_odom.pose.orientation = po
+        
+        self._tts.publish('Found shelf.')
+
+        # Possibly hard code the position of the shelf
+        #shelf_base = PoseStamped()
+        #shelf_base.header.frame_id = 'base_footprint'
+        #shelf_base.pose.position.x = 2.27
+        #shelf_base.pose.position.y = -0.61
+        #shelf_base.pose.position.z = 0
+        #shelf_base.pose.orientation.w = 1
+        #shelf_base.pose.orientation.x = 0
+        #shelf_base.pose.orientation.y = 0
+        #shelf_base.pose.orientation.z = 0
+        #shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_base)
 
         transform = TransformStamped()
         transform.header.frame_id = 'odom_combined'
