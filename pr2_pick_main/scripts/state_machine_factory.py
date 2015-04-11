@@ -11,6 +11,7 @@ from pr2_pick_perception.srv import DeleteStaticTransform
 from pr2_pick_perception.srv import LocalizeShelfResponse
 from pr2_pick_perception.msg import Object
 from std_msgs.msg import String
+from visualization_msgs.msg import Marker
 import mock
 import outcomes
 import rospy
@@ -55,6 +56,7 @@ def real_robot_services():
                                        SetStaticTransform),
         'drive_linear': rospy.ServiceProxy('drive_linear_service', DriveLinear),
         'drive_angular': rospy.ServiceProxy('drive_angular_service', DriveAngular),
+        'markers': rospy.Publisher('pr2_pick_visualization', Marker),
      }
 
 
@@ -129,13 +131,16 @@ def mock_robot():
     drive_angular.wait_for_service = mock.Mock(return_value=None)
     drive_angular.call = mock.Mock(side_effect=side_effect('drive_angular'))
 
+    markers = rospy.Publisher('pr2_pick_visualization', Marker)
+    markers.publish = mock.Mock(side_effect=side_effect('markers'))
+
     return build(tts, tuck_arms, move_torso, set_grippers, move_head,
                  moveit_move_arm, localize_shelf, set_static_tf, drive_linear,
-                 drive_angular)
+                 drive_angular, markers)
 
 
 def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
-          localize_shelf, set_static_tf, drive_linear, drive_angular):
+          localize_shelf, set_static_tf, drive_linear, drive_angular, markers):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -164,10 +169,13 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(tts, localize_shelf, set_static_tf),
+            states.FindShelf(tts, localize_shelf, set_static_tf, markers),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+            },
+            remapping={
+                'debug': 'debug'
             }
         )
         smach.StateMachine.add(
