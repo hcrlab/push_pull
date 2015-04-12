@@ -194,7 +194,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.MoveToBin.name,
-            states.MoveToBin(tts, drive_linear, move_torso),
+            states.MoveToBin(tts, drive_linear, drive_angular, move_torso, markers),
             transitions={
                 outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
                 outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
