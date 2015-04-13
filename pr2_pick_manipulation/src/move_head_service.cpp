@@ -44,8 +44,8 @@ namespace pr2_pick_manipulation {
     client_.sendGoal(goal);
 
     bool success = false;
-    //wait for it to get there (abort after 30 secs to prevent getting stuck)
-    success = client_.waitForResult(ros::Duration(30.0));
+    //wait for it to get there (abort after 2 secs to prevent getting stuck)
+    success = client_.waitForResult(ros::Duration(2.0));
 
     if (success) {
 	    SimpleClientGoalState state = client_.getState();
