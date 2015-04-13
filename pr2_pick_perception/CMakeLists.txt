@@ -16,12 +16,14 @@ find_package(catkin REQUIRED
   pcl_ros
   pr2_pick_msgs
   roscpp
+  tf
+  tf2
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost 1.46.1 REQUIRED COMPONENTS signals regex system thread filesystem)
 find_package(OpenCV)
-find_package(PCL 1.7.1 REQUIRED)
+find_package(PCL REQUIRED)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
 
@@ -35,8 +37,7 @@ link_libraries(${catkin_LIBRARIES} ${PCL_LIBRARIES})
 find_package(OpenMP REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-# -std=c++0x"
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=c++0x")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -75,14 +76,15 @@ add_message_files(
   ObjectList.msg
   ObjectDetectionRequest.msg
   ROI2d.msg
-  Cell.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   LocalizeShelf.srv
-  CropShelf.srv
+  SetStaticTransform.srv
+  DeleteStaticTransform.srv
+   CropShelf.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -100,15 +102,15 @@ generate_messages(
   pr2_pick_msgs
 )
 
-# ###################################
-# ## catkin specific configuration ##
-# ###################################
-# ## The catkin_package macro generates cmake config files for your package
-# ## Declare things to be passed to dependent projects
-# ## INCLUDE_DIRS: uncomment this if you package contains header files
-# ## LIBRARIES: libraries you create in this project that dependent projects also need
-# ## CATKIN_DEPENDS: catkin_packages dependent projects also need
-# ## DEPENDS: system dependencies of this project that dependent projects also need
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES mock_perception
@@ -172,18 +174,12 @@ add_dependencies(shelf_cropping_service_node
   pr2_pick_perception_generate_messages_cpp
 )
 
-
-# add_dependencies(mock_perception_easy_boxes
-#   mock_perception
-#   ${pr2_pick_perception_EXPORTED_TARGETS}
-# )
-# 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(mock_perception ${catkin_LIBRARIES})
-target_link_libraries(mock_perception_easy_boxes
-  mock_perception
-  ${catkin_LIBRARIES}
-)
+#target_link_libraries(mock_perception ${catkin_LIBRARIES})
+#target_link_libraries(mock_perception_easy_boxes
+#  mock_perception
+#  ${catkin_LIBRARIES}
+#)
 target_link_libraries(shelf_localization_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
@@ -196,3 +192,50 @@ target_link_libraries(shelf_cropping_service_node
   ${Boost_LIBRARIES}
 )
 
+#############
+## Install ##
+#############
+
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark executables and/or libraries for installation
+# install(TARGETS perception_tools perception_tools_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_perception_tools.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)

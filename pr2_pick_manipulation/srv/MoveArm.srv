@@ -1,3 +1,5 @@
 geometry_msgs/PoseStamped goal
+float64 planning_time
+string group
 ---
 bool success

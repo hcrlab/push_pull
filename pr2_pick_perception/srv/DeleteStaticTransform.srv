@@ -1,0 +1,5 @@
+# Deletes the static transform with the given parent and child frame.
+string parent_frame # The "from" frame
+string child_frame # The "to" frame
+---
+bool success

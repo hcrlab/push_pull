@@ -26,7 +26,7 @@ bool RobotDriver::DriveLinear(double dx, double dy, double distance) {
   listener_.lookupTransform("base_footprint", "odom_combined", 
                             ros::Time(0), start_transform);
   
-  ros::Rate rate(10.0);
+  ros::Rate rate(20.0);
   bool done = distance <= 0;
   while (!done) {
     cmd_vel_pub_.publish(base_cmd);

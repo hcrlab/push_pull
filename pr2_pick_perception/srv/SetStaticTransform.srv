@@ -1,0 +1,4 @@
+# The static transform to add.
+geometry_msgs/TransformStamped transform
+---
+bool success

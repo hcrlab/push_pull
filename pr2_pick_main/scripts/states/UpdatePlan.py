@@ -35,6 +35,7 @@ class UpdatePlan(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Updating plan.')
+        self._tts.publish('Updating plan.')
 
         for bin_id in self._preferred_order:
             if not userdata.bin_data[bin_id].visited:

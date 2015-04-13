@@ -13,6 +13,12 @@ rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
 catkin_make
 ```
 
+If you have a problem with catkin not finding `pr2_pretouch_optical_dist`, then from the root of the repository, run:
+```
+git submodule init
+git submodule update
+```
+
 ## Packages
 ### festival_tts
 A text-to-speech node.
@@ -49,6 +55,7 @@ Contains common message types for the picking challenge.
 ### pr2_pick_perception
 - Contains a launch file which starts the Kinect, shelf localization, and fingertip sensor.
 - Contains a shelf localization service.
+- Contains a static tf transform publisher.
 - Contains a script for recording point cloud data.
 - Contains a "mock perception" class for testing purposes.
 

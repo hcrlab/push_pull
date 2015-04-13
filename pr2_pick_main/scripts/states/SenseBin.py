@@ -8,7 +8,7 @@ class SenseBin(smach.State):
     """
     name = 'SENSE_BIN'
 
-    def __init__(self):
+    def __init__(self, tts):
 
         smach.State.__init__(
             self,
@@ -19,7 +19,9 @@ class SenseBin(smach.State):
             ],
             input_keys=['bin_id']
         )
+        self._tts = tts
 
     def execute(self, userdata):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
+        self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
         return outcomes.SENSE_BIN_SUCCESS

@@ -17,7 +17,7 @@
   <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
 
    <param name="RobotReference" value="/base_footprint" />  
-   <param name="WorldReference" value="/map" /> <!-- Will default to base_footprint if there's no map. -->
+   <param name="WorldReference" value="/odom_combined" /> <!-- Will default to base_footprint if there's no map. -->
 
    <param name="manual_segmentation" value="false" />
    <param name="pca_alignment" value="false"/>
