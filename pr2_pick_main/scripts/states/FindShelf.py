@@ -35,44 +35,66 @@ class FindShelf(smach.State):
         self._tts = tts
         self._markers = markers
 
+    def localize_shelf(self):
+        """Calls the shelf localization service to get the shelf position.
+
+        If the service fails, or it returns a result outside of acceptable
+        bounds, then it will try calling the service again, up to a total of 3
+        tries.
+
+        Returns: (success, pose), where success is whether or not we got a
+        reasonable pose from the service, and pose is a PoseStamped message
+        with the shelf's pose.
+        """
+        success = False
+        shelf_ps = PoseStamped() # The shelf pose returned by the service.
+        shelf_odom = PoseStamped() # Shelf pose in odom_combined frame.
+        for try_num in range(3):
+            self._localize_shelf.wait_for_service()
+            response = self._localize_shelf()
+            if len(response.locations.objects) == 0:
+                rospy.logwarn('[FindShelf]: Shelf service returned no results.')
+                continue
+            shelf = response.locations.objects[0]
+            rospy.loginfo('Shelf pose: {}'.format(shelf.pose))
+            shelf_ps.pose = shelf.pose
+            shelf_ps.header = shelf.header
+
+            try:
+                shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_ps)
+            except:
+                rospy.logerr('No transform between {} and {} in FindShelf'.format(
+                    shelf.header.frame_id, 'odom_combined'))
+                continue
+            
+            # Check that the response is reasonable.
+            if shelf_odom.pose.position.z < -0.1 or shelf_odom.pose.position.z > 0.1:
+                rospy.logwarn('[FindShelf]: Shelf not on the ground.')
+                continue
+
+            success = True
+            break
+        
+        if not success:
+            return False, None
+        return success, shelf_odom
+
     def execute(self, userdata):
         if (self._tf_set):
             return outcomes.FIND_SHELF_SUCCESS
 
         rospy.loginfo('Finding shelf.')
         self._tts.publish('Finding shelf.')
-
-        # TODO(jstn): Localization is not very precise yet.
-        self._localize_shelf.wait_for_service()
-        response = self._localize_shelf()
-        if len(response.locations.objects) == 0:
-            return outcomes.FIND_SHELF_FAILURE
-        shelf = response.locations.objects[0]
-        rospy.loginfo(shelf)
-        shelf_ps = PoseStamped()
-        shelf_ps.pose = shelf.pose
-        rospy.loginfo('Shelf data came in the {} frame'.format(shelf.pose))
-        shelf_ps.header = shelf.header
         
-        shelf_odom = None
-        try:
-            shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_ps)
-        except:
-            rospy.logerr('No transform between {} and {} in FindShelf'.format(
-                shelf.header.frame_id, 'odom_combined'))
+        success, shelf_odom = self.localize_shelf()
+        if not success:
+            rospy.logerr('[FindShelf]: Failed to localize shelf.')
             return outcomes.FIND_SHELF_FAILURE
 
         # Project onto the floor.
-        #shelf_odom.pose.position.z = 0
-        #quaternion_angles = (shelf_odom.pose.orientation.w,
-        #                     shelf_odom.pose.orientation.x,
-        #                     shelf_odom.pose.orientation.y,
-        #                     shelf_odom.pose.orientation.z)
-        #                    
-        #_, _, yaw = tf.transformations.euler_from_quaternion(quaternion_angles)
-        #po = Quaternion()
-        #po.w, po.x, po.y, po.z = tf.transformations.quaternion_from_euler(0, 0, yaw)
-        #shelf_odom.pose.orientation = po
+        # Adjusting pitch and roll to be 0 seems to make the model worse than just
+        # letting it be slightly tilted.
+        shelf_odom.pose.position.z = 0
         
         self._tts.publish('Found shelf.')
 
@@ -88,6 +110,7 @@ class FindShelf(smach.State):
         #shelf_base.pose.orientation.z = 0
         #shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_base)
 
+        # Publish static transform.
         transform = TransformStamped()
         transform.header.frame_id = 'odom_combined'
         transform.header.stamp = rospy.Time.now()
@@ -114,8 +137,7 @@ class FindShelf(smach.State):
         marker.scale.z = 1
         marker.lifetime = rospy.Duration()
 
-        # Some kind of issue with rviz requires you to loop and wait for rviz
-        # to subscribe to the visualization topic.
+        # Need to wait for rviz for some reason.
         rate = rospy.Rate(1)
         while self._markers.get_num_connections() == 0:
             rate.sleep()
