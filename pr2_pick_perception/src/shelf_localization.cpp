@@ -14,8 +14,9 @@ int main(int argc, char **argv)
 {    
     ros::init(argc, argv, "obj_detector");
 
-
+    ros::NodeHandle nh;
     ObjDetector detector;    
+    
     
     
     if(!detector.initialize())
@@ -24,6 +25,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    ros::ServiceServer server(nh.advertiseService("localize_object", &ObjDetector::detectCallback, &detector));
+  
+  
     ros::spin();
     
     return 0;
@@ -38,9 +42,8 @@ ObjDetector::ObjDetector()
       score_thresh_(0.07),
       max_iter_(100),
       on_table_(false),
-      debug_(false),
-      nh_(),
-      server_(nh_.advertiseService("localize_shelf", &ObjDetector::detectCallback, this)) {
+      debug_(false)
+{
 }
 
 
@@ -48,6 +51,8 @@ bool ObjDetector::initialize()
 {
     ros::NodeHandle nh;
     ros::NodeHandle nh_local("~");
+    
+    
     
     //max iterations for ICP
     nh_local.getParam("iter", max_iter_);
@@ -59,10 +64,9 @@ bool ObjDetector::initialize()
     score_thresh_ = 0.08;//TODO: add 2 thresholds for rough and fine match?
     
     nh_local.param("radius_search", radius_search_, 0.03);
-    nh_local.param("DistanceThreshold", DistanceThreshold_, 5.0);
-    nh_local.param("PointColorThreshold", PointColorThreshold_, 6.0);
-    nh_local.param("RegionColorThreshold", RegionColorThreshold_, 3.0);
-    nh_local.param("MinClusterSize", MinClusterSize_, 100.);
+    nh_local.param("DistanceThreshold", dist_threshold_, 5.0);
+    nh_local.param("PointColorThreshold", point_color_threshold_, 6.0);
+    //nh_local.param("MinClusterSize", min_cluster_size_, 100.);
     nh_local.param("PlaneSize",PlaneSize_,2000);
     nh_local.param("PlanesegThres", PlanesegThres_,0.1);
     nh_local.param("highplane", highplane_,-1.0);
@@ -103,16 +107,11 @@ bool ObjDetector::initialize()
     
     pc_sub_ = nh.subscribe<sensor_msgs::PointCloud2>(pc_topic,10,&ObjDetector::xtionPCcallback,this);
     
-    
     //advertise object detections
-    //std::string det_topic = nh.resolveName("/ap/detected_object");
-    //pub_ = nh.advertise<pr2_pick_perception::Object>(det_topic, 1, true); //TODO: latch or not latch?
+    std::string det_topic = nh.resolveName("/ap/detected_object");
+    pub_ = nh.advertise<pr2_pick_perception::ObjectList>(det_topic, 1, true);     
     
-    //subscribe to detection trigger topic
-    //std::string trigger_topic = nh.resolveName("/ap_ms/run_object_detection");
-    //trigger_sub_ = nh.subscribe<pr2_pick_perception::ObjectDetectionRequest>(trigger_topic, 1, &ObjDetector::detectCallback, this);
-    //ROS_INFO("subscribed to %s", trigger_sub_.getTopic().c_str());
- 
+   
     std::string camera_info = nh.resolveName("/cam_info");
     sensor_msgs::CameraInfoConstPtr cam_info;
     cam_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camera_info);//,nh,ros::Duration(15.));
@@ -122,7 +121,6 @@ bool ObjDetector::initialize()
     im_size_.width = cam_info->width;    
 
 
-    //xtionPC2ptr_ = pcl::PointCloudPtr<PointT> (new pcl::PointCloudPtr<PointT> );
     
  
     return true;
@@ -193,18 +191,30 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         return false;
     }
     
+    std::cout << "The name used to trigger is = " << request.object.obj_type << std::endl;
+    if(request.object.obj_type != obj_type_)
+    {
+        return false;
+    }
+    else
+    {
+        ROS_INFO("AP: %s detection triggered (msg \"%s\")\n", obj_type_.c_str(), request.object.obj_type.c_str());
+    }
+    
     roi_.clear();
     manual_segmentation_ = false;
-    //if (cmd->region2d.bottom_right_x != -1 && cmd->region2d.bottom_right_y != -1 &&
-    //    cmd->region2d.top_left_y != -1 && cmd->region2d.top_left_x != -1)   {
-    //   manual_segmentation_ = true;
-    //   roi_.push_back(cv::Point2f(cmd->region2d.top_left_x, cmd->region2d.top_left_y));
-    //   roi_.push_back(cv::Point2f(cmd->region2d.bottom_right_x, cmd->region2d.bottom_right_y));
-    //   
-    //  
-    //}   
+    
+    if (request.object.region2d.bottom_right_x != -1 && request.object.region2d.bottom_right_y != -1 &&
+        request.object.region2d.top_left_y != -1 && request.object.region2d.top_left_x != -1)   {
+       manual_segmentation_ = true;
+       roi_.push_back(cv::Point2f(request.object.region2d.top_left_x, request.object.region2d.top_left_y));
+       roi_.push_back(cv::Point2f(request.object.region2d.bottom_right_x, request.object.region2d.bottom_right_y));
+       
+      
+    }   
+       
    
-    //manual_segmentation_ = false;
+    
     std::string error_msg;    
     if (tf_.canTransform(robot_frame_id_, cloud_frame_id_, pc_timestamp_, &error_msg)){
       tf_.lookupTransform(robot_frame_id_, cloud_frame_id_, pc_timestamp_, cloud_to_robot_);
@@ -252,13 +262,13 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     
     
        /// Instead of transforming the detection, transform the point cloud
-    pcl::PointCloud<PointT>::Ptr scene(new pcl::PointCloud<PointT>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr scene(new pcl::PointCloud<pcl::PointXYZ>);
     pcl_ros::transformPointCloud(xtionPC_,*scene,cloud_to_robot_); 
     
     
     //visualize scene
     pcl::visualization::PCLVisualizer::Ptr vis;
-    pcl::visualization::PointCloudColorHandlerGenericField<PointT> scene_handler(scene, "x");//100, 100, 200);
+    pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZ> scene_handler(scene, "x");//100, 100, 200);
     if (debug_) {
       vis.reset(new pcl::visualization::PCLVisualizer("Amchallenge -- Debug"));
       vis->addPointCloud(scene, scene_handler, "scene");
@@ -272,7 +282,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     // 1. extract clusters from scene //
     ////////////////////////////////////
     ROS_DEBUG("AP: clustering point cloud.\n");
-    std::vector<pcl::PointCloud<PointT>::Ptr> clusters;    
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;    
     
     extractClusters(scene,&clusters);   
     
@@ -283,8 +293,8 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
       {
          std::stringstream ss;
          ss << "cluster_raw_" << i;
-         //pcl::visualization::PointCloudColorHandlerCustom<PointTc> cluster_handler(clusters[i], 0, 0, 255.0);
-         pcl::visualization::PointCloudColorHandlerRandom<PointT> cluster_handler(clusters[i]);
+         //pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> cluster_handler(clusters[i], 0, 0, 255.0);
+         pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZ> cluster_handler(clusters[i]);
          vis->addPointCloud(clusters[i], cluster_handler, ss.str());
          vis->spinOnce();
       }
@@ -295,15 +305,15 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     //    TODO: remove when switching to our cfvh?                //
     ////////////////////////////////////////////////////////////////
     
-    ROS_INFO("Clusters detected = %d \n",  clusters.size());
-    std::vector<pcl::PointCloud<PointT>::Ptr> cluster_candidates;
+    ROS_INFO("Clusters detected = %d \n", (int)  clusters.size());
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cluster_candidates;
     for(int i = 0; i < clusters.size(); ++i)    {
       
     
-        pcl::PointCloud<PointT>::Ptr cluster = clusters[i];
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cluster = clusters[i];
         
         
-        PointT minPt, maxPt;
+        pcl::PointXYZ minPt, maxPt;
         pcl::getMinMax3D(*cluster, minPt, maxPt);
         
         float height = maxPt.z-minPt.z;
@@ -327,19 +337,19 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     //visualize cluster candidates
     if (debug_) {
       vis->removePointCloud("scene");
-      ROS_ERROR("%d cluster candidates", cluster_candidates.size());
+      ROS_ERROR("%d cluster candidates", (int) cluster_candidates.size());
       for(int i = 0; i < cluster_candidates.size(); ++i)
-      {   ROS_ERROR("cluster %d/%d", i, cluster_candidates.size());
+      {   ROS_ERROR("cluster %d/%d", i, (int) cluster_candidates.size());
           std::stringstream ss;
           ss << "cluster_" << i;
-          pcl::visualization::PointCloudColorHandlerCustom<PointT> cluster_handler(cluster_candidates[i], 0, 100, 255.0*double(i)/cluster_candidates.size());    
+          pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cluster_handler(cluster_candidates[i], 0, 100, 255.0*double(i)/cluster_candidates.size());    
           vis->addPointCloud(cluster_candidates[i], cluster_handler, ss.str());    
           vis->spinOnce();            
       }    
       vis->spin();
     }
     
-    ROS_DEBUG("%d/%d clusters are candidates\n", cluster_candidates.size(), clusters.size());
+    ROS_DEBUG("%d/%d clusters are candidates\n",(int) cluster_candidates.size(), (int) clusters.size());
     
     ////////////////////////////////////////////////
     // 3. run detection on each cluster candidate //
@@ -354,8 +364,6 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     
     std::vector<Model> detections;
     std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > detection_transforms;
-    //TODO: not sure whether using parallelization here makes a lot of sense given that the detector uses a thread per viewpoint as well
-    //...when switching to our cvfh we can definitely parallelize here though as the inner detector won't need threads then I think
     pcl::ScopeTime t_all;
 
     #pragma omp parallel for 
@@ -375,10 +383,11 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
 
         
         //Copy the tf matrix to eigen format
-        for (int i=0; i<3; i++)    {
-            tras(i) = cloud_to_model_.inverse().getOrigin()[i];
-            for (int j=0; j<3; j++)    
-                R(i,j) = cloud_to_model_.inverse().getBasis()[i][j];
+        for (int j=0; j<3; j++)    
+        {
+            tras(j) = cloud_to_model_.inverse().getOrigin()[j];
+            for (int k=0; k<3; k++)    
+                R(j,k) = cloud_to_model_.inverse().getBasis()[j][k];
         }
         TtoOrigin.block<3,3>(0,0) = R; TtoOrigin.block<3,1>(0,3) = tras;
         
@@ -392,7 +401,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         
         
         
-        ROS_DEBUG("Detection for cluster %d took %fs\n", i, t.getTimeSeconds());
+        ROS_DEBUG("Detection for cluster %d took %fs\n", (int) i, (float) t.getTimeSeconds());
         
         if(detection_id != -1)
         {
@@ -423,11 +432,11 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
           
           //ROS_ERROR("added valve for cluster %d", i);
           
-          pcl::PointCloud<PointT>::Ptr modelCloudMatched(new pcl::PointCloud<PointT>);
+          pcl::PointCloud<pcl::PointXYZ>::Ptr modelCloudMatched(new pcl::PointCloud<pcl::PointXYZ>);
           pcl::transformPointCloud(*m.cloud, *modelCloudMatched, detection_transform2);
-          pcl::visualization::PointCloudColorHandlerCustom<PointT> match_cloud_handler(modelCloudMatched, 0, 255, 0);
+          pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> match_cloud_handler(modelCloudMatched, 0, 255, 0);
           vis->addPointCloud(modelCloudMatched, match_cloud_handler, visMatchName.str()+"_cloud");
-          vis->addText3D(visMatchName.str(), PointT(detection_transform(0,3),detection_transform(1,3),detection_transform(2,3)+2.5), 0.08, 1.0, 1.0, 1.0, visMatchName.str()+"_text");    
+          vis->addText3D(visMatchName.str(), pcl::PointXYZ(detection_transform(0,3),detection_transform(1,3),detection_transform(2,3)+2.5), 0.08, 1.0, 1.0, 1.0, visMatchName.str()+"_text");    
           vis->spinOnce();
         }
             }
@@ -456,8 +465,6 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         ss << "ap_" << obj_type_ <<  ++id_object;
         obj.id = ss.str();
         obj.object_ref = obj_type_;        
-       // obj.wm_operation.action = pr2_pick_perception::WorldModelOperation::ADD;
-       // obj.wm_authority.value = pr2_pick_perception::WorldModelAuthor::HUMAN;
               
         obj.pose.position.x = detection_transforms[i](0,3);
         obj.pose.position.y = detection_transforms[i](1,3); 
@@ -474,37 +481,35 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         obj.pose.orientation.w = quat.w();
         
         objects.objects.push_back(obj);
-        //pub_.publish(obj);
+        
     }
+    pub_.publish(objects);
     response.locations = objects;
-    ROS_INFO("AP: published object list containing %d objects\n", objects.objects.size());
+    ROS_INFO("AP: published object list containing %d objects\n", (int)  objects.objects.size());
 
     if (debug_) {
       vis->spin();
-//     ROS_ERROR("VISUALIZER IS DEAD!!!!\n");
-//     vis->close();
-// //     vis.reset();
-//     ROS_ERROR("CLOSED?\n");
+
     }
 
     return true;
  }
 
-void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& scene, std::vector< boost::shared_ptr< pcl::PointCloud< PointT > > >* clusters){
+void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& scene, std::vector< boost::shared_ptr< pcl::PointCloud< pcl::PointXYZ > > >* clusters){
   
   
-    pcl::PointCloud<PointT>::Ptr cloud_p (new pcl::PointCloud<PointT>) ;
-    pcl::PointCloud<PointT>::Ptr cloud_f (new pcl::PointCloud<PointT>) ;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p (new pcl::PointCloud<pcl::PointXYZ>) ;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f (new pcl::PointCloud<pcl::PointXYZ>) ;
      
-    pcl::PointCloud<PointT>::Ptr rgbpc (new pcl::PointCloud<PointT>);
-    pcl::PointCloud<PointT>::Ptr rgbpc_sampled (new pcl::PointCloud<PointT>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr rgbpc (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr rgbpc_sampled (new pcl::PointCloud<pcl::PointXYZ>);
       
     
     std::cout << "Got colored point cloud  with " <<  scene->points.size() << "points" <<std::endl;
     
     //  Downsample 
     pcl::PointCloud<int> sampled_indices;
-    pcl::UniformSampling<PointT> uniform_sampling;
+    pcl::UniformSampling<pcl::PointXYZ> uniform_sampling;
     
     uniform_sampling.setInputCloud (scene);
     uniform_sampling.setRadiusSearch (radius_search_);
@@ -514,7 +519,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
     std::cout << "Scene total points: " << scene->size () << "; Selected Keypoints: " << rgbpc_sampled->size () << std::endl;
 
     
-    pcl::PointCloud<PointT>::Ptr rgbpc_sampled_cropped (new pcl::PointCloud<PointT>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr rgbpc_sampled_cropped (new pcl::PointCloud<pcl::PointXYZ>);
      
     if(manual_segmentation_){
        cv::Rect roi(roi_[0].x*im_size_.width,roi_[0].y*im_size_.height, 
@@ -556,19 +561,15 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
         
     }      
     
-    // transform the cropped scene into robot reference frame since the model was acquired in that reference
     
-    std::cout << "Scene cropped points: " << rgbpc_sampled->size () << "; Cropped Keypoints: " << rgbpc_sampled_cropped->size () << std::endl;
+    std::cout << "Scene cropped points: " << rgbpc_sampled->size () << "; Sampled cropped Keypoints: " << rgbpc_sampled_cropped->size () << std::endl;
     
-        pcl_ros::transformPointCloud(*rgbpc_sampled_cropped,*rgbpc_sampled_cropped,cloud_to_model_); 
-
-     
     /** get the wall and floor and eliminate from the scene ***/
     
     pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
     // Create the segmentation object
-    pcl::SACSegmentation<PointT> seg;
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
     // Optional
     seg.setOptimizeCoefficients(true);
     // Mandatory
@@ -578,7 +579,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
     seg.setMaxIterations (1000);
 
     /// Create the filtering object
-    pcl::ExtractIndices<PointT> extract;
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
     int i = 0;
     while (true) 
     {
@@ -595,7 +596,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
         extract.setIndices (inliers);
         extract.setNegative (false);
         extract.filter (*cloud_p);
-        fprintf(stderr, "plane size: %d, thresh: %d, small: %d\n", cloud_p->points.size(), PlaneSize_, (cloud_p->points.size() < PlaneSize_));
+        fprintf(stderr, "plane size: %d, thresh: %d, small: %d\n", (int) cloud_p->points.size(), PlaneSize_, (int) (cloud_p->points.size() < PlaneSize_));
         if(cloud_p->points.size() < PlaneSize_) 
             break;
         std::cerr << "PointCloud representing the planar component: " << cloud_p->points.size() << " data points." << std::endl;
@@ -613,8 +614,8 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
      
        
       
-       pcl::PointCloud<PointT>::Ptr scene_filtered(new pcl::PointCloud<PointT>);
-      pcl::PassThrough<PointT> pass;
+      pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::PassThrough<pcl::PointXYZ> pass;
       
       /// Filter the points below certain height
       pass.setInputCloud (rgbpc_sampled_cropped);
@@ -625,17 +626,17 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
       
       std::cout << "Final point cloud without planes size = " << scene_filtered->points.size() << std::endl;
       
-    pcl::PointCloud<PointT>::Ptr scene_filtered_world (new pcl::PointCloud<PointT>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered_world (new pcl::PointCloud<pcl::PointXYZ>);
     /// Transfor the point cloud into world reference to give the object pose in world coordinates
     pcl_ros::transformPointCloud(*scene_filtered,*scene_filtered_world,robot_to_world_); 
     
       ///extract clusters EUclidean
-    pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
     tree->setInputCloud(scene_filtered_world);    
     std::vector<pcl::PointIndices> clustersInd;
-    pcl::EuclideanClusterExtraction<PointT> ec;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
     ec.setClusterTolerance(cluster_tolerance_); //25cm
-    ec.setMinClusterSize(MinClusterSize_); //need to go low for standpipe
+    ec.setMinClusterSize(min_cluster_size_); //need to go low for standpipe
     ec.setMaxClusterSize(100000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(scene_filtered_world);
@@ -643,8 +644,8 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
     
             
     for(int i = 0; i < clustersInd.size(); ++i) {      
-        pcl::PointCloud<PointT>::Ptr cluster (new pcl::PointCloud<PointT>); 
-        PointT point;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cluster (new pcl::PointCloud<pcl::PointXYZ>); 
+        pcl::PointXYZ point;
         for(int j=0; j < clustersInd[i].indices.size();j++){
             int index = clustersInd[i].indices[j];
             point.x = scene_filtered_world->points[index].x;
@@ -662,7 +663,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
       
       
     if (debug_) {
-      //pcl::PointCloud <PointTc>::Ptr colored_cloud = ec.reg.getColoredCloud ();
+      //pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = ec.reg.getColoredCloud ();
       pcl::visualization::CloudViewer viewer ("Cluster viewer");     
 //       viewer.showCloud (rgbpc_sampled_cropped, "cloud cropped");
       viewer.showCloud (scene_filtered, "scene_filtered");
@@ -678,7 +679,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< PointT >::ConstPtr& sce
 }
 
 
-void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int* matchedModelID, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2, const pcl::visualization::PCLVisualizer::Ptr &visu)
+void ObjDetector::detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2, const pcl::visualization::PCLVisualizer::Ptr &visu)
 {
     //run thread for each model to speed up process - correct model should return after ~0.5s 
     //TODO: optimize, use our-cvfh to prune possible models, try to stop other threads once one of them found a match
@@ -687,12 +688,12 @@ void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int
     std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > model_transforms(models_.size());
 
     //downsample cluster
-    pcl::PointCloud<PointT>::Ptr cluster_sampled(new pcl::PointCloud<PointT>);
-    pcl::VoxelGrid<PointT> vg;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cluster_sampled(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::VoxelGrid<pcl::PointXYZ> vg;
     vg.setLeafSize(sample_size_, sample_size_, sample_size_);
     vg.setInputCloud(cluster);
     vg.filter(*cluster_sampled);
-    ROS_INFO("cluster has %d points after sampling (%d before)\n", cluster_sampled->size(), cluster->size());
+    ROS_INFO("cluster has %d points after sampling (%d before)\n",(int) cluster_sampled->size(), (int) cluster->size());
 
     int numThreads = models_.size(); //there's only up to 8 views per model at the moment so this runs 1 thread per view
     int schedule_chunk_size = 1;//round(models_.size()/8);
@@ -705,7 +706,7 @@ void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int
     for(int modelIdx = 0; modelIdx < models_.size(); ++modelIdx)
     {
 
-        pcl::PointCloud<PointT>::Ptr model = models_[modelIdx].cloud_sampled;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr model = models_[modelIdx].cloud_sampled;
 
         ///////////////////////////////////////
         // 3. Shift clouds based on centroid //
@@ -717,7 +718,7 @@ void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int
        // Eigen::Vector4f initialTransform = centCluster - centModel;               
        // Eigen::Quaternionf rot(1.0, 0.0, 0.0, 0.0);
         /// Model transformed into the cluster reference system
-        pcl::PointCloud<PointT>::Ptr model_transformed(new pcl::PointCloud<PointT>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr model_transformed(new pcl::PointCloud<pcl::PointXYZ>);
         
         Eigen::Matrix4f T_cluster = Eigen::Matrix4f::Identity(); 
          T_cluster.block<3,1>(0,3) = centCluster.head(3) - centModel.head(3);
@@ -728,7 +729,7 @@ void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int
         {
         
         //compute principal direction using eigenvectors computed by PCA class
-            pcl::PCA<PointT> pca;
+            pcl::PCA<pcl::PointXYZ> pca;
             pca.setInputCloud(model);
             Eigen::Matrix3f R_model = pca.getEigenVectors();
             Eigen::Vector3f t_model = pca.getMean().head(3);
@@ -777,13 +778,13 @@ void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int
         
         // 4. register clouds //
         ////////////////////////
-        pcl::PointCloud<PointT>::Ptr modelRegistered(new pcl::PointCloud<PointT>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr modelRegistered(new pcl::PointCloud<pcl::PointXYZ>);
         
         pcl::ScopeTime t("ICP...");
 //         ROS_INFO("T%d:__6\n", omp_get_thread_num());
-        pcl::Registration<PointT, PointT>::Ptr registration (new pcl::IterativeClosestPoint<PointT, PointT>);
-        //         pcl::Registration<PointT, PointT>::Ptr registration(new pcl::IterativeClosestPointNonLinear<PointT, PointT>);
-//         pcl::Registration<PointT, PointT>::Ptr registration(new pcl::GeneralizedIterativeClosestPoint<PointT, PointT>);
+        pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration (new pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>);
+        //         pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration(new pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ>);
+//         pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration(new pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>);
         registration->setInputSource(model_transformed);
         registration->setInputTarget(cluster_sampled);
         registration->setMaxCorrespondenceDistance(0.25);
@@ -791,7 +792,7 @@ void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int
         registration->setTransformationEpsilon(0.000001);
         registration->setMaximumIterations(max_iter_);
         
-        ROS_INFO("Input to ICP: inputSource: %dpts, inputTarget: %dpts\n", model_transformed->size(), cluster_sampled->size());
+        ROS_INFO("Input to ICP: inputSource: %dpts, inputTarget: %dpts\n",(int) model_transformed->size(), (int) cluster_sampled->size());
 
         registration->align(*modelRegistered);
         Eigen::Matrix4f transformation_matrix = registration->getFinalTransformation();
@@ -847,7 +848,7 @@ void ObjDetector::detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int
         }
         *matchedTransform2 = /*refined_transform **/ model_transforms[*matchedModelID];
         
-        ROS_DEBUG("AP: Best match: view %d with score of %f\n", model_scores[0].second, model_scores[0].first);
+        ROS_DEBUG("AP: Best match: view %d with score of %f\n",(int) model_scores[0].second, model_scores[0].first);
         ROS_DEBUG_STREAM("AP: Transformation matrix: \n" << *matchedTransform);
     }
     else
@@ -865,7 +866,7 @@ void ObjDetector::getModel(int id, Model* model)
     else
     {
         *model = Model();
-        ROS_ERROR("AP: no model with id %d! (%d models in db)\n", id, models_.size());
+        ROS_ERROR("AP: no model with id %d! (%d models in db)\n", id, (int) models_.size());
     }
 }
 
@@ -930,7 +931,7 @@ bool ObjDetector::loadModels(const std::string& db_file)
             lineParse >> pcd >> x >> y >> z >> roll >> pitch >> yaw;
             
             ROS_INFO("AP: \tloading view %s\n", pcd.c_str());
-            pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
             if(pcl::io::loadPCDFile(db_path+obj_type_+"/"+pcd, *cloud) < 0)
             {
                 ROS_ERROR("Failed loading model cloud \"%s\"!", (db_path+pcd).c_str());
@@ -945,8 +946,8 @@ bool ObjDetector::loadModels(const std::string& db_file)
             
   
             //downsample cloud
-            pcl::PointCloud<PointT>::Ptr cloud_filtered(new pcl::PointCloud<PointT>);
-            pcl::VoxelGrid<PointT> vg;
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::VoxelGrid<pcl::PointXYZ> vg;
             vg.setLeafSize(sample_size_, sample_size_, sample_size_);
             vg.setInputCloud(cloud);
             vg.filter(*cloud_filtered);

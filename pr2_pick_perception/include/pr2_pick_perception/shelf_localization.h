@@ -7,21 +7,26 @@
 
 /////// ROS ///////
 #include <ros/ros.h>
+#include <ros/publisher.h>
+#include <ros/package.h>
+#include <ros/time.h>
+
+
 #include <geometry_msgs/Pose.h>
 #include <std_msgs/String.h>
 #include <laser_assembler/AssembleScans2.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
-#include <ros/publisher.h>
+
+
+
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/Image.h>
 #include <image_geometry/pinhole_camera_model.h>
-#include <ros/package.h>
-#include <ros/time.h>
 
 #include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
@@ -78,38 +83,25 @@
 #include <pcl/registration/registration.h>
 #include <pcl/registration/icp.h>
 
- #include <pcl/registration/gicp.h> //generalized icp extension
-// #include <pcl/registration/icp_nl.h> //Levenberg-Marquardt icp 
+#include <pcl/registration/gicp.h> //generalized icp extension
 
 
 #include <pr2_pick_perception/ObjectList.h>
 #include <pr2_pick_perception/ObjectDetectionRequest.h>
 #include <pr2_pick_perception/Object.h>
 #include <pr2_pick_perception/LocalizeShelf.h>
-//#include <pr2_pick_perception/WorldModelOperation.h>
 
-
-
-typedef pcl::PointXYZ PointT; //NOTE: this is bad! (typedef in header file and not even a namespace)
-typedef pcl::PointXYZRGB PointTc; //NOTE: this is bad! (typedef in header file and not even a namespace)
 
 struct Model
 {
     int id; ///<model view id ... not really used anywhere but useful for debugging maybe
-    pcl::PointCloud<PointT>::Ptr cloud; ///<model cloud from sensor point of view
-    pcl::PointCloud<PointT>::Ptr cloud_sampled; ///<downsampled cloud (used for first phase of pose estimate)
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud; ///<model cloud from sensor point of view
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_sampled; ///<downsampled cloud (used for first phase of pose estimate)
     geometry_msgs::PosePtr pose;///<pose relative to robot during recording
 };
 
 
-  //points of mouse callback
-  cv::Point mouse_point1_;
-  cv::Point mouse_point2_;
-  bool click1_;
-  bool click2_;
-
-  /// Mouse callback
-  void callbackmouse(int event, int x, int y, int flags, void* param);
+  
 
 class ObjDetector
 {
@@ -131,7 +123,11 @@ public:
     ///\brief try to match cluster
     ///\param cluster point cloud of cluster
     ///\return view id if found, -1 otherwise
-    void detect(const pcl::PointCloud< PointT >::ConstPtr& cluster, int *matchedModelID, Eigen::Matrix4f *matchedTransform, Eigen::Matrix4f *matchedTransform2, const pcl::visualization::PCLVisualizer::Ptr &visu);
+    void detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, Eigen::Matrix4f *matchedTransform, Eigen::Matrix4f *matchedTransform2, const pcl::visualization::PCLVisualizer::Ptr &visu);
+    
+    ///callback for receiving detection commands
+    bool detectCallback(pr2_pick_perception::LocalizeShelfRequest &request, pr2_pick_perception::LocalizeShelfResponse& response);
+    
     
     ///\brief Returns model with id "id"
     void getModel(int id, Model *model);
@@ -145,12 +141,9 @@ public:
   
      
 private:
-    ros::NodeHandle nh_;
-    ros::ServiceClient client_;
     ros::Publisher pub_;
     ros::Subscriber trigger_sub_;
     ros::Subscriber pc_sub_;
-    ros::ServiceServer server_;
     
     /// stereo to world transform 
     tf::StampedTransform stereo2world_;
@@ -204,7 +197,7 @@ private:
     boost::mutex xtion_mtx_; 
     boost::mutex image_mtx_; 
     
-    pcl::PointCloud<PointT> xtionPC_;
+    pcl::PointCloud<pcl::PointXYZ> xtionPC_;
     sensor_msgs::PointCloud2Ptr xtionPC2ptr_;
     ros::Time pc_timestamp_;
     
@@ -221,10 +214,10 @@ private:
     
     /// color segmentation
     bool color_segmentation_;
-    double DistanceThreshold_;
-    double PointColorThreshold_;
+    double dist_threshold_;
+    double point_color_threshold_;
     double RegionColorThreshold_;
-    double MinClusterSize_;
+    //double min_cluster_size_;
     /// plane segmentation threshold
     double PlanesegThres_;    
     int PlaneSize_;
@@ -258,8 +251,6 @@ private:
     /// Transformation to the robot reference system
     //Eigen::Matrix4f cloud_to_robotE_;
     
-    ///callback for receiving detection commands
-    bool detectCallback(pr2_pick_perception::LocalizeShelfRequest &request, pr2_pick_perception::LocalizeShelfResponse& response);
     
     /// callback for stereo point cloud   
     void xtionPCcallback(const sensor_msgs::PointCloud2ConstPtr &pcloud);
@@ -268,7 +259,7 @@ private:
     void processImage(const sensor_msgs::ImageConstPtr &l_image_msg, const sensor_msgs::CameraInfoConstPtr& l_info_msg);    
     
     ///extract clusters based on color   
-    void extractClusters(const pcl::PointCloud<PointT>::ConstPtr &scene, std::vector<pcl::PointCloud<PointT>::Ptr> *clusters);
+    void extractClusters(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &scene, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> *clusters);
     
     
     

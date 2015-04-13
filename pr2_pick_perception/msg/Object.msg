@@ -4,12 +4,6 @@
 
 Header header
 
-#operation that the World Model should perform on this object
-#trooper_msgs/WorldModelOperation wm_operation 
-
-#current authority for this object (populated by the WorldModel)
-#trooper_msgs/WorldModelAuthor wm_authority 
-
 #unique ID assigned to the object
 string id 
 
@@ -18,8 +12,3 @@ string object_ref
 
 #the object's pose in space
 geometry_msgs/Pose pose
-
-#simple shapes that make up the object
-#Sphere[] spheres
-#Cylinder[] cylinders
-#Box[] boxes
