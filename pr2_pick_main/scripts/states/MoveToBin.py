@@ -1,4 +1,4 @@
-from geometry_msgs.msg import PoseStamped, Point, Quaternion
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import math
 import rospy
 import smach
@@ -52,7 +52,7 @@ class MoveToBin(smach.State):
                 outcomes.MOVE_TO_BIN_SUCCESS,
                 outcomes.MOVE_TO_BIN_FAILURE
             ],
-            input_keys=['bin_id', 'base_to_shelf_tf']
+            input_keys=['bin_id', 'debug']
         )
         self._tts = tts
         self.drive_linear = drive_linear
@@ -84,10 +84,12 @@ class MoveToBin(smach.State):
         listener = tf.TransformListener()
         target_in_shelf_frame = PoseStamped(
             header=Header(frame_id='shelf'),
-            position=Point(x=self.robot_distance_from_shelf,
-                           y=self.strafe_by_bin[userdata.bin_id],
-                           z=0.0),
-            orientation=Quaternion(w=1, x=0, y=0, z=0)
+            pose=Pose(
+                position=Point(x=self.robot_distance_from_shelf,
+                               y=self.strafe_by_bin[userdata.bin_id],
+                               z=0.0),
+                orientation=Quaternion(w=1, x=0, y=0, z=0)
+            )
         )
         rospy.loginfo('Waiting for tf...')
         try:
@@ -105,22 +107,27 @@ class MoveToBin(smach.State):
 
         # Visualize target pose.
         marker = Marker()
-        marker.header.frame_id = 'shelf'
+        marker.header.frame_id = 'base_footprint'
         marker.header.stamp = rospy.Time().now()
         marker.ns = 'target_location'
         marker.id = 0
         marker.type = Marker.CUBE
         marker.action = Marker.ADD
-        marker.pose = target_in_shelf_frame.pose
-        marker.scale.x = 1
-        marker.scale.y = 1
-        marker.scale.z = 0.3
+        marker.pose = target_in_robot_frame.pose
+        marker.pose.position.z = 0.03 / 2
+        marker.scale.x = 0.67
+        marker.scale.y = 0.67
+        marker.scale.z = 0.03
+        marker.color.r = 0
+        marker.color.g = 1
+        marker.color.b = 0
+        marker.color.a = 1
         marker.lifetime = rospy.Duration()
 
         rate = rospy.Rate(1)
-        while self._markers.get_num_connections() == 0:
+        while self.markers.get_num_connections() == 0:
             rate.sleep()
-        self._markers.publish(marker)
+        self.markers.publish(marker)
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
@@ -148,11 +155,10 @@ class MoveToBin(smach.State):
 
         # Turn to face shelf.
         orientation = target_in_robot_frame.pose.orientation
-        _, _, yaw = tf.transformations.euler_from_quaternion(orientation)
+        angles = [orientation.w, orientation.x, orientation.y, orientation.z]
+        _, _, yaw = tf.transformations.euler_from_quaternion(angles)
+        rospy.loginfo('yaw: {}'.format(yaw))
         self.drive_angular(0.1, yaw)
-
-        if userdata.debug:
-            raw_input('(Debug) Press enter to continue: ')
 
         # set torso height for the given shelf
         self.move_torso.wait_for_service()
