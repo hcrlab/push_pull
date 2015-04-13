@@ -12,7 +12,7 @@
     <arg name="camera" value="head_mount_kinect"/>
     <arg name="rgb_frame_id" value="$(arg kinect_frame_prefix)_rgb_optical_frame"/>
     <arg name="depth_frame_id" value="$(arg kinect_frame_prefix)_depth_optical_frame"/>
-    <arg name="publish_tf" value="false"/>
+    <arg name="publish_tf" value="true"/>
   </include>
 
   <!-- Start laser tilt -->
