@@ -17,19 +17,19 @@
 #define _PR2_PICK_MANIPULATION_MOVE_HEAD_SERVICE_H_
 
 namespace pr2_pick_manipulation {
-  typedef actionlib::SimpleActionClient<
-    pr2_controllers_msgs::PointHeadAction> MoveHeadClient;
+typedef actionlib::SimpleActionClient<
+  pr2_controllers_msgs::PointHeadAction> MoveHeadClient;
 
-  class MoveHeadService {
-    private:
-      ros::NodeHandle nh_;
-      ros::ServiceServer server_;
-      MoveHeadClient client_;
-      bool Callback(MoveHead::Request& request, MoveHead::Response& response);
-  
-    public:
-      MoveHeadService();
-  };
+class MoveHeadService {
+ private:
+  ros::NodeHandle nh_;
+  ros::ServiceServer server_;
+  MoveHeadClient client_;
+  bool Callback(MoveHead::Request& request, MoveHead::Response& response);
+
+ public:
+  MoveHeadService();
+};
 };  // namespace pr2_pick_manipulation
 
 #endif // _PR2_PICK_MANIPULATION_MOVE_HEAD_SERVICE_H_

@@ -3,6 +3,9 @@ This is the main code repository for the UW Amazon Picking Challenge team.
 
 ## Getting started
 ```
+sudo pip install mock
+sudo apt-get install ros-hydro-cmake-modules
+
 cd ~/catkin_ws_hydro/src
 git clone --recursive git@gitlab.cs.washington.edu:amazon-picking-challenge-2015/pr2_pick.git
 cd ~/catkin_ws
@@ -10,11 +13,10 @@ rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
 catkin_make
 ```
 
-## Shelf detection
-Improved documentation TBD.
+If you have a problem with catkin not finding `pr2_pretouch_optical_dist`, then from the root of the repository, run:
 ```
-roslaunch obj_recognition shelf_recognition_KinPR2.launch
-roslaunch multisense crop_image_PR2.launch --screen
+git submodule init
+git submodule update
 ```
 
 ## Packages
@@ -38,8 +40,8 @@ Contest interface, inventory management, and strategy.
 A package that contains the main state machine runner for the picking challenge, as well as other end-to-end demos.
 Test programs for specific components might be in other packages, but end-to-end integration stuff should go here.
 
-- Contains a template of the main state machine.
-- Contains demo code for picking 3 items out of the bin.
+- Contains the main state machine.
+- Contains demo code for other programs.
 
 ### pr2_pick_manipulation
 - Contains services for controlling the robot (torso, base, grippers, etc.)
@@ -51,7 +53,9 @@ Test programs for specific components might be in other packages, but end-to-end
 Contains common message types for the picking challenge.
 
 ### pr2_pick_perception
-- Contains a launch file which starts the Kinect.
+- Contains a launch file which starts the Kinect, shelf localization, and fingertip sensor.
+- Contains a shelf localization service.
+- Contains a static tf transform publisher.
 - Contains a script for recording point cloud data.
 - Contains a "mock perception" class for testing purposes.
 

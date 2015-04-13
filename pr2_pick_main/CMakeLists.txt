@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   pr2_pick_perception
   roscpp
   std_msgs
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions

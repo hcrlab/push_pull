@@ -3,102 +3,65 @@
 """The main state machine for the picking challenge.
 """
 
-import outcomes
+from bin_data import BinData
+import argparse
 import rospy
 import smach
 import smach_ros
+import state_machine_factory
 import states
 
 
-def main():
+def main(mock=False, test_move_to_bin=False, debug=False):
     rospy.init_node('pr2_pick_state_machine')
+    sm = None
+    if mock:
+        sm = state_machine_factory.mock_robot()
+    elif test_move_to_bin:
+        sm = state_machine_factory.test_move_to_bin()
+    else:
+        sm = state_machine_factory.real_robot()
 
-    sm = smach.StateMachine(outcomes=[
-        outcomes.CHALLENGE_SUCCESS,
-        outcomes.CHALLENGE_FAILURE
-    ])
+    # Whether to step through checkpoints.
+    sm.userdata.debug = debug
 
-    # The set of bins we have already attempted to pick from.
-    sm.userdata.last_bin_id = None
+    # The current bin being attempted.
+    sm.userdata.current_bin = None
 
-    with sm:
-        smach.StateMachine.add(
-            states.StartPose.name,
-            states.StartPose(),
-            transitions={
-                outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
-            }
-        )
-        smach.StateMachine.add(
-            states.FindShelf.name,
-            states.FindShelf(),
-            transitions={
-                outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
-                outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
-            }
-        )
-        smach.StateMachine.add(
-            states.UpdatePlan.name,
-            states.UpdatePlan(),
-            transitions={
-                outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
-                outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
-                outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
-            }
-        )
-        smach.StateMachine.add(
-            states.MoveToBin.name,
-            states.MoveToBin(),
-            transitions={
-                outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
-                outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
-            }
-        )
-        smach.StateMachine.add(
-            states.SenseBin.name,
-            states.SenseBin(),
-            transitions={
-                outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
-                outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,
-                outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
-            }
-        )
-        smach.StateMachine.add(
-            states.Grasp.name,
-            states.Grasp(),
-            transitions={
-                outcomes.GRASP_SUCCESS: states.ExtractItem.name,
-                outcomes.GRASP_FAILURE: (
-                    outcomes.CHALLENGE_FAILURE
-                )
-            }
-        )
-        smach.StateMachine.add(
-            states.ExtractItem.name,
-            states.ExtractItem(),
-            transitions={
-                outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
-                outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
-            }
-        )
-        smach.StateMachine.add(
-            states.DropOffItem.name,
-            states.DropOffItem(),
-            transitions={
-                outcomes.DROP_OFF_ITEM_SUCCESS: states.UpdatePlan.name,
-                outcomes.DROP_OFF_ITEM_FAILURE: states.UpdatePlan.name
-            }
-        )
+    # Holds data about the state of each bin.
+    sm.userdata.bin_data = {}
+    for bin_id in 'ABCDEFGHIJKL':
+        sm.userdata.bin_data[bin_id] = BinData(id, False, False)
 
-    sis = smach_ros.IntrospectionServer('state_machine_introspection_server',
-                                        sm,
-                                        '/')
-    sis.start()
-    outcome = sm.execute()
+    try:
+        sis = smach_ros.IntrospectionServer(
+            'state_machine_introspection_server', sm, '/')
+        sis.start()
+        outcome = sm.execute()
+    except:
+        sis.stop()
+        rospy.signal_shutdown('Exception in the state machine.')
+
     rospy.spin()
     sis.stop()
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        '--mock', action='store_true',
+        help=('True if you want to create a state machine with mock robot'
+            ' components.')
+    )
+    group.add_argument(
+        '--test_move_to_bin', action='store_true',
+        help=('True to create a minimal state machine for testing the'
+              'MoveToBin state.')
+    )
+    parser.add_argument(
+        '--debug', action='store_true',
+        help=('True if you want to step through debugging checkpoints.')
+    )
+    args = parser.parse_args(args=rospy.myargv()[1:])
+    main(args.mock, args.test_move_to_bin, args.debug)

@@ -6,7 +6,19 @@ It also contains other end-to-end demos that integrate multiple parts.
 Located in `scripts/main.py`.
 It is implemented using the [smach](http://wiki.ros.org/smach) framework.
 smach has extensive [tutorials](http://wiki.ros.org/smach/Tutorials) on how to use it.
-Our state machine is just a template for right now.
+
+### Getting started
+You may need to install [mock](https://pypi.python.org/pypi/mock): `sudo pip install mock`
+
+Launch the appropriate launch file: `roslaunch pr2_pick_main milestone1.launch`, or launch the prereqs and the main file separately:
+
+```
+roslaunch pr2_pick_main milestone1_prereqs.launch
+python main.py
+```
+
+If the robot is busy, you can still run the state machine by mocking out all the
+ROS services, publishers, etc. Just run the launch file with `mock:=true`, or with `python main.py --mock`.
 
 ## Travel support demo
 Picks 3 objects, one from bin G, H, and I.

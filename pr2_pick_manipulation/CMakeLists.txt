@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -73,6 +74,7 @@ add_service_files(
   MoveTorso.srv
   TuckArms.srv
   MoveHead.srv
+  MoveArm.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -157,15 +159,20 @@ add_executable(gripper_service_node src/gripper_service_node.cpp)
 add_executable(torso_service_node src/torso_service_node.cpp)
 add_executable(tuck_arms_service_node src/tuck_arms_service_node.cpp)
 add_executable(move_head_service_node src/move_head_service_node.cpp)
-
+add_executable(moveit_service_node src/moveit_service_node.cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-#add_dependencies(easy_boxes_demo
-#  gripper
-#  driver
-#  arm_navigator
-#  ${pr2_pick_manipulation_EXPORTED_TARGETS}
-#)
+add_dependencies(driver_service pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(gripper_service pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(torso_service pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(tuck_arms_service pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(move_head_service pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(driver_service_node pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(gripper_service_node pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(torso_service_node pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(tuck_arms_service_node pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(move_head_service_node pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(moveit_service_node pr2_pick_manipulation_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(arm_navigator
@@ -218,7 +225,9 @@ target_link_libraries(move_head_service_node
   ${catkin_LIBRARIES}
   move_head_service
 )
-
+target_link_libraries(moveit_service_node
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
