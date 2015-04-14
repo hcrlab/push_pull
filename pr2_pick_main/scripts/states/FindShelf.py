@@ -5,6 +5,7 @@ from pr2_pick_perception.msg import ObjectDetectionRequest
 from pr2_pick_perception.msg import ROI2d
 from pr2_pick_perception.srv import LocalizeShelfRequest
 from visualization_msgs.msg import Marker
+import math
 import outcomes
 import rospy
 import smach
@@ -75,6 +76,12 @@ class FindShelf(smach.State):
                     'No transform between {} and {} in FindShelf'.format(
                         shelf.header.frame_id, 'odom_combined'))
                 continue
+
+            roll, pitch, yaw = tf.transformations.euler_from_quaternion(
+                [shelf_odom.pose.orientation.x, shelf_odom.pose.orientation.y,
+                 shelf_odom.pose.orientation.z, shelf_odom.pose.orientation.w])
+            rospy.loginfo('roll: {}, pitch: {}, yaw: {}'.format(
+                180*roll/math.pi, 180*pitch/math.pi, 180*yaw/math.pi))
 
             # Check that the response is reasonable.
             if shelf_odom.pose.position.z < -0.1 or shelf_odom.pose.position.z > 0.1:
