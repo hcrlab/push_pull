@@ -1,14 +1,15 @@
+<!-- Launches shelf detection-->
 <launch>
+  <!-- param name="/use_sim_time" value="true"/ --> <!-- Use for testing with bag files. -->
   <arg name="debug" default="false" /> <!-- Whether to show debug visualizations. -->
   <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node" name="shelf_obj_detector" respawn="true" output="screen">
    <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
 
    <param name="iter" value="70"/>
-   <param name="minClusterSize" value="350"/>
+   <param name="minClusterSize" value="10350"/>
    <param name="radius_search" value="0.015"/>
 
    <param name="DistanceThreshold" value="0.05"/>
-   <param name="MinClusterSize" value="250"/> 
    <param name="PlanesegThres" value="0.03"/>   <!-- was 0.05 for non-hose, to remove wall behind valve -->
    <param name="PlaneSize" value="10000"/> <!-- WAS 4500,50000 -->
    <param name="highplane" value="2.5" /> <!-- removes points further than this limit -->
@@ -16,7 +17,7 @@
   <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
 
    <param name="RobotReference" value="/base_footprint" />  
-   <param name="WorldReference" value="/odom_combined" /> <!-- Will default to base_footprint if there's no map. -->
+   <param name="WorldReference" value="/map" /> <!-- Will default to base_footprint if there's no map. -->
 
    <param name="manual_segmentation" value="false" />
    <param name="pca_alignment" value="false"/>

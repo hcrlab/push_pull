@@ -12,7 +12,7 @@ import state_machine_factory
 import states
 
 
-def main(mock=False, test_move_to_bin=False):
+def main(mock=False, test_move_to_bin=False, debug=False):
     rospy.init_node('pr2_pick_state_machine')
     sm = None
     if mock:
@@ -21,6 +21,9 @@ def main(mock=False, test_move_to_bin=False):
         sm = state_machine_factory.test_move_to_bin()
     else:
         sm = state_machine_factory.real_robot()
+
+    # Whether to step through checkpoints.
+    sm.userdata.debug = debug
 
     # The current bin being attempted.
     sm.userdata.current_bin = None
@@ -56,5 +59,9 @@ if __name__ == '__main__':
         help=('True to create a minimal state machine for testing the'
               'MoveToBin state.')
     )
+    parser.add_argument(
+        '--debug', action='store_true',
+        help=('True if you want to step through debugging checkpoints.')
+    )
     args = parser.parse_args(args=rospy.myargv()[1:])
-    main(args.mock, args.test_move_to_bin)
+    main(args.mock, args.test_move_to_bin, args.debug)

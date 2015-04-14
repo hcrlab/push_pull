@@ -5,10 +5,7 @@
 Header header
 
 #unique ID assigned to the object
-string id 
-
-#reference to the object in the database
-string object_ref  
+string id  
 
 #the object's pose in space
-geometry_msgs/Pose pose
+sensor_msgs/PointCloud2 pointcloud
