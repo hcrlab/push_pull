@@ -104,6 +104,14 @@ class FindShelf(smach.State):
         # Adjusting pitch and roll to be 0 seems to make the model worse than just
         # letting it be slightly tilted.
         #shelf_odom.pose.position.z = 0
+        #_, _, yaw = tf.transformations.euler_from_quaternion(
+        #    [shelf_odom.pose.orientation.x, shelf_odom.pose.orientation.y,
+        #     shelf_odom.pose.orientation.z, shelf_odom.pose.orientation.w])
+        #quat = tf.transformations.quaternion_from_euler(0, 0, yaw)
+        #shelf_odom.pose.orientation.x = quat[0]
+        #shelf_odom.pose.orientation.y = quat[1]
+        #shelf_odom.pose.orientation.z = quat[2]
+        #shelf_odom.pose.orientation.w = quat[3]
 
         self._tts.publish('Found shelf.')
 
