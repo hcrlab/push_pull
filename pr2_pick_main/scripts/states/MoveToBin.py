@@ -29,6 +29,8 @@ class MoveToBin(smach.State):
 
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
+    robot_distance_from_shelf_d_l = -1.04
+    robot_distance_from_shelf_a_c = -0.95
     robot_distance_from_shelf = -1.1
 
     # speed in meters per second for driving to each bin
@@ -79,6 +81,12 @@ class MoveToBin(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
+
+        if userdata.bin_id > "C":
+            self.robot_distance_from_shelf = self.robot_distance_from_shelf_d_l
+        else:
+            self.robot_distance_from_shelf = robot_distance_from_shelf_a_c
+
 
         # find the target pose in robot coordinates
         listener = tf.TransformListener()

@@ -56,62 +56,62 @@
     {
       "bin": "bin_A",
       "item": "munchkin_white_hot_duck_bath_toy",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0.28, "z":1.57}
     },
     {
       "bin": "bin_B",
       "item": "paper_mate_12_count_mirado_black_warrior",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0, "z":1.57}
     },
     {
       "bin": "bin_C",
       "item": "cheezit_big_original",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": -0.28, "z":1.57}
     },
     {
       "bin": "bin_D",
       "item": "feline_greenies_dental_treats",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0.28, "z":1.34}
     },
     {
       "bin": "bin_E",
       "item": "first_years_take_and_toss_straw_cup",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0, "z":1.34}
     },
     {
       "bin": "bin_F",
       "item": "kyjen_squeakin_eggs_plush_puppies",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": -0.28, "z":1.34}
     },
     {
       "bin": "bin_G",
       "item": "crayola_64_ct",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0.28, "z":1.11}
     },
     {
       "bin": "bin_H",
       "item": "mead_index_cards",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0, "z":1.11}
     },
     {
       "bin": "bin_I",
       "item": "highland_6539_self_stick_notes",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": -0.28, "z":1.11}
     },
     {
       "bin": "bin_J",
       "item": "expo_dry_erase_board_eraser",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0.28, "z":0.85}
     },
     {
       "bin": "bin_K",
       "item": "mommys_helper_outlet_plugs",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": 0, "z":0.85}
     },
     {
       "bin": "bin_L",
       "item": "elmers_washable_no_run_school_glue",
-      "pose": {"x": 0, "y": -0.125, "z":0}
+      "pose": {"x": 0.406, "y": -0.28, "z":0.85}
     }
   ]
 }

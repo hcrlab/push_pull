@@ -1,6 +1,7 @@
 from pr2_pick_manipulation.srv import DriveAngular
 from pr2_pick_manipulation.srv import DriveLinear
 from pr2_pick_manipulation.srv import MoveArm
+from pr2_pick_manipulation.srv import GetPose
 from pr2_pick_manipulation.srv import MoveHead
 from pr2_pick_manipulation.srv import MoveTorso
 from pr2_pick_manipulation.srv import SetGrippers
@@ -35,8 +36,8 @@ def test_move_to_bin():
         key: all_services[key]
         for key in {
             'tts', 'tuck_arms', 'move_torso', 'set_grippers',
-            'move_head', 'drive_linear', 'localize_shelf',
-            'set_static_tf'
+            'move_head', 'moveit_move_arm', 'get_pose', 
+            'drive_linear', 'localize_shelf', 'set_static_tf'
         }
     }
     return build_for_move_to_bin(**services)
@@ -50,6 +51,7 @@ def real_robot_services():
         'set_grippers': rospy.ServiceProxy('gripper_service', SetGrippers),
         'move_head': rospy.ServiceProxy('move_head_service', MoveHead),
         'moveit_move_arm': rospy.ServiceProxy('moveit_service', MoveArm),
+        'get_pose': rospy.ServiceProxy('get_pose', GetPose),
         'localize_shelf': rospy.ServiceProxy('perception/localize_shelf',
                                         LocalizeShelf),
         'set_static_tf': rospy.ServiceProxy('perception/set_static_transform',
@@ -230,7 +232,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.ExtractItem.name,
-            states.ExtractItem(tts, moveit_move_arm),
+            states.ExtractItem(tts, moveit_move_arm, get_pose),
             transitions={
                 outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
                 outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
