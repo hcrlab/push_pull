@@ -72,6 +72,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  Cell.msg
   Object.msg
   ObjectList.msg
   ObjectDetectionRequest.msg
@@ -84,7 +85,7 @@ add_service_files(
   LocalizeShelf.srv
   SetStaticTransform.srv
   DeleteStaticTransform.srv
-   CropShelf.srv
+  CropShelf.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -164,6 +165,10 @@ add_dependencies(mock_perception
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
+add_dependencies(mock_perception_easy_boxes
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
 add_dependencies(shelf_localization_service_node
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
@@ -184,12 +189,20 @@ target_link_libraries(shelf_localization_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Boost_LIBRARIES}
-
+  ${catkin_LIBRARIES}
 )
 target_link_libraries(shelf_cropping_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(mock_perception
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(mock_perception_easy_boxes
+  ${catkin_LIBRARIES}
+  mock_perception
 )
 
 #############
