@@ -1,6 +1,6 @@
 <!-- Launches shelf detection-->
 <launch>
-<param name="/use_sim_time" value="true"/>
+  <!-- param name="/use_sim_time" value="true"/ --> <!-- Use for testing with bag files. -->
   <arg name="debug" default="false" /> <!-- Whether to show debug visualizations. -->
   <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node" name="shelf_obj_detector" respawn="true" output="screen">
    <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
