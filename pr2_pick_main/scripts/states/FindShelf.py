@@ -49,7 +49,7 @@ class FindShelf(smach.State):
         success = False
         shelf_ps = PoseStamped() # The shelf pose returned by the service.
         shelf_odom = PoseStamped() # Shelf pose in odom_combined frame.
-        for try_num in range(3):
+        for try_num in range(5):
             self._localize_shelf.wait_for_service()
             response = self._localize_shelf()
             if len(response.locations.objects) == 0:
