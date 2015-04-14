@@ -72,19 +72,22 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  Cell.msg
+  Cluster.msg
+  ClusterList.msg
   Object.msg
-  ObjectList.msg
   ObjectDetectionRequest.msg
+  ObjectList.msg
   ROI2d.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  CropShelf.srv
+  DeleteStaticTransform.srv
   LocalizeShelf.srv
   SetStaticTransform.srv
-  DeleteStaticTransform.srv
-   CropShelf.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -146,21 +149,25 @@ include_directories(include)
 add_library(mock_perception
   src/mock_perception.cpp
 )
+
+## Declare a cpp executable
+add_executable(mock_perception_easy_boxes
+  src/mock_perception_easy_boxes.cpp
+)
 add_executable(shelf_localization_service_node
   src/shelf_localization.cpp
 )
-
 add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
 )
 
-
-## Declare a cpp executable
-add_executable(mock_perception_easy_boxes src/mock_perception_easy_boxes.cpp)
-
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(mock_perception
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+add_dependencies(mock_perception_easy_boxes
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
@@ -184,12 +191,20 @@ target_link_libraries(shelf_localization_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Boost_LIBRARIES}
-
+  ${catkin_LIBRARIES}
 )
 target_link_libraries(shelf_cropping_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(mock_perception
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(mock_perception_easy_boxes
+  ${catkin_LIBRARIES}
+  mock_perception
 )
 
 #############

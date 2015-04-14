@@ -4,7 +4,7 @@
   <arg name="debug_shelf" default="false" />
 
   <!-- Import c1 and c2 machine definitions -->
-  <include file="$(find pr2_machine)/$(env ROBOT).machine" />
+  <!--include file="$(find pr2_machine)/$(env ROBOT).machine" /-->
 
   <!-- Turn on the Kinect -->
   <include file="$(find openni_launch)/launch/openni.launch">
@@ -12,7 +12,10 @@
     <arg name="camera" value="head_mount_kinect"/>
     <arg name="rgb_frame_id" value="$(arg kinect_frame_prefix)_rgb_optical_frame"/>
     <arg name="depth_frame_id" value="$(arg kinect_frame_prefix)_depth_optical_frame"/>
-    <arg name="publish_tf" value="false"/>
+    <arg name="publish_tf" value="false"/> <!-- We publish the tf ourselves with kinect_frame.launch -->
+  </include>
+  <include file="$(find pr2_pick_perception)/launch/kinect_frames.launch">
+    <arg name="camera" value="head_mount_kinect" />
   </include>
 
   <!-- Start laser tilt -->
@@ -26,13 +29,13 @@
   </node-->
 
   <!-- Convert tilt laser scan to pointcloud -->
-  <node pkg="laser_filters" type="scan_to_cloud_filter_chain" output="screen" 
+  <!--node pkg="laser_filters" type="scan_to_cloud_filter_chain" output="screen" 
     name="scan_to_cloud_filter_chain_tilt_laser">
     <remap from="scan" to="/tilt_scan"/>
     <remap from="cloud_filtered" to="/tilt_scan_cloud"/>
     <param name="target_frame" type="string" value="base_footprint"/>
     <param name="incident_angle_correction" value="false"/>
-  </node>
+  </node-->
 
   <include file="$(find pr2_pretouch_optical_dist)/launch/optical_dist.launch" />
   <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_KinPR2.launch" />

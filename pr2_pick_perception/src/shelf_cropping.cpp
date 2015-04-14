@@ -11,6 +11,9 @@
 
 
 #include<pr2_pick_perception/shelf_cropping.h>
+#include <pr2_pick_perception/Cluster.h>
+#include <pr2_pick_perception/ClusterList.h>
+
 
 CropShelf::CropShelf()
 {
@@ -267,9 +270,24 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
             vis->spin();
         
         }    
-        pcl::toROSMsg(*cell_pc,response.cell);        
-         
+        
+        // copy the clusters to the object ObjectList
+        pr2_pick_perception::ClusterList clusterlist;
+        for (int i=0; i < clusters.size(); i++)
+        {
+            
+            pr2_pick_perception::Cluster cluster;
+            cluster.header.frame_id = model_frame_id_; 
+            cluster.header.stamp = pc_timestamp_; 
+            std::stringstream ss;
+            ss << "cluster_" << i;
+            cluster.id = ss.str(); 
+            pcl::toROSMsg(*clusters[i],cluster.pointcloud);        
+            
+            clusterlist.clusters.push_back(cluster);
+        }
        
+       response.locations = clusterlist;
     
     }
     

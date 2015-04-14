@@ -23,9 +23,9 @@ class MoveToBin(smach.State):
     # y-direction displacement of robot base center from shelf base center
     # by bin column, in shelf coordinates. Tuned for robot's right arm to
     # be able to access bins
-    left_column_strafe = 0.53
-    center_column_strafe = 0.23
-    right_column_strafe = -0.07
+    left_column_strafe = 0.51
+    center_column_strafe = 0.2147
+    right_column_strafe = -0.0806
 
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
@@ -158,9 +158,6 @@ class MoveToBin(smach.State):
         if not result:
             return outcomes.MOVE_TO_BIN_FAILURE
 
-        if userdata.debug:
-            raw_input('(Debug) Press enter to continue: ')
-
         # Turn to face shelf.
         orientation = target_in_robot_frame.pose.orientation
         angles = [orientation.w, orientation.x, orientation.y, orientation.z]
@@ -171,6 +168,9 @@ class MoveToBin(smach.State):
         # set torso height for the given shelf
         self.move_torso.wait_for_service()
         result = self.move_torso(self.torso_height_by_bin[userdata.bin_id])
+
+        if userdata.debug:
+            raw_input('(Debug) Press enter to continue: ')
 
         if not result:
             return outcomes.MOVE_TO_BIN_FAILURE

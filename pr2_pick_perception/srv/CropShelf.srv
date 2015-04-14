@@ -1,4 +1,4 @@
 #return the point cloud of the respective cell
 string cellID
 ---
-sensor_msgs/PointCloud2 cell
+pr2_pick_perception/ClusterList locations
