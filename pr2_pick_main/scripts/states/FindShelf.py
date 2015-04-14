@@ -161,7 +161,8 @@ class FindShelf(smach.State):
         marker.lifetime = rospy.Duration()
 
         # Set up static a transform for each bin relative to shelf.
-        # Bin origin is the front center of the bin opening.
+        # Bin origin is the front center of the bin opening, equidistant
+        # from top edge and bottom edge of bin.
         shelf_depth = 0.87
 
         top_row_z = 165.735
@@ -173,21 +174,19 @@ class FindShelf(smach.State):
         center_column_y = 0.0
         right_column_y = -29.21
 
-        # These could remain static once perception works or we could try
-        # localizing each bin individually.
         bin_translations = {
-            'A': Position(x=shelf_depth/2, y=left_column_y, z=top_row_z),
-            'B': Position(x=shelf_depth/2, y=center_column_y, z=top_row_z),
-            'C': Position(x=shelf_depth/2, y=right_column_y, z=top_row_z),
-            'D': Position(x=shelf_depth/2, y=left_column_y, z=second_row_z),
-            'E': Position(x=shelf_depth/2, y=center_column_y, z=second_row_z),
-            'F': Position(x=shelf_depth/2, y=right_column_y, z=second_row_z),
-            'G': Position(x=shelf_depth/2, y=left_column_y, z=third_row_z),
-            'H': Position(x=shelf_depth/2, y=center_column_y, z=third_row_z),
-            'I': Position(x=shelf_depth/2, y=right_column_y, z=third_row_z),
-            'J': Position(x=shelf_depth/2, y=left_column_y, z=bottom_row_z),
-            'K': Position(x=shelf_depth/2, y=center_column_y, z=bottom_row_z),
-            'L': Position(x=shelf_depth/2, y=right_column_y, z=bottom_row_z),
+            'A': Position(x=-shelf_depth/2., y=left_column_y, z=top_row_z),
+            'B': Position(x=-shelf_depth/2., y=center_column_y, z=top_row_z),
+            'C': Position(x=-shelf_depth/2., y=right_column_y, z=top_row_z),
+            'D': Position(x=-shelf_depth/2., y=left_column_y, z=second_row_z),
+            'E': Position(x=-shelf_depth/2., y=center_column_y, z=second_row_z),
+            'F': Position(x=-shelf_depth/2., y=right_column_y, z=second_row_z),
+            'G': Position(x=-shelf_depth/2., y=left_column_y, z=third_row_z),
+            'H': Position(x=-shelf_depth/2., y=center_column_y, z=third_row_z),
+            'I': Position(x=-shelf_depth/2., y=right_column_y, z=third_row_z),
+            'J': Position(x=-shelf_depth/2., y=left_column_y, z=bottom_row_z),
+            'K': Position(x=-shelf_depth/2., y=center_column_y, z=bottom_row_z),
+            'L': Position(x=-shelf_depth/2., y=right_column_y, z=bottom_row_z),
         }
 
         for bin_id, translation in bin_translations:
