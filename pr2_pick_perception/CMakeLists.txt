@@ -73,19 +73,21 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 add_message_files(
   FILES
   Cell.msg
+  Cluster.msg
+  ClusterList.msg
   Object.msg
-  ObjectList.msg
   ObjectDetectionRequest.msg
+  ObjectList.msg
   ROI2d.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  CropShelf.srv
+  DeleteStaticTransform.srv
   LocalizeShelf.srv
   SetStaticTransform.srv
-  DeleteStaticTransform.srv
-  CropShelf.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -147,17 +149,17 @@ include_directories(include)
 add_library(mock_perception
   src/mock_perception.cpp
 )
+
+## Declare a cpp executable
+add_executable(mock_perception_easy_boxes
+  src/mock_perception_easy_boxes.cpp
+)
 add_executable(shelf_localization_service_node
   src/shelf_localization.cpp
 )
-
 add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
 )
-
-
-## Declare a cpp executable
-add_executable(mock_perception_easy_boxes src/mock_perception_easy_boxes.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
