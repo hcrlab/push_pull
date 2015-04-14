@@ -4,10 +4,12 @@ import rospy
 import smach
 import sys
 import tf
+from visualization_msgs.msg import Marker
 
 import outcomes
-from pr2_pick_manipulation.srv import DriveLinear, MoveTorso
+from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, MoveHead, MoveTorso
 from states.MoveToBin import MoveToBin
+from std_msgs.msg import String
 
 # Simple test to execute the MoveToBin state for a hard coded bin
 # How to run:
@@ -43,7 +45,12 @@ if __name__ == '__main__':
     # )
     # mock_userdata.base_to_shelf_tf = (translation, rotation)
 
-    move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
+    tts = rospy.Publisher('/festival_tts', String)
+    drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
     drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
-    state = MoveToBin(drive_linear, move_torso)
+    move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
+    move_head = rospy.ServiceProxy('move_head_service', MoveHead)
+    markers = rospy.Publisher('pr2_pick_visualization', Marker)
+
+    state = MoveToBin(tts, drive_linear, drive_angular, move_head, move_torso, markers)
     state.execute(mock_userdata)
