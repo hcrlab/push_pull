@@ -1,6 +1,6 @@
 <launch>
   <arg name="debug_shelf" default="false" />
-  <node name="sound_play_node" pkg="sound_play" type="soundplay_node.py" />
+  <!--node name="sound_play_node" pkg="sound_play" type="soundplay_node.py" /--> <!-- Already started by the robot -->
   <node name="festival_tts" pkg="festival_tts" type="speak.py" />
   <node name="pr2_pick_inventory" pkg="pr2_pick_contest" type="inventory.py" args="$(find pr2_pick_contest)/config/milestone_1.json" />
   <node name="moveit_service_node" pkg="pr2_pick_manipulation" type="moveit_service_node.py" />
