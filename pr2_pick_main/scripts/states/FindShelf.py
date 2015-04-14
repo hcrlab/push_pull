@@ -1,5 +1,4 @@
-from geometry_msgs.msg import Orientation, PoseStamped, TransformStamped, \
-    Quaternion
+from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion
 import math
 import rospy
 import smach
@@ -196,13 +195,13 @@ class FindShelf(smach.State):
                 header=Header(
                     frame_id='shelf',
                     stamp=rospy.Time.now(),
-                    ),
+                ),
                 transform=Transform(
                     translation=translation,
-                    rotation=Orientation(w=1, x=0, y=0, z=0),
-                    )
+                    rotation=Quaternion(w=1, x=0, y=0, z=0),
+                ),
                 child_frame_id=bin_id,
-                )
+            )
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
 
