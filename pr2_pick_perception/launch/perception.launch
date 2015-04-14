@@ -12,7 +12,10 @@
     <arg name="camera" value="head_mount_kinect"/>
     <arg name="rgb_frame_id" value="$(arg kinect_frame_prefix)_rgb_optical_frame"/>
     <arg name="depth_frame_id" value="$(arg kinect_frame_prefix)_depth_optical_frame"/>
-    <arg name="publish_tf" value="true"/>
+    <arg name="publish_tf" value="false"/> <!-- We publish the tf ourselves with kinect_frame.launch -->
+  </include>
+  <include file="$(find pr2_pick_perception)/launch/kinect_frames.launch">
+    <arg name="camera" value="head_mount_kinect" />
   </include>
 
   <!-- Start laser tilt -->
