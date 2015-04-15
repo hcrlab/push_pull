@@ -52,11 +52,11 @@ class DropOffItem(smach.State):
 
         # add the order bin to planning scene
         rospy.loginfo('Adding order bin to planning scene')
-        position = (1.524, -0.9905999999999999, 0.4572)    
-        size = (0.9144, 0.4572, 0.9144)    
-        name = 'order_bin'
-        planningscene_create_box(position, size, name)
-        planningscene_create_box(position, size, name)
+        # position = (1.524, -0.9905999999999999, 0.4572)    
+        # size = (0.9144, 0.4572, 0.9144)    
+        # name = 'order_bin'
+        # planningscene_create_box(position, size, name)
+        # planningscene_create_box(position, size, name)
 
         # move to the order bin
         rospy.loginfo('Move next to the order bin')
@@ -78,11 +78,14 @@ class DropOffItem(smach.State):
         # move arm
         rospy.loginfo('Move arm above order bin')
         pose_target = geometry_msgs.msg.PoseStamped()
-        pose_target.header.frame_id = "odom_combined";
-        pose_target.pose.orientation.w = 1
-        pose_target.pose.position.x = 1.3335
-        pose_target.pose.position.y = 1.2954
-        pose_target.pose.position.z = 1.1176
+        pose_target.header.frame_id = "base_footprint";
+        pose_target.pose.position.x = 0.2968
+        pose_target.pose.position.y = -0.5871
+        pose_target.pose.position.z = 1.0326
+        pose_target.pose.orientation.x = 0.3332
+        pose_target.pose.orientation.y = -0.9335
+        pose_target.pose.orientation.z = -0.0361
+        pose_target.pose.orientation.w = -0.1273
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose_target, 0, "right_arm")
 
