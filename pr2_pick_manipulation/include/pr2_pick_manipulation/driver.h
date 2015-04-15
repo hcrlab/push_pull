@@ -9,6 +9,8 @@
 //  driver.DriveAngular(-0.5, M_PI/2);
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
 #include <tf/transform_listener.h>
 
 #ifndef _PR2_PICK_MANIPULATION_DRIVER_H_
@@ -16,28 +18,34 @@
 
 namespace pr2_pick_manipulation {
 class RobotDriver {
- private:
-  ros::NodeHandle node_handle_;
-  ros::Publisher cmd_vel_pub_;
-  tf::TransformListener listener_;
+  private:
+    ros::NodeHandle node_handle_;
+    ros::Publisher cmd_vel_pub_;
+    tf::TransformListener listener_;
 
- public:
-  RobotDriver();
+  public:
+    RobotDriver();
 
-  // Drives the robot in a straight line.
-  //
-  // dx and dy are linear velocities (+dx forward, +dy left) in meters/second
-  //
-  // Stops driving once the robot has been displaced by the given distance from
-  // its starting position.
-  bool DriveLinear(double dx, double dy, double distance);
+    // Drives the robot in a straight line.
+    //
+    // dx and dy are linear velocities (+dx forward, +dy left) in meters/second
+    //
+    // Stops driving once the robot has been displaced by the given distance from
+    // its starting position.
+    bool DriveLinear(double dx, double dy, double distance);
 
-  // Rotates the robot.
-  //
-  // dt is an angular velocity (+dt counter-clockwise) in radians/second
-  //
-  // Stops rotating once the robot has rotated the specified number of radians.
-  bool DriveAngular(double dt, double radians);
+    // Rotates the robot.
+    //
+    // dt is an angular velocity (+dt counter-clockwise) in radians/second
+    //
+    // Stops rotating once the robot has rotated the specified number of radians.
+    bool DriveAngular(double dt, double radians);
+
+    // Drives the robot to the given pose.
+    //
+    // Returns true if the robot sucessfully reaches its destination pose.
+    bool DriveToPose(geometry_msgs::PoseStamped pose,
+      std_msgs::Float64 linearVelocity, std_msgs::Float64 angularVelocity);
 };
 };  // namespace pr2_pick_manipulation
 #endif

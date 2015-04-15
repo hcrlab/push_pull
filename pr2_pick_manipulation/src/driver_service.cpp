@@ -11,6 +11,9 @@ DriverService::DriverService()
       linear_server_(nh_.advertiseService("drive_linear_service",
                                           &DriverService::LinearCallback,
                                           this)),
+      drive_to_pose_server_(nh_.advertiseService("drive_to_pose_service",
+                                          &DriverService::PoseCallback,
+                                          this)),
       driver_() {
 }
 
@@ -25,6 +28,14 @@ bool DriverService::LinearCallback(DriveLinear::Request& request,
                                    DriveLinear::Response& response) {
   bool success = driver_.DriveLinear(request.vel_x, request.vel_y,
                                      request.displacement);
+  response.success = success;
+  return success;
+}
+
+bool DriverService::PoseCallback(DriveToPose::Request& request,
+                                   DriveToPose::Response& response) {
+  bool success = driver_.DriveToPose(request.pose, request.linearVelocity,
+    request.angularVelocity);
   response.success = success;
   return success;
 }

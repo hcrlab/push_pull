@@ -1,5 +1,8 @@
+#include <math.h>
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
 #include <tf/transform_listener.h>
 #include "pr2_pick_manipulation/driver.h"
 
@@ -93,5 +96,35 @@ bool RobotDriver::DriveAngular(double dt, double radians) {
     }
   }
   return true;
+}
+bool RobotDriver::DriveToPose(geometry_msgs::PoseStamped pose,
+  std_msgs::Float64 linearVelocity, std_msgs::Float64 angularVelocity) {
+  // Transform pose to be relative to "base_footprint"
+  geometry_msgs::PoseStamped newPose;
+  listener_.transformPose("base_footprint", pose, newPose);
+
+  // tf::Transform t;
+  // t.setOrigin(tf::Vector3(pose.pose.position.x, pose.pose.position.y,
+  //   pose.pose.position.y));
+  // t.setRotation(tf::Quaternion(pose.pose.orientation.w, pose.pose.orientation.x,
+  //   pose.pose.orientation.y, pose.pose.orientation.z));
+  
+  // tf::Vector3 location;
+  // tf::Quaternion rotation;
+  // (location, rotation) = t.lookupTransform("base_footprint",
+  //   pose.header.frame_id, ros::Time::now());
+
+  tf::Matrix3x3 m(newPose.pose.orientation);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+
+  // Move to point using DriveLinear
+  double distance = sqrt((newPose.pose.position.x ^ 2) +
+    (newPose.pose.position.y ^ 2));
+  double dx = linearVelocity * (newPose.pose.position.x / distance);
+  double dy = linearVelocity * (newPose.pose.position.y / distance);
+  RobotDriver::DriveLinear(dx, dy, distance);
+  // Rotate to final pose using DriveAngular
+  RobotDriver::DriveAngular((double)angularVelocity, yaw);
 }
 };  // namespace pr2_pick_manipulation
