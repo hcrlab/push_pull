@@ -382,7 +382,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
          Eigen::Matrix4f TtoOrigin = Eigen::Matrix4f::Identity(); 
         int detection_id = -1;
         pcl::ScopeTime t;
-        detectICP2D(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2);
+        detect(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2);
         
         // transform the detections into the camera reference frame system
 
