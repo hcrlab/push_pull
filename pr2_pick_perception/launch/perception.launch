@@ -41,6 +41,7 @@
   <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_KinPR2.launch" />
 
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />
+  <node pkg="pr2_pick_perception" type="shelf_cropping_service_node" name="shelf_cropping_service_node" respawn="true" />
 
   <!-- Self filter laser scans -->
   <!--node pkg="robot_self_filter" type="self_filter" respawn="true" name="laser_self_filter" output="screen" machine="c2">
