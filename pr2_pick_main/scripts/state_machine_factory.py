@@ -36,7 +36,7 @@ def test_move_to_bin():
         key: all_services[key]
         for key in {
             'tts', 'tuck_arms', 'move_torso', 'set_grippers',
-            'move_head', 'moveit_move_arm', 'get_pose', 
+            'move_head', 'moveit_move_arm', 'ee_pose', 
             'drive_linear', 'localize_object', 'set_static_tf'
         }
     }
@@ -51,7 +51,7 @@ def real_robot_services():
         'set_grippers': rospy.ServiceProxy('gripper_service', SetGrippers),
         'move_head': rospy.ServiceProxy('move_head_service', MoveHead),
         'moveit_move_arm': rospy.ServiceProxy('moveit_service', MoveArm),
-        'get_pose': rospy.ServiceProxy('get_pose', GetPose),
+        'ee_pose': rospy.ServiceProxy('ee_pose_service', GetPose),
         'localize_object': rospy.ServiceProxy('perception/localize_object',
                                               LocalizeShelf),
         'set_static_tf': rospy.ServiceProxy('perception/set_static_transform',
@@ -142,7 +142,8 @@ def mock_robot():
 
 
 def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
-          localize_object, set_static_tf, drive_linear, drive_angular, markers):
+          ee_pose, localize_object, set_static_tf, drive_linear, drive_angular, 
+          markers):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -232,7 +233,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.ExtractItem.name,
-            states.ExtractItem(tts, moveit_move_arm, get_pose),
+            states.ExtractItem(tts, moveit_move_arm, ee_pose),
             transitions={
                 outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
                 outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name

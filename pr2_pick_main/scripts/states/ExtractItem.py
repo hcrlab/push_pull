@@ -13,7 +13,7 @@ class ExtractItem(smach.State):
     """
     name = 'EXTRACT_ITEM'
 
-    def __init__(self, tts, moveit_move_arm, get_pose):
+    def __init__(self, tts, moveit_move_arm, ee_pose):
         smach.State.__init__(
             self,
             outcomes=[
@@ -25,7 +25,7 @@ class ExtractItem(smach.State):
 
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
-        self._get_pose = get_pose
+        self._ee_pose = ee_pose
 
         # Shelf heights
 
@@ -83,8 +83,8 @@ class ExtractItem(smach.State):
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
-        self._get_pose.wait_for_service()
-        current_pose = self._get_pose.("right_arm", "r_wrist_roll_link")
+        self._ee_pose.wait_for_service()
+        current_pose = self._ee_pose("right_arm", "r_wrist_roll_link")
 
 
         # Lift item to clear bin lip
@@ -110,7 +110,7 @@ class ExtractItem(smach.State):
         # Pull item out of bin
         success = False
 
-        for i in range(attempts)
+        for i in range(attempts):
 
             # Pose in front of bin
 

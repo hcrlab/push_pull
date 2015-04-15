@@ -165,7 +165,7 @@ class Grasp(smach.State):
         
         success_pre_grasp = False
 
-        for i in range(attempts)
+        for i in range(attempts):
 
             # Pose in front of bin
 
@@ -243,7 +243,7 @@ class Grasp(smach.State):
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                         
                 self._moveit_move_arm.wait_for_service()
-                success_grasp = self._moveit_move_arm(pose_target, 0.0001, 0.001 0, "right_arm")
+                success_grasp = self._moveit_move_arm(pose_target, 0.0001, 0.001, 0, "right_arm")
 
             else:
                 # real - Translation: [0.431, -0.280, 1.570]
@@ -262,7 +262,7 @@ class Grasp(smach.State):
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                         
                 self._moveit_move_arm.wait_for_service()
-                success_grasp = self._moveit_move_arm(pose_target, 0.01, 0.01 0, "right_arm")
+                success_grasp = self._moveit_move_arm(pose_target, 0.01, 0.01, 0, "right_arm")
 
 
 
