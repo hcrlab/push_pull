@@ -188,7 +188,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
             states.StartPose(tts, tuck_arms, move_torso, set_grippers,
                              move_head),
             transitions={
-                outcomes.START_POSE_SUCCESS: states.DropOffItem.name, #states.FindShelf.name,
+                outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
             }
         )
