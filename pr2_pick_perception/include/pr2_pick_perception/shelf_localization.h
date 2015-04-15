@@ -82,6 +82,11 @@
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/registration.h>
 #include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+#include <pcl/registration/transformation_estimation_lm.h>
+#include <pcl/registration/warp_point_rigid_3d.h>
+#include <pcl/registration/transformation_estimation_2D.h>
+
 
 #include <pcl/registration/gicp.h> //generalized icp extension
 
@@ -123,7 +128,14 @@ public:
     ///\brief try to match cluster
     ///\param cluster point cloud of cluster
     ///\return view id if found, -1 otherwise
-    void detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, Eigen::Matrix4f *matchedTransform, Eigen::Matrix4f *matchedTransform2, const pcl::visualization::PCLVisualizer::Ptr &visu);
+    void detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, 
+                Eigen::Matrix4f *matchedTransform, Eigen::Matrix4f *matchedTransform2);
+    
+    void detectICP2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, 
+                Eigen::Matrix4f *matchedTransform, Eigen::Matrix4f *matchedTransform2);
+    
+    void detect2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, Eigen::Matrix4f *matchedTransform, 
+                  Eigen::Matrix4f *matchedTransform2);
     
     ///callback for receiving detection commands
     bool detectCallback(pr2_pick_perception::LocalizeShelfRequest &request, pr2_pick_perception::LocalizeShelfResponse& response);
