@@ -34,7 +34,8 @@ class SenseBin(smach.State):
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
         # TODO(jstn): Move the head here.
         request = CropShelfRequest(cellID=userdata.bin_id)
-        response = self._crop_shelf(request)
-        response = CropShelfResponse()
-        userdata.clusters = response.locations.clusters
+        #self._crop_shelf.wait_for_service()
+        #response = self._crop_shelf(request)
+        #response = CropShelfResponse()
+        #userdata.clusters = response.locations.clusters
         return outcomes.SENSE_BIN_SUCCESS

@@ -18,8 +18,8 @@ class ArmMover:
         self._default_orientation_tolerance = 0.001
         self._group = moveit_commander.MoveGroupCommander("right_arm") 
         #self._group_left = moveit_commander.MoveGroupCommander("left_arm")
-        self._s = rospy.Service('moveit_service', MoveArm, self.move_arm)
-        self._s = rospy.Service('eef_pose_service', GetPose, self.get_pose)
+        self._s1 = rospy.Service('moveit_service', MoveArm, self.move_arm)
+        self._s2 = rospy.Service('eef_pose_service', GetPose, self.get_pose)
 
     def get_pose(self, req):
         pose = None
@@ -62,10 +62,15 @@ class ArmMover:
         plan = self._group.plan()
     
         success = self._group.go(wait=True)
+
+        print "Plan: " + str(len(plan.joint_trajectory.points))
+        print "Success: " + str(success)
            
         if plan.joint_trajectory.points and success:
+            print "Moved arm successfully!"
             return MoveArmResponse(True)
         else:
+            print "Failed to move arm"
             return MoveArmResponse(False)
 
 

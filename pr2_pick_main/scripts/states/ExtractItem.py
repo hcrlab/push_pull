@@ -7,6 +7,7 @@ from pr2_pick_manipulation.srv import GetPose
 from pr2_pick_manipulation.srv import MoveArm
 import json
 import os
+import tf
 
 class ExtractItem(smach.State):
     """Extracts the target item from the bin.
@@ -54,6 +55,7 @@ class ExtractItem(smach.State):
         self._pre_grasp_height = self._grasp_height + 0.01
         self._lift_height = 0.03
         self._extract_dist = 0.30
+        self._wait_for_transform_duration = rospy.Duration(5.0)
 
     def execute(self, userdata):
         rospy.loginfo('Extracting item in bin {}'.format(userdata.bin_id))
@@ -78,8 +80,16 @@ class ExtractItem(smach.State):
                 item_pose.pose.position.z = shelf_bin["pose"]["z"]
                 break
         item_pose.header.frame_id = "shelf"
+        listener = tf.TransformListener()
+        listener.waitForTransform(
+                'base_footprint',
+                'shelf',
+                rospy.Time(0),
+                self._wait_for_transform_duration
+            )
 
-        transformed_item_pose = tf.transformPose("base_footprint", item_pose)
+
+        transformed_item_pose = listener.transformPose("base_footprint", item_pose)
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
@@ -127,7 +137,7 @@ class ExtractItem(smach.State):
             rospy.loginfo("orientation x: " + str(extract_pose_target.pose.orientation.x) + ", y: " + str(extract_pose_target.pose.orientation.y) + ", z: " + str(extract_pose_target.pose.orientation.z) + ", w: " + str(extract_pose_target.pose.orientation.w))
             
             self._moveit_move_arm.wait_for_service()
-            success = self._moveit_move_arm(extract_pose_target, 0.01, 0.01, 8.0, "right_arm")
+            success = self._moveit_move_arm(extract_pose_target, 0.01, 0.01, 8.0, "right_arm").success
 
             if success:
                 # Open Hand
