@@ -12,13 +12,15 @@ import state_machine_factory
 import states
 
 
-def main(mock=False, test_move_to_bin=False, debug=False):
+def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=False):
     rospy.init_node('pr2_pick_state_machine')
     sm = None
     if mock:
         sm = state_machine_factory.mock_robot()
     elif test_move_to_bin:
         sm = state_machine_factory.test_move_to_bin()
+    elif test_drop_off_item:
+        sm = state_machine_factory.test_drop_off_item()
     else:
         sm = state_machine_factory.real_robot()
 
@@ -59,9 +61,14 @@ if __name__ == '__main__':
         help=('True to create a minimal state machine for testing the'
               'MoveToBin state.')
     )
+    group.add_argument(
+        '--test_drop_off_item', action='store_true',
+        help=('True to create a minimal state machine for testing the'
+              'DropOffItem state.')
+    )
     parser.add_argument(
         '--debug', action='store_true',
         help=('True if you want to step through debugging checkpoints.')
     )
     args = parser.parse_args(args=rospy.myargv()[1:])
-    main(args.mock, args.test_move_to_bin, args.debug)
+    main(args.mock, args.test_move_to_bin, args.test_drop_off_item, args.debug)

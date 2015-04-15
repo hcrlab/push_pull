@@ -41,6 +41,21 @@ def test_move_to_bin():
     }
     return build_for_move_to_bin(**services)
 
+def test_drop_off_item():
+    '''
+    Minimal state machine to test DropOffItem state, using real
+    robot services
+    '''
+    all_services = real_robot_services()
+    services = {
+        key: all_services[key]
+        for key in {
+            'moveit_move_arm', 'tts', 'tuck_arms', 'move_torso', 'set_grippers',
+            'move_head', 'drive_linear', 'localize_object',
+            'set_static_tf'
+        }
+    }
+    return build_for_drop_off_item(**services)
 
 def real_robot_services():
     return {
@@ -163,7 +178,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
             states.StartPose(tts, tuck_arms, move_torso, set_grippers,
                              move_head),
             transitions={
-                outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                outcomes.START_POSE_SUCCESS: states.DropOffItem.name, #states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
             }
         )
@@ -241,7 +256,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.DropOffItem.name,
-            states.DropOffItem(tts),
+            states.DropOffItem(set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts),
             transitions={
                 outcomes.DROP_OFF_ITEM_SUCCESS: states.UpdatePlan.name,
                 outcomes.DROP_OFF_ITEM_FAILURE: states.UpdatePlan.name
@@ -303,6 +318,38 @@ def build_for_move_to_bin(tts, tuck_arms, move_torso, drive_linear,
             },
             remapping={
                 'bin_id': 'current_bin'
+            }
+        )
+    return sm
+
+def build_for_drop_off_item(moveit_move_arm, tts, tuck_arms, move_torso, drive_linear,
+                          set_grippers, move_head, localize_object,
+                          set_static_tf):
+    sm = smach.StateMachine(outcomes=[
+        outcomes.CHALLENGE_SUCCESS,
+        outcomes.CHALLENGE_FAILURE
+    ])
+    with sm:
+        smach.StateMachine.add(
+            states.StartPose.name,
+            states.StartPose(tts, tuck_arms, move_torso, set_grippers,
+                             move_head),
+            transitions={
+                outcomes.START_POSE_SUCCESS: states.DropOffItem.name,
+                outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
+            }
+        )
+        smach.StateMachine.add(
+            states.DropOffItem.name,
+            states.DropOffItem(set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts),
+            transitions={
+                outcomes.DROP_OFF_ITEM_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                outcomes.DROP_OFF_ITEM_FAILURE: outcomes.CHALLENGE_FAILURE
+            },
+            remapping={
+                'bin_id': 'current_bin',
+                'bin_data': 'bin_data',
+                'output_bin_data': 'bin_data',
             }
         )
     return sm
