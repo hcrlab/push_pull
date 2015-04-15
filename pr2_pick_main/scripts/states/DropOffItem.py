@@ -55,7 +55,7 @@ class DropOffItem(smach.State):
         # add the order bin to planning scene
         rospy.loginfo('Adding order bin to planning scene')
         # near wall of bin only
-        size = (0.9144, 0.01, 0.79)    
+        size = (0.9144, 0.01, 0.45)    
         position = (1.524, -1.10, size[2] / 2.0)
         # full bin
         # size = (0.9144, 0.4572, 0.9144)    
@@ -85,9 +85,9 @@ class DropOffItem(smach.State):
         pose_target = geometry_msgs.msg.PoseStamped()
         pose_target.header.frame_id = "base_footprint";
         pose_target.pose.position.x = 0.2855
-        pose_target.pose.position.y = -0.7051
+        pose_target.pose.position.y = -0.7551
         # pose_target.pose.position.z = 1.0253  # taller table
-        pose_target.pose.position.z = 0.87
+        pose_target.pose.position.z = 0.40
         pose_target.pose.orientation.x = 0.6878
         pose_target.pose.orientation.y = -0.6733
         pose_target.pose.orientation.z = -0.1941
