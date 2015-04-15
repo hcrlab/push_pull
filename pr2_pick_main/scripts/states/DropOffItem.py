@@ -91,10 +91,10 @@ class DropOffItem(smach.State):
         self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(False, True)
 
-	# report success
-        bin_id = userdata.bin_id
-        bin_data = userdata.bin_data.copy()
-        bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
-        userdata.output_bin_data = bin_data
+    	# report success
+        # bin_id = userdata.bin_id
+        # bin_data = userdata.bin_data.copy()
+        # bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
+        # userdata.output_bin_data = bin_data
         return outcomes.DROP_OFF_ITEM_SUCCESS
 
