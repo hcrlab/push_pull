@@ -1,4 +1,5 @@
 #include "pr2_pick_perception/shelf_localization.h"
+#include <boost/graph/graph_concepts.hpp>
 
 #include <vtkTransform.h>
 
@@ -381,7 +382,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
          Eigen::Matrix4f TtoOrigin = Eigen::Matrix4f::Identity(); 
         int detection_id = -1;
         pcl::ScopeTime t;
-        detect(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2, vis);
+        detectICP2D(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2);
         
         // transform the detections into the camera reference frame system
 
@@ -683,7 +684,72 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
 }
 
 
-void ObjDetector::detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2, const pcl::visualization::PCLVisualizer::Ptr &visu)
+
+void ObjDetector::detect2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster,  Eigen::Matrix4f* matchedTransform, 
+                           Eigen::Matrix4f* matchedTransform2)
+{
+
+    std::vector<std::pair<double,int> > model_scores(models_.size()); //store model score with index for sorting
+    std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > model_transforms(models_.size());
+
+    //downsample cluster
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cluster_sampled(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::VoxelGrid<pcl::PointXYZ> vg;
+    vg.setLeafSize(sample_size_, sample_size_, sample_size_);
+    vg.setInputCloud(cluster);
+    vg.filter(*cluster_sampled);
+    ROS_INFO("cluster has %d points after sampling (%d before)\n",(int) cluster_sampled->size(), (int) cluster->size());
+
+    int numThreads = models_.size(); //there's only up to 8 views per model at the moment so this runs 1 thread per view
+    int schedule_chunk_size = 1;//round(models_.size()/8);
+ 
+ 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr model = models_[0].cloud_sampled;
+
+    ///////////////////////////////////////
+    // 3. Shift clouds based on centroid //
+    ///////////////////////////////////////
+    Eigen::Vector4f centModel, centCluster;
+    pcl::compute3DCentroid(*model, centModel);
+    pcl::compute3DCentroid(*cluster_sampled, centCluster);
+        /// Model transformed into the cluster reference system
+    pcl::PointCloud<pcl::PointXYZ>::Ptr model_transformed(new pcl::PointCloud<pcl::PointXYZ>);
+    
+    Eigen::Matrix4f T_cluster = Eigen::Matrix4f::Identity(); 
+        T_cluster.block<3,1>(0,3) = centCluster.head(3) - centModel.head(3);
+    
+    Eigen::Matrix4f T_model = Eigen::Matrix4f::Identity();
+
+    
+    pcl::transformPointCloud(*model, *model_transformed, T_cluster*T_model.inverse());   
+    
+    // 4. register clouds //
+    ////////////////////////
+    
+    Eigen::Matrix4f transformation_matrix;
+    pcl::registration::TransformationEstimation2D<pcl::PointXYZ,pcl::PointXYZ,float > estimateT;
+    estimateT.estimateRigidTransformation (*cluster_sampled, *model_transformed,transformation_matrix);
+    
+    
+    
+    model_transforms[0] = transformation_matrix *  T_cluster*T_model.inverse();
+     
+    //calculate final transformation
+    geometry_msgs::PosePtr mp = models_[0].pose;
+    Eigen::Affine3f tr;
+    tr = Eigen::Translation3f(mp->position.x, mp->position.y, mp->position.z) * Eigen::Quaternionf(mp->orientation.w, mp->orientation.x, mp->orientation.y, mp->orientation.z);
+    Eigen::Matrix4f initPose(tr.data()); 
+    
+    std::cout << "Init model pose \n" << initPose << endl;
+    
+    *matchedTransform = /*refined_transform **/ model_transforms[0] * initPose;                         
+    *matchedTransform2 = /*refined_transform **/ model_transforms[0];
+    
+    ROS_DEBUG_STREAM("AP: Transformation matrix: \n" << *matchedTransform);
+    
+}
+
+void ObjDetector::detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2)
 {
     //run thread for each model to speed up process - correct model should return after ~0.5s 
     //TODO: optimize, use our-cvfh to prune possible models, try to stop other threads once one of them found a match
@@ -873,6 +939,201 @@ void ObjDetector::getModel(int id, Model* model)
         ROS_ERROR("AP: no model with id %d! (%d models in db)\n", id, (int) models_.size());
     }
 }
+
+void ObjDetector::detectICP2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2)
+{
+    //run thread for each model to speed up process - correct model should return after ~0.5s 
+    //TODO: optimize, use our-cvfh to prune possible models, try to stop other threads once one of them found a match
+    
+    std::vector<std::pair<double,int> > model_scores(models_.size()); //store model score with index for sorting
+    std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > model_transforms(models_.size());
+
+    //downsample cluster
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cluster_sampled(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::VoxelGrid<pcl::PointXYZ> vg;
+    vg.setLeafSize(sample_size_, sample_size_, sample_size_);
+    vg.setInputCloud(cluster);
+    vg.filter(*cluster_sampled);
+    ROS_INFO("cluster has %d points after sampling (%d before)\n",(int) cluster_sampled->size(), (int) cluster->size());
+
+    int numThreads = models_.size(); //there's only up to 8 views per model at the moment so this runs 1 thread per view
+    int schedule_chunk_size = 1;//round(models_.size()/8);
+    Eigen::Matrix3f  R_yaw, R_pitch,R_roll,R;
+
+    
+    
+    
+    #pragma omp parallel for num_threads(numThreads) schedule(dynamic, schedule_chunk_size)
+    for(int modelIdx = 0; modelIdx < models_.size(); ++modelIdx)
+    {
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr model = models_[modelIdx].cloud_sampled;
+
+        ///////////////////////////////////////
+        // 3. Shift clouds based on centroid //
+        ///////////////////////////////////////
+        //TODO: maybe add eigen vectors (orientation)?
+        Eigen::Vector4f centModel, centCluster;
+        pcl::compute3DCentroid(*model, centModel);
+        pcl::compute3DCentroid(*cluster_sampled, centCluster);
+       // Eigen::Vector4f initialTransform = centCluster - centModel;               
+       // Eigen::Quaternionf rot(1.0, 0.0, 0.0, 0.0);
+        /// Model transformed into the cluster reference system
+        pcl::PointCloud<pcl::PointXYZ>::Ptr model_transformed(new pcl::PointCloud<pcl::PointXYZ>);
+        
+        Eigen::Matrix4f T_cluster = Eigen::Matrix4f::Identity(); 
+         T_cluster.block<3,1>(0,3) = centCluster.head(3) - centModel.head(3);
+        
+        Eigen::Matrix4f T_model = Eigen::Matrix4f::Identity();
+
+        if (pca_alignment_)
+        {
+        
+        //compute principal direction using eigenvectors computed by PCA class
+            pcl::PCA<pcl::PointXYZ> pca;
+            pca.setInputCloud(model);
+            Eigen::Matrix3f R_model = pca.getEigenVectors();
+            Eigen::Vector3f t_model = pca.getMean().head(3);
+
+            
+            T_model.block<3,3>(0,0) = R_model;
+            T_model.block<3,1>(0,3) = t_model;
+            
+            if (R_model.determinant() < 0.0)
+            {            
+                T_model.setIdentity();
+                T_model.row(1) << R_model.row(0),0.0; 
+                T_model.row(2) << R_model.row(1),0.0; 
+                T_model.row(0) << (R_model.row(0).cross(R_model.row(1))).normalized(),0;             
+                T_model.block<3,1>(0,3) = t_model;        
+            }
+            pca.setInputCloud(cluster_sampled);
+            Eigen::Matrix3f R_cluster = pca.getEigenVectors();
+            Eigen::Vector3f t_cluster = pca.getMean().head(3);       
+            
+    //         Eigen::Vector3f t_cluster = centCluster.head(3);
+    //         Eigen::Matrix3f covariance_cluster;
+    //         pcl::computeCovarianceMatrixNormalized(*cluster_sampled,centCluster, covariance_cluster);
+    //         Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver_cluster(covariance_cluster, Eigen::ComputeEigenvectors);
+    //         Eigen::Matrix3f R_cluster = eigen_solver_cluster.eigenvectors();
+    //         R_cluster.col(2) = R_cluster.col(0).cross(R_cluster.col(1));        
+            
+            T_cluster.block<3,3>(0,0) = R_cluster;
+            T_cluster.block<3,1>(0,3) = t_cluster;
+            
+
+            
+            if (R_cluster.determinant() < 0.0)
+            {
+                    T_cluster.setIdentity();
+                    T_cluster.col(1) << R_cluster.col(0),0; 
+                    T_cluster.col(2) << R_cluster.col(1),0; 
+                    T_cluster.col(0) << (R_cluster.col(0).cross(R_cluster.col(1))).normalized(),0;           
+                    T_cluster.block<3,1>(0,3) = t_cluster;
+            }     
+
+        }
+    
+        pcl::transformPointCloud(*model, *model_transformed, T_cluster*T_model.inverse());   
+        //pcl::transformPointCloud(*model, *model_transformed, Eigen::Vector3f(initialTransform[0],initialTransform[1],initialTransform[2]), rot);
+        
+        // 4. register clouds //
+        ////////////////////////
+        pcl::PointCloud<pcl::PointXYZ>::Ptr modelRegistered(new pcl::PointCloud<pcl::PointXYZ>);
+        
+        pcl::ScopeTime t("ICP...");
+        
+         ROS_INFO("model transformed has %d points \n",(int) model_transformed->points.size());
+
+        
+        pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration (new pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ>);
+
+        boost::shared_ptr<pcl::registration::WarpPointRigid3D<pcl::PointXYZ, pcl::PointXYZ> > warp_fcn 
+        (new pcl::registration::WarpPointRigid3D<pcl::PointXYZ, pcl::PointXYZ>);
+
+         ROS_INFO("Input to ICP 1: \n");
+        // Create a TransformationEstimationLM object, and set the warp to it
+        boost::shared_ptr<pcl::registration::TransformationEstimationLM<pcl::PointXYZ, pcl::PointXYZ> > te (new pcl::registration::TransformationEstimationLM<pcl::PointXYZ, pcl::PointXYZ>);
+        te->setWarpFunction (warp_fcn);
+        ROS_INFO("Input to ICP 2: \n");
+         registration->setInputSource(model_transformed);
+        registration->setInputTarget(cluster_sampled);
+        // Pass the TransformationEstimation objec to the ICP algorithm
+        registration->setTransformationEstimation (te);
+         ROS_INFO("Input to ICP opopopo \n");
+       
+        registration->setMaxCorrespondenceDistance(0.25);
+        registration->setRANSACOutlierRejectionThreshold(0.1);
+        registration->setTransformationEpsilon(0.000001);
+        registration->setMaximumIterations(max_iter_);       
+
+        
+        
+        ROS_INFO("Input to ICP: inputSource: %dpts, inputTarget: %dpts\n",(int) model_transformed->size(), (int) cluster_sampled->size());
+
+        registration->align(*modelRegistered);
+        Eigen::Matrix4f transformation_matrix = registration->getFinalTransformation();
+     
+
+        Eigen::Matrix4f initT;
+
+        
+        ROS_INFO("score: %f\n", registration->getFitnessScore());
+        model_scores[modelIdx] = std::make_pair(registration->getFitnessScore(), modelIdx);
+     //   model_transforms[modelIdx] = transformation_matrix * initT;
+        model_transforms[modelIdx] = transformation_matrix *  T_cluster*T_model.inverse();
+        
+    }
+
+    //sort model scores (lower score = better)
+    std::sort(model_scores.begin(), model_scores.end(), pairComparator);
+        
+    if(model_scores[0].first < score_thresh_)
+    {
+        *matchedModelID = model_scores[0].second;
+
+       
+        
+        //calculate final transformation
+        geometry_msgs::PosePtr mp = models_[*matchedModelID].pose;
+        Eigen::Affine3f tr;
+        tr = Eigen::Translation3f(mp->position.x, mp->position.y, mp->position.z) * Eigen::Quaternionf(mp->orientation.w, mp->orientation.x, mp->orientation.y, mp->orientation.z);
+        Eigen::Matrix4f initPose(tr.data()); //FIXME: does this actually work?
+        
+        std::cout << "Init model pose \n" << initPose << endl;
+        
+        *matchedTransform = /*refined_transform **/ model_transforms[*matchedModelID] * initPose;                         
+        Eigen::Matrix3f  R_pitch_init,R_roll_init;
+        if(only_yaw_)
+        {
+            Eigen::Vector3f ypr,ypr_init;
+          //  Eigen::Matrix3f  R_yaw, R_pitch,R_roll,R;
+            ypr = matchedTransform->block<3,3>(0,0).eulerAngles(2,1,0);
+            ypr_init = initPose.block<3,3>(0,0).eulerAngles(2,1,0);
+            
+            Eigen::Matrix3f rot_desired;
+            rot_desired = Eigen::AngleAxisf(ypr(0), Eigen::Vector3f::UnitZ()) 
+                        * Eigen::AngleAxisf(ypr_init(1), Eigen::Vector3f::UnitY())
+                        * Eigen::AngleAxisf(ypr_init(2), Eigen::Vector3f::UnitX());
+            
+               
+
+
+            matchedTransform->block<3,3>(0,0).setIdentity();
+            matchedTransform->block<3,3>(0,0) = rot_desired;
+            
+        }
+        *matchedTransform2 = /*refined_transform **/ model_transforms[*matchedModelID];
+        
+        ROS_DEBUG("AP: Best match: view %d with score of %f\n",(int) model_scores[0].second, model_scores[0].first);
+        ROS_DEBUG_STREAM("AP: Transformation matrix: \n" << *matchedTransform);
+    }
+    else
+    {
+        ROS_DEBUG("AP: No matches found for cluster (might be a good thing!)\n");
+    }
+}
+
 
 bool ObjDetector::loadModels(const std::string& db_file)
 {
