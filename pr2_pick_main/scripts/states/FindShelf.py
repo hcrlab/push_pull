@@ -1,29 +1,29 @@
-from geometry_msgs.msg import PoseStamped
-from geometry_msgs.msg import Quaternion
-from geometry_msgs.msg import TransformStamped
-from pr2_pick_perception.msg import ObjectDetectionRequest
-from pr2_pick_perception.msg import ROI2d
-from pr2_pick_perception.srv import LocalizeShelfRequest
-from visualization_msgs.msg import Marker
+from geometry_msgs.msg import PoseStamped, Transform, TransformStamped, \
+    Quaternion, Vector3
 import math
-import outcomes
 import rospy
 import smach
+from std_msgs.msg import Header
 import tf
+from visualization_msgs.msg import Marker
+
+import outcomes
+from pr2_pick_perception.msg import ObjectDetectionRequest, ROI2d
+from pr2_pick_perception.srv import LocalizeShelfRequest
 
 
 class FindShelf(smach.State):
-    """Localizes the shelf.
-    """
+    '''Localizes the shelf.
+    '''
     name = 'FIND_SHELF'
 
     def __init__(self, tts, localize_object, set_static_tf, markers):
-        """Constructor for this state.
+        '''Constructor for this state.
 
         Args:
           localize_object: The shelf localization service.
           set_static_tf: The service for setting static tfs.
-        """
+        '''
         smach.State.__init__(
             self,
             outcomes=[outcomes.FIND_SHELF_SUCCESS, outcomes.FIND_SHELF_FAILURE],
@@ -36,7 +36,7 @@ class FindShelf(smach.State):
         self._markers = markers
 
     def localize_shelf(self):
-        """Calls the object localization service to get the shelf position.
+        '''Calls the object localization service to get the shelf position.
 
         If the service fails, or it returns a result outside of acceptable
         bounds, then it will try calling the service again, up to a total of 3
@@ -45,7 +45,7 @@ class FindShelf(smach.State):
         Returns: (success, pose), where success is whether or not we got a
         reasonable pose from the service, and pose is a PoseStamped message
         with the shelf's pose in the odom_combined frame.
-        """
+        '''
         success = False
         shelf_ps = PoseStamped()  # The shelf pose returned by the service.
         shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
@@ -64,7 +64,7 @@ class FindShelf(smach.State):
                 rospy.logwarn('[FindShelf]: Shelf service returned no results.')
                 continue
             shelf = response.locations.objects[0]
-            rospy.loginfo('Shelf pose: {}'.format(shelf.pose))
+            rospy.loginfo('Shelf pose: {}'.format(shelf))
             shelf_ps.pose = shelf.pose
             shelf_ps.header = shelf.header
 
@@ -160,6 +160,53 @@ class FindShelf(smach.State):
         marker.scale.y = 1
         marker.scale.z = 1
         marker.lifetime = rospy.Duration()
+
+        if userdata.debug:
+            raw_input('(Debug) Press enter to continue: ')
+
+        # Set up static a transform for each bin relative to shelf.
+        # Bin origin is the front center of the bin opening, equidistant
+        # from top edge and bottom edge of bin.
+        shelf_depth = 0.87
+
+        top_row_z = 1.524
+        second_row_z = 1.308
+        third_row_z = 1.073
+        bottom_row_z = .806
+
+        left_column_y = .2921
+        center_column_y = 0.0
+        right_column_y = -.2921
+
+        bin_translations = {
+            'A': Vector3(x=-shelf_depth/2., y=left_column_y, z=top_row_z),
+            'B': Vector3(x=-shelf_depth/2., y=center_column_y, z=top_row_z),
+            'C': Vector3(x=-shelf_depth/2., y=right_column_y, z=top_row_z),
+            'D': Vector3(x=-shelf_depth/2., y=left_column_y, z=second_row_z),
+            'E': Vector3(x=-shelf_depth/2., y=center_column_y, z=second_row_z),
+            'F': Vector3(x=-shelf_depth/2., y=right_column_y, z=second_row_z),
+            'G': Vector3(x=-shelf_depth/2., y=left_column_y, z=third_row_z),
+            'H': Vector3(x=-shelf_depth/2., y=center_column_y, z=third_row_z),
+            'I': Vector3(x=-shelf_depth/2., y=right_column_y, z=third_row_z),
+            'J': Vector3(x=-shelf_depth/2., y=left_column_y, z=bottom_row_z),
+            'K': Vector3(x=-shelf_depth/2., y=center_column_y, z=bottom_row_z),
+            'L': Vector3(x=-shelf_depth/2., y=right_column_y, z=bottom_row_z),
+        }
+
+        for (bin_id, translation) in bin_translations.items():
+            transform = TransformStamped(
+                header=Header(
+                    frame_id='shelf',
+                    stamp=rospy.Time.now(),
+                ),
+                transform=Transform(
+                    translation=translation,
+                    rotation=Quaternion(w=1, x=0, y=0, z=0),
+                ),
+                child_frame_id='bin_{}'.format(bin_id),
+            )
+            self._set_static_tf.wait_for_service()
+            self._set_static_tf(transform)
 
         # Need to wait for rviz for some reason.
         rate = rospy.Rate(1)
