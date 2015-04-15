@@ -1,5 +1,5 @@
 <launch>
   <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" />
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" ns="ee_reader">
   </include>
 </launch>
