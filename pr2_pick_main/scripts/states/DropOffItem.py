@@ -60,7 +60,8 @@ class DropOffItem(smach.State):
 
         # move to the order bin
         rospy.loginfo('Move next to the order bin')
-        target_position = (1.20, -0.5588)
+        # target_position = (1.20, -0.5588) # too close
+        target_position = (1.1227, -0.41382) # move base, assuming torso is fully down
         position = get_position()
         rospy.loginfo("get_position() = " + str(position))
         displacement = (target_position[0] - position[0], target_position[1] - position[1])
@@ -79,13 +80,13 @@ class DropOffItem(smach.State):
         rospy.loginfo('Move arm above order bin')
         pose_target = geometry_msgs.msg.PoseStamped()
         pose_target.header.frame_id = "base_footprint";
-        pose_target.pose.position.x = 0.2968
-        pose_target.pose.position.y = -0.5871
-        pose_target.pose.position.z = 1.0326
-        pose_target.pose.orientation.x = 0.3332
-        pose_target.pose.orientation.y = -0.9335
+        pose_target.pose.position.x = 0.2855
+        pose_target.pose.position.y = -0.7051
+        pose_target.pose.position.z = 0.9753
+        pose_target.pose.orientation.x = 0.6878
+        pose_target.pose.orientation.y = -0.6733
         pose_target.pose.orientation.z = -0.0361
-        pose_target.pose.orientation.w = -0.1273
+        pose_target.pose.orientation.w = -0.1941
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose_target, 0, "right_arm")
 
