@@ -5,11 +5,13 @@ from pr2_pick_manipulation.srv import MoveHead
 from pr2_pick_manipulation.srv import MoveTorso
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
-from pr2_pick_perception.srv import LocalizeShelf
-from pr2_pick_perception.srv import SetStaticTransform
-from pr2_pick_perception.srv import DeleteStaticTransform
-from pr2_pick_perception.srv import LocalizeShelfResponse
 from pr2_pick_perception.msg import Object
+from pr2_pick_perception.srv import CropShelf
+from pr2_pick_perception.srv import CropShelfResponse
+from pr2_pick_perception.srv import DeleteStaticTransform
+from pr2_pick_perception.srv import LocalizeShelf
+from pr2_pick_perception.srv import LocalizeShelfResponse
+from pr2_pick_perception.srv import SetStaticTransform
 from std_msgs.msg import String
 from visualization_msgs.msg import Marker
 import mock
@@ -57,6 +59,7 @@ def real_robot_services():
         'drive_linear': rospy.ServiceProxy('drive_linear_service', DriveLinear),
         'drive_angular': rospy.ServiceProxy('drive_angular_service', DriveAngular),
         'markers': rospy.Publisher('pr2_pick_visualization', Marker),
+        'crop_shelf': rospy.ServiceProxy('shelf_cropper', CropShelf)
      }
 
 
@@ -134,13 +137,20 @@ def mock_robot():
     markers = rospy.Publisher('pr2_pick_visualization', Marker)
     markers.publish = mock.Mock(side_effect=side_effect('markers'))
 
+    crop_response = CropShelfResponse()
+    crop_shelf = rospy.ServiceProxy('shelf_cropper', CropShelf)
+    crop_shelf.wait_for_service = mock.Mock(return_value=None)
+    crop_shelf.call = mock.Mock(
+        side_effect=side_effect('shelf_cropper', return_value=crop_response))
+
     return build(tts, tuck_arms, move_torso, set_grippers, move_head,
                  moveit_move_arm, localize_object, set_static_tf, drive_linear,
-                 drive_angular, markers)
+                 drive_angular, markers, crop_shelf)
 
 
 def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
-          localize_object, set_static_tf, drive_linear, drive_angular, markers):
+          localize_object, set_static_tf, drive_linear, drive_angular, markers,
+          crop_shelf):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -205,14 +215,15 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.SenseBin.name,
-            states.SenseBin(tts),
+            states.SenseBin(tts, crop_shelf),
             transitions={
                 outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
                 outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,
                 outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
             },
             remapping={
-                'bin_id': 'current_bin'
+                'bin_id': 'current_bin',
+                'clusters': 'clusters'
             }
         )
         smach.StateMachine.add(
