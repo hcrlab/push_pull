@@ -35,6 +35,5 @@ class SenseBin(smach.State):
         # TODO(jstn): Move the head here.
         request = CropShelfRequest(cellID=userdata.bin_id)
         response = self._crop_shelf(request)
-        response = CropShelfResponse()
         userdata.clusters = response.locations.clusters
         return outcomes.SENSE_BIN_SUCCESS
