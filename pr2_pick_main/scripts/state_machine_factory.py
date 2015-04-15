@@ -236,7 +236,8 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
                 )
             },
             remapping={
-                'bin_id': 'current_bin'
+                'bin_id': 'current_bin',
+                'clusters': 'clusters'
             }
         )
         smach.StateMachine.add(
