@@ -114,8 +114,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
                     cloud_frame_id_.c_str(),robot_frame_id_.c_str());
-            ROS_DEBUG("Transform error: %s", error_msg.c_str());
+            ROS_WARN("Transform error: %s", error_msg.c_str());
             cloud_to_robot_.setIdentity();
+            robot_frame_id_ = cloud_frame_id_;
         }
         
         
@@ -127,8 +128,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
                     world_frame_id_.c_str(),robot_frame_id_.c_str());
-            ROS_DEBUG("Transform error: %s", error_msg.c_str());
+            ROS_WARN("Transform error: %s", error_msg.c_str());
             robot_to_world_.setIdentity();
+            world_frame_id_ = robot_frame_id_;
         }         
       
         
@@ -140,7 +142,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
                     model_frame_id_.c_str(),shelf_frame_id_.c_str());
-            ROS_DEBUG("Transform error: %s", error_msg.c_str());
+            ROS_WARN("Transform error: %s", error_msg.c_str());
             shelf_to_origin_.setIdentity();
         }
         
