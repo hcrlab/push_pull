@@ -86,7 +86,8 @@ class DropOffItem(smach.State):
         pose_target.header.frame_id = "base_footprint";
         pose_target.pose.position.x = 0.2855
         pose_target.pose.position.y = -0.7051
-        pose_target.pose.position.z = 1.0253
+        # pose_target.pose.position.z = 1.0253  # taller table
+        pose_target.pose.position.z = 0.9053
         pose_target.pose.orientation.x = 0.6878
         pose_target.pose.orientation.y = -0.6733
         pose_target.pose.orientation.z = -0.1941
