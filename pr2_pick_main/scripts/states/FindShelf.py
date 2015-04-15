@@ -1,4 +1,5 @@
-from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion
+from geometry_msgs.msg import PoseStamped, Transform, TransformStamped, \
+    Quaternion, Vector3
 import math
 import rospy
 import smach
@@ -63,7 +64,7 @@ class FindShelf(smach.State):
                 rospy.logwarn('[FindShelf]: Shelf service returned no results.')
                 continue
             shelf = response.locations.objects[0]
-            rospy.loginfo('Shelf pose: {}'.format(shelf.pose))
+            rospy.loginfo('Shelf pose: {}'.format(shelf))
             shelf_ps.pose = shelf.pose
             shelf_ps.header = shelf.header
 
@@ -160,36 +161,39 @@ class FindShelf(smach.State):
         marker.scale.z = 1
         marker.lifetime = rospy.Duration()
 
+        if userdata.debug:
+            raw_input('(Debug) Press enter to continue: ')
+
         # Set up static a transform for each bin relative to shelf.
         # Bin origin is the front center of the bin opening, equidistant
         # from top edge and bottom edge of bin.
         shelf_depth = 0.87
 
-        top_row_z = 165.735
-        second_row_z = 142.24
-        third_row_z = 118.745
-        bottom_row_z = 93.98
+        top_row_z = 1.524
+        second_row_z = 1.308
+        third_row_z = 1.073
+        bottom_row_z = .806
 
-        left_column_y = 29.21
+        left_column_y = .2921
         center_column_y = 0.0
-        right_column_y = -29.21
+        right_column_y = -.2921
 
         bin_translations = {
-            'A': Position(x=-shelf_depth/2., y=left_column_y, z=top_row_z),
-            'B': Position(x=-shelf_depth/2., y=center_column_y, z=top_row_z),
-            'C': Position(x=-shelf_depth/2., y=right_column_y, z=top_row_z),
-            'D': Position(x=-shelf_depth/2., y=left_column_y, z=second_row_z),
-            'E': Position(x=-shelf_depth/2., y=center_column_y, z=second_row_z),
-            'F': Position(x=-shelf_depth/2., y=right_column_y, z=second_row_z),
-            'G': Position(x=-shelf_depth/2., y=left_column_y, z=third_row_z),
-            'H': Position(x=-shelf_depth/2., y=center_column_y, z=third_row_z),
-            'I': Position(x=-shelf_depth/2., y=right_column_y, z=third_row_z),
-            'J': Position(x=-shelf_depth/2., y=left_column_y, z=bottom_row_z),
-            'K': Position(x=-shelf_depth/2., y=center_column_y, z=bottom_row_z),
-            'L': Position(x=-shelf_depth/2., y=right_column_y, z=bottom_row_z),
+            'A': Vector3(x=-shelf_depth/2., y=left_column_y, z=top_row_z),
+            'B': Vector3(x=-shelf_depth/2., y=center_column_y, z=top_row_z),
+            'C': Vector3(x=-shelf_depth/2., y=right_column_y, z=top_row_z),
+            'D': Vector3(x=-shelf_depth/2., y=left_column_y, z=second_row_z),
+            'E': Vector3(x=-shelf_depth/2., y=center_column_y, z=second_row_z),
+            'F': Vector3(x=-shelf_depth/2., y=right_column_y, z=second_row_z),
+            'G': Vector3(x=-shelf_depth/2., y=left_column_y, z=third_row_z),
+            'H': Vector3(x=-shelf_depth/2., y=center_column_y, z=third_row_z),
+            'I': Vector3(x=-shelf_depth/2., y=right_column_y, z=third_row_z),
+            'J': Vector3(x=-shelf_depth/2., y=left_column_y, z=bottom_row_z),
+            'K': Vector3(x=-shelf_depth/2., y=center_column_y, z=bottom_row_z),
+            'L': Vector3(x=-shelf_depth/2., y=right_column_y, z=bottom_row_z),
         }
 
-        for bin_id, translation in bin_translations:
+        for (bin_id, translation) in bin_translations.items():
             transform = TransformStamped(
                 header=Header(
                     frame_id='shelf',
@@ -199,7 +203,7 @@ class FindShelf(smach.State):
                     translation=translation,
                     rotation=Quaternion(w=1, x=0, y=0, z=0),
                 ),
-                child_frame_id=bin_id,
+                child_frame_id='bin_{}'.format(bin_id),
             )
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)

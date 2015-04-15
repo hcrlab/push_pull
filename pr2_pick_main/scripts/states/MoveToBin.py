@@ -166,7 +166,7 @@ class MoveToBin(smach.State):
 
         # face the head towards the bin
         self.move_head.wait_for_service()
-        self.move_head(x=0.0, y=0.0, z=0.0, frame=userdata.bin_id)
+        self.move_head(x=0.0, y=0.0, z=0.0, frame='bin_{}'.format(userdata.bin_id))
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')

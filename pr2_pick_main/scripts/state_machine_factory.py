@@ -34,9 +34,9 @@ def test_move_to_bin():
     services = {
         key: all_services[key]
         for key in {
-            'tts', 'tuck_arms', 'move_torso', 'set_grippers',
-            'move_head', 'drive_linear', 'localize_object',
-            'set_static_tf'
+            'move_torso', 'set_grippers',  'markers', 'move_head',
+            'drive_angular', 'drive_linear', 'localize_object', 'set_static_tf',
+            'tts', 'tuck_arms',
         }
     }
     return build_for_move_to_bin(**services)
@@ -255,9 +255,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
     return sm
 
 
-def build_for_move_to_bin(tts, tuck_arms, move_torso, drive_linear,
-                          set_grippers, move_head, localize_object,
-                          set_static_tf):
+def build_for_move_to_bin(**services):
     sm = smach.StateMachine(outcomes=[
         outcomes.CHALLENGE_SUCCESS,
         outcomes.CHALLENGE_FAILURE
@@ -265,8 +263,11 @@ def build_for_move_to_bin(tts, tuck_arms, move_torso, drive_linear,
     with sm:
         smach.StateMachine.add(
             states.StartPose.name,
-            states.StartPose(tts, tuck_arms, move_torso, set_grippers,
-                             move_head),
+            states.StartPose(services['tts'],
+                             services['tuck_arms'],
+                             services['move_torso'],
+                             services['set_grippers'],
+                             services['move_head']),
             transitions={
                 outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -274,7 +275,10 @@ def build_for_move_to_bin(tts, tuck_arms, move_torso, drive_linear,
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(localize_object, set_static_tf),
+            states.FindShelf(services['tts'],
+                             services['localize_object'],
+                             services['set_static_tf'],
+                             services['markers']),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -282,7 +286,7 @@ def build_for_move_to_bin(tts, tuck_arms, move_torso, drive_linear,
         )
         smach.StateMachine.add(
             states.UpdatePlan.name,
-            states.UpdatePlan(tts),
+            states.UpdatePlan(services['tts']),
             transitions={
                 outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
@@ -296,7 +300,12 @@ def build_for_move_to_bin(tts, tuck_arms, move_torso, drive_linear,
         )
         smach.StateMachine.add(
             states.MoveToBin.name,
-            states.MoveToBin(tts, drive_linear, drive_angular, move_head, move_torso, markers),
+            states.MoveToBin(services['tts'],
+                             services['drive_linear'],
+                             services['drive_angular'],
+                             services['move_head'],
+                             services['move_torso'],
+                             services['markers']),
             transitions={
                 outcomes.MOVE_TO_BIN_SUCCESS: states.UpdatePlan.name,
                 outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
