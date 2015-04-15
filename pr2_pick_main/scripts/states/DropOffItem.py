@@ -20,7 +20,9 @@ def planningscene_create_box(position, size, name):
     table_pose.pose.position.x = position[0]
     table_pose.pose.position.y = position[1]
     table_pose.pose.position.z = position[2]
-    scene.add_box(name, table_pose, size)
+    for i in range(10):
+        rospy.sleep(0.10)
+        scene.add_box(name, table_pose, size)
 
 class DropOffItem(smach.State):
     """Deposits the item into the order bin.
@@ -55,7 +57,6 @@ class DropOffItem(smach.State):
         position = (1.524, -0.9905999999999999, 0.4572)    
         size = (0.9144, 0.4572, 0.9144)    
         name = 'order_bin'
-        planningscene_create_box(position, size, name)
         planningscene_create_box(position, size, name)
 
         # move to the order bin
