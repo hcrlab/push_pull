@@ -35,6 +35,10 @@ def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=Fal
     for bin_id in 'ABCDEFGHIJKL':
         sm.userdata.bin_data[bin_id] = BinData(id, False, False)
 
+    # A list of clusters (pr2_pick_perception/Cluster.msg) for objects in the
+    # current bin.
+    sm.userdata.clusters = []
+
     try:
         sis = smach_ros.IntrospectionServer(
             'state_machine_introspection_server', sm, '/')
