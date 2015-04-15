@@ -54,7 +54,7 @@ class DropOffItem(smach.State):
 
         # add the order bin to planning scene
         rospy.loginfo('Adding order bin to planning scene')
-        position = (1.524, -1.2005999999999999, 0.4572)
+        position = (1.524, -1.1505999999999999, 0.4572)
         # near wall of bin only
         size = (0.9144, 0.01, 0.9144)    
         # full bin
