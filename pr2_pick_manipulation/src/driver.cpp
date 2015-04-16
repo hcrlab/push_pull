@@ -54,7 +54,6 @@ bool RobotDriver::DriveLinear(double dx, double dy, double distance) {
 }
 
 bool RobotDriver::DriveAngular(double dt, double radians) {
-
   // We still need to test whether "odom_combined"
   // can represent rotations of abs >= 2pi radians.
   if (std::abs(dt) >= 2*M_PI) {
@@ -74,7 +73,7 @@ bool RobotDriver::DriveAngular(double dt, double radians) {
   listener_.lookupTransform("base_footprint", "odom_combined", 
                             ros::Time(0), start_transform);
   
-  ros::Rate rate(10.0);
+  ros::Rate rate(20.0);
   bool done = radians == 0;
   while (!done) {
     cmd_vel_pub_.publish(base_cmd);
@@ -103,10 +102,10 @@ bool RobotDriver::DriveToPose(geometry_msgs::PoseStamped pose,
   geometry_msgs::PoseStamped newPose;
   listener_.transformPose("base_footprint", pose, newPose);
 
-  tf::Matrix3x3 m(tf::Quaternion( newPose.pose.orientation.w, 
-                                  newPose.pose.orientation.x, 
-                                  newPose.pose.orientation.y, 
-                                  newPose.pose.orientation.z));
+  tf::Matrix3x3 m(tf::Quaternion(newPose.pose.orientation.x, 
+                                 newPose.pose.orientation.y, 
+                                 newPose.pose.orientation.z,
+                                 newPose.pose.orientation.w));
   double roll, pitch, yaw;
   m.getRPY(roll, pitch, yaw);
 
@@ -118,11 +117,15 @@ bool RobotDriver::DriveToPose(geometry_msgs::PoseStamped pose,
   double dx = linearVelocity * (posX / distance);
   double dy = linearVelocity * (posY / distance);
   
-  bool sucess = RobotDriver::DriveLinear(dx, dy, distance);
+  bool success = RobotDriver::DriveLinear(dx, dy, distance);
   
   // Rotate to final pose using DriveAngular
-  sucess = sucess & RobotDriver::DriveAngular((double)angularVelocity, yaw);
+  if (yaw < 0) {
+    angularVelocity *= -1;
+    yaw *= -1;
+  }
+  success = success && RobotDriver::DriveAngular((double)angularVelocity, yaw);
 
-  return sucess;
+  return success;
 }
 };  // namespace pr2_pick_manipulation

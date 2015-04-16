@@ -161,8 +161,11 @@ class FindShelf(smach.State):
         marker.scale.z = 1
         marker.lifetime = rospy.Duration()
 
-        if userdata.debug:
-            raw_input('(Debug) Press enter to continue: ')
+        # Need to wait for rviz for some reason.
+        rate = rospy.Rate(1)
+        while self._markers.get_num_connections() == 0:
+            rate.sleep()
+        self._markers.publish(marker)
 
         # Set up static a transform for each bin relative to shelf.
         # Bin origin is the front center of the bin opening, equidistant
@@ -207,12 +210,6 @@ class FindShelf(smach.State):
             )
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
-
-        # Need to wait for rviz for some reason.
-        rate = rospy.Rate(1)
-        while self._markers.get_num_connections() == 0:
-            rate.sleep()
-        self._markers.publish(marker)
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')

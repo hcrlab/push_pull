@@ -41,11 +41,10 @@ class MoveToBin(smach.State):
 
     name = 'MOVE_TO_BIN'
 
-    def __init__(self, tts, drive_linear, drive_angular, move_head, move_torso, markers):
+    def __init__(self, tts, drive_to_pose, move_head, move_torso, markers):
         '''
         @param tts - service proxy for speech
-        @param drive_linear - service proxy for the drive_linear service
-        @param drive_angular - service proxy for the drive_angular service
+        @param drive_to_pose - service proxy for the drive_to_pose service
         @param move_head - service proxy for moving the head
         @param move_torso - service proxy for the move_torso service
         @param markers - publisher for markers
@@ -59,8 +58,7 @@ class MoveToBin(smach.State):
             input_keys=['bin_id', 'debug']
         )
         self._tts = tts
-        self.drive_linear = drive_linear
-        self.drive_angular = drive_angular
+        self.drive_to_pose = drive_to_pose
         self.move_head = move_head
         self.move_torso = move_torso
         self.markers = markers
@@ -102,29 +100,16 @@ class MoveToBin(smach.State):
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
             )
         )
-        rospy.loginfo('Waiting for tf...')
-        try:
-            listener.waitForTransform(
-                'base_footprint',
-                'shelf',
-                rospy.Time(0),
-                self.wait_for_transform_duration
-            )
-        except:
-            return outcomes.MOVE_TO_BIN_FAILURE
-
-        target_in_robot_frame = listener.transformPose('base_footprint', target_in_shelf_frame)
-        rospy.loginfo('target_in_robot_frame.pose {}'.format(target_in_robot_frame.pose))
 
         # Visualize target pose.
         marker = Marker()
-        marker.header.frame_id = 'base_footprint'
+        marker.header.frame_id = target_in_shelf_frame.header.frame_id
         marker.header.stamp = rospy.Time().now()
         marker.ns = 'target_location'
         marker.id = 0
         marker.type = Marker.CUBE
         marker.action = Marker.ADD
-        marker.pose = target_in_robot_frame.pose
+        marker.pose = target_in_shelf_frame.pose
         marker.pose.position.z = 0.03 / 2
         marker.scale.x = 0.67
         marker.scale.y = 0.67
@@ -143,31 +128,9 @@ class MoveToBin(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
-        # calculate x and y velocity components to drive diagonally
-        x_distance = target_in_robot_frame.pose.position.x
-        y_distance = target_in_robot_frame.pose.position.y
-        speed = self.drive_speed
-        distance = math.sqrt(pow(x_distance, 2) + pow(y_distance, 2))
-        x_velocity = speed * (x_distance / distance)
-        y_velocity = speed * (y_distance / distance)
-
-        # go there
-        rospy.loginfo('Moving a distance of {} with x_velocity {} and y_velocity {}'
-                      .format(distance, x_velocity, y_velocity))
-
-        self.drive_linear.wait_for_service()
-        result = self.drive_linear(x_velocity, y_velocity, distance)
-
-        if not result:
-            return outcomes.MOVE_TO_BIN_FAILURE
-
-        # Turn to face shelf.
-        orientation = target_in_robot_frame.pose.orientation
-        angles = [orientation.w, orientation.x, orientation.y, orientation.z]
-        _, _, yaw = tf.transformations.euler_from_quaternion(angles)
-        rospy.loginfo('yaw: {}'.format(yaw))
-        self.drive_angular(0.1, yaw)
-
+        self.drive_to_pose.wait_for_service()
+        self.drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
+        
         # set torso height for the given shelf
         self.move_torso.wait_for_service()
         result = self.move_torso(self.torso_height_by_bin[userdata.bin_id])

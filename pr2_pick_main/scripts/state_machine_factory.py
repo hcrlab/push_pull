@@ -1,5 +1,6 @@
 from pr2_pick_manipulation.srv import DriveAngular
 from pr2_pick_manipulation.srv import DriveLinear
+from pr2_pick_manipulation.srv import DriveToPose
 from pr2_pick_manipulation.srv import MoveArm
 from pr2_pick_manipulation.srv import GetPose
 from pr2_pick_manipulation.srv import MoveHead
@@ -39,7 +40,7 @@ def test_move_to_bin():
         for key in {
             'move_torso', 'set_grippers',  'markers', 'move_head',
             'drive_angular', 'drive_linear', 'localize_object', 'set_static_tf',
-            'tts', 'tuck_arms',
+            'tts', 'tuck_arms', 'drive_to_pose'
         }
     }
     return build_for_move_to_bin(**services)
@@ -75,7 +76,8 @@ def real_robot_services():
         'drive_linear': rospy.ServiceProxy('drive_linear_service', DriveLinear),
         'drive_angular': rospy.ServiceProxy('drive_angular_service', DriveAngular),
         'markers': rospy.Publisher('pr2_pick_visualization', Marker),
-        'crop_shelf': rospy.ServiceProxy('shelf_cropper', CropShelf)
+        'crop_shelf': rospy.ServiceProxy('shelf_cropper', CropShelf),
+        'drive_to_pose': rospy.ServiceProxy('drive_to_pose_service', DriveToPose),
      }
 
 
@@ -159,14 +161,18 @@ def mock_robot():
     crop_shelf.call = mock.Mock(
         side_effect=side_effect('shelf_cropper', return_value=crop_response))
 
+    drive_to_pose = rospy.ServiceProxy('drive_to_pose_service', DriveToPose)
+    drive_to_pose.wait_for_service = mock.Mock(return_value=None)
+    drive_to_pose.call = mock.Mock(side_effect=side_effect('drive_to_pose'))
+
     return build(tts, tuck_arms, move_torso, set_grippers, move_head,
                  moveit_move_arm, localize_object, set_static_tf, drive_linear,
-                 drive_angular, markers, crop_shelf)
+                 drive_angular, markers, crop_shelf, drive_to_pose)
 
 
 def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
-          localize_object, set_static_tf, drive_linear, drive_angular, markers, 
-          crop_shelf):
+          localize_object, set_static_tf, drive_linear, drive_angular, markers,
+          crop_shelf, drive_to_pose):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -220,7 +226,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.MoveToBin.name,
-            states.MoveToBin(tts, drive_linear, drive_angular, move_head, move_torso, markers),
+            states.MoveToBin(tts, drive_to_pose, move_head, move_torso, markers),
             transitions={
                 outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
                 outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
