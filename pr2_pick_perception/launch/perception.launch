@@ -3,7 +3,7 @@
   <arg name="kinect_camera_name" default="head_mount_kinect" />
   <arg name="debug_shelf" default="false" />
   <arg name="debug_crop" default="false" />
-  <arg name="alternate_kinect_frames" default="false" />
+  <arg name="alternate_kinect_frames" default="true" />
 
   <!-- Turn on the Kinect -->
   <include file="$(find openni_launch)/launch/openni.launch">
