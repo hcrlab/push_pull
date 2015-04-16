@@ -116,7 +116,7 @@ generate_messages(
 # ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mock_perception
+  LIBRARIES
   CATKIN_DEPENDS
     actionlib_msgs
     cv_bridge
@@ -146,9 +146,8 @@ catkin_package(
 include_directories(include)
 
 ## Declare a cpp library
-# add_library(mock_perception
-#   src/mock_perception.cpp
-# )
+
+## Declare a cpp executable
 add_executable(shelf_localization_service_node
   src/shelf_localization.cpp
 )
@@ -156,10 +155,6 @@ add_executable(shelf_localization_service_node
 add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
 )
-
-
-## Declare a cpp executable
-# add_executable(mock_perception_easy_boxes src/mock_perception_easy_boxes.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -174,24 +169,14 @@ add_dependencies(shelf_cropping_service_node
   pr2_pick_perception_generate_messages_cpp
 )
 
-
-# add_dependencies(mock_perception_easy_boxes
-#   mock_perception
-#   ${pr2_pick_perception_EXPORTED_TARGETS}
-# )
-# 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(mock_perception ${catkin_LIBRARIES})
-# target_link_libraries(mock_perception_easy_boxes
-#   mock_perception
-#   ${catkin_LIBRARIES}
-# )
 target_link_libraries(shelf_localization_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
 target_link_libraries(shelf_cropping_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
