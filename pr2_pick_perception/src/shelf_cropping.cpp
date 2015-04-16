@@ -34,12 +34,12 @@ CropShelf::initialize()
     //subscribe to shelf localization topic
     std::string pc_topic = nh.resolveName("/pc_topic");
     
-    shelf_pose_sub_ = nh.subscribe<pr2_pick_perception::ObjectList>(shelf_pose_topic,10,&CropShelf::poseListener,this);
+    //shelf_pose_sub_ = nh.subscribe<pr2_pick_perception::ObjectList>(shelf_pose_topic,10,&CropShelf::poseListener,this);
     pc_sub_ = nh.subscribe<sensor_msgs::PointCloud2>(pc_topic,10,&CropShelf::pcCallBack,this);    
  
     nh_local.param("RobotReference", robot_frame_id_,std::string("/base_footprint"));
     nh_local.param("WorldReference", world_frame_id_,std::string("/map"));
-    nh_local.param("ModelReference", model_frame_id_,std::string("/model_frame"));
+   // nh_local.param("ModelReference", model_frame_id_,std::string("/model_frame"));
     
     nh_local.param("ShelfReference", shelf_frame_id_,std::string("/shelf_leftcorner_frame"));
     nh_local.param("Debug", debug_,false);
@@ -129,11 +129,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
            
         if ( "A" == request.cellID)                   
         {
-            std::string bin = "bin_A";
+            bin_frame_id_ = "bin_A";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -149,11 +149,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "B" == request.cellID)
         {
-            std::string bin = "bin_B";
+            bin_frame_id_ = "bin_B";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -169,11 +169,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "C" == request.cellID)
         {
-            std::string bin = "bin_C";
+            bin_frame_id_ = "bin_C";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -188,11 +188,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "D" == request.cellID)
         {
-            std::string bin = "bin_D";
+            bin_frame_id_ = "bin_D";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -207,11 +207,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "E" == request.cellID)
         {
-            std::string bin = "bin_E";
+            bin_frame_id_ = "bin_E";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -226,11 +226,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "F" == request.cellID)
         {
-            std::string bin = "bin_F";
+            bin_frame_id_ = "bin_F";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -245,11 +245,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "G" == request.cellID)
         {
-            std::string bin = "bin_G";
+            bin_frame_id_ = "bin_G";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -264,11 +264,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "H" == request.cellID)
         {
-            std::string bin = "bin_H";
+            bin_frame_id_ = "bin_H";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -283,11 +283,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "I" == request.cellID)
         {
-            std::string bin = "bin_I";
+            bin_frame_id_ = "bin_I";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -302,11 +302,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "J" == request.cellID)
         {
-            std::string bin = "bin_J";
+            bin_frame_id_ = "bin_J";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -321,11 +321,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "K" == request.cellID)
         {
-            std::string bin = "bin_K";
+            bin_frame_id_ = "bin_K";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -340,11 +340,11 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
         if ( "L" == request.cellID)
         {
-            std::string bin = "bin_A";
+            bin_frame_id_ = "bin_L";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
+            if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
+                tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -423,7 +423,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             
             pr2_pick_perception::Cluster cluster;
-            cluster.header.frame_id = model_frame_id_; 
+            cluster.header.frame_id = bin_frame_id_; 
             cluster.header.stamp = pc_timestamp_; 
             std::stringstream ss;
             ss << "cluster_" << i;
@@ -644,26 +644,26 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     
 }*/
 
-void 
-CropShelf::poseListener(pr2_pick_perception::ObjectList shelfdetection)
-{
-    if(shelfdetection.objects.size() > 0 )
-    {
-        shelf_pose_ = true;
-        shelf_transform_.setOrigin(tf::Vector3(shelfdetection.objects[0].pose.position.x, shelfdetection.objects[0].pose.position.y, 
-                                               shelfdetection.objects[0].pose.position.z));
-        shelf_transform_.setRotation(tf::Quaternion( shelfdetection.objects[0].pose.orientation.x, shelfdetection.objects[0].pose.orientation.y, 
-                                                     shelfdetection.objects[0].pose.orientation.z, shelfdetection.objects[0].pose.orientation.w));
-        
-        model_frame_id_ = shelfdetection.objects[0].header.frame_id;
-    }
-    else
-    {
-        ROS_ERROR("Shelf pose not available");
-    }
-        
-
-}
+// void 
+// CropShelf::poseListener(pr2_pick_perception::ObjectList shelfdetection)
+// {
+//     if(shelfdetection.objects.size() > 0 )
+//     {
+//         shelf_pose_ = true;
+//         shelf_transform_.setOrigin(tf::Vector3(shelfdetection.objects[0].pose.position.x, shelfdetection.objects[0].pose.position.y, 
+//                                                shelfdetection.objects[0].pose.position.z));
+//         shelf_transform_.setRotation(tf::Quaternion( shelfdetection.objects[0].pose.orientation.x, shelfdetection.objects[0].pose.orientation.y, 
+//                                                      shelfdetection.objects[0].pose.orientation.z, shelfdetection.objects[0].pose.orientation.w));
+//         
+//         model_frame_id_ = shelfdetection.objects[0].header.frame_id;
+//     }
+//     else
+//     {
+//         ROS_ERROR("Shelf pose not available");
+//     }
+//         
+// 
+// }
 
 
 int main(int argc, char **argv)
