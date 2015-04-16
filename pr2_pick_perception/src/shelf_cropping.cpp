@@ -63,8 +63,10 @@ CropShelf::pcCallBack(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
     cloud_frame_id_ = pc_msg->header.frame_id;
     pcl::fromROSMsg (*pc_msg, kinect_pc_); 
     pc_timestamp_ =  pc_msg->header.stamp;
+    if (!pc_ready_) {
+      ROS_INFO("Point cloud ready for crop."); 
+    }
     pc_ready_ = true;
-    ROS_INFO("Point cloud ready for crop."); 
     
 }
 
@@ -116,6 +118,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     if ( !pc_ready_)
     {
         ROS_ERROR("No point cloud or no shelf detected\n");
+        return false;
     }
     else
     {
@@ -390,7 +393,6 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     
           pcl::visualization::PCLVisualizer::Ptr vis;
         //transform point cloud to robot_frame (where the point cloud is published)
-        ROS_INFO("Creating visualization");
         
         if(debug_)
         {
@@ -415,8 +417,6 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         
         }    
 
-        ROS_INFO("Copying clusters");
-        
         // copy the clusters to the object ObjectList
         pr2_pick_perception::ClusterList clusterlist;
         for (int i=0; i < clusters.size(); i++)
@@ -434,11 +434,8 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
        
        response.locations = clusterlist;
-       ROS_INFO("Exiting");
-    
+        return true; 
     }
-    
-    
 }
 
 
