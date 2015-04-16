@@ -87,6 +87,7 @@ bool ObjDetector::initialize()
     nh_local.param("only_yaw",only_yaw_,false);
     nh_local.param("debug", debug_, false);
     
+    nh_local.param("ICP2D",icp2D_, false);
     //load db
     std::string db_file = "";
     if(!nh_local.getParam("db", db_file))
@@ -382,7 +383,10 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
          Eigen::Matrix4f TtoOrigin = Eigen::Matrix4f::Identity(); 
         int detection_id = -1;
         pcl::ScopeTime t;
-        detect(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2);
+        if (!icp2D_)
+            detect(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2);
+        else
+            detect2D(cluster_candidates[i],&detection_transform, &detection_transform2);
         
         // transform the detections into the camera reference frame system
 
@@ -682,7 +686,6 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
   
     
 }
-
 
 
 void ObjDetector::detect2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster,  Eigen::Matrix4f* matchedTransform, 

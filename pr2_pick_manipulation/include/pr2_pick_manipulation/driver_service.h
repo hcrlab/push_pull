@@ -15,6 +15,7 @@
 #include "pr2_pick_manipulation/driver.h"
 #include "pr2_pick_manipulation/DriveAngular.h"
 #include "pr2_pick_manipulation/DriveLinear.h"
+#include "pr2_pick_manipulation/DriveToPose.h"
 #include <ros/ros.h>
 
 #ifndef _PR2_PICK_MANIPULATION_DRIVER_SERVICE_H_
@@ -26,11 +27,14 @@ class DriverService {
   ros::NodeHandle nh_;
   ros::ServiceServer angular_server_;
   ros::ServiceServer linear_server_;
+  ros::ServiceServer drive_to_pose_server_;
   RobotDriver driver_;
   bool AngularCallback(DriveAngular::Request& request,
                        DriveAngular::Response& response);
   bool LinearCallback(DriveLinear::Request& request,
                       DriveLinear::Response& response);
+  bool PoseCallback(DriveToPose::Request& request,
+                      DriveToPose::Response& response);
 
  public:
   DriverService();

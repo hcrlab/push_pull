@@ -1,0 +1,6 @@
+# Service that moves the robot relative to the given pose.
+geometry_msgs/PoseStamped pose
+float64 linearVelocity
+float64 angularVelocity
+---
+bool success

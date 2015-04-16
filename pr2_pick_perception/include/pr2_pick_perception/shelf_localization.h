@@ -169,7 +169,7 @@ private:
     tf::StampedTransform  cloud_to_model_;
 
     bool debug_;
-    
+    bool icp2D_;
     
     /// name of colored point cloud
     std::string topicLidar_;

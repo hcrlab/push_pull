@@ -71,6 +71,7 @@ add_service_files(
   SetGrippers.srv
   DriveLinear.srv
   DriveAngular.srv
+  DriveToPose.srv
   MoveTorso.srv
   TuckArms.srv
   MoveHead.srv

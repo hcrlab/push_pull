@@ -6,8 +6,8 @@
 
 <!-- <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
    <param name="Debug" value="true" />  
-   <param name="RobotReference" value="/base_footprint" />  
-   <param name="WorldReference" value="/map" /> <!-- Will default to base_footprint if there's no map. -->
+  <!-- <param name="RobotReference" value="/base_footprint" />   -->
+<!--   <param name="WorldReference" value="/odom_combined" />  --><!-- Will default to base_footprint if there's no map. -->
    
    <param name="Width1" value="-0.2671" />  
    <param name="Width2" value="-0.2991" />  
@@ -16,15 +16,15 @@
    <param name="Depth" value="0.43" />  
    
    
-   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" />
+ <!--   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" /> -->
    <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
--   <remap from="/shelf_pose_topic" to="/ap/detected_object" /> -
+<!---   <remap from="/shelf_pose_topic" to="/ap/detected_object" /> -->
   </node>
 
 
   <arg name="tf_rate" default="100"/>
 
   <!--   params are "x y z yaw pitch roll parent child rate" -->
-      <node pkg="tf" type="static_transform_publisher" name="shelf_to_leftcorner" args=" 0.43809  -0.40247 -1.77665  0.0 0.0 0.0  /map /shelf_leftcorner_frame  $(arg tf_rate)"/> 
+     <!-- <node pkg="tf" type="static_transform_publisher" name="shelf_to_leftcorner" args=" 0.43809  -0.40247 -1.77665  0.0 0.0 0.0  /map /shelf_leftcorner_frame  $(arg tf_rate)"/>  -->
 </launch> 
 

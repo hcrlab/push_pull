@@ -1,5 +1,8 @@
+#include <math.h>
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
 #include <tf/transform_listener.h>
 #include "pr2_pick_manipulation/driver.h"
 
@@ -93,5 +96,33 @@ bool RobotDriver::DriveAngular(double dt, double radians) {
     }
   }
   return true;
+}
+bool RobotDriver::DriveToPose(geometry_msgs::PoseStamped pose,
+  double linearVelocity, double angularVelocity) {
+  // Transform pose to be relative to "base_footprint"
+  geometry_msgs::PoseStamped newPose;
+  listener_.transformPose("base_footprint", pose, newPose);
+
+  tf::Matrix3x3 m(tf::Quaternion( newPose.pose.orientation.w, 
+                                  newPose.pose.orientation.x, 
+                                  newPose.pose.orientation.y, 
+                                  newPose.pose.orientation.z));
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+
+  // Move to point using DriveLinear
+  double posX = newPose.pose.position.x;
+  double posY = newPose.pose.position.y;
+  double distance = sqrt(pow(newPose.pose.position.x, 2) +
+    pow(newPose.pose.position.y, 2));
+  double dx = linearVelocity * (posX / distance);
+  double dy = linearVelocity * (posY / distance);
+  
+  bool sucess = RobotDriver::DriveLinear(dx, dy, distance);
+  
+  // Rotate to final pose using DriveAngular
+  sucess = sucess & RobotDriver::DriveAngular((double)angularVelocity, yaw);
+
+  return sucess;
 }
 };  // namespace pr2_pick_manipulation

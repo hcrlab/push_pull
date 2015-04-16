@@ -62,6 +62,8 @@ private:
     tf::StampedTransform robot_to_world_;
     /// shelf to left top corner origin
     tf::StampedTransform shelf_to_origin_;
+    /// cloud to bin
+    tf::StampedTransform cloud_to_bin_;
 
     
     ///shelf transform
