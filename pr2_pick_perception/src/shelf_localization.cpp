@@ -175,8 +175,10 @@ void ObjDetector::xtionPCcallback(const sensor_msgs::PointCloud2ConstPtr &pc_msg
     cloud_frame_id_ = pc_msg->header.frame_id;
     pcl::fromROSMsg (*pc_msg, xtionPC_); 
     pc_timestamp_ =  pc_msg->header.stamp;
+    if (!pc_ready_) {
+      ROS_INFO("Point cloud ready for localization.");
+    }
     pc_ready_ = true;
-    ROS_INFO("Point cloud ready for localization.");
     //printf("The number of points in xtion_PC is %d",xtionPC_.points.size());
    // xtionPC2ptr_ = pc_msg;
     
