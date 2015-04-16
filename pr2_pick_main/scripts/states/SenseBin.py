@@ -42,12 +42,16 @@ class SenseBin(smach.State):
         request = CropShelfRequest(cellID=userdata.bin_id)
         response = self._crop_shelf(request)
         userdata.clusters = response.locations.clusters
+        rospy.loginfo('[SenseBin] Found {} clusters.'.format(
+            len(response.locations.clusters)))
         for i, cluster in enumerate(response.locations.clusters):
             points = pc2.read_points(cluster.pointcloud,
                                      field_names=['x', 'y', 'z'],
                                      skip_nans=True)
             marker = Marker()
-            marker.header.frame_id = cluster.pointcloud.header.frame_id
+            # TODO(jstn): Once the point clouds have the correct frame_id,
+            # use them here.
+            marker.header.frame_id = 'bin_{}'.format(userdata.bin_id)
             marker.header.stamp = rospy.Time().now()
             marker.ns = 'bin_{}_items'.format(userdata.bin_id)
             marker.id = i
@@ -63,4 +67,7 @@ class SenseBin(smach.State):
             marker.lifetime = rospy.Duration()
 
             self._markers.publish(marker)
+
+        if userdata.debug:
+            raw_input('[SenseBin] Press enter to continue: ')
         return outcomes.SENSE_BIN_SUCCESS
