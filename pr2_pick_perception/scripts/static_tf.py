@@ -37,7 +37,7 @@ class StaticTransformManager(object):
 def main():
     rospy.init_node('static_tf')
     m = StaticTransformManager()
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(100)
     while not rospy.is_shutdown():
         m.broadcast_all()
         rate.sleep()

@@ -39,10 +39,12 @@ class MoveToBin(smach.State):
 
     name = 'MOVE_TO_BIN'
 
-    def __init__(self, tts, drive_linear, drive_angular, move_torso, markers):
+    def __init__(self, tts, drive_linear, drive_angular, move_head, move_torso, markers):
         '''
+        @param tts - service proxy for speech
         @param drive_linear - service proxy for the drive_linear service
         @param drive_angular - service proxy for the drive_angular service
+        @param move_head - service proxy for moving the head
         @param move_torso - service proxy for the move_torso service
         @param markers - publisher for markers
         '''
@@ -57,6 +59,7 @@ class MoveToBin(smach.State):
         self._tts = tts
         self.drive_linear = drive_linear
         self.drive_angular = drive_angular
+        self.move_head = move_head
         self.move_torso = move_torso
         self.markers = markers
 
@@ -160,6 +163,10 @@ class MoveToBin(smach.State):
         # set torso height for the given shelf
         self.move_torso.wait_for_service()
         result = self.move_torso(self.torso_height_by_bin[userdata.bin_id])
+
+        # face the head towards the bin
+        self.move_head.wait_for_service()
+        self.move_head(x=0.0, y=0.0, z=0.0, frame='bin_{}'.format(userdata.bin_id))
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')

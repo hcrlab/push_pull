@@ -21,7 +21,7 @@ class Grasp(smach.State):
                 outcomes.GRASP_SUCCESS,
                 outcomes.GRASP_FAILURE
             ],
-            input_keys=['bin_id']
+            input_keys=['bin_id', 'clusters']
         )
 
         self._set_grippers = set_grippers
