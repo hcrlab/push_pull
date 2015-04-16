@@ -14,7 +14,7 @@ class ExtractItem(smach.State):
     """
     name = 'EXTRACT_ITEM'
 
-    def __init__(self, tts, moveit_move_arm, ee_pose):
+    def __init__(self, tts, moveit_move_arm):
         smach.State.__init__(
             self,
             outcomes=[
@@ -26,14 +26,13 @@ class ExtractItem(smach.State):
 
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
-        self._ee_pose = ee_pose
 
         # Shelf heights
 
-        self._shelf_height_a_c = 1.55
-        self._shelf_height_d_f = 1.32
-        self._shelf_height_g_i = 1.09
-        self._shelf_height_j_l = 0.84
+        self._shelf_height_a_c = 1.56
+        self._shelf_height_d_f = 1.33
+        self._shelf_height_g_i = 1.10
+        self._shelf_height_j_l = 0.85
 
         self._shelf_heights = {"A": self._shelf_height_a_c,
                                 "B": self._shelf_height_a_c,
@@ -54,7 +53,7 @@ class ExtractItem(smach.State):
         self._grasp_height = 0.02
         self._pre_grasp_height = self._grasp_height + 0.01
         self._lift_height = 0.03
-        self._extract_dist = 0.30
+        self._extract_dist = 0.3
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
     def execute(self, userdata):
@@ -93,28 +92,65 @@ class ExtractItem(smach.State):
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
-        self._ee_pose.wait_for_service()
-        current_pose = self._ee_pose("right_arm", "r_wrist_roll_link")
-
-
-        # Lift item to clear bin lip
-        rospy.loginfo("Lift")
-        pose_target = current_pose
-        pose_target.pose.position.z = current_pose.pose.position.z + self._lift_height
-
-
-        # pose_target.header.frame_id = "base_footprint";
-        # pose_target.pose.orientation.w = 1
-        # pose_target.pose.position.x = grasp_dist + item_pose.position.x
-        # pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
-        # pose_target.pose.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height
- 
-        rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
-        rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
+        #self._ee_pose.wait_for_service()
         
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0.01, 0.01, 0, "right_arm")
+        listener.waitForTransform(
+                'base_footprint',
+                'r_wrist_roll_link',
+                rospy.Time(0),
+                self._wait_for_transform_duration
+            )
+
+        (current_position, current_orientation) = listener.lookupTransform('base_footprint', 'r_wrist_roll_link', rospy.Time(0))#self._ee_pose("right_arm", "r_wrist_roll_link")
+        current_pose = geometry_msgs.msg.PoseStamped()
+        current_pose.header.frame_id = 'base_footprint'
+        current_pose.pose.position.x = current_position[0]
+        current_pose.pose.position.y = current_position[1] 
+        current_pose.pose.position.z = current_position[2]
+
+        current_pose.pose.orientation.x = current_orientation[0]
+        current_pose.pose.orientation.y = current_orientation[1]
+        current_pose.pose.orientation.z = current_orientation[2]
+        current_pose.pose.orientation.w = current_orientation[3]
+
+        rospy.loginfo("pose x: " + str(current_pose.pose.position.x) + ", y: " + str(current_pose.pose.position.y) + ", z: " + str(current_pose.pose.position.z))
+            rospy.loginfo("orientation x: " + str(current_pose.pose.orientation.x) + ", y: " + str(current_pose.pose.orientation.y) + ", z: " + str(current_pose.pose.orientation.z) + ", w: " + str(current_pose.pose.orientation.w))
+
+
+        success_lift = False
+        attempts = 5
+        pose_target = geometry_msgs.msg.PoseStamped()
+        for i in range(attempts):
+            # Lift item to clear bin lip
+            rospy.loginfo("Lift")
+            pose_target.pose.position.x = current_pose.pose.position.x
+            pose_target.pose.position.y = current_pose.pose.position.y
+            pose_target.pose.orientation.x = current_pose.pose.orientation.x
+            pose_target.pose.orientation.y = current_pose.pose.orientation.y
+            pose_target.pose.orientation.z = current_pose.pose.orientation.z
+            pose_target.pose.orientation.w = current_pose.pose.orientation.w 
+            pose_target.pose.position.z = current_pose.pose.position.z + self._lift_height
+            #pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
+
+            # pose_target.header.frame_id = "base_footprint";
+            # pose_target.pose.orientation.w = 1
+            # pose_target.pose.position.x = grasp_dist + item_pose.position.x
+            # pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
+            # pose_target.pose.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height
+     
+            rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
+            rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
+            
+            self._moveit_move_arm.wait_for_service()
+            success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
        
+            if success_lift:
+                rospy.loginfo("Lift success")
+                break
+            else:
+                rospy.loginfo("Lift attempt " + str(i) + " failed")
+                continue
+
         attempts = 5
 
         # Pull item out of bin
@@ -130,7 +166,7 @@ class ExtractItem(smach.State):
             extract_pose_target.pose.orientation.w = 1
             extract_pose_target.pose.position.x = self._extract_dist + 0.01 * i 
             extract_pose_target.pose.position.y = transformed_item_pose.pose.position.y
-            extract_pose_target.pose.position.y = pose_target.pose.position.z
+            extract_pose_target.pose.position.z = pose_target.pose.position.z
             
 
             rospy.loginfo("pose x: " + str(extract_pose_target.pose.position.x) + ", y: " + str(extract_pose_target.pose.position.y) + ", z: " + str(extract_pose_target.pose.position.z))
@@ -141,15 +177,12 @@ class ExtractItem(smach.State):
 
             if success:
                 # Open Hand
-
-                rospy.loginfo("Open Hand")
-                self._set_grippers.wait_for_service()
-                grippers_open = self._set_grippers(False, True)
-
+                rospy.loginfo("Extract success")
                 break
             else:
+                rospy.loginfo("Extract attempt " + str(i) + " failed")
                 continue
         if success:
-            return outcomes.EXTRACT_ITEM_SUCCESS
+            return outcomes.EXTRACT_ITEM_FAILURE
         else:
             return outcomes.EXTRACT_ITEM_FAILURE

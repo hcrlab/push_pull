@@ -13,26 +13,12 @@ class ArmMover:
         rospy.init_node('moveit_service_node')
 
         robot = moveit_commander.RobotCommander()
-        self._default_planning_time = 12
+        self._default_planning_time = 10
         self._default_position_tolerance = 0.0001
         self._default_orientation_tolerance = 0.001
         self._group = moveit_commander.MoveGroupCommander("right_arm") 
         #self._group_left = moveit_commander.MoveGroupCommander("left_arm")
-        self._s1 = rospy.Service('moveit_service', MoveArm, self.move_arm)
-        self._s2 = rospy.Service('eef_pose_service', GetPose, self.get_pose)
-
-    def get_pose(self, req):
-        pose = None
-        if req.group > 0:
-            self._group = moveit_commander.MoveGroupCommander(req.group)
-        if req.end_effector_link > 0:
-            pose = self._group.get_current_pose(req.end_effector_link)
-        else:
-            pose = self._group.get_current_pose()
-        resp = GetPoseResponse()
-        resp.pose = pose
-        return resp
-        
+        self._s = rospy.Service('moveit_service', MoveArm, self.move_arm)
 
     def move_arm(self, req):
 
