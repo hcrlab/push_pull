@@ -2,7 +2,7 @@
 <launch>
   <arg name="debug" default="false" />
   <param name="/use_sim_time" value="false"/>
-  <node ns="perception" pkg="pr2_pick_perception" type="shelf_cropping_service_node" name="shelf_cropper" respawn="true" output="screen"> 
+  <node ns="perception" pkg="pr2_pick_perception" type="shelf_cropping_service_node" name="shelf_cropper" respawn="true" output="screen" launch-prefix="xterm -e gdb -ex run --args"> 
 
 
 <!-- <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
@@ -10,10 +10,10 @@
   <!-- <param name="RobotReference" value="/base_footprint" />   -->
 <!--   <param name="WorldReference" value="/odom_combined" />  --><!-- Will default to base_footprint if there's no map. -->
    
-   <param name="Width1" value="-0.2671" />  
-   <param name="Width2" value="-0.2991" />  
-   <param name="Height1" value="-0.26" />  
-   <param name="Height2" value="-0.23" />  
+   <param name="Width1" value="0.2671" />  
+   <param name="Width2" value="0.2991" />  
+   <param name="Height1" value="0.26" />  
+   <param name="Height2" value="0.23" />  
    <param name="Depth" value="0.43" />  
    
    

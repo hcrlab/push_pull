@@ -176,6 +176,7 @@ void ObjDetector::xtionPCcallback(const sensor_msgs::PointCloud2ConstPtr &pc_msg
     pcl::fromROSMsg (*pc_msg, xtionPC_); 
     pc_timestamp_ =  pc_msg->header.stamp;
     pc_ready_ = true;
+    ROS_INFO("Point cloud ready for localization.");
     //printf("The number of points in xtion_PC is %d",xtionPC_.points.size());
    // xtionPC2ptr_ = pc_msg;
     
@@ -218,8 +219,8 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
    
     
     std::string error_msg;    
-    if (tf_.canTransform(robot_frame_id_, cloud_frame_id_, pc_timestamp_, &error_msg)){
-      tf_.lookupTransform(robot_frame_id_, cloud_frame_id_, pc_timestamp_, cloud_to_robot_);
+    if (tf_.canTransform(robot_frame_id_, cloud_frame_id_, ros::Time(0), &error_msg)){
+      tf_.lookupTransform(robot_frame_id_, cloud_frame_id_, ros::Time(0), cloud_to_robot_);
     }
     else
     {
@@ -230,8 +231,8 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
       robot_frame_id_ = cloud_frame_id_;
     }
     
-     if (tf_.canTransform(camera_frame_id_, robot_frame_id_, pc_timestamp_, &error_msg)){
-      tf_.lookupTransform(camera_frame_id_, robot_frame_id_, pc_timestamp_, robot_to_camera_);
+     if (tf_.canTransform(camera_frame_id_, robot_frame_id_, ros::Time(0), &error_msg)){
+      tf_.lookupTransform(camera_frame_id_, robot_frame_id_, ros::Time(0), robot_to_camera_);
     }
     else
     {
@@ -242,8 +243,8 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
       camera_frame_id_ = robot_frame_id_;
     }
     
-    if (tf_.canTransform(world_frame_id_, robot_frame_id_,pc_timestamp_, &error_msg)){
-      tf_.lookupTransform(world_frame_id_, robot_frame_id_, pc_timestamp_, robot_to_world_);
+    if (tf_.canTransform(world_frame_id_, robot_frame_id_,ros::Time(0), &error_msg)){
+      tf_.lookupTransform(world_frame_id_, robot_frame_id_, ros::Time(0), robot_to_world_);
     }
     else
     {

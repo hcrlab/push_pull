@@ -44,10 +44,10 @@ CropShelf::initialize()
     nh_local.param("ShelfReference", shelf_frame_id_,std::string("/shelf_leftcorner_frame"));
     nh_local.param("Debug", debug_,false);
     
-    nh_local.param("Width1", cell_width1_,-0.2671);
-    nh_local.param("Width2", cell_width2_, -0.2991);
-    nh_local.param("Height1", cell_height1_,-0.26);
-    nh_local.param("Height2", cell_height2_, -0.23);
+    nh_local.param("Width1", cell_width1_,0.2671);
+    nh_local.param("Width2", cell_width2_, 0.2991);
+    nh_local.param("Height1", cell_height1_,0.26);
+    nh_local.param("Height2", cell_height2_, 0.23);
     nh_local.param("Depth", depth_cell_, 0.43); 
     
     return true;
@@ -64,7 +64,7 @@ CropShelf::pcCallBack(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
     pcl::fromROSMsg (*pc_msg, kinect_pc_); 
     pc_timestamp_ =  pc_msg->header.stamp;
     pc_ready_ = true;
-    
+    ROS_INFO("Point cloud ready for crop."); 
     
 }
 
@@ -128,9 +128,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_A";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -148,9 +148,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_B";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -168,9 +168,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_C";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -187,9 +187,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_D";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -206,9 +206,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_E";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -225,9 +225,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_F";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -244,9 +244,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_G";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -263,9 +263,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_H";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -282,9 +282,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_I";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -301,9 +301,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_J";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -320,9 +320,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_K";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -339,9 +339,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         {
             std::string bin = "bin_A";
                     //depending on the cell we read that transform with respect to the pc reference system
-            if (tf_.canTransform(bin, cloud_frame_id_, pc_timestamp_, &error_msg))
+            if (tf_.canTransform(bin, cloud_frame_id_, ros::Time(0), &error_msg))
             {
-                tf_.lookupTransform(bin, cloud_frame_id_, pc_timestamp_, cloud_to_bin_);
+                tf_.lookupTransform(bin, cloud_frame_id_, ros::Time(0), cloud_to_bin_);
             }
             else
             {
@@ -360,7 +360,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
             
         std::cout << "Final point cloud without planes size = " << cell_pc->points.size() << std::endl;
         //extract clusters EUclidean
-        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
         tree->setInputCloud(cell_pc);    
         std::vector<pcl::PointIndices> clustersInd;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
@@ -390,6 +390,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     
           pcl::visualization::PCLVisualizer::Ptr vis;
         //transform point cloud to robot_frame (where the point cloud is published)
+        ROS_INFO("Creating visualization");
         
         if(debug_)
         {
@@ -413,6 +414,8 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
             vis->spin();
         
         }    
+
+        ROS_INFO("Copying clusters");
         
         // copy the clusters to the object ObjectList
         pr2_pick_perception::ClusterList clusterlist;
@@ -431,6 +434,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         }
        
        response.locations = clusterlist;
+       ROS_INFO("Exiting");
     
     }
     
