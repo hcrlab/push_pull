@@ -4,6 +4,7 @@
 """
 
 from bin_data import BinData
+from pr2_pick_manipulation.srv import DriveToPose
 import argparse
 import rospy
 import smach
@@ -12,7 +13,8 @@ import state_machine_factory
 import states
 
 
-def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=False):
+def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=False,
+         auto_reset=True):
     rospy.init_node('pr2_pick_state_machine')
     sm = None
     if mock:
@@ -35,9 +37,25 @@ def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=Fal
     for bin_id in 'ABCDEFGHIJKL':
         sm.userdata.bin_data[bin_id] = BinData(id, False, False)
 
+    # The starting pose of the robot, in odom_combined.
+    sm.userdata.start_pose = None
+
     # A list of clusters (pr2_pick_perception/Cluster.msg) for objects in the
     # current bin.
     sm.userdata.clusters = []
+
+    def on_shutdown():
+        if sm.userdata is not None:
+            try:
+                drive_to_pose = rospy.ServiceProxy('drive_to_pose_service',
+                                                   DriveToPose)
+                drive_to_pose(pose=sm.userdata.start_pose,
+                              linearVelocity=0.1,
+                              angularVelocity=0.1)
+            except:
+                pass
+    if auto_reset:
+        rospy.on_shutdown(on_shutdown)
 
     try:
         sis = smach_ros.IntrospectionServer(
@@ -74,10 +92,16 @@ if __name__ == '__main__':
         '--debug', action='store_true',
         help=('True if you want to step through debugging checkpoints.')
     )
+    parser.add_argument(
+        '--auto_reset', action='store_true', default=True,
+        help=('Set to true to make the robot to drive back to its starting'
+              ' point when the state machine exits.')
+    )
     args = parser.parse_args(args=rospy.myargv()[1:])
     sim_time = rospy.get_param('use_sim_time', False)
     if sim_time != False:
         rospy.logwarn('Warning: use_sim_time was set to true. Setting back to '
             'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
-    main(args.mock, args.test_move_to_bin, args.test_drop_off_item, args.debug)
+    main(args.mock, args.test_move_to_bin, args.test_drop_off_item, args.debug,
+         args.auto_reset)

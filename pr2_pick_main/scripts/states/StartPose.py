@@ -2,9 +2,11 @@ from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
+from geometry_msgs.msg import PoseStamped
 import outcomes
 import rospy
 import smach
+import tf
 
 
 class StartPose(smach.State):
@@ -27,13 +29,15 @@ class StartPose(smach.State):
                 outcomes.START_POSE_SUCCESS,
                 outcomes.START_POSE_FAILURE
             ],
-            input_keys=['debug']
+            input_keys=['debug'],
+            output_keys=['start_pose']
         )
         self._tts = tts
         self._tuck_arms = tuck_arms
         self._move_torso = move_torso
         self._set_grippers = set_grippers
         self._move_head = move_head
+        self._tf_listener = tf.TransformListener()
 
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
@@ -73,6 +77,23 @@ class StartPose(smach.State):
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
+
+        start_pose = None
+        try:
+            here = PoseStamped()
+            here.header.frame_id = 'base_footprint'
+            here.pose.position.x = 0
+            here.pose.position.y = 0
+            here.pose.position.z = 0
+            here.pose.orientation.w = 1
+            here.pose.orientation.x = 0
+            here.pose.orientation.y = 0
+            here.pose.orientation.z = 0
+            start_pose = self._tf_listener.transformPose('odom_combined', here)
+            userdata.start_pose = start_pose
+        except:
+            rospy.logerr('No transform for start pose.')
+            start_pose = None
         
         if (tuck_success and torso_success and grippers_success
                 and move_head_success):
