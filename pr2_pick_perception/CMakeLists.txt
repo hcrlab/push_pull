@@ -21,7 +21,7 @@ find_package(catkin REQUIRED
 ## System dependencies are found with CMake's conventions
 find_package(Boost 1.46.1 REQUIRED COMPONENTS signals regex system thread filesystem)
 find_package(OpenCV)
-find_package(PCL 1.7.1 REQUIRED)
+find_package(PCL 1.7.0 REQUIRED)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
 
