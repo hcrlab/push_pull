@@ -78,7 +78,7 @@ private:
     /// shelf reference system    
     std::string shelf_frame_id_;
     /// model reference system
-    std::string model_frame_id_;
+    std::string bin_frame_id_;
     
     
     bool debug_;
