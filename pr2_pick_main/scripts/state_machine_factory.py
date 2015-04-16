@@ -241,7 +241,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.SenseBin.name,
-            states.SenseBin(tts, crop_shelf),
+            states.SenseBin(tts, crop_shelf, markers),
             transitions={
                 outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
                 outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,

@@ -10,6 +10,8 @@ from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import GetPose
 from pr2_pick_manipulation.srv import MoveArm
 import rospkg
+from sensor_msgs.msg import PointCloud2
+import sensor_msgs.point_cloud2 as pc2
 
 class Grasp(smach.State):
     """Grasps an item in the bin.
