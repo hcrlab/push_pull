@@ -80,8 +80,8 @@ CropShelf::cropPC(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, floa
     int timesx = 0;
     int timesy = 0;
     
-    float p1y = width * timesx;    float p1z = height * timesy;
-    float p2y = p1y + width;    float p2z = p1z + height;  
+    //float p1y = width * timesx;    float p1z = height * timesy;
+    //float p2y = p1y + width;    float p2z = p1z + height;  
     
     pcl::PointCloud<pcl::PointXYZ>::Ptr cell_pc(new pcl::PointCloud<pcl::PointXYZ>);
     
@@ -90,8 +90,17 @@ CropShelf::cropPC(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, floa
     for (int i=0; i < shelf_pc->points.size(); i++)
     {
         pcl::PointXYZ point = shelf_pc->points[i];
-        if ( (p1y >= point.y) && (point.y  >= p2y) && (p1z >= point.z)&&(point.z >= p2z) && (point.x <= depth) )
-            cell_pc->push_back(point);                    
+        // The point cloud has been transformed around the frame of the bin.
+        // The origin of the bin's frame is in the front bottom center of the bin.
+        if (
+            point.x < depth
+            && point.y < width / 2
+            && point.y >= -width / 2
+            && point.z < height
+            && point.z  >= 0
+        ) {
+          cell_pc->push_back(point);                    
+        }
     }
     return cell_pc;
 }

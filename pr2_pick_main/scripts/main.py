@@ -75,4 +75,9 @@ if __name__ == '__main__':
         help=('True if you want to step through debugging checkpoints.')
     )
     args = parser.parse_args(args=rospy.myargv()[1:])
+    sim_time = rospy.get_param('use_sim_time', False)
+    if sim_time != False:
+        rospy.logwarn('Warning: use_sim_time was set to true. Setting back to '
+            'false. Verify your launch files.')
+        rospy.set_param('use_sim_time', False)
     main(args.mock, args.test_move_to_bin, args.test_drop_off_item, args.debug)

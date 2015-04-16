@@ -76,7 +76,7 @@ def real_robot_services():
         'drive_linear': rospy.ServiceProxy('drive_linear_service', DriveLinear),
         'drive_angular': rospy.ServiceProxy('drive_angular_service', DriveAngular),
         'markers': rospy.Publisher('pr2_pick_visualization', Marker),
-        'crop_shelf': rospy.ServiceProxy('shelf_cropper', CropShelf),
+        'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
         'drive_to_pose': rospy.ServiceProxy('drive_to_pose_service', DriveToPose),
      }
 
@@ -156,7 +156,7 @@ def mock_robot():
     markers.publish = mock.Mock(side_effect=side_effect('markers'))
 
     crop_response = CropShelfResponse()
-    crop_shelf = rospy.ServiceProxy('shelf_cropper', CropShelf)
+    crop_shelf = rospy.ServiceProxy('perception/shelf_cropper', CropShelf)
     crop_shelf.wait_for_service = mock.Mock(return_value=None)
     crop_shelf.call = mock.Mock(
         side_effect=side_effect('shelf_cropper', return_value=crop_response))

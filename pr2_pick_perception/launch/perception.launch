@@ -2,10 +2,8 @@
   <arg name="kinect_frame_prefix" default="/head_mount_kinect" />
   <arg name="kinect_camera_name" default="head_mount_kinect" />
   <arg name="debug_shelf" default="false" />
+  <arg name="debug_crop" default="false" />
   <arg name="alternate_kinect_frames" default="false" />
-
-  <!-- Import c1 and c2 machine definitions -->
-  <!--include file="$(find pr2_machine)/$(env ROBOT).machine" /-->
 
   <!-- Turn on the Kinect -->
   <include file="$(find openni_launch)/launch/openni.launch">
@@ -21,45 +19,11 @@
     <arg name="camera" value="head_mount_kinect" />
   </include>
 
-  <!-- Start laser tilt -->
-  <!--node pkg="pr2_mechanism_controllers" type="send_periodic_cmd_srv.py" name="laser_tilt_controller_3dnav_params" 
-     args="laser_tilt_controller linear 10 1.02 .31" />
-
-  <node name="$(anon dynparam)" pkg="dynamic_reconfigure" type="dynparam" args="set_from_parameters tilt_hokuyo_node">
-    <param name="intensity" type="bool" value="false" />
-    <param name="min_ang" type="double" value="-1.15" />
-    <param name="max_ang" type="double" value="1.15" />
-  </node-->
-
-  <!-- Convert tilt laser scan to pointcloud -->
-  <!--node pkg="laser_filters" type="scan_to_cloud_filter_chain" output="screen" 
-    name="scan_to_cloud_filter_chain_tilt_laser">
-    <remap from="scan" to="/tilt_scan"/>
-    <remap from="cloud_filtered" to="/tilt_scan_cloud"/>
-    <param name="target_frame" type="string" value="base_footprint"/>
-    <param name="incident_angle_correction" value="false"/>
-  </node-->
-
   <include file="$(find pr2_pretouch_optical_dist)/launch/optical_dist.launch" />
+
+  <!-- If you want debugging output, run these launch files separately on your local machine. -->
   <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_KinPR2.launch" />
+  <include unless="$(arg debug_crop)" file="$(find pr2_pick_perception)/launch/crop_cellA.launch" />
 
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />
-  <node pkg="pr2_pick_perception" type="shelf_cropping_service_node" name="shelf_cropping_service_node" respawn="true" />
-
-  <!-- Self filter laser scans -->
-  <!--node pkg="robot_self_filter" type="self_filter" respawn="true" name="laser_self_filter" output="screen" machine="c2">
-    <remap from="cloud_in" to="/tilt_scan_cloud" />
-    <remap from="cloud_out" to="/tilt_scan_cloud_filtered2" />
-    <param name="sensor_frame" type="string" value="laser_tilt_link" />
-    <param name="subsample_value" type="double" value=".01"/>
-  </node-->
-
-  <!-- Self filter Kinect points -->
-  <!--node pkg="robot_self_filter" type="self_filter" respawn="true" name="kinect_self_filter" 
-    output="screen">
-    <remap from="cloud_in" to="/$(arg kinect_camera_name)/depth_registered/points" />
-    <remap from="cloud_out" to="/$(arg kinect_camera_name)/rgb/points_filtered" />
-    <param name="sensor_frame" type="string" value="$(arg kinect_frame_prefix)_rgb_optical_frame" />
-    <param name="subsample_value" type="double" value=".02"/>
-  </node-->
 </launch>
