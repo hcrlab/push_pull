@@ -13,6 +13,7 @@
    <param name="PlanesegThres" value="0.03"/>   <!-- was 0.05 for non-hose, to remove wall behind valve -->
    <param name="PlaneSize" value="10000"/> <!-- WAS 4500,50000 -->
    <param name="highplane" value="2.5" /> <!-- removes points further than this limit -->
+      <param name="ICP2D" value="false" /> <!-- removes points further than this limit -->
  
   <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
 
