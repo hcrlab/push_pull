@@ -86,7 +86,7 @@ CropShelf::cropPC(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, floa
     pcl::PointCloud<pcl::PointXYZ>::Ptr cell_pc(new pcl::PointCloud<pcl::PointXYZ>);
     
     printf("The number of points %d\n", (int) shelf_pc->points.size());
-    printf("point limits = [%f, %f, %f, %f, %f]\n", p1y,p2y,p1z,p2z,depth);
+    //printf("point limits = [%f, %f, %f, %f, %f]\n", p1y,p2y,p1z,p2z,depth);
     for (int i=0; i < shelf_pc->points.size(); i++)
     {
         pcl::PointXYZ point = shelf_pc->points[i];
