@@ -93,7 +93,7 @@ class DropOffItem(smach.State):
         pose_target.pose.orientation.z = -0.1941
         pose_target.pose.orientation.w = -0.1897
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, "right_arm")
+        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
 
         # open gripper
         rospy.loginfo('Open gripper')
