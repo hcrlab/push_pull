@@ -119,31 +119,61 @@ class ExtractItem(smach.State):
 
         success_lift = False
         attempts = 5
-        pose_target = geometry_msgs.msg.PoseStamped()
         for i in range(attempts):
-            # Lift item to clear bin lip
-            rospy.loginfo("Lift")
-            pose_target.pose.position.x = current_pose.pose.position.x
-            pose_target.pose.position.y = current_pose.pose.position.y
-            pose_target.pose.orientation.x = current_pose.pose.orientation.x
-            pose_target.pose.orientation.y = current_pose.pose.orientation.y
-            pose_target.pose.orientation.z = current_pose.pose.orientation.z
-            pose_target.pose.orientation.w = current_pose.pose.orientation.w 
-            pose_target.pose.position.z = current_pose.pose.position.z + self._lift_height
-            #pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
+            if userdata.bin_id > "C":
+                # Lift item to clear bin lip
+                pose_target = geometry_msgs.msg.PoseStamped()
+                pose_target.header.frame_id = 'base_footprint'
+                rospy.loginfo("Lift")
+                pose_target.pose.position.x = current_pose.pose.position.x
+                pose_target.pose.position.y = current_pose.pose.position.y
+                pose_target.pose.orientation.x = current_pose.pose.orientation.x
+                pose_target.pose.orientation.y = current_pose.pose.orientation.y
+                pose_target.pose.orientation.z = current_pose.pose.orientation.z
+                pose_target.pose.orientation.w = current_pose.pose.orientation.w 
+                pose_target.pose.position.z = current_pose.pose.position.z + self._lift_height
+                #pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
 
-            # pose_target.header.frame_id = "base_footprint";
-            # pose_target.pose.orientation.w = 1
-            # pose_target.pose.position.x = grasp_dist + item_pose.position.x
-            # pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
-            # pose_target.pose.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height
+                # pose_target.header.frame_id = "base_footprint";
+                # pose_target.pose.orientation.w = 1
+                # pose_target.pose.position.x = grasp_dist + item_pose.position.x
+                # pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
+                # pose_target.pose.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height
+         
+                rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
+                rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
+                
+                self._moveit_move_arm.wait_for_service()
+                success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+            else:
+                euler_tuple = tf.transformations.euler_from_quaternion([current_pose.pose.orientation.x, current_pose.pose.orientation.y, current_pose.pose.orientation.z, current_pose.pose.orientation.w])
+                euler = list(euler_tuple)
+                euler[1] = euler[1] + 3.14/6.0
+                quaternion = tf.transformations.quaternion_from_euler(euler[0], euler[1], euler[2])
+                # Lift item to clear bin lip
+                pose_target = geometry_msgs.msg.PoseStamped()
+                pose_target.header.frame_id = 'base_footprint'
+                rospy.loginfo("Lift")
+                pose_target.pose.position.x = current_pose.pose.position.x
+                pose_target.pose.position.y = current_pose.pose.position.y
+                pose_target.pose.orientation.x = quaternion[0]
+                pose_target.pose.orientation.y = quaternion[1]
+                pose_target.pose.orientation.z = quaternion[2]
+                pose_target.pose.orientation.w = quaternion[3]
+                pose_target.pose.position.z = current_pose.pose.position.z 
+                #pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
+
+                # pose_target.header.frame_id = "base_footprint";
+                # pose_target.pose.orientation.w = 1
+                # pose_target.pose.position.x = grasp_dist + item_pose.position.x
+                # pose_target.pose.position.y = robot_centered_offset #+ item_pose.position.y;
+                # pose_target.pose.position.z = shelf_height + grasp_height + item_pose.position.z + lift_height
      
-            rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
-            rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
+                rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
+                rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
             
-            self._moveit_move_arm.wait_for_service()
-            success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
-       
+                self._moveit_move_arm.wait_for_service()
+                success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
             if success_lift:
                 rospy.loginfo("Lift success")
                 break
@@ -160,21 +190,41 @@ class ExtractItem(smach.State):
 
             # Pose in front of bin
 
-            rospy.loginfo("Extract:")
-            extract_pose_target = geometry_msgs.msg.PoseStamped()
-            extract_pose_target.header.frame_id = "base_footprint";
-            extract_pose_target.pose.orientation.w = 1
-            extract_pose_target.pose.position.x = self._extract_dist + 0.01 * i 
-            extract_pose_target.pose.position.y = transformed_item_pose.pose.position.y
-            extract_pose_target.pose.position.z = pose_target.pose.position.z
-            
+            if userdata.bin_id > "C":
+                rospy.loginfo("Extract:")
+                extract_pose_target = geometry_msgs.msg.PoseStamped()
+                extract_pose_target.header.frame_id = "base_footprint";
+                extract_pose_target.pose.orientation.w = 1
+                extract_pose_target.pose.position.x = self._extract_dist + 0.01 * i 
+                extract_pose_target.pose.position.y = transformed_item_pose.pose.position.y
+                extract_pose_target.pose.position.z = pose_target.pose.position.z
+                
 
-            rospy.loginfo("pose x: " + str(extract_pose_target.pose.position.x) + ", y: " + str(extract_pose_target.pose.position.y) + ", z: " + str(extract_pose_target.pose.position.z))
-            rospy.loginfo("orientation x: " + str(extract_pose_target.pose.orientation.x) + ", y: " + str(extract_pose_target.pose.orientation.y) + ", z: " + str(extract_pose_target.pose.orientation.z) + ", w: " + str(extract_pose_target.pose.orientation.w))
-            
-            self._moveit_move_arm.wait_for_service()
-            success = self._moveit_move_arm(extract_pose_target, 0.01, 0.01, 8.0, "right_arm").success
+                rospy.loginfo("pose x: " + str(extract_pose_target.pose.position.x) + ", y: " + str(extract_pose_target.pose.position.y) + ", z: " + str(extract_pose_target.pose.position.z))
+                rospy.loginfo("orientation x: " + str(extract_pose_target.pose.orientation.x) + ", y: " + str(extract_pose_target.pose.orientation.y) + ", z: " + str(extract_pose_target.pose.orientation.z) + ", w: " + str(extract_pose_target.pose.orientation.w))
+                
+                self._moveit_move_arm.wait_for_service()
+                success = self._moveit_move_arm(extract_pose_target, 0.01, 0.01, 8.0, "right_arm").success
+            else:
+                rospy.loginfo("Extract:")
+                extract_pose_target = geometry_msgs.msg.PoseStamped()
+                extract_pose_target.header.frame_id = "base_footprint";
+               
+                rospy.loginfo("In top row")
+                extract_pose_target.pose.orientation.x = 0.984
+                extract_pose_target.pose.orientation.y = -0.013
+                extract_pose_target.pose.orientation.z = 0.178
+                extract_pose_target.pose.orientation.w = 0.028
+                extract_pose_target.pose.position.x = 0.243 + 0.01 * i
+                extract_pose_target.pose.position.y = transformed_item_pose.pose.position.y
+                extract_pose_target.pose.position.z = 1.508
+ 
 
+                rospy.loginfo("pose x: " + str(extract_pose_target.pose.position.x) + ", y: " + str(extract_pose_target.pose.position.y) + ", z: " + str(extract_pose_target.pose.position.z))
+                rospy.loginfo("orientation x: " + str(extract_pose_target.pose.orientation.x) + ", y: " + str(extract_pose_target.pose.orientation.y) + ", z: " + str(extract_pose_target.pose.orientation.z) + ", w: " + str(extract_pose_target.pose.orientation.w))
+                
+                self._moveit_move_arm.wait_for_service()
+                success = self._moveit_move_arm(extract_pose_target, 0.01, 0.01, 8.0, "right_arm").success
             if success:
                 # Open Hand
                 rospy.loginfo("Extract success")
