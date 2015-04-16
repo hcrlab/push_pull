@@ -45,7 +45,7 @@ class RobotDriver {
     //
     // Returns true if the robot sucessfully reaches its destination pose.
     bool DriveToPose(geometry_msgs::PoseStamped pose,
-      std_msgs::Float64 linearVelocity, std_msgs::Float64 angularVelocity);
+      double linearVelocity, double angularVelocity);
 };
 };  // namespace pr2_pick_manipulation
 #endif
