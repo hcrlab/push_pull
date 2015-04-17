@@ -16,7 +16,7 @@ def planningscene_create_box(position, size, name):
     """Create a box in the MoveIt planning scene specified by position and size, both tuples"""
     scene = moveit_commander.PlanningSceneInterface()
     scene.remove_world_object(name)
-    table_pose = geometry_msgs.msg.PoseStamped()
+    table_pose = PoseStamped()
     table_pose.header.frame_id = "odom_combined"
     table_pose.pose.position.x = position[0]
     table_pose.pose.position.y = position[1]
@@ -30,7 +30,7 @@ class DropOffItem(smach.State):
     """
     name = 'DROP_OFF_ITEM'
 
-    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts, set_static_tf):
+    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts, set_static_tf, markers, **kwargs):
         smach.State.__init__(self,
             outcomes=[
                 outcomes.DROP_OFF_ITEM_SUCCESS,
@@ -45,6 +45,7 @@ class DropOffItem(smach.State):
         self._moveit_move_arm = moveit_move_arm
         self._tuck_arms = tuck_arms
         self._set_static_tf = set_static_tf
+        self._markers = markers
 
         self._order_bin_found = False
 
@@ -68,7 +69,7 @@ class DropOffItem(smach.State):
             transform.child_frame_id = 'order_bin'
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
-            self._tf_set = True
+            self._order_bin_found = True
 
             # Publish marker
             marker = Marker()
@@ -89,7 +90,6 @@ class DropOffItem(smach.State):
                 rate.sleep()
             self._markers.publish(marker)
 
-            self._order_bin_found = True
 
         
         rospy.loginfo('Untucking right arm')

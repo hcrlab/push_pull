@@ -14,7 +14,7 @@ class UpdatePlan(smach.State):
     """
     name = 'UPDATE_PLAN'
 
-    def __init__(self, tts):
+    def __init__(self, tts, **kwargs):
         """Constructor for this state.
 
         Args:
