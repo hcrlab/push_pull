@@ -232,7 +232,43 @@ class ExtractItem(smach.State):
             else:
                 rospy.loginfo("Extract attempt " + str(i) + " failed")
                 continue
+
+        # Center Arm
+
+        rospy.loginfo('Center Arm')
+        pose = geometry_msgs.msg.PoseStamped()
+        pose.header.frame_id = 'base_footprint';
+
+        if userdata.bin_id > 'F':
+            pose.pose.position.x = 0.3135;
+            pose.pose.position.y = -0.4665;
+            pose.pose.position.z = 0.6905;
+            pose.pose.orientation.x = -0.7969;
+            pose.pose.orientation.y = 0.2719;
+            pose.pose.orientation.z = -0.4802;
+            pose.pose.orientation.w = -0.2458;
+        elif userdata.bin_id > 'C':
+            pose.pose.position.x = 0.3135;
+            pose.pose.position.y = -0.3865;
+            pose.pose.position.z = 0.6905 + 0.23;
+            pose.pose.orientation.x = -0.7969;
+            pose.pose.orientation.y = 0.2719;
+            pose.pose.orientation.z = -0.4802;
+            pose.pose.orientation.w = -0.2458;
+        else:
+            pose.pose.position.x = 0.3135;
+            pose.pose.position.y = -0.3865;
+            pose.pose.position.z = 0.6905 + 2 * 0.23;
+            pose.pose.orientation.x = -0.7969;
+            pose.pose.orientation.y = 0.2719;
+            pose.pose.orientation.z = -0.4802;
+            pose.pose.orientation.w = -0.2458;
+
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
+
+
         if success:
-            return outcomes.EXTRACT_ITEM_FAILURE
+            return outcomes.EXTRACT_ITEM_SUCCESS
         else:
             return outcomes.EXTRACT_ITEM_FAILURE
