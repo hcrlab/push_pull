@@ -69,7 +69,7 @@ class DropOffItem(smach.State):
             roll = euler[0]
             pitch = euler[1]
             yaw = euler[2]
-            quaternion = tf.transformations.quaternion_from_euler(roll, 0, yaw)
+            quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
             # do the actual message publishing
             order_bin_fixedto_odom = TransformStamped()
             order_bin_fixedto_odom.header.frame_id = 'odom_combined'
@@ -157,7 +157,7 @@ class DropOffItem(smach.State):
             header=Header(frame_id='order_bin'),
             pose=Pose(
                 position=Point(x=-6 * 0.0254,
-                               y=-28.5 * 0.0254,
+                               y=28.5 * 0.0254,
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
             )

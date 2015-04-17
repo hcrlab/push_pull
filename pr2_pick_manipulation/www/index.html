@@ -63,7 +63,11 @@
 </head>
 
 <body onload="init()">
-  <h1>r_wrist_roll_link relative to base_footprint</h1>
+  <h1>
+    <select><option value="r_wrist_roll_link">r_wrist_roll_link</option></select>
+    relative to
+    <select><option value="base_footprint">base_footprint</option></select>
+  </h1>
   <button type="button" id="toggleButton" onclick="toggleState()">Pause</button><br />
   p.pose.position.x = <span id="pos_x">?</span>;<br />
   p.pose.position.y = <span id="pos_y">?</span>;<br />
