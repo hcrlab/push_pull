@@ -3,8 +3,9 @@ import rospy
 import smach
 import moveit_commander
 import tf
-from geometry_msgs.msg import TransformStamped, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
 from visualization_msgs.msg import Marker
+from std_msgs.msg import Header
 
 
 class DropOffItem(smach.State):
@@ -63,16 +64,23 @@ class DropOffItem(smach.State):
             self._tf_listener.waitForTransform("odom_combined","shelf",rospy.Time(0), rospy.Duration(1.0))
             (pos_shelf_in_odom, orient_shelf_in_odom) = \
                 self._tf_listener.lookupTransform("odom_combined", "shelf", rospy.Time(0))
+            # set pitch and roll to 0
+            euler = tf.transformations.euler_from_quaternion(orient_shelf_in_odom)
+            roll = euler[0]
+            pitch = euler[1]
+            yaw = euler[2]
+            quaternion = tf.transformations.quaternion_from_euler(roll, 0, yaw)
+            # do the actual message publishing
             order_bin_fixedto_odom = TransformStamped()
             order_bin_fixedto_odom.header.frame_id = 'odom_combined'
             order_bin_fixedto_odom.header.stamp = rospy.Time.now()
             order_bin_fixedto_odom.transform.translation.x = -36 * 0.0254 + pos_shelf_in_odom[0]
             order_bin_fixedto_odom.transform.translation.y = -27 * 0.0254 + pos_shelf_in_odom[1]
             order_bin_fixedto_odom.transform.translation.z = 12 * 0.0254 + pos_shelf_in_odom[2]
-            order_bin_fixedto_odom.transform.rotation.x = 0
-            order_bin_fixedto_odom.transform.rotation.y = 0
-            order_bin_fixedto_odom.transform.rotation.z = 0
-            order_bin_fixedto_odom.transform.rotation.w = 1
+            order_bin_fixedto_odom.transform.rotation.x = quaternion[0]
+            order_bin_fixedto_odom.transform.rotation.y = quaternion[1]
+            order_bin_fixedto_odom.transform.rotation.z = quaternion[2]
+            order_bin_fixedto_odom.transform.rotation.w = quaternion[3]
             order_bin_fixedto_odom.child_frame_id = 'order_bin_fixedto_odom'
             self._set_static_tf.wait_for_service()
             self._set_static_tf(order_bin_fixedto_odom)
