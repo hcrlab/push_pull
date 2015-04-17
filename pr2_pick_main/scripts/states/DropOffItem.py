@@ -183,7 +183,7 @@ class DropOffItem(smach.State):
         marker.lifetime = rospy.Duration(5)
 
         rate = rospy.Rate(1)
-        while self.markers.get_num_connections() == 0:
+        while self._markers.get_num_connections() == 0:
             rate.sleep()
         self._markers.publish(marker)
 
