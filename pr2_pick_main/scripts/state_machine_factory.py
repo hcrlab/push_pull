@@ -57,7 +57,7 @@ def test_drop_off_item():
         for key in {
             'moveit_move_arm', 'tts', 'tuck_arms', 'move_torso', 'set_grippers',
             'move_head', 'drive_linear', 'localize_object',
-            'set_static_tf'
+            'set_static_tf','markers'
         }
     }
     return build_for_drop_off_item(**services)
@@ -356,7 +356,7 @@ def build_for_move_to_bin(**services):
 
 def build_for_drop_off_item(moveit_move_arm, tts, tuck_arms, move_torso, drive_linear,
                           set_grippers, move_head, localize_object,
-                          set_static_tf):
+                          set_static_tf,markers):
     sm = smach.StateMachine(outcomes=[
         outcomes.CHALLENGE_SUCCESS,
         outcomes.CHALLENGE_FAILURE
@@ -367,8 +367,19 @@ def build_for_drop_off_item(moveit_move_arm, tts, tuck_arms, move_torso, drive_l
             states.StartPose(tts, tuck_arms, move_torso, set_grippers,
                              move_head),
             transitions={
-                outcomes.START_POSE_SUCCESS: states.DropOffItem.name,
+                outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
+            }
+        )
+        smach.StateMachine.add(
+            states.FindShelf.name,
+            states.FindShelf(tts,
+                             localize_object,
+                             set_static_tf,
+                             markers),
+            transitions={
+                outcomes.FIND_SHELF_SUCCESS: states.DropOffItem.name,
+                outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
             }
         )
         smach.StateMachine.add(
