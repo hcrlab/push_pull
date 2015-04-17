@@ -26,4 +26,5 @@
   <include unless="$(arg debug_crop)" file="$(find pr2_pick_perception)/launch/crop_cellA.launch" />
 
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />
+  <node pkg="pr2_pick_perception" type="pcl_utilities.py" name="pcl_utilities" respawn="true" />
 </launch>

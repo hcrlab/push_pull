@@ -11,7 +11,7 @@ from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     TuckArms
 from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
-    DeleteStaticTransform, LocalizeShelf, LocalizeShelfResponse, \
+    DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform
 import states
 

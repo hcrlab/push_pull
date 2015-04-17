@@ -7,6 +7,8 @@ from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 from std_msgs.msg import Header
 
+from pr2_pick_perception.srv import FindCentroid, FindCentroidResponse
+
 class PCLUtilities(object):
     '''Computes and logs the time taken to process a point cloud. '''
 
@@ -17,10 +19,14 @@ class PCLUtilities(object):
             self.find_centroid
         )
 
-    def find_centroid(self, cluster):
+    def find_centroid(self, request):
         '''Computes the average point in a point cloud. '''
-        points = pc2.read_points(cluster.pointcloud, data, field_names=['x', 'y', 'z'],
-            skip_nans=True)
+        points = pc2.read_points(
+            request.cluster.pointcloud,
+            data,
+            field_names=['x', 'y', 'z'],
+            skip_nans=True
+        )
 
         num_points = 0
         avg_x = 0
@@ -37,14 +43,14 @@ class PCLUtilities(object):
             avg_z /= num_points
 
         rospy.loginfo('Centroid: ({}, {}, {})'.format(avg_x, avg_y, avg_z))
-        response = PointStamped(
+        centroid = PointStamped(
             point=Point(x=avg_x, y=avg_y, z=agv_z),
             header=Header(
                 frame_id=cluster.header.frame_id,
                 stamp=rospy.Time.now(),
             )
         )
-        return response
+        return FindCentroidResponse(centroid=centroid)
 
 
 def main():

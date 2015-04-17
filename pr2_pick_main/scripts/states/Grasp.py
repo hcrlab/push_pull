@@ -22,7 +22,7 @@ class Grasp(smach.State):
                 outcomes.GRASP_SUCCESS,
                 outcomes.GRASP_FAILURE
             ],
-            input_keys=['bin_id', 'clusters']
+            input_keys=['bin_id', 'clusters', 'debug']
         )
 
         self._find_centroid = find_centroid
@@ -118,7 +118,13 @@ class Grasp(smach.State):
             )
         transformed_item_pose = listener.transformPose('base_footprint', item_pose)
 
-        rospy.loginfo('Grasping item in bin {}'.format(userdata.bin_id))
+        rospy.loginfo(
+            'Grasping item in bin {} from pose {}'
+            .format(userdata.bin_id, transformed_item_pose)
+        )
+
+        if userdata.debug:
+            raw_input('(Debug) Press enter to continue >')
 
         scene = moveit_commander.PlanningSceneInterface()
         scene.remove_world_object('shelf')
