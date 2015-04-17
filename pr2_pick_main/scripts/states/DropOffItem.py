@@ -191,22 +191,6 @@ class DropOffItem(smach.State):
         self._drive_to_pose.wait_for_service()
         self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
 
-        # # target_position = (1.20, -0.5588) # too close
-        # target_position = (1.1227, -0.41382) # move base, assuming torso is fully down
-        # position = self.get_position()
-        # rospy.loginfo("get_position() = " + str(position))
-        # displacement = (target_position[0] - position[0], target_position[1] - position[1])
-        # rospy.loginfo("displacement = " + str(displacement))
-
-        # # drive in the x direction
-        # rospy.loginfo('Drive in the x direction')
-        # self._drive_linear.wait_for_service()
-        # self._drive_linear(0.10*(1 if displacement[0] > 0 else -1), 0, abs(displacement[0]))
-        # # drive in the y direction
-        # rospy.loginfo('Drive in the y direction')
-        # self._drive_linear.wait_for_service()
-        # self._drive_linear(0, 0.10*(1 if displacement[1] > 0 else -1), abs(displacement[1]))
-
         # move arm above bin
         rospy.loginfo('Move arm above order bin')
         pose_target = PoseStamped()
