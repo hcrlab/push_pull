@@ -16,7 +16,7 @@ class Grasp(smach.State):
     """
     name = 'GRASP'
 
-    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm):
+    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, **kwargs):
         smach.State.__init__(
             self,
             outcomes=[

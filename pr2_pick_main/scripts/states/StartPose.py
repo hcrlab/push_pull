@@ -14,7 +14,7 @@ class StartPose(smach.State):
     """
     name = 'START_POSE'
 
-    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head):
+    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head, tf_listener, **kwargs):
         """Constructor for this state.
 
         Args:
@@ -37,7 +37,7 @@ class StartPose(smach.State):
         self._move_torso = move_torso
         self._set_grippers = set_grippers
         self._move_head = move_head
-        self._tf_listener = tf.TransformListener()
+        self._tf_listener = tf_listener
 
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')

@@ -41,7 +41,7 @@ class MoveToBin(smach.State):
 
     name = 'MOVE_TO_BIN'
 
-    def __init__(self, tts, drive_to_pose, move_head, move_torso, markers):
+    def __init__(self, tts, drive_to_pose, move_head, move_torso, markers, **kwargs):
         '''
         @param tts - service proxy for speech
         @param drive_to_pose - service proxy for the drive_to_pose service
@@ -90,7 +90,6 @@ class MoveToBin(smach.State):
 
 
         # find the target pose in robot coordinates
-        listener = tf.TransformListener()
         target_in_shelf_frame = PoseStamped(
             header=Header(frame_id='shelf'),
             pose=Pose(
