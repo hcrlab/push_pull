@@ -149,7 +149,7 @@ class DropOffItem(smach.State):
             header=Header(frame_id='order_bin'),
             pose=Pose(
                 position=Point(x=-28.5 * 0.0254,
-                               y=-6 * 0.0254],
+                               y=-6 * 0.0254,
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
             )
