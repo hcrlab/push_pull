@@ -84,10 +84,11 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  CropShelf.srv
+  DeleteStaticTransform.srv
+  FindCentroid.srv
   LocalizeShelf.srv
   SetStaticTransform.srv
-  DeleteStaticTransform.srv
-  CropShelf.srv
 )
 
 ## Generate actions in the 'action' folder
