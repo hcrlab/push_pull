@@ -187,6 +187,7 @@ class DropOffItem(smach.State):
             rate.sleep()
         self._markers.publish(marker)
 
+        rospy.loginfo('Sending drive command')
         self._drive_to_pose.wait_for_service()
         self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
 
