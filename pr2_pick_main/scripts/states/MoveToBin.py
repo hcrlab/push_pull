@@ -41,7 +41,7 @@ class MoveToBin(smach.State):
 
     name = 'MOVE_TO_BIN'
 
-    def __init__(self, tts, drive_to_pose, move_head, move_torso, markers):
+    def __init__(self, tts, drive_to_pose, move_head, move_torso, markers, **kwargs):
         '''
         @param tts - service proxy for speech
         @param drive_to_pose - service proxy for the drive_to_pose service

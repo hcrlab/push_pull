@@ -3,7 +3,8 @@ import rospy
 import smach
 import moveit_commander
 import tf
-import geometry_msgs.msg
+from geometry_msgs.msg import TransformStamped, PoseStamped
+from visualization_msgs.msg import Marker
 
 def get_position(base_frame="odom_combined"):
     tf_listener = tf.TransformListener()
@@ -15,7 +16,7 @@ def planningscene_create_box(position, size, name):
     """Create a box in the MoveIt planning scene specified by position and size, both tuples"""
     scene = moveit_commander.PlanningSceneInterface()
     scene.remove_world_object(name)
-    table_pose = geometry_msgs.msg.PoseStamped()
+    table_pose = PoseStamped()
     table_pose.header.frame_id = "odom_combined"
     table_pose.pose.position.x = position[0]
     table_pose.pose.position.y = position[1]
@@ -29,7 +30,7 @@ class DropOffItem(smach.State):
     """
     name = 'DROP_OFF_ITEM'
 
-    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts):
+    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts, set_static_tf, markers, **kwargs):
         smach.State.__init__(self,
             outcomes=[
                 outcomes.DROP_OFF_ITEM_SUCCESS,
@@ -43,10 +44,53 @@ class DropOffItem(smach.State):
         self._drive_linear = drive_linear
         self._moveit_move_arm = moveit_move_arm
         self._tuck_arms = tuck_arms
+        self._set_static_tf = set_static_tf
+        self._markers = markers
+
+        self._order_bin_found = False
 
     def execute(self, userdata):
         rospy.loginfo('Dropping off item from bin {}'.format(userdata.bin_id))
         self._tts.publish('Dropping off item from bin {}'.format(userdata.bin_id))
+
+        if not self._order_bin_found:
+            rospy.loginfo('Creating a static TF for the order bin relative to the shelf')
+            # Publish static transform.
+            transform = TransformStamped()
+            transform.header.frame_id = 'shelf'
+            transform.header.stamp = rospy.Time.now()
+            transform.transform.translation.x = 0
+            transform.transform.translation.y = 0
+            transform.transform.translation.z = 0
+            transform.transform.rotation.x = 0
+            transform.transform.rotation.y = 0
+            transform.transform.rotation.z = 0
+            transform.transform.rotation.w = 1
+            transform.child_frame_id = 'order_bin'
+            self._set_static_tf.wait_for_service()
+            self._set_static_tf(transform)
+            self._order_bin_found = True
+
+            # Publish marker
+            marker = Marker()
+            marker.header.frame_id = 'shelf'
+            marker.header.stamp = rospy.Time().now()
+            marker.ns = 'order_bin'
+            marker.id = 0
+            marker.type = Marker.CUBE
+            marker.action = Marker.ADD
+            marker.scale.x = 1
+            marker.scale.y = 1
+            marker.scale.z = 1
+            marker.lifetime = rospy.Duration()
+
+            # Need to wait for rviz for some reason.
+            rate = rospy.Rate(1)
+            while self._markers.get_num_connections() == 0:
+                rate.sleep()
+            self._markers.publish(marker)
+
+
         
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
@@ -82,7 +126,7 @@ class DropOffItem(smach.State):
 
         # move arm
         rospy.loginfo('Move arm above order bin')
-        pose_target = geometry_msgs.msg.PoseStamped()
+        pose_target = PoseStamped()
         pose_target.header.frame_id = "base_footprint";
         pose_target.pose.position.x = 0.2855
         pose_target.pose.position.y = -0.7551

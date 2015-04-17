@@ -15,7 +15,7 @@ class SenseBin(smach.State):
     """
     name = 'SENSE_BIN'
 
-    def __init__(self, tts, crop_shelf, markers):
+    def __init__(self, tts, crop_shelf, markers, **kwargs):
         """Constructor for this state.
 
         tts: The text-to-speech publisher.

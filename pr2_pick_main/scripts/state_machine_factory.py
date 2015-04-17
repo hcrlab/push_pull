@@ -57,7 +57,7 @@ def test_drop_off_item():
         for key in {
             'moveit_move_arm', 'tts', 'tuck_arms', 'move_torso', 'set_grippers',
             'move_head', 'drive_linear', 'localize_object',
-            'set_static_tf'
+            'set_static_tf','markers'
         }
     }
     return build_for_drop_off_item(**services)
@@ -166,14 +166,19 @@ def mock_robot():
     drive_to_pose.wait_for_service = mock.Mock(return_value=None)
     drive_to_pose.call = mock.Mock(side_effect=side_effect('drive_to_pose'))
 
-    return build(tts, tuck_arms, move_torso, set_grippers, move_head,
-                 moveit_move_arm, localize_object, set_static_tf, drive_linear,
-                 drive_angular, markers, crop_shelf, drive_to_pose)
+    return build(tts=tts, tuck_arms=tuck_arms, move_torso=move_torso,
+                 set_grippers=set_grippers, move_head=move_head,
+                 moveit_move_arm=moveit_move_arm,
+                 localize_object=localize_object, set_static_tf=set_static_tf,
+                 drive_linear=drive_linear, drive_angular=drive_angular,
+                 markers=markers, crop_shelf=crop_shelf,
+                 drive_to_pose=drive_to_pose)
 
+# def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
+#           localize_object, set_static_tf, drive_linear, drive_angular, markers,
+#           crop_shelf, drive_to_pose):
 
-def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
-          localize_object, set_static_tf, drive_linear, drive_angular, markers,
-          crop_shelf, drive_to_pose):
+def build(**kwargs):
     """Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
@@ -193,8 +198,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
     with sm:
         smach.StateMachine.add(
             states.StartPose.name,
-            states.StartPose(tts, tuck_arms, move_torso, set_grippers,
-                             move_head),
+            states.StartPose(**kwargs),
             transitions={
                 outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -205,7 +209,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(tts, localize_object, set_static_tf, markers),
+            states.FindShelf(**kwargs),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -216,7 +220,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.UpdatePlan.name,
-            states.UpdatePlan(tts),
+            states.UpdatePlan(**kwargs),
             transitions={
                 outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
@@ -230,7 +234,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.MoveToBin.name,
-            states.MoveToBin(tts, drive_to_pose, move_head, move_torso, markers),
+            states.MoveToBin(**kwargs),
             transitions={
                 outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
                 outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -241,7 +245,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.SenseBin.name,
-            states.SenseBin(tts, crop_shelf, markers),
+            states.SenseBin(**kwargs),
             transitions={
                 outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
                 outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,
@@ -254,7 +258,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.Grasp.name,
-            states.Grasp(tts, set_grippers, tuck_arms, moveit_move_arm),
+            states.Grasp(**kwargs),
             transitions={
                 outcomes.GRASP_SUCCESS: states.ExtractItem.name,
                 outcomes.GRASP_FAILURE: (
@@ -268,7 +272,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.ExtractItem.name,
-            states.ExtractItem(tts, moveit_move_arm),
+            states.ExtractItem(**kwargs),
             transitions={
                 outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
                 outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
@@ -279,7 +283,7 @@ def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
         )
         smach.StateMachine.add(
             states.DropOffItem.name,
-            states.DropOffItem(set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts),
+            states.DropOffItem(**kwargs),
             transitions={
                 outcomes.DROP_OFF_ITEM_SUCCESS: states.UpdatePlan.name,
                 outcomes.DROP_OFF_ITEM_FAILURE: states.UpdatePlan.name
@@ -354,9 +358,7 @@ def build_for_move_to_bin(**services):
         )
     return sm
 
-def build_for_drop_off_item(moveit_move_arm, tts, tuck_arms, move_torso, drive_linear,
-                          set_grippers, move_head, localize_object,
-                          set_static_tf):
+def build_for_drop_off_item(**kwargs):
     sm = smach.StateMachine(outcomes=[
         outcomes.CHALLENGE_SUCCESS,
         outcomes.CHALLENGE_FAILURE
@@ -364,16 +366,23 @@ def build_for_drop_off_item(moveit_move_arm, tts, tuck_arms, move_torso, drive_l
     with sm:
         smach.StateMachine.add(
             states.StartPose.name,
-            states.StartPose(tts, tuck_arms, move_torso, set_grippers,
-                             move_head),
+            states.StartPose(**kwargs),
             transitions={
-                outcomes.START_POSE_SUCCESS: states.DropOffItem.name,
+                outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
             }
         )
         smach.StateMachine.add(
+            states.FindShelf.name,
+            states.FindShelf(**kwargs),
+            transitions={
+                outcomes.FIND_SHELF_SUCCESS: states.DropOffItem.name,
+                outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+            }
+        )
+        smach.StateMachine.add(
             states.DropOffItem.name,
-            states.DropOffItem(set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts),
+            states.DropOffItem(**kwargs),
             transitions={
                 outcomes.DROP_OFF_ITEM_SUCCESS: outcomes.CHALLENGE_SUCCESS,
                 outcomes.DROP_OFF_ITEM_FAILURE: outcomes.CHALLENGE_FAILURE
