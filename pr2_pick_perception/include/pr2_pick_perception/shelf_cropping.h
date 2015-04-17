@@ -85,7 +85,7 @@ private:
     
     double cell_width1_, cell_width2_, cell_height1_, cell_height2_, depth_cell_ ;
     double bottom_crop_offset_, top_crop_offset_, left_crop_offset_, 
-        right_crop_offset_, depth_crop_offset_;
+        right_crop_offset_, depth_close_crop_offset_, depth_far_crop_offset_;
     int max_cluster_points_, min_cluster_points_;
     
    

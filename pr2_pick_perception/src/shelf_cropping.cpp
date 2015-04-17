@@ -55,7 +55,8 @@ CropShelf::initialize()
     nh_local.param("top_crop_offset", top_crop_offset_, 0.02);
     nh_local.param("left_crop_offset", left_crop_offset_, 0.02);
     nh_local.param("right_crop_offset", right_crop_offset_, 0.02);
-    nh_local.param("depth_crop_offset", depth_crop_offset_, 0.02);
+    nh_local.param("depth_close_crop_offset", depth_close_crop_offset_, 0.02);
+    nh_local.param("depth_far_crop_offset", depth_far_crop_offset_, 0.02);
     nh_local.param("max_cluster_points", max_cluster_points_, 100000);
     nh_local.param("min_cluster_points", min_cluster_points_, 150);
     
@@ -104,7 +105,8 @@ CropShelf::cropPC(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, floa
         // The point cloud has been transformed around the frame of the bin.
         // The origin of the bin's frame is in the front bottom center of the bin.
         if (
-            point.x < (depth - depth_crop_offset_)
+            point.x < (depth - depth_far_crop_offset_)
+            && point.x >= (0 + depth_close_crop_offset_)
             && point.y < (width / 2 - left_crop_offset_)
             && point.y >= (-width / 2 + right_crop_offset_)
             && point.z < (height - top_crop_offset_)
