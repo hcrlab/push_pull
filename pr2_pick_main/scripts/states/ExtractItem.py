@@ -14,7 +14,7 @@ class ExtractItem(smach.State):
     """
     name = 'EXTRACT_ITEM'
 
-    def __init__(self, tts, moveit_move_arm):
+    def __init__(self, tts, moveit_move_arm, **kwargs):
         smach.State.__init__(
             self,
             outcomes=[

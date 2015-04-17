@@ -14,7 +14,7 @@ class StartPose(smach.State):
     """
     name = 'START_POSE'
 
-    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head):
+    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head, **kwargs):
         """Constructor for this state.
 
         Args:
