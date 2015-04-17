@@ -49,16 +49,6 @@ CropShelf::initialize()
     nh_local.param("Height1", cell_height1_,0.26);
     nh_local.param("Height2", cell_height2_, 0.23);
     nh_local.param("Depth", depth_cell_, 0.43); 
-
-    //Parameters for tweaking shelf crop
-    nh_local.param("bottom_crop_offset", bottom_crop_offset_, 0.02);
-    nh_local.param("top_crop_offset", top_crop_offset_, 0.02);
-    nh_local.param("left_crop_offset", left_crop_offset_, 0.02);
-    nh_local.param("right_crop_offset", right_crop_offset_, 0.02);
-    nh_local.param("depth_close_crop_offset", depth_close_crop_offset_, 0.02);
-    nh_local.param("depth_far_crop_offset", depth_far_crop_offset_, 0.02);
-    nh_local.param("max_cluster_points", max_cluster_points_, 100000);
-    nh_local.param("min_cluster_points", min_cluster_points_, 150);
     
     return true;
 }
@@ -105,12 +95,11 @@ CropShelf::cropPC(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, floa
         // The point cloud has been transformed around the frame of the bin.
         // The origin of the bin's frame is in the front bottom center of the bin.
         if (
-            point.x < (depth - depth_far_crop_offset_)
-            && point.x >= (0 + depth_close_crop_offset_)
-            && point.y < (width / 2 - left_crop_offset_)
-            && point.y >= (-width / 2 + right_crop_offset_)
-            && point.z < (height - top_crop_offset_)
-            && point.z  >= (0 + bottom_crop_offset_)
+            point.x < depth
+            && point.y < width / 2
+            && point.y >= -width / 2
+            && point.z < height
+            && point.z  >= 0
         ) {
           cell_pc->push_back(point);                    
         }
@@ -379,8 +368,8 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         std::vector<pcl::PointIndices> clustersInd;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
         ec.setClusterTolerance(0.01); //25cm
-        ec.setMinClusterSize(min_cluster_points_); //need to go low for standpipe
-        ec.setMaxClusterSize(max_cluster_points_);
+        ec.setMinClusterSize(150); //need to go low for standpipe
+        ec.setMaxClusterSize(100000);
         ec.setSearchMethod(tree);
         ec.setInputCloud(cell_pc);
         ec.extract(clustersInd);    
