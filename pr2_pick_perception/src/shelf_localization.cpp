@@ -389,7 +389,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         if (!icp2D_)
             detect(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2);
         else
-            detect2D(cluster_candidates[i],&detection_transform, &detection_transform2);
+            detectICP2D(cluster_candidates[i], &detection_id,&detection_transform, &detection_transform2);
         
         // transform the detections into the camera reference frame system
 
