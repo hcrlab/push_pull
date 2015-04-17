@@ -98,7 +98,7 @@ class DropOffItem(smach.State):
             order_bin_tf.header.frame_id = 'order_bin_fixedto_shelf'
             order_bin_tf.header.stamp = rospy.Time.now()
             order_bin_tf.transform.rotation.w = 1
-            order_bin_fixedto_shelf.child_frame_id = 'order_bin'
+            order_bin_tf.child_frame_id = 'order_bin'
             self._set_static_tf.wait_for_service()
             self._set_static_tf(order_bin_tf)
 
