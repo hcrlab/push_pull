@@ -188,7 +188,7 @@ class DropOffItem(smach.State):
         self._markers.publish(marker)
 
         self._drive_to_pose.wait_for_service()
-        self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
+        self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
 
         # # target_position = (1.20, -0.5588) # too close
         # target_position = (1.1227, -0.41382) # move base, assuming torso is fully down
