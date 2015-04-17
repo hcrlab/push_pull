@@ -384,7 +384,7 @@ def build_for_drop_off_item(moveit_move_arm, tts, tuck_arms, move_torso, drive_l
         )
         smach.StateMachine.add(
             states.DropOffItem.name,
-            states.DropOffItem(set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts),
+            states.DropOffItem(set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts, set_static_tf),
             transitions={
                 outcomes.DROP_OFF_ITEM_SUCCESS: outcomes.CHALLENGE_SUCCESS,
                 outcomes.DROP_OFF_ITEM_FAILURE: outcomes.CHALLENGE_FAILURE
