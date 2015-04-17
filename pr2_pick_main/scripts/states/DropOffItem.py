@@ -69,7 +69,7 @@ class DropOffItem(smach.State):
             transform.child_frame_id = 'order_bin'
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
-            self._tf_set = True
+            self._order_bin_found = True
 
             # Publish marker
             marker = Marker()
@@ -90,7 +90,6 @@ class DropOffItem(smach.State):
                 rate.sleep()
             self._markers.publish(marker)
 
-            self._order_bin_found = True
 
         
         rospy.loginfo('Untucking right arm')
