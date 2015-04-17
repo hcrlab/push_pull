@@ -15,7 +15,8 @@ class Grasp(smach.State):
     ''' Grasps an item in the bin. '''
     name = 'GRASP'
 
-    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, find_centroid, **kwargs):
+    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, find_centroid,
+                 tf_listener, **kwargs):
         smach.State.__init__(
             self,
             outcomes=[
@@ -30,6 +31,7 @@ class Grasp(smach.State):
         self._tuck_arms = tuck_arms
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
+        self._tf_listener = tf_listener
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -110,8 +112,7 @@ class Grasp(smach.State):
         # to bypass perception, do this
         # item_pose = self.locate_hard_coded_items()[0]
 
-        listener = tf.TransformListener()
-        listener.waitForTransform(
+        self._tf_listener.waitForTransform(
                 'base_footprint',
                 'shelf',
                 rospy.Time(0),
@@ -119,7 +120,7 @@ class Grasp(smach.State):
         )
         ## Why are there errors here? Look up would require extrapolation into the past.
         ## TODO: Make sure we're waiting for the right transform.
-        transformed_item_pose = listener.transformPose('base_footprint', item_pose)
+        transformed_item_pose = self._tf_listener.transformPose('base_footprint', item_pose)
 
         rospy.loginfo(
             'Grasping item in bin {} from pose {}'

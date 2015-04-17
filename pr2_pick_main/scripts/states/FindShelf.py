@@ -17,7 +17,8 @@ class FindShelf(smach.State):
     '''
     name = 'FIND_SHELF'
 
-    def __init__(self, tts, localize_object, set_static_tf, markers, **kwargs):
+    def __init__(self, tts, localize_object, set_static_tf, markers, tf_listener,
+                 **kwargs):
         '''Constructor for this state.
 
         Args:
@@ -30,7 +31,7 @@ class FindShelf(smach.State):
             input_keys=['debug'])
         self._localize_object = localize_object
         self._set_static_tf = set_static_tf
-        self._tf_listener = tf.TransformListener()
+        self._tf_listener = tf_listener
         self._tf_set = False
         self._tts = tts
         self._markers = markers
