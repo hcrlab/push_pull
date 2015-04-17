@@ -235,6 +235,8 @@ private:
     int PlaneSize_;
     /// minimum height to detect objects
     double highplane_;
+    /// maximum depth expected (remove walls)
+    double depthplane_;
     
     /// hose segmentation mainly
     bool manual_segmentation_;

@@ -71,6 +71,7 @@ bool ObjDetector::initialize()
     nh_local.param("PlaneSize",PlaneSize_,2000);
     nh_local.param("PlanesegThres", PlanesegThres_,0.1);
     nh_local.param("highplane", highplane_,-1.0);
+    nh_local.param("depthplane",depthplane_,-1.0);
 
     nh_local.param("manual_segmentation", manual_segmentation_,false);
     
@@ -630,30 +631,39 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
       std::cout << "Point cloud cropped size = " << rgbpc_sampled_cropped->points.size() << std::endl;
      
        
-      
+      //depth filter
       pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered(new pcl::PointCloud<pcl::PointXYZ>);
       pcl::PassThrough<pcl::PointXYZ> pass;
       
       /// Filter the points below certain height
       pass.setInputCloud (rgbpc_sampled_cropped);
       pass.setFilterFieldName ("x");
-      pass.setFilterLimits (0.2, highplane_);
+      pass.setFilterLimits (0.2, depthplane_);
       pass.filter (*scene_filtered);      
       
+      //height filter
+       pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered2(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::PassThrough<pcl::PointXYZ> pass2;
+      
+      /// Filter the points below certain height
+      pass2.setInputCloud (scene_filtered);
+      pass2.setFilterFieldName ("z");
+      pass2.setFilterLimits (0.75, highplane_);
+      pass2.filter (*scene_filtered2);     
       
       std::cout << "Final point cloud without planes size = " << scene_filtered->points.size() << std::endl;
       
     pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered_world (new pcl::PointCloud<pcl::PointXYZ>);
     /// Transfor the point cloud into world reference to give the object pose in world coordinates
-    pcl_ros::transformPointCloud(*scene_filtered,*scene_filtered_world,robot_to_world_); 
+    pcl_ros::transformPointCloud(*scene_filtered2,*scene_filtered_world,robot_to_world_); 
     
       ///extract clusters EUclidean
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
     tree->setInputCloud(scene_filtered_world);    
     std::vector<pcl::PointIndices> clustersInd;
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance(cluster_tolerance_); //25cm
-    ec.setMinClusterSize(min_cluster_size_); //need to go low for standpipe
+    ec.setClusterTolerance(cluster_tolerance_); 
+    ec.setMinClusterSize(min_cluster_size_);
     ec.setMaxClusterSize(100000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(scene_filtered_world);
