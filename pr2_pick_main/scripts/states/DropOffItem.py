@@ -13,7 +13,7 @@ class DropOffItem(smach.State):
     name = 'DROP_OFF_ITEM'
 
     def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms,
-        tts, set_static_tf, tf_listener, markers, **kwargs):
+        tts, set_static_tf, tf_listener, markers, drive_to_pose, **kwargs):
         smach.State.__init__(self,
             outcomes=[
                 outcomes.DROP_OFF_ITEM_SUCCESS,
@@ -29,6 +29,7 @@ class DropOffItem(smach.State):
         self._tuck_arms = tuck_arms
         self._set_static_tf = set_static_tf
         self._markers = markers
+        self._drive_to_pose = drive_to_pose
         self._tf_listener = tf_listener
 
         self._order_bin_found = False
@@ -131,33 +132,71 @@ class DropOffItem(smach.State):
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, False)
 
-        # add the order bin to planning scene
-        rospy.loginfo('Adding order bin to planning scene')
-        # near wall of bin only
-        size = (0.9144, 0.01, 0.45)    
-        position = (1.524, -1.10, size[2] / 2.0)
-        # full bin
-        # size = (0.9144, 0.4572, 0.9144)    
-        name = 'order_bin'
-        self.planningscene_create_box(position, size, name)
+        # # add the order bin to planning scene
+        # rospy.loginfo('Adding order bin to planning scene')
+        # # near wall of bin only
+        # size = (0.9144, 0.01, 0.45)    
+        # position = (1.524, -1.10, size[2] / 2.0)
+        # # full bin
+        # # size = (0.9144, 0.4572, 0.9144)    
+        # name = 'order_bin'
+        # self.planningscene_create_box(position, size, name)
 
         # move to the order bin
         rospy.loginfo('Move next to the order bin')
-        # target_position = (1.20, -0.5588) # too close
-        target_position = (1.1227, -0.41382) # move base, assuming torso is fully down
-        position = self.get_position()
-        rospy.loginfo("get_position() = " + str(position))
-        displacement = (target_position[0] - position[0], target_position[1] - position[1])
-        rospy.loginfo("displacement = " + str(displacement))
 
-        # drive in the x direction
-        rospy.loginfo('Drive in the x direction')
-        self._drive_linear.wait_for_service()
-        self._drive_linear(0.10*(1 if displacement[0] > 0 else -1), 0, abs(displacement[0]))
-        # drive in the y direction
-        rospy.loginfo('Drive in the y direction')
-        self._drive_linear.wait_for_service()
-        self._drive_linear(0, 0.10*(1 if displacement[1] > 0 else -1), abs(displacement[1]))
+        target_in_order_bin_frame = PoseStamped(
+            header=Header(frame_id='order_bin'),
+            pose=Pose(
+                position=Point(x=-28.5 * 0.0254,
+                               y=-6 * 0.0254],
+                               z=0.0),
+                orientation=Quaternion(w=1, x=0, y=0, z=0)
+            )
+        )
+
+        # Visualize target pose.
+        marker = Marker()
+        marker.header.frame_id = 'order_bin'
+        marker.header.stamp = rospy.Time().now()
+        marker.ns = 'target_location'
+        marker.id = 2
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.pose = target_in_order_bin_frame.pose
+        marker.pose.position.z = 0.03 / 2
+        marker.scale.x = 0.67
+        marker.scale.y = 0.67
+        marker.scale.z = 0.03
+        marker.color.r = 0
+        marker.color.g = 1
+        marker.color.b = 0
+        marker.color.a = 1
+        marker.lifetime = rospy.Duration(5)
+
+        rate = rospy.Rate(1)
+        while self.markers.get_num_connections() == 0:
+            rate.sleep()
+        self.markers.publish(marker)
+
+        self._drive_to_pose.wait_for_service()
+        self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
+
+        # # target_position = (1.20, -0.5588) # too close
+        # target_position = (1.1227, -0.41382) # move base, assuming torso is fully down
+        # position = self.get_position()
+        # rospy.loginfo("get_position() = " + str(position))
+        # displacement = (target_position[0] - position[0], target_position[1] - position[1])
+        # rospy.loginfo("displacement = " + str(displacement))
+
+        # # drive in the x direction
+        # rospy.loginfo('Drive in the x direction')
+        # self._drive_linear.wait_for_service()
+        # self._drive_linear(0.10*(1 if displacement[0] > 0 else -1), 0, abs(displacement[0]))
+        # # drive in the y direction
+        # rospy.loginfo('Drive in the y direction')
+        # self._drive_linear.wait_for_service()
+        # self._drive_linear(0, 0.10*(1 if displacement[1] > 0 else -1), abs(displacement[1]))
 
         # move arm
         rospy.loginfo('Move arm above order bin')

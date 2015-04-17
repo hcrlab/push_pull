@@ -90,7 +90,6 @@ class MoveToBin(smach.State):
 
 
         # find the target pose in robot coordinates
-        listener = tf.TransformListener()
         target_in_shelf_frame = PoseStamped(
             header=Header(frame_id='shelf'),
             pose=Pose(
