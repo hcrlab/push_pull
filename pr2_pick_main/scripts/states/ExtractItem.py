@@ -94,14 +94,15 @@ class ExtractItem(smach.State):
 
         #self._ee_pose.wait_for_service()
         
-        listener.waitForTransform(
-                'base_footprint',
-                'r_wrist_roll_link',
-                rospy.Time(0),
-                self._wait_for_transform_duration
-            )
+        self._tf_listener.waitForTransform(
+            'base_footprint',
+            'r_wrist_roll_link',
+            rospy.Time(0),
+            self._wait_for_transform_duration
+        )
 
-        (current_position, current_orientation) = listener.lookupTransform('base_footprint', 'r_wrist_roll_link', rospy.Time(0))#self._ee_pose("right_arm", "r_wrist_roll_link")
+        (current_position, current_orientation) = self._tf_listener.lookupTransform(
+            'base_footprint', 'r_wrist_roll_link', rospy.Time(0))#self._ee_pose("right_arm", "r_wrist_roll_link")
         current_pose = geometry_msgs.msg.PoseStamped()
         current_pose.header.frame_id = 'base_footprint'
         current_pose.pose.position.x = current_position[0]
