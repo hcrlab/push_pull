@@ -14,7 +14,7 @@ class ExtractItem(smach.State):
     """
     name = 'EXTRACT_ITEM'
 
-    def __init__(self, tts, moveit_move_arm, **kwargs):
+    def __init__(self, tts, moveit_move_arm, tf_listener, **kwargs):
         smach.State.__init__(
             self,
             outcomes=[
@@ -26,6 +26,7 @@ class ExtractItem(smach.State):
 
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
+        self._tf_listener = tf_listener
 
         # Shelf heights
 
@@ -79,8 +80,7 @@ class ExtractItem(smach.State):
                 item_pose.pose.position.z = shelf_bin["pose"]["z"]
                 break
         item_pose.header.frame_id = "shelf"
-        listener = tf.TransformListener()
-        listener.waitForTransform(
+        self._tf_listener.waitForTransform(
                 'base_footprint',
                 'shelf',
                 rospy.Time(0),
@@ -88,7 +88,7 @@ class ExtractItem(smach.State):
             )
 
 
-        transformed_item_pose = listener.transformPose("base_footprint", item_pose)
+        transformed_item_pose = self._tf_listener.transformPose("base_footprint", item_pose)
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
