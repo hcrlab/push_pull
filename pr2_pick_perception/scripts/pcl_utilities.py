@@ -10,7 +10,7 @@ from std_msgs.msg import Header
 class PCLUtilities(object):
     '''Computes and logs the time taken to process a point cloud. '''
 
-    def __init__(self, prev_time):
+    def __init__(self):
         self._find_centroid_service = rospy.Service(
             'perception/find_centroid',
             FindCentroid,
@@ -49,7 +49,7 @@ class PCLUtilities(object):
 
 def main():
     rospy.init_node('pcl_utilities');
-    processor = Processor(rospy.Time.now())
+    utils = PCLUtilities()
     rospy.spin()
 
 
