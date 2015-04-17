@@ -92,7 +92,7 @@ class Grasp(smach.State):
         cluster_to_use = None
         largest_size = 0
         for cluster in clusters:
-            size = cluster.pointcloud.height * cluster.pointcoud.width
+            size = cluster.pointcloud.height * cluster.pointcloud.width
             if size > largest_size:
                 largest_size = size
                 cluster_to_use = cluster

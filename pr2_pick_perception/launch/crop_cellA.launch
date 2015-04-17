@@ -25,7 +25,7 @@
    <param name="depth_close_crop_offset" value="0.0" />
    <param name="max_cluster_points" value="150" />
    <param name="min_cluster_points" value="100000" />
-   --!>
+   -->
 
    <param name="bottom_crop_offset" value="0.0" />
    <param name="top_crop_offset" value="0.0" />
