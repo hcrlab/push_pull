@@ -107,20 +107,29 @@ class Grasp(smach.State):
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(False, False)
 
-        item_pose = self.locate_one_item(userdata.clusters)
-
         # to bypass perception, do this
         # item_pose = self.locate_hard_coded_items()[0]
 
-        self._tf_listener.waitForTransform(
-                'base_footprint',
-                'shelf',
-                rospy.Time(0),
-                self._wait_for_transform_duration,
-        )
-        ## Why are there errors here? Look up would require extrapolation into the past.
-        ## TODO: Make sure we're waiting for the right transform.
-        transformed_item_pose = self._tf_listener.transformPose('base_footprint', item_pose)
+        # TODO(sksellio): check whether this works.
+        #self._tf_listener.waitForTransform(
+        #        'base_footprint',
+        #        'bin_{}'.format(userdata.bin_id),
+        #        rospy.Time(0),
+        #        self._wait_for_transform_duration,
+        #)
+        
+        item_point = self.locate_one_item(userdata.clusters)
+        item_pose = geometry_msgs.msg.PoseStamped()
+        item_pose.header.frame_id = item_point.header.frame_id
+        item_pose.header.stamp = rospy.Time(0)
+        item_pose.pose.position = item_point.point
+        item_pose.pose.orientation.w = 1
+        item_pose.pose.orientation.x = 0
+        item_pose.pose.orientation.y = 0
+        item_pose.pose.orientation.z = 0
+
+        transformed_item_pose = self._tf_listener.transformPose('base_footprint',
+                                                                item_pose)
 
         rospy.loginfo(
             'Grasping item in bin {} from pose {}'
