@@ -1,27 +1,19 @@
-from pr2_pick_manipulation.srv import DriveAngular
-from pr2_pick_manipulation.srv import DriveLinear
-from pr2_pick_manipulation.srv import DriveToPose
-from pr2_pick_manipulation.srv import MoveArm
-from pr2_pick_manipulation.srv import GetPose
-from pr2_pick_manipulation.srv import MoveHead
-from pr2_pick_manipulation.srv import MoveTorso
-from pr2_pick_manipulation.srv import SetGrippers
-from pr2_pick_manipulation.srv import TuckArms
-from pr2_pick_perception.msg import Object
-from pr2_pick_perception.srv import CropShelf
-from pr2_pick_perception.srv import CropShelfResponse
-from pr2_pick_perception.srv import DeleteStaticTransform
-from pr2_pick_perception.srv import LocalizeShelf
-from pr2_pick_perception.srv import LocalizeShelfResponse
-from pr2_pick_perception.srv import SetStaticTransform
-from std_msgs.msg import String
-from visualization_msgs.msg import Marker
 import mock
-import outcomes
 import rospy
+from std_msgs.msg import String
 import smach
-import states
 import tf
+from visualization_msgs.msg import Marker
+
+import outcomes
+from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
+    DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
+    TuckArms
+from pr2_pick_perception.msg import Object
+from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
+    DeleteStaticTransform, LocalizeShelf, LocalizeShelfResponse, \
+    SetStaticTransform
+import states
 
 
 def real_robot():
@@ -46,6 +38,7 @@ def test_move_to_bin():
     }
     return build_for_move_to_bin(**services)
 
+
 def test_drop_off_item():
     '''
     Minimal state machine to test DropOffItem state, using real
@@ -54,32 +47,39 @@ def test_drop_off_item():
     all_services = real_robot_services()
     return build_for_drop_off_item(**all_services)
 
+
 def real_robot_services():
     return {
+        # Speech
         'tts': rospy.Publisher('/festival_tts', String),
-        'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
+
+        # Manipulation
+        'drive_angular': rospy.ServiceProxy('drive_angular_service', DriveAngular),
+        'drive_linear': rospy.ServiceProxy('drive_linear_service', DriveLinear),
+        'drive_to_pose': rospy.ServiceProxy('drive_to_pose_service', DriveToPose),
         'move_torso': rospy.ServiceProxy('torso_service', MoveTorso),
-        'set_grippers': rospy.ServiceProxy('gripper_service', SetGrippers),
         'move_head': rospy.ServiceProxy('move_head_service', MoveHead),
         'moveit_move_arm': rospy.ServiceProxy('moveit_service', MoveArm),
+        'set_grippers': rospy.ServiceProxy('gripper_service', SetGrippers),
+        'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
+
+        # World and Perception
+        'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
+        'find_centroid': rospy.ServiceProxy('perception/find_centroid', FindCentroid),
         'localize_object': rospy.ServiceProxy('perception/localize_object',
                                               LocalizeShelf),
+        'markers': rospy.Publisher('pr2_pick_visualization', Marker),
         'set_static_tf': rospy.ServiceProxy('perception/set_static_transform',
                                             SetStaticTransform),
-        'drive_linear': rospy.ServiceProxy('drive_linear_service', DriveLinear),
-        'drive_angular': rospy.ServiceProxy('drive_angular_service', DriveAngular),
-        'markers': rospy.Publisher('pr2_pick_visualization', Marker),
-        'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
-        'drive_to_pose': rospy.ServiceProxy('drive_to_pose_service', DriveToPose),
-        'tf_listener': tf.TransformListener()
+        'tf_listener': tf.TransformListener(),
      }
 
 
 def side_effect(name, return_value=True):
-    """A side effect for mock functions.
+    '''A side effect for mock functions.
 
     Causes all wrapped functions to return True, and logs their arguments.
-    """
+    '''
     def wrapped(*args, **kwargs):
         rospy.loginfo('Calling {}{}'.format(name, args))
         return return_value
@@ -87,7 +87,7 @@ def side_effect(name, return_value=True):
 
 
 def mock_robot():
-    """Mock robot state machine builder.
+    '''Mock robot state machine builder.
 
     This will cause all services and publishers to do nothing. Their arguments
     will be printed to the screen, and all service calls will succeed.  This is
@@ -96,7 +96,7 @@ def mock_robot():
 
     To change the behavior for a particular state, you can just instantiate
     real publishers or services for the state you're testing.
-    """
+    '''
     tts = rospy.Publisher('/festival_tts', String)
     tts.publish = mock.Mock(side_effect=side_effect('tts'))
 
@@ -167,12 +167,9 @@ def mock_robot():
                  markers=markers, crop_shelf=crop_shelf,
                  drive_to_pose=drive_to_pose)
 
-# def build(tts, tuck_arms, move_torso, set_grippers, move_head, moveit_move_arm,
-#           localize_object, set_static_tf, drive_linear, drive_angular, markers,
-#           crop_shelf, drive_to_pose):
 
-def build(**kwargs):
-    """Builds the main state machine.
+def build(**services):
+    '''Builds the main state machine.
 
     You probably want to call either real_robot() or mock_robot() to build a
     state machine instead of this method.
@@ -183,7 +180,7 @@ def build(**kwargs):
       move_torso: The torso service proxy.
       set_grippers: The grippers service proxy.
       move_head: The head service proxy.
-    """
+    '''
     sm = smach.StateMachine(outcomes=[
         outcomes.CHALLENGE_SUCCESS,
         outcomes.CHALLENGE_FAILURE
@@ -191,7 +188,7 @@ def build(**kwargs):
     with sm:
         smach.StateMachine.add(
             states.StartPose.name,
-            states.StartPose(**kwargs),
+            states.StartPose(**services),
             transitions={
                 outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -202,7 +199,7 @@ def build(**kwargs):
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(**kwargs),
+            states.FindShelf(**services),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -213,7 +210,7 @@ def build(**kwargs):
         )
         smach.StateMachine.add(
             states.UpdatePlan.name,
-            states.UpdatePlan(**kwargs),
+            states.UpdatePlan(**services),
             transitions={
                 outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
@@ -227,7 +224,7 @@ def build(**kwargs):
         )
         smach.StateMachine.add(
             states.MoveToBin.name,
-            states.MoveToBin(**kwargs),
+            states.MoveToBin(**services),
             transitions={
                 outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
                 outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -238,7 +235,7 @@ def build(**kwargs):
         )
         smach.StateMachine.add(
             states.SenseBin.name,
-            states.SenseBin(**kwargs),
+            states.SenseBin(**services),
             transitions={
                 outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
                 outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,
@@ -251,7 +248,7 @@ def build(**kwargs):
         )
         smach.StateMachine.add(
             states.Grasp.name,
-            states.Grasp(**kwargs),
+            states.Grasp(**services),
             transitions={
                 outcomes.GRASP_SUCCESS: states.ExtractItem.name,
                 outcomes.GRASP_FAILURE: (
@@ -265,7 +262,7 @@ def build(**kwargs):
         )
         smach.StateMachine.add(
             states.ExtractItem.name,
-            states.ExtractItem(**kwargs),
+            states.ExtractItem(**services),
             transitions={
                 outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
                 outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
@@ -276,7 +273,7 @@ def build(**kwargs):
         )
         smach.StateMachine.add(
             states.DropOffItem.name,
-            states.DropOffItem(**kwargs),
+            states.DropOffItem(**services),
             transitions={
                 outcomes.DROP_OFF_ITEM_SUCCESS: states.UpdatePlan.name,
                 outcomes.DROP_OFF_ITEM_FAILURE: states.UpdatePlan.name
@@ -351,7 +348,8 @@ def build_for_move_to_bin(**services):
         )
     return sm
 
-def build_for_drop_off_item(**kwargs):
+
+def build_for_drop_off_item(**services):
     sm = smach.StateMachine(outcomes=[
         outcomes.CHALLENGE_SUCCESS,
         outcomes.CHALLENGE_FAILURE
@@ -359,7 +357,7 @@ def build_for_drop_off_item(**kwargs):
     with sm:
         smach.StateMachine.add(
             states.StartPose.name,
-            states.StartPose(**kwargs),
+            states.StartPose(**services),
             transitions={
                 outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                 outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -367,7 +365,7 @@ def build_for_drop_off_item(**kwargs):
         )
         smach.StateMachine.add(
             states.FindShelf.name,
-            states.FindShelf(**kwargs),
+            states.FindShelf(**services),
             transitions={
                 outcomes.FIND_SHELF_SUCCESS: states.DropOffItem.name,
                 outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
@@ -375,7 +373,7 @@ def build_for_drop_off_item(**kwargs):
         )
         smach.StateMachine.add(
             states.DropOffItem.name,
-            states.DropOffItem(**kwargs),
+            states.DropOffItem(**services),
             transitions={
                 outcomes.DROP_OFF_ITEM_SUCCESS: outcomes.CHALLENGE_SUCCESS,
                 outcomes.DROP_OFF_ITEM_FAILURE: outcomes.CHALLENGE_FAILURE

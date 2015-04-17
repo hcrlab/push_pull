@@ -15,7 +15,7 @@ class Grasp(smach.State):
     ''' Grasps an item in the bin. '''
     name = 'GRASP'
 
-    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, **kwargs):
+    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, find_centroid, **kwargs):
         smach.State.__init__(
             self,
             outcomes=[
@@ -25,10 +25,12 @@ class Grasp(smach.State):
             input_keys=['bin_id', 'clusters']
         )
 
+        self._find_centroid = find_centroid
         self._set_grippers = set_grippers
         self._tuck_arms = tuck_arms
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
+
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
         # Shelf heights
@@ -59,13 +61,11 @@ class Grasp(smach.State):
         self._grasp_height = 0.03
         self._pre_grasp_height = self._grasp_height + 0.02
 
-    def execute(self, userdata):
-        self._tts.publish('Grasping item')
-        self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(False, False)
-
-        # Get fake object locations
-
+    def locate_hard_coded_items(self):
+        '''
+        Locate items in this shelf based on the hard-coded values
+        in the json configuration file ignoring perception data.
+        '''
         current_dir = os.path.dirname(__file__)
         relative_path = '../../config/milestone_1_fake_object_locations.json'
         file_path = os.path.join(current_dir, relative_path)
@@ -82,6 +82,32 @@ class Grasp(smach.State):
                 item_pose.pose.position.z = shelf_bin['pose']['z']
                 break
         item_pose.header.frame_id = 'shelf'
+        return [item_pose,]
+
+    def locate_one_item(self, clusters):
+        '''
+        Locate one items in this shelf based on clusters from perception data.
+        If there is more than one cluster (unexpected) use the largest one.
+        '''
+        cluster_to_use = None
+        largest_size = 0
+        for cluster in clusters:
+            size = cluster.pointcloud.height * cluster.pointcoud.width
+            if size > largest_size:
+                largest_size = size
+                cluster_to_use = cluster
+
+        return self._find_centroid(cluster_to_use)
+
+    def execute(self, userdata):
+        self._tts.publish('Grasping item')
+        self._tuck_arms.wait_for_service()
+        tuck_success = self._tuck_arms(False, False)
+
+        item_pose = self.locate_one_item(userdata.clusters)
+
+        # to bypass perception, do this
+        # item_pose = self.locate_hard_coded_items()[0]
 
         listener = tf.TransformListener()
         listener.waitForTransform(
@@ -90,7 +116,6 @@ class Grasp(smach.State):
                 rospy.Time(0),
                 self._wait_for_transform_duration
             )
-
         transformed_item_pose = listener.transformPose('base_footprint', item_pose)
 
         rospy.loginfo('Grasping item in bin {}'.format(userdata.bin_id))
