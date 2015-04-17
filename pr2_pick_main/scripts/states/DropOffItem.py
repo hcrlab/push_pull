@@ -185,7 +185,7 @@ class DropOffItem(smach.State):
         rate = rospy.Rate(1)
         while self.markers.get_num_connections() == 0:
             rate.sleep()
-        self.markers.publish(marker)
+        self._markers.publish(marker)
 
         self._drive_to_pose.wait_for_service()
         self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
