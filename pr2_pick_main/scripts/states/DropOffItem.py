@@ -58,7 +58,7 @@ class DropOffItem(smach.State):
             rospy.loginfo('Creating a static TF for the order bin relative to the shelf')
 
             # Publish static transform order_bin_fixedto_odom.
-            self._tf_listener.waitForTransform(base_frame,"shelf",rospy.Time(0), rospy.Duration(1.0))
+            self._tf_listener.waitForTransform("odom_combined","shelf",rospy.Time(0), rospy.Duration(1.0))
             (pos_shelf_in_odom, orient_shelf_in_odom) = \
                 self._tf_listener.lookupTransform("odom_combined", "shelf", rospy.Time(0))
             order_bin_fixedto_odom = TransformStamped()
@@ -76,7 +76,7 @@ class DropOffItem(smach.State):
             self._set_static_tf(order_bin_fixedto_odom)
 
             # Publish static transform order_bin_fixedto_shelf.
-            self._tf_listener.waitForTransform(base_frame,"order_bin_fixedto_odom",rospy.Time(0), rospy.Duration(1.0))
+            self._tf_listener.waitForTransform("shelf","order_bin_fixedto_odom",rospy.Time(0), rospy.Duration(1.0))
             (pos_orderbin_in_shelf, orient_orderbin_in_shelf) = \
                 self._tf_listener.lookupTransform("shelf", "order_bin_fixedto_odom", rospy.Time(0))
             order_bin_fixedto_shelf = TransformStamped()
