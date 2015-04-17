@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import division
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Point, PointStamped
 import rospy
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
@@ -23,9 +23,8 @@ class PCLUtilities(object):
         '''Computes the average point in a point cloud. '''
         points = pc2.read_points(
             request.cluster.pointcloud,
-            data,
             field_names=['x', 'y', 'z'],
-            skip_nans=True
+            skip_nans=True,
         )
 
         num_points = 0
