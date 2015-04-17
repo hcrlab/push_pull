@@ -1,0 +1,4 @@
+# return the centroid of the cluster
+pr2_pick_perception/Cluster cluster
+---
+geometry_msgs/PointStamped centroid

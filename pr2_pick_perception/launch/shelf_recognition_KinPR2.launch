@@ -14,16 +14,16 @@
    <param name="PlaneSize" value="10000"/> <!-- WAS 4500,50000 -->
    <param name="highplane" value="2.5" /> <!-- removes points further than this limit -->
       <param name="ICP2D" value="false" /> <!-- removes points further than this limit -->
- 
+
   <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
 
-   <param name="RobotReference" value="/base_footprint" />  
+   <param name="RobotReference" value="/base_footprint" />
    <param name="WorldReference" value="/odom_combined" />
 
    <param name="manual_segmentation" value="false" />
    <param name="pca_alignment" value="false"/>
    <param name="debug" value="$(arg debug)"/>
-   
+
    <remap from="/image" to="/head_mount_kinect/rgb/image_rect_color" />
    <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" />
    <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
@@ -34,5 +34,4 @@
 
   <!--   params are "x y z yaw pitch roll parent child rate" -->
     <!--   <node pkg="tf" type="static_transform_publisher" name="cam_left_pub" args="0.0 0.0 0.0   1.5708 3.14159  1.5708  /model_frame /camera_rgb_optical_frame  $(arg tf_rate)"/> -->
-</launch> 
-
+</launch>

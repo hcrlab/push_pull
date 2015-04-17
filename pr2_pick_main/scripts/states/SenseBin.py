@@ -28,7 +28,7 @@ class SenseBin(smach.State):
                 outcomes.SENSE_BIN_NO_OBJECTS,
                 outcomes.SENSE_BIN_FAILURE
             ],
-            input_keys=['bin_id'],
+            input_keys=['bin_id', 'debug'],
             output_keys=['clusters']
         )
         self._tts = tts
