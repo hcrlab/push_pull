@@ -12,7 +12,8 @@ class DropOffItem(smach.State):
     """
     name = 'DROP_OFF_ITEM'
 
-    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms, tts, set_static_tf, markers, **kwargs):
+    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms,
+        tts, set_static_tf, tf_listener, markers, **kwargs):
         smach.State.__init__(self,
             outcomes=[
                 outcomes.DROP_OFF_ITEM_SUCCESS,
@@ -28,7 +29,7 @@ class DropOffItem(smach.State):
         self._tuck_arms = tuck_arms
         self._set_static_tf = set_static_tf
         self._markers = markers
-        self._tf_listener = tf.TransformListener()
+        self._tf_listener = tf_listener
 
         self._order_bin_found = False
 

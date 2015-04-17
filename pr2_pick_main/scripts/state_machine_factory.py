@@ -71,6 +71,7 @@ def real_robot_services():
         'markers': rospy.Publisher('pr2_pick_visualization', Marker),
         'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
         'drive_to_pose': rospy.ServiceProxy('drive_to_pose_service', DriveToPose),
+        'tf_listener': tf.TransformListener()
      }
 
 
