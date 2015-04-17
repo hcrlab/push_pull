@@ -16,6 +16,13 @@
    <param name="Height2" value="0.23" />  
    <param name="Depth" value="0.43" />  
    
+   <param name="bottom_crop_offset" value="0.02" />  
+   <param name="top_crop_offset" value="0.02" />  
+   <param name="left_crop_offset" value="0.03" />  
+   <param name="right_crop_offset" value="0.0" />  
+   <param name="depth_crop_offset" value="0.0" />  
+   <param name="max_cluster_points" value="150" />  
+   <param name="min_cluster_points" value="100000" />  
    
  <!--   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" /> -->
    <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
