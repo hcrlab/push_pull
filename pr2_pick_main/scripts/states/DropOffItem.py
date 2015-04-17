@@ -75,7 +75,7 @@ class DropOffItem(smach.State):
             order_bin_fixedto_odom.header.frame_id = 'odom_combined'
             order_bin_fixedto_odom.header.stamp = rospy.Time.now()
             order_bin_fixedto_odom.transform.translation.x = -36 * 0.0254 + pos_shelf_in_odom[0]
-            order_bin_fixedto_odom.transform.translation.y = -27 * 0.0254 + pos_shelf_in_odom[1]
+            order_bin_fixedto_odom.transform.translation.y = -32 * 0.0254 + pos_shelf_in_odom[1]  # -27
             order_bin_fixedto_odom.transform.translation.z = 12 * 0.0254 + pos_shelf_in_odom[2]
             order_bin_fixedto_odom.transform.rotation.x = quaternion[0]
             order_bin_fixedto_odom.transform.rotation.y = quaternion[1]
@@ -207,18 +207,23 @@ class DropOffItem(smach.State):
         # self._drive_linear.wait_for_service()
         # self._drive_linear(0, 0.10*(1 if displacement[1] > 0 else -1), abs(displacement[1]))
 
-        # move arm
+        # move arm above bin
         rospy.loginfo('Move arm above order bin')
         pose_target = PoseStamped()
         pose_target.header.frame_id = "base_footprint";
         pose_target.pose.position.x = 0.2855
         pose_target.pose.position.y = -0.7551
         # pose_target.pose.position.z = 1.0253  # taller table
-        pose_target.pose.position.z = 0.40
+        pose_target.pose.position.z = 0.70
         pose_target.pose.orientation.x = 0.6878
         pose_target.pose.orientation.y = -0.6733
         pose_target.pose.orientation.z = -0.1941
         pose_target.pose.orientation.w = -0.1897
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
+
+        # lower arm into bin
+        pose_target.pose.position.z = 0.40
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
 
@@ -227,10 +232,22 @@ class DropOffItem(smach.State):
         self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(False, True)
 
+        # raise arm
+        pose_target.pose.position.z = 0.70
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
+
+        # get back to "untucked" position
+        rospy.loginfo('Untucking right arm')
+        self._tuck_arms.wait_for_service()
+        tuck_success = self._tuck_arms(True, False)
+
     	# report success
+        
         # bin_id = userdata.bin_id
         # bin_data = userdata.bin_data.copy()
         # bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
         # userdata.output_bin_data = bin_data
+
         return outcomes.DROP_OFF_ITEM_SUCCESS
 
