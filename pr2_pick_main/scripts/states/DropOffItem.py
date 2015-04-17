@@ -16,7 +16,7 @@ def planningscene_create_box(position, size, name):
     """Create a box in the MoveIt planning scene specified by position and size, both tuples"""
     scene = moveit_commander.PlanningSceneInterface()
     scene.remove_world_object(name)
-    table_pose = geometry_msgs.msg.PoseStamped()
+    table_pose = PoseStamped()
     table_pose.header.frame_id = "odom_combined"
     table_pose.pose.position.x = position[0]
     table_pose.pose.position.y = position[1]
