@@ -93,6 +93,15 @@ class DropOffItem(smach.State):
             self._set_static_tf.wait_for_service()
             self._set_static_tf(order_bin_fixedto_shelf)
 
+            # Finally publish order_bin tf
+            order_bin_tf = TransformStamped()
+            order_bin_tf.header.frame_id = 'order_bin_fixedto_shelf'
+            order_bin_tf.header.stamp = rospy.Time.now()
+            order_bin_tf.transform.rotation.w = 1
+            order_bin_fixedto_shelf.child_frame_id = 'order_bin'
+            self._set_static_tf.wait_for_service()
+            self._set_static_tf(order_bin_tf)
+
             self._order_bin_found = True
 
             # Publish marker
@@ -129,7 +138,7 @@ class DropOffItem(smach.State):
         # full bin
         # size = (0.9144, 0.4572, 0.9144)    
         name = 'order_bin'
-        planningscene_create_box(position, size, name)
+        self.planningscene_create_box(position, size, name)
 
         # move to the order bin
         rospy.loginfo('Move next to the order bin')
