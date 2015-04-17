@@ -52,15 +52,7 @@ def test_drop_off_item():
     robot services
     '''
     all_services = real_robot_services()
-    services = {
-        key: all_services[key]
-        for key in {
-            'moveit_move_arm', 'tts', 'tuck_arms', 'move_torso', 'set_grippers',
-            'move_head', 'drive_linear', 'localize_object',
-            'set_static_tf','markers'
-        }
-    }
-    return build_for_drop_off_item(**services)
+    return build_for_drop_off_item(**all_services)
 
 def real_robot_services():
     return {
@@ -79,6 +71,7 @@ def real_robot_services():
         'markers': rospy.Publisher('pr2_pick_visualization', Marker),
         'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
         'drive_to_pose': rospy.ServiceProxy('drive_to_pose_service', DriveToPose),
+        'tf_listener': tf.TransformListener()
      }
 
 
