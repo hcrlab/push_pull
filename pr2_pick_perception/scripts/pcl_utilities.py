@@ -44,9 +44,9 @@ class PCLUtilities(object):
 
         rospy.loginfo('Centroid: ({}, {}, {})'.format(avg_x, avg_y, avg_z))
         centroid = PointStamped(
-            point=Point(x=avg_x, y=avg_y, z=agv_z),
+            point=Point(x=avg_x, y=avg_y, z=avg_z),
             header=Header(
-                frame_id=cluster.header.frame_id,
+                frame_id=request.cluster.header.frame_id,
                 stamp=rospy.Time.now(),
             )
         )

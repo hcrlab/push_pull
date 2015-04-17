@@ -92,12 +92,13 @@ class Grasp(smach.State):
         cluster_to_use = None
         largest_size = 0
         for cluster in clusters:
-            size = cluster.pointcloud.height * cluster.pointcoud.width
+            size = cluster.pointcloud.height * cluster.pointcloud.width
             if size > largest_size:
                 largest_size = size
                 cluster_to_use = cluster
 
-        return self._find_centroid(cluster_to_use)
+        response = self._find_centroid(cluster_to_use)
+        return response.centroid
 
     def execute(self, userdata):
         self._tts.publish('Grasping item')
@@ -114,8 +115,8 @@ class Grasp(smach.State):
                 'base_footprint',
                 'shelf',
                 rospy.Time(0),
-                self._wait_for_transform_duration
-            )
+                self._wait_for_transform_duration,
+        )
         transformed_item_pose = listener.transformPose('base_footprint', item_pose)
 
         rospy.loginfo(
