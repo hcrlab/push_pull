@@ -128,10 +128,10 @@ public:
     ///\brief try to match cluster
     ///\param cluster point cloud of cluster
     ///\return view id if found, -1 otherwise
-    void detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, 
+    void detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, double *score,
                 Eigen::Matrix4f *matchedTransform, Eigen::Matrix4f *matchedTransform2);
     
-    void detectICP2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, 
+    void detectICP2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int *matchedModelID, double *score,
                 Eigen::Matrix4f *matchedTransform, Eigen::Matrix4f *matchedTransform2);
     
     void detect2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, Eigen::Matrix4f *matchedTransform, 

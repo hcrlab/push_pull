@@ -375,6 +375,8 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > detection_transforms;
     pcl::ScopeTime t_all;
 
+    std::vector<double> scores;
+    
     #pragma omp parallel for 
     for(int i = 0; i < cluster_candidates.size(); ++i)
     {
@@ -385,11 +387,12 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         Eigen::Vector3f tras;
          Eigen::Matrix4f TtoOrigin = Eigen::Matrix4f::Identity(); 
         int detection_id = -1;
+        double score = 0.0;
         pcl::ScopeTime t;
         if (!icp2D_)
-            detect(cluster_candidates[i], &detection_id, &detection_transform, &detection_transform2);
+            detect(cluster_candidates[i], &detection_id, &score, &detection_transform, &detection_transform2);
         else
-            detectICP2D(cluster_candidates[i], &detection_id,&detection_transform, &detection_transform2);
+            detectICP2D(cluster_candidates[i], &detection_id, &score, &detection_transform, &detection_transform2);
         
         // transform the detections into the camera reference frame system
 
@@ -421,13 +424,14 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
             getModel(detection_id, &m);
 
 //             #pragma omp critical
-            {
+            
                 detections.push_back(m);
                 detection_transforms.push_back(detection_transform);
-            
+                scores.push_back(score);
             
                 //visualize 3D model of detection
-        if (debug_) {
+            if (debug_) 
+            {
                 
           vtkSmartPointer<vtkTransform> vtkTrans(vtkTransform::New());
           const double vtkMat[16] = {(detection_transform)(0,0), (detection_transform)(0,1),(detection_transform)(0,2),(detection_transform)(0,3),
@@ -451,7 +455,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
           vis->addText3D(visMatchName.str(), pcl::PointXYZ(detection_transform(0,3),detection_transform(1,3),detection_transform(2,3)+2.5), 0.08, 1.0, 1.0, 1.0, visMatchName.str()+"_text");    
           vis->spinOnce();
         }
-            }
+        
         }
         ROS_ERROR("cluster %d done", i);
     }
@@ -476,7 +480,8 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         std::stringstream ss;
         ss << "ap_" << obj_type_ <<  ++id_object;
         obj.id = ss.str();
-        obj.object_ref = obj_type_;        
+        obj.object_ref = obj_type_; 
+        obj.score = scores[i];
               
         obj.pose.position.x = detection_transforms[i](0,3);
         obj.pose.position.y = detection_transforms[i](1,3); 
@@ -755,7 +760,7 @@ void ObjDetector::detect2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& clu
     
 }
 
-void ObjDetector::detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2)
+void ObjDetector::detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, double *score, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2)
 {
     //run thread for each model to speed up process - correct model should return after ~0.5s 
     //TODO: optimize, use our-cvfh to prune possible models, try to stop other threads once one of them found a match
@@ -891,7 +896,7 @@ void ObjDetector::detect(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& clust
     {
         *matchedModelID = model_scores[0].second;
 
-       
+        *score = model_scores[0].first;
         
         //calculate final transformation
         geometry_msgs::PosePtr mp = models_[*matchedModelID].pose;
@@ -946,7 +951,8 @@ void ObjDetector::getModel(int id, Model* model)
     }
 }
 
-void ObjDetector::detectICP2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2)
+void ObjDetector::detectICP2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& cluster, int* matchedModelID, double *score,
+                              Eigen::Matrix4f* matchedTransform, Eigen::Matrix4f* matchedTransform2)
 {
     //run thread for each model to speed up process - correct model should return after ~0.5s 
     //TODO: optimize, use our-cvfh to prune possible models, try to stop other threads once one of them found a match
@@ -1097,7 +1103,8 @@ void ObjDetector::detectICP2D(const pcl::PointCloud< pcl::PointXYZ >::ConstPtr& 
     if(model_scores[0].first < score_thresh_)
     {
         *matchedModelID = model_scores[0].second;
-
+        *score = model_scores[0].first;
+        
        
         
         //calculate final transformation
