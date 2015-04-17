@@ -117,6 +117,8 @@ class Grasp(smach.State):
                 rospy.Time(0),
                 self._wait_for_transform_duration,
         )
+        ## Why are there errors here? Look up would require extrapolation into the past.
+        ## TODO: Make sure we're waiting for the right transform.
         transformed_item_pose = listener.transformPose('base_footprint', item_pose)
 
         rospy.loginfo(
