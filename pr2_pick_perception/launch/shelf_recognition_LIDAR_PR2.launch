@@ -1,0 +1,41 @@
+<!-- Launches shelf detection-->
+<launch>
+  <param name="/use_sim_time" value="true"/> <!-- Use for testing with bag files. -->
+  <arg name="debug" default="true" /> <!-- Whether to show debug visualizations. -->
+  <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node" name="shelf_obj_detector" respawn="true" output="screen">
+   <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
+
+   <param name="iter" value="70"/>
+   <param name="minClusterSize" value="2350"/>
+   <param name="radius_search" value="0.015"/>
+
+   <param name="DistanceThreshold" value="0.05"/>
+   <param name="PlanesegThres" value="0.03"/>   <!-- was 0.05 for non-hose, to remove wall behind valve -->
+   <param name="PlaneSize" value="10000"/> <!-- WAS 4500,50000 -->
+   <param name="depthplane" value="2.5" /> <!-- removes points further than this limit -->
+   <param name="highplane" value="0.75" /> <!-- removes points higher than this limit -->
+   <param name="ICP2D" value="false" /> 
+
+  <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
+
+   <param name="RobotReference" value="/base_footprint" />
+   <param name="WorldReference" value="/odom_combined" />
+
+   <param name="manual_segmentation" value="false" />
+   <param name="pca_alignment" value="false"/>
+   <param name="debug" value="$(arg debug)"/>
+
+   <remap from="/image" to="/head_mount_kinect/rgb/image_rect_color" />
+   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" />
+   <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
+  </node>
+
+  <!-- laser scan assembler -->
+  <node pkg="laser_assembler" type="point_cloud2_assembler" name="point_cloud_assembler" respawn="true" output="screen">
+     <remap from="cloud" to="/tilt_scan_cloud" />
+     <param name="max_clouds" value="250"/>
+     <param name="fixed_frame" value="/base_link"/> <!-- pay attention to this reference system -->
+  </node>
+
+
+</launch>
