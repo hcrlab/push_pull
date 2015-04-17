@@ -17,7 +17,7 @@ class FindShelf(smach.State):
     '''
     name = 'FIND_SHELF'
 
-    def __init__(self, tts, localize_object, set_static_tf, markers):
+    def __init__(self, tts, localize_object, set_static_tf, markers, **kwargs):
         '''Constructor for this state.
 
         Args:
