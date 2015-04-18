@@ -59,7 +59,7 @@ class Grasp(smach.State):
 
         # Grasp Parameters
 
-        self._pre_grasp_dist = 0.35
+        self._pre_grasp_dist = 0.33
         self._grasp_height = 0.03
         self._pre_grasp_height = self._grasp_height + 0.02
 
@@ -195,8 +195,8 @@ class Grasp(smach.State):
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
         """
-        dist_to_palm = 0.077
-        dist_to_fingertips = 0.18
+        dist_to_palm = 0.10
+        dist_to_fingertips = 0.20
         attempts = 3
 
         success_pre_grasp = False
@@ -230,7 +230,7 @@ class Grasp(smach.State):
                               ', w: ' + str(pose_target.pose.orientation.w))
 
                 self._moveit_move_arm.wait_for_service()
-                success_pre_grasp = self._moveit_move_arm(pose_target, 0.001, 0.001, 0, 'right_arm').success
+                success_pre_grasp = self._moveit_move_arm(pose_target, 0.001, 0.01, 0, 'right_arm').success
             else:
                 #   pre  - Translation: [0.253, -0.277, 1.508]
                 # - Rotation: in Quaternion [0.984, -0.013, 0.178, 0.028]
@@ -285,7 +285,7 @@ class Grasp(smach.State):
 
                 rospy.loginfo('Not grasping from top row')
                 pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = transformed_item_pose.pose.position.x - dist_to_palm - 0.01 * i
+                pose_target.pose.position.x = transformed_item_pose.pose.position.x - dist_to_palm - 0.01 * i 
                 pose_target.pose.position.y = transformed_item_pose.pose.position.y
                 if ((transformed_item_pose.pose.position.z > (shelf_height + self._grasp_height))
                     and (transformed_item_pose.pose.position.z < (shelf_height + 0.15))):

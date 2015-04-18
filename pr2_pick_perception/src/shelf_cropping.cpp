@@ -450,7 +450,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
             cluster.header.frame_id = bin_frame_id_;
             cluster.header.stamp = pc_timestamp_;
             std::stringstream ss;
-            ss << "cluster_1";
+            ss << "cluster_0";
             cluster.id = ss.str();
             pcl::toROSMsg(*cell_pc,cluster.pointcloud);
 
