@@ -1,10 +1,13 @@
 import outcomes
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
+from visualization_msgs.msg import Marker
 import rospy
 import smach
 import moveit_commander
 import geometry_msgs.msg
 from pr2_pick_manipulation.srv import GetPose
 from pr2_pick_manipulation.srv import MoveArm
+from std_msgs.msg import Header
 import json
 import os
 import tf
@@ -14,19 +17,21 @@ class ExtractItem(smach.State):
     """
     name = 'EXTRACT_ITEM'
 
-    def __init__(self, tts, moveit_move_arm, tf_listener, **kwargs):
+    def __init__(self, tts, moveit_move_arm, tf_listener, drive_to_pose, markers, **kwargs):
         smach.State.__init__(
             self,
             outcomes=[
                 outcomes.EXTRACT_ITEM_SUCCESS,
                 outcomes.EXTRACT_ITEM_FAILURE
             ],
-            input_keys=['bin_id']
+            input_keys=['bin_id', 'debug']
         )
 
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
         self._tf_listener = tf_listener
+        self._drive_to_pose = drive_to_pose
+        self._markers = markers
 
         # Shelf heights
 
@@ -233,6 +238,50 @@ class ExtractItem(smach.State):
             else:
                 rospy.loginfo("Extract attempt " + str(i) + " failed")
                 continue
+        t = rospy.Time(0)
+        position, quaternion = self._tf_listener.lookupTransform("shelf", "base_footprint", t)
+
+        # find the target pose in robot coordinates
+        target_in_shelf_frame = geometry_msgs.msg.PoseStamped(
+            header=Header(frame_id='shelf'),
+            pose=Pose(
+                position=Point(x=-1.15,
+                               y=position[1],
+                               z=0.0),
+                orientation=Quaternion(w=1, x=0, y=0, z=0)
+            )
+        )
+
+        # Visualize target pose.
+        marker = Marker()
+        marker.header.frame_id = 'shelf'
+        marker.header.stamp = rospy.Time().now()
+        marker.ns = 'target_location'
+        marker.id = 0
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.pose = target_in_shelf_frame.pose
+        marker.pose.position.z = 0.03 / 2
+        marker.scale.x = 0.67
+        marker.scale.y = 0.67
+        marker.scale.z = 0.03
+        marker.color.r = 0
+        marker.color.g = 1
+        marker.color.b = 0
+        marker.color.a = 1
+        marker.lifetime = rospy.Duration()
+
+        rate = rospy.Rate(1)
+        while self._markers.get_num_connections() == 0:
+            rate.sleep()
+        self._markers.publish(marker)
+
+        if userdata.debug:
+            raw_input('(Debug) Press enter to continue: ')
+
+        self._drive_to_pose.wait_for_service()
+        self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
+
 
         # Center Arm
 
@@ -272,4 +321,4 @@ class ExtractItem(smach.State):
         if success:
             return outcomes.EXTRACT_ITEM_SUCCESS
         else:
-            return outcomes.EXTRACT_ITEM_FAILURE
+            return outcomes.EXTRACT_ITEM_SUCCESS

@@ -60,53 +60,65 @@ class DropOffItem(smach.State):
         if not self._order_bin_found:
             rospy.loginfo('Creating a static TF for the order bin relative to the shelf')
 
-            # Publish static transform order_bin_fixedto_odom.
-            self._tf_listener.waitForTransform("odom_combined","shelf",rospy.Time(0), rospy.Duration(1.0))
-            (pos_shelf_in_odom, orient_shelf_in_odom) = \
-                self._tf_listener.lookupTransform("odom_combined", "shelf", rospy.Time(0))
-            # set pitch and roll to 0
-            euler = tf.transformations.euler_from_quaternion(orient_shelf_in_odom)
-            roll = euler[0]
-            pitch = euler[1]
-            yaw = euler[2]
-            quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-            # do the actual message publishing
-            order_bin_fixedto_odom = TransformStamped()
-            order_bin_fixedto_odom.header.frame_id = 'odom_combined'
-            order_bin_fixedto_odom.header.stamp = rospy.Time.now()
-            order_bin_fixedto_odom.transform.translation.x = -36 * 0.0254 + pos_shelf_in_odom[0]
-            order_bin_fixedto_odom.transform.translation.y = -32 * 0.0254 + pos_shelf_in_odom[1]  # -27
-            order_bin_fixedto_odom.transform.translation.z = 12 * 0.0254 + pos_shelf_in_odom[2]
-            order_bin_fixedto_odom.transform.rotation.x = quaternion[0]
-            order_bin_fixedto_odom.transform.rotation.y = quaternion[1]
-            order_bin_fixedto_odom.transform.rotation.z = quaternion[2]
-            order_bin_fixedto_odom.transform.rotation.w = quaternion[3]
-            order_bin_fixedto_odom.child_frame_id = 'order_bin_fixedto_odom'
-            self._set_static_tf.wait_for_service()
-            self._set_static_tf(order_bin_fixedto_odom)
+            # # Publish static transform order_bin_fixedto_odom.
+            # self._tf_listener.waitForTransform("odom_combined","shelf",rospy.Time(0), rospy.Duration(1.0))
+            # (pos_shelf_in_odom, orient_shelf_in_odom) = \
+            #     self._tf_listener.lookupTransform("odom_combined", "shelf", rospy.Time(0))
+            # # set pitch and roll to 0
+            # euler = tf.transformations.euler_from_quaternion(orient_shelf_in_odom)
+            # roll = euler[0]
+            # pitch = euler[1]
+            # yaw = euler[2]
+            # quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+            # # do the actual message publishing
+            # order_bin_fixedto_odom = TransformStamped()
+            # order_bin_fixedto_odom.header.frame_id = 'odom_combined'
+            # order_bin_fixedto_odom.header.stamp = rospy.Time.now()
+            # order_bin_fixedto_odom.transform.translation.x = -36 * 0.0254 + pos_shelf_in_odom[0]
+            # order_bin_fixedto_odom.transform.translation.y = -32 * 0.0254 + pos_shelf_in_odom[1]  # -27
+            # order_bin_fixedto_odom.transform.translation.z = 12 * 0.0254 + pos_shelf_in_odom[2]
+            # order_bin_fixedto_odom.transform.rotation.x = quaternion[0]
+            # order_bin_fixedto_odom.transform.rotation.y = quaternion[1]
+            # order_bin_fixedto_odom.transform.rotation.z = quaternion[2]
+            # order_bin_fixedto_odom.transform.rotation.w = quaternion[3]
+            # order_bin_fixedto_odom.child_frame_id = 'order_bin_fixedto_odom'
+            # self._set_static_tf.wait_for_service()
+            # self._set_static_tf(order_bin_fixedto_odom)
 
-            # Publish static transform order_bin_fixedto_shelf.
-            self._tf_listener.waitForTransform("shelf","order_bin_fixedto_odom",rospy.Time(0), rospy.Duration(1.0))
-            (pos_orderbin_in_shelf, orient_orderbin_in_shelf) = \
-                self._tf_listener.lookupTransform("shelf", "order_bin_fixedto_odom", rospy.Time(0))
-            order_bin_fixedto_shelf = TransformStamped()
-            order_bin_fixedto_shelf.header.frame_id = 'shelf'
-            order_bin_fixedto_shelf.header.stamp = rospy.Time.now()
-            order_bin_fixedto_shelf.transform.translation.x = pos_orderbin_in_shelf[0]
-            order_bin_fixedto_shelf.transform.translation.y = pos_orderbin_in_shelf[1]
-            order_bin_fixedto_shelf.transform.translation.z = pos_orderbin_in_shelf[2]
-            order_bin_fixedto_shelf.transform.rotation.x = orient_orderbin_in_shelf[0]
-            order_bin_fixedto_shelf.transform.rotation.y = orient_orderbin_in_shelf[1]
-            order_bin_fixedto_shelf.transform.rotation.z = orient_orderbin_in_shelf[2]
-            order_bin_fixedto_shelf.transform.rotation.w = orient_orderbin_in_shelf[3]
-            order_bin_fixedto_shelf.child_frame_id = 'order_bin_fixedto_shelf'
-            self._set_static_tf.wait_for_service()
-            self._set_static_tf(order_bin_fixedto_shelf)
+            # # Publish static transform order_bin_fixedto_shelf.
+            # self._tf_listener.waitForTransform("shelf","order_bin_fixedto_odom",rospy.Time(0), rospy.Duration(1.0))
+            # (pos_orderbin_in_shelf, orient_orderbin_in_shelf) = \
+            #     self._tf_listener.lookupTransform("shelf", "order_bin_fixedto_odom", rospy.Time(0))
+            # order_bin_fixedto_shelf = TransformStamped()
+            # order_bin_fixedto_shelf.header.frame_id = 'shelf'
+            # order_bin_fixedto_shelf.header.stamp = rospy.Time.now()
+            # order_bin_fixedto_shelf.transform.translation.x = pos_orderbin_in_shelf[0]
+            # order_bin_fixedto_shelf.transform.translation.y = pos_orderbin_in_shelf[1]
+            # order_bin_fixedto_shelf.transform.translation.z = pos_orderbin_in_shelf[2]
+            # order_bin_fixedto_shelf.transform.rotation.x = orient_orderbin_in_shelf[0]
+            # order_bin_fixedto_shelf.transform.rotation.y = orient_orderbin_in_shelf[1]
+            # order_bin_fixedto_shelf.transform.rotation.z = orient_orderbin_in_shelf[2]
+            # order_bin_fixedto_shelf.transform.rotation.w = orient_orderbin_in_shelf[3]
+            # order_bin_fixedto_shelf.child_frame_id = 'order_bin_fixedto_shelf'
+            # self._set_static_tf.wait_for_service()
+            # self._set_static_tf(order_bin_fixedto_shelf)
 
-            # Finally publish order_bin tf
+            # # Finally publish order_bin tf
+            # order_bin_tf = TransformStamped()
+            # order_bin_tf.header.frame_id = 'order_bin_fixedto_shelf'
+            # order_bin_tf.header.stamp = rospy.Time.now()
+            # order_bin_tf.transform.rotation.w = 1
+            # order_bin_tf.child_frame_id = 'order_bin'
+            # self._set_static_tf.wait_for_service()
+            # self._set_static_tf(order_bin_tf)
+
+            # Do it the simple way! Assumes the shelf is not too tilted
             order_bin_tf = TransformStamped()
-            order_bin_tf.header.frame_id = 'order_bin_fixedto_shelf'
+            order_bin_tf.header.frame_id = 'shelf'
             order_bin_tf.header.stamp = rospy.Time.now()
+            order_bin_tf.transform.translation.x = -36 * 0.0254
+            order_bin_tf.transform.translation.y = -32 * 0.0254 # -27
+            order_bin_tf.transform.translation.z = 12 * 0.0254
             order_bin_tf.transform.rotation.w = 1
             order_bin_tf.child_frame_id = 'order_bin'
             self._set_static_tf.wait_for_service()
@@ -127,7 +139,7 @@ class DropOffItem(smach.State):
             marker.scale.x = 24 * 0.0254
             marker.scale.y = 14.5 * 0.0254
             marker.scale.z = 8 * 0.0254
-            marker.pose
+            marker.pose.orientation.w = 1
             marker.lifetime = rospy.Duration()
 
             # Need to wait for rviz for some reason.
@@ -207,6 +219,7 @@ class DropOffItem(smach.State):
         self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
 
         # lower arm into bin
+        rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = 0.40
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
