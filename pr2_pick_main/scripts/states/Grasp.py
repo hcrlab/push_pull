@@ -162,7 +162,7 @@ class Grasp(smach.State):
         shelf_height = self._shelf_heights[userdata.bin_id]
 
         # Center Arm
-
+        """
         rospy.loginfo('Center Arm')
         pose = geometry_msgs.msg.PoseStamped()
         pose.header.frame_id = 'base_footprint';
@@ -194,7 +194,7 @@ class Grasp(smach.State):
 
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
-
+        """
         dist_to_palm = 0.077
         dist_to_fingertips = 0.18
         attempts = 3
