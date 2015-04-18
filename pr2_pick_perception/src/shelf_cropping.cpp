@@ -53,7 +53,7 @@ CropShelf::initialize()
     //Parameters for tweaking shelf crop
     nh_local.param("bottom_crop_offset", bottom_crop_offset_, 0.02);
     nh_local.param("top_crop_offset", top_crop_offset_, 0.02);
-    nh_local.param("left_crop_offset", left_crop_offset_, 0.02);
+    nh_local.param("left_crop_offset", left_crop_offset_, 0.08);
     nh_local.param("right_crop_offset", right_crop_offset_, 0.02);
     nh_local.param("depth_close_crop_offset", depth_close_crop_offset_, 0.02);
     nh_local.param("depth_far_crop_offset", depth_far_crop_offset_, 0.02);
@@ -115,6 +115,7 @@ CropShelf::cropPC(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, floa
           cell_pc->push_back(point);                    
         }
     }
+    ROS_INFO("Cropping PC");
     return cell_pc;
 }
 
