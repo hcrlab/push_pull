@@ -153,6 +153,11 @@ add_executable(shelf_localization_service_node
   src/shelf_localization.cpp
 )
 
+add_executable(shelf_localization_service_node_lidar
+  src/shelf_localization_LIDAR.cpp
+)
+
+
 add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
 )
@@ -161,6 +166,11 @@ add_executable(shelf_cropping_service_node
 ## as an example, message headers may need to be generated before nodes
 
 add_dependencies(shelf_localization_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+add_dependencies(shelf_localization_service_node_lidar
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
