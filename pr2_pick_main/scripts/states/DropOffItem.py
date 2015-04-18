@@ -127,7 +127,7 @@ class DropOffItem(smach.State):
             marker.scale.x = 24 * 0.0254
             marker.scale.y = 14.5 * 0.0254
             marker.scale.z = 8 * 0.0254
-            marker.pose
+            marker.pose.orientation.w = 1
             marker.lifetime = rospy.Duration()
 
             # Need to wait for rviz for some reason.
@@ -207,6 +207,7 @@ class DropOffItem(smach.State):
         self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
 
         # lower arm into bin
+        rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = 0.40
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
