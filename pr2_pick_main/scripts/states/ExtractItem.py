@@ -191,7 +191,7 @@ class ExtractItem(smach.State):
 
         # Pull item out of bin
         success = False
-
+        """
         for i in range(attempts):
 
             # Pose in front of bin
@@ -238,6 +238,7 @@ class ExtractItem(smach.State):
             else:
                 rospy.loginfo("Extract attempt " + str(i) + " failed")
                 continue
+        """
         t = rospy.Time(0)
         position, quaternion = self._tf_listener.lookupTransform("shelf", "base_footprint", t)
 
