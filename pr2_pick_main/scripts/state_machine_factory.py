@@ -190,6 +190,22 @@ class StateMachineBuilder(object):
             outcomes.CHALLENGE_SUCCESS,
             outcomes.CHALLENGE_FAILURE
         ])
+
+        def mock_update_plan_execute(userdata):
+            ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
+            default_next_bin = 'A'
+            input_bin = raw_input('(Debug) Enter the next bin [{}]:'.format(default_next_bin))
+            if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
+                bin_letter = input_bin[0]
+            else:
+                bin_letter = default_next_bin
+
+            userdata.next_bin = bin_letter
+            return outcomes.UPDATE_PLAN_NEXT_OBJECT
+
+        mock_update_plan = states.UpdatePlan(**services)
+        mock_update_plan.execute = mock_update_plan_execute
+
         with sm:
             smach.StateMachine.add(
                 states.StartPose.name,
@@ -209,7 +225,7 @@ class StateMachineBuilder(object):
             )
             smach.StateMachine.add(
                 states.UpdatePlan.name,
-                states.UpdatePlan(**services),
+                mock_update_plan,
                 transitions={
                     outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                     outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
