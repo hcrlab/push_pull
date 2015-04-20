@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""The main state machine for the picking challenge.
-"""
+'''The main state machine for the picking challenge. '''
 
 from bin_data import BinData
 from pr2_pick_manipulation.srv import DriveToPose
@@ -9,22 +8,27 @@ import argparse
 import rospy
 import smach
 import smach_ros
-import state_machine_factory
+from state_machine_factory import StateMachineBuilder
 import states
 
 
 def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=False,
          auto_reset=True):
     rospy.init_node('pr2_pick_state_machine')
-    sm = None
-    if mock:
-        sm = state_machine_factory.mock_robot()
-    elif test_move_to_bin:
-        sm = state_machine_factory.test_move_to_bin()
+
+    if test_move_to_bin:
+        state_machine_type = StateMachineBuilder.TEST_MOVE_TO_BIN
     elif test_drop_off_item:
-        sm = state_machine_factory.test_drop_off_item()
+        state_machine_type = StateMachineBuilder.TEST_DROP_OFF_ITEM
     else:
-        sm = state_machine_factory.real_robot()
+        state_machine_type = StateMachineBuilder.DEFAULT
+
+    sm = (
+        StateMachineBuilder()
+        .set_mock(mock)
+        .set_state_machine(state_machine_type)
+        .build()
+    )
 
     # Whether to step through checkpoints.
     sm.userdata.debug = debug
@@ -74,11 +78,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        '--mock', action='store_true',
-        help=('True if you want to create a state machine with mock robot'
-            ' components.')
-    )
-    group.add_argument(
         '--test_move_to_bin', action='store_true',
         help=('True to create a minimal state machine for testing the'
               'MoveToBin state.')
@@ -87,6 +86,12 @@ if __name__ == '__main__':
         '--test_drop_off_item', action='store_true',
         help=('True to create a minimal state machine for testing the'
               'DropOffItem state.')
+    )
+
+    parser.add_argument(
+        '--mock', action='store_true',
+        help=('True if you want to create a state machine with mock robot'
+            ' components.')
     )
     parser.add_argument(
         '--debug', action='store_true',
