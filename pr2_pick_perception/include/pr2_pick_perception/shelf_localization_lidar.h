@@ -1,5 +1,5 @@
-#ifndef DETECT_OBJECTS_XTION_H_
-#define DETECT_OBJECTS_XTION_H_
+#ifndef DETECT_OBJECTS_LIDAR_H_
+#define DETECT_OBJECTS_LIDAR_H_
 
 //////// std includes ////////
 #include <stdio.h>
@@ -157,6 +157,8 @@ private:
     ros::Subscriber trigger_sub_;
     ros::Subscriber pc_sub_;
     
+    ros::ServiceClient client_;
+    
     /// stereo to world transform 
     tf::StampedTransform stereo2world_;
     /// cloud to robot transform
@@ -235,7 +237,7 @@ private:
     int PlaneSize_;
     /// minimum height to detect objects
     double highplane_;
-    /// maximum depth expected (remove walls)
+    /// max depth 
     double depthplane_;
     
     /// hose segmentation mainly
@@ -262,12 +264,7 @@ private:
     bool on_table_; ///< flag whether object can be on a table ... mainly for optimization right now
     
     
-    /// Transformation to the robot reference system
-    //Eigen::Matrix4f cloud_to_robotE_;
-    
-    
-    /// callback for stereo point cloud   
-    void xtionPCcallback(const sensor_msgs::PointCloud2ConstPtr &pcloud);
+   
     
     /// Image callback
     void processImage(const sensor_msgs::ImageConstPtr &l_image_msg, const sensor_msgs::CameraInfoConstPtr& l_info_msg);    

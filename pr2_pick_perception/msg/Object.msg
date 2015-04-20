@@ -10,5 +10,8 @@ string id
 #reference to the object in the database
 string object_ref  
 
+#matching score of the object with the database models
+float64 score
+
 #the object's pose in space
 geometry_msgs/Pose pose

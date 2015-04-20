@@ -15,7 +15,8 @@ class Grasp(smach.State):
     ''' Grasps an item in the bin. '''
     name = 'GRASP'
 
-    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, find_centroid, **kwargs):
+    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, find_centroid,
+                 tf_listener, **kwargs):
         smach.State.__init__(
             self,
             outcomes=[
@@ -30,6 +31,7 @@ class Grasp(smach.State):
         self._tuck_arms = tuck_arms
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
+        self._tf_listener = tf_listener
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -57,7 +59,7 @@ class Grasp(smach.State):
 
         # Grasp Parameters
 
-        self._pre_grasp_dist = 0.35
+        self._pre_grasp_dist = 0.33
         self._grasp_height = 0.03
         self._pre_grasp_height = self._grasp_height + 0.02
 
@@ -105,19 +107,29 @@ class Grasp(smach.State):
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(False, False)
 
-        item_pose = self.locate_one_item(userdata.clusters)
-
         # to bypass perception, do this
         # item_pose = self.locate_hard_coded_items()[0]
 
-        listener = tf.TransformListener()
-        listener.waitForTransform(
-                'base_footprint',
-                'shelf',
-                rospy.Time(0),
-                self._wait_for_transform_duration,
-        )
-        transformed_item_pose = listener.transformPose('base_footprint', item_pose)
+        # TODO(sksellio): check whether this works.
+        #self._tf_listener.waitForTransform(
+        #        'base_footprint',
+        #        'bin_{}'.format(userdata.bin_id),
+        #        rospy.Time(0),
+        #        self._wait_for_transform_duration,
+        #)
+        
+        item_point = self.locate_one_item(userdata.clusters)
+        item_pose = geometry_msgs.msg.PoseStamped()
+        item_pose.header.frame_id = item_point.header.frame_id
+        item_pose.header.stamp = rospy.Time(0)
+        item_pose.pose.position = item_point.point
+        item_pose.pose.orientation.w = 1
+        item_pose.pose.orientation.x = 0
+        item_pose.pose.orientation.y = 0
+        item_pose.pose.orientation.z = 0
+
+        transformed_item_pose = self._tf_listener.transformPose('base_footprint',
+                                                                item_pose)
 
         rospy.loginfo(
             'Grasping item in bin {} from pose {}'
@@ -150,7 +162,7 @@ class Grasp(smach.State):
         shelf_height = self._shelf_heights[userdata.bin_id]
 
         # Center Arm
-
+        """
         rospy.loginfo('Center Arm')
         pose = geometry_msgs.msg.PoseStamped()
         pose.header.frame_id = 'base_footprint';
@@ -182,9 +194,9 @@ class Grasp(smach.State):
 
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
-
-        dist_to_palm = 0.077
-        dist_to_fingertips = 0.18
+        """
+        dist_to_palm = 0.10
+        dist_to_fingertips = 0.20
         attempts = 3
 
         success_pre_grasp = False
@@ -218,7 +230,7 @@ class Grasp(smach.State):
                               ', w: ' + str(pose_target.pose.orientation.w))
 
                 self._moveit_move_arm.wait_for_service()
-                success_pre_grasp = self._moveit_move_arm(pose_target, 0.001, 0.001, 0, 'right_arm').success
+                success_pre_grasp = self._moveit_move_arm(pose_target, 0.001, 0.01, 0, 'right_arm').success
             else:
                 #   pre  - Translation: [0.253, -0.277, 1.508]
                 # - Rotation: in Quaternion [0.984, -0.013, 0.178, 0.028]
@@ -273,7 +285,7 @@ class Grasp(smach.State):
 
                 rospy.loginfo('Not grasping from top row')
                 pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = transformed_item_pose.pose.position.x - dist_to_palm - 0.01 * i
+                pose_target.pose.position.x = transformed_item_pose.pose.position.x - dist_to_palm - 0.01 * i 
                 pose_target.pose.position.y = transformed_item_pose.pose.position.y
                 if ((transformed_item_pose.pose.position.z > (shelf_height + self._grasp_height))
                     and (transformed_item_pose.pose.position.z < (shelf_height + 0.15))):

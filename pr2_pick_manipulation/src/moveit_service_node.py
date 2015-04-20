@@ -13,7 +13,7 @@ class ArmMover:
         rospy.init_node('moveit_service_node')
 
         robot = moveit_commander.RobotCommander()
-        self._default_planning_time = 10
+        self._default_planning_time = 8
         self._default_position_tolerance = 0.0001
         self._default_orientation_tolerance = 0.001
         self._group = moveit_commander.MoveGroupCommander("right_arm") 

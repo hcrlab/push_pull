@@ -30,9 +30,12 @@
    <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
   </node>
 
+  <!-- laser scan assembler -->
+  <node pkg="laser_assembler" type="point_cloud2_assembler" name="point_cloud_assembler" respawn="true" output="screen">
+     <remap from="cloud" to="/tilt_scan_cloud" />
+     <param name="max_clouds" value="250"/>
+     <param name="fixed_frame" value="/base_link"/> <!-- pay attention to this reference system -->
+  </node>
 
-  <arg name="tf_rate" default="20"/>
 
-  <!--   params are "x y z yaw pitch roll parent child rate" -->
-    <!--   <node pkg="tf" type="static_transform_publisher" name="cam_left_pub" args="0.0 0.0 0.0   1.5708 3.14159  1.5708  /model_frame /camera_rgb_optical_frame  $(arg tf_rate)"/> -->
 </launch>

@@ -1,7 +1,9 @@
-#include "pr2_pick_perception/shelf_localization.h"
+#include "pr2_pick_perception/shelf_localization_lidar.h"
 #include <boost/graph/graph_concepts.hpp>
 
 #include <vtkTransform.h>
+
+#include <laser_assembler/AssembleScans2.h>
 
 
 ///comparator for pair of double and int
@@ -71,7 +73,8 @@ bool ObjDetector::initialize()
     nh_local.param("PlaneSize",PlaneSize_,2000);
     nh_local.param("PlanesegThres", PlanesegThres_,0.1);
     nh_local.param("highplane", highplane_,-1.0);
-    nh_local.param("depthplane",depthplane_,-1.0);
+    nh_local.param("depthplane", depthplane_,-1.0);
+    
 
     nh_local.param("manual_segmentation", manual_segmentation_,false);
     
@@ -103,13 +106,10 @@ bool ObjDetector::initialize()
         return 1;
     }    
     
-    
-    //subscribe to point cloud topic
-    
-    std::string pc_topic = nh.resolveName("/pc_topic");
-    
-    pc_sub_ = nh.subscribe<sensor_msgs::PointCloud2>(pc_topic,10,&ObjDetector::xtionPCcallback,this);
-    
+     //subscribe to spinning lidar cloud service
+    ros::service::waitForService("/assemble_scans2");
+    client_ = nh.serviceClient<laser_assembler::AssembleScans2>("/assemble_scans2");
+     
     //advertise object detections
     std::string det_topic = nh.resolveName("/ap/detected_object");
     pub_ = nh.advertise<pr2_pick_perception::ObjectList>(det_topic, 1, true);     
@@ -169,33 +169,31 @@ void ObjDetector::checkInputsSynchronized()
                  all_received_, ros::this_node::getName().c_str());
     }
 }
-
-void ObjDetector::xtionPCcallback(const sensor_msgs::PointCloud2ConstPtr &pc_msg){
-    
-    boost::mutex::scoped_lock lock(xtion_mtx_);
-    cloud_frame_id_ = pc_msg->header.frame_id;
-    pcl::fromROSMsg (*pc_msg, xtionPC_); 
-    pc_timestamp_ =  pc_msg->header.stamp;
-    if (!pc_ready_) {
-      ROS_INFO("Point cloud ready for localization.");
-    }
-    pc_ready_ = true;
-    //printf("The number of points in xtion_PC is %d",xtionPC_.points.size());
-   // xtionPC2ptr_ = pc_msg;
-    
-    
-}
    
 
 bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& request,
                                  pr2_pick_perception::LocalizeShelfResponse& response){
   
     
-    if (!pc_ready_)
+    laser_assembler::AssembleScans2 srv;
+    srv.request.begin = ros::Time(0);
+    srv.request.end   = ros::Time::now();
+    if (client_.call(srv))
     {
-        ROS_ERROR("No point cloud available");
-        return false;
+        ROS_DEBUG("AP: Got scene with %lu points.\n", srv.response.cloud.data.size());
     }
+    else
+    {
+        ROS_ERROR("AP: Service call failed!\n");
+        return false;
+    }     
+  
+     //create point cloud from msg
+    const sensor_msgs::PointCloud2 &cloud = srv.response.cloud;
+    pcl::fromROSMsg(cloud, xtionPC_);
+    
+    cloud_frame_id_ = cloud.header.frame_id;
+    
     
     std::cout << "The name used to trigger is = " << request.object.obj_type << std::endl;
     if(request.object.obj_type != obj_type_)
@@ -270,6 +268,8 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
       model_frame_id_ = cloud_frame_id_;
     }
     
+   
+   
     
        /// Instead of transforming the detection, transform the point cloud
     pcl::PointCloud<pcl::PointXYZ>::Ptr scene(new pcl::PointCloud<pcl::PointXYZ>);
@@ -631,7 +631,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
       std::cout << "Point cloud cropped size = " << rgbpc_sampled_cropped->points.size() << std::endl;
      
        
-      //depth filter
+      
       pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered(new pcl::PointCloud<pcl::PointXYZ>);
       pcl::PassThrough<pcl::PointXYZ> pass;
       
@@ -639,10 +639,11 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
       pass.setInputCloud (rgbpc_sampled_cropped);
       pass.setFilterFieldName ("x");
       pass.setFilterLimits (0.2, depthplane_);
-      pass.filter (*scene_filtered);      
-      
-      //height filter
-       pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered2(new pcl::PointCloud<pcl::PointXYZ>);
+        pass.filter (*scene_filtered);
+
+
+        //height filter
+        pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered2(new pcl::PointCloud<pcl::PointXYZ>);
       pcl::PassThrough<pcl::PointXYZ> pass2;
       
       /// Filter the points below certain height
@@ -651,11 +652,12 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
       pass2.setFilterLimits (0.75, highplane_);
       pass2.filter (*scene_filtered2);     
       
+      
       std::cout << "Final point cloud without planes size = " << scene_filtered->points.size() << std::endl;
       
     pcl::PointCloud<pcl::PointXYZ>::Ptr scene_filtered_world (new pcl::PointCloud<pcl::PointXYZ>);
     /// Transfor the point cloud into world reference to give the object pose in world coordinates
-    pcl_ros::transformPointCloud(*scene_filtered2,*scene_filtered_world,robot_to_world_); 
+    pcl_ros::transformPointCloud(*scene_filtered,*scene_filtered_world,robot_to_world_); 
     
       ///extract clusters EUclidean
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
