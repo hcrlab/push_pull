@@ -105,7 +105,7 @@ class Grasp(smach.State):
     def execute(self, userdata):
         self._tts.publish('Grasping item')
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(False, False)
+        tuck_success = self._tuck_arms(True, False)
 
         # to bypass perception, do this
         # item_pose = self.locate_hard_coded_items()[0]
