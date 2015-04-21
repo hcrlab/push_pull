@@ -1,6 +1,0 @@
-string frame_from
-string frame_to
----
-geometry_msgs/Point position
-geometry_msgs/Quaternion quat_orient
-geometry_msgs/Point rpy_orient
