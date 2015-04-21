@@ -4,7 +4,7 @@ import rospy
 import smach
 from std_msgs.msg import Header
 import tf
-from visualization_msgs.msg import Marker
+import visualization as viz
 
 import outcomes
 
@@ -101,28 +101,8 @@ class MoveToBin(smach.State):
         )
 
         # Visualize target pose.
-        marker = Marker()
-        marker.header.frame_id = 'shelf'
-        marker.header.stamp = rospy.Time().now()
-        marker.ns = 'target_location'
-        marker.id = 0
-        marker.type = Marker.CUBE
-        marker.action = Marker.ADD
-        marker.pose = target_in_shelf_frame.pose
-        marker.pose.position.z = 0.03 / 2
-        marker.scale.x = 0.67
-        marker.scale.y = 0.67
-        marker.scale.z = 0.03
-        marker.color.r = 0
-        marker.color.g = 1
-        marker.color.b = 0
-        marker.color.a = 1
-        marker.lifetime = rospy.Duration()
-
-        rate = rospy.Rate(1)
-        while self.markers.get_num_connections() == 0:
-            rate.sleep()
-        self.markers.publish(marker)
+        viz.publish_base(self.markers, target_in_shelf_frame.pose.position.x,
+                         target_in_shelf_frame.pose.position.y, 'shelf')
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
