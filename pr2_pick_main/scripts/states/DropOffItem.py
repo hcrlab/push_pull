@@ -168,7 +168,7 @@ class DropOffItem(smach.State):
         target_in_order_bin_frame = PoseStamped(
             header=Header(frame_id='order_bin'),
             pose=Pose(
-                position=Point(x=-6 * 0.0254,
+                position=Point(x=-8 * 0.0254,
                                y=28.5 * 0.0254,
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
