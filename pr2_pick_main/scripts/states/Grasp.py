@@ -195,8 +195,8 @@ class Grasp(smach.State):
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
         """
-        dist_to_palm = 0.10
-        dist_to_fingertips = 0.20
+        dist_to_palm = 0.11
+        dist_to_fingertips = 0.21
         attempts = 3
 
         success_pre_grasp = False

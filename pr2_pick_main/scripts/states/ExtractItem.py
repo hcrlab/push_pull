@@ -150,7 +150,12 @@ class ExtractItem(smach.State):
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
                 self._moveit_move_arm.wait_for_service()
-                success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                try:
+                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                except rospy.ServiceException:
+                    rospy.sleep(5.0)
+                    self._moveit_move_arm.wait_for_service()
+                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
             else:
                 euler_tuple = tf.transformations.euler_from_quaternion([current_pose.pose.orientation.x, current_pose.pose.orientation.y, current_pose.pose.orientation.z, current_pose.pose.orientation.w])
                 euler = list(euler_tuple)
@@ -179,7 +184,12 @@ class ExtractItem(smach.State):
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
             
                 self._moveit_move_arm.wait_for_service()
-                success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                try:
+                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                except rospy.ServiceException:
+                    rospy.sleep(5.0)
+                    self._moveit_move_arm.wait_for_service()
+                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
             if success_lift:
                 rospy.loginfo("Lift success")
                 break
@@ -246,7 +256,7 @@ class ExtractItem(smach.State):
         target_in_shelf_frame = geometry_msgs.msg.PoseStamped(
             header=Header(frame_id='shelf'),
             pose=Pose(
-                position=Point(x=-1.15,
+                position=Point(x=-1.35,
                                y=position[1],
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)

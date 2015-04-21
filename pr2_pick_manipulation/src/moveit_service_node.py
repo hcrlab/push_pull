@@ -26,38 +26,43 @@ class ArmMover:
         success = False
 
         rospy.loginfo("Requested to move: " + req.group)
-        self._group = moveit_commander.MoveGroupCommander(req.group)
 
-        if req.position_tolerance > 0:
-            self._group.set_goal_position_tolerance(req.position_tolerance)
-        else:
-            self._group.set_goal_position_tolerance(self._default_position_tolerance)
+        while plan is None:
+            try: 
+                self._group = moveit_commander.MoveGroupCommander(req.group)
 
-        if req.orientation_tolerance > 0:
-            self._group.set_goal_orientation_tolerance(req.orientation_tolerance)
-        else:
-            self._group.set_goal_orientation_tolerance(self._default_orientation_tolerance)
+                if req.position_tolerance > 0:
+                    self._group.set_goal_position_tolerance(req.position_tolerance)
+                else:
+                    self._group.set_goal_position_tolerance(self._default_position_tolerance)
 
-        self._group.set_pose_target(req.goal)
+                if req.orientation_tolerance > 0:
+                    self._group.set_goal_orientation_tolerance(req.orientation_tolerance)
+                else:
+                    self._group.set_goal_orientation_tolerance(self._default_orientation_tolerance)
 
-        if req.planning_time > 0:
-            self._group.set_planning_time(req.planning_time)
-        else:
-            self._group.set_planning_time(self._default_planning_time)
+                self._group.set_pose_target(req.goal)
 
-        plan = self._group.plan()
-    
-        success = self._group.go(wait=True)
+                if req.planning_time > 0:
+                    self._group.set_planning_time(req.planning_time)
+                else:
+                    self._group.set_planning_time(self._default_planning_time)
 
-        print "Plan: " + str(len(plan.joint_trajectory.points))
-        print "Success: " + str(success)
-           
-        if plan.joint_trajectory.points and success:
-            print "Moved arm successfully!"
-            return MoveArmResponse(True)
-        else:
-            print "Failed to move arm"
-            return MoveArmResponse(False)
+                plan = self._group.plan()
+            
+                success = self._group.go(wait=True)
+
+                print "Plan: " + str(len(plan.joint_trajectory.points))
+                print "Success: " + str(success)
+                   
+                if plan.joint_trajectory.points and success:
+                    print "Moved arm successfully!"
+                    return MoveArmResponse(True)
+                else:
+                    print "Failed to move arm"
+                    return MoveArmResponse(False)
+            except RuntimeError:
+                rospy.sleep(3.0)
 
 
 if __name__ == "__main__":
