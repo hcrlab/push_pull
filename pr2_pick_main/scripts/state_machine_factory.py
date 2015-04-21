@@ -1,3 +1,4 @@
+from interactive_markers.interactive_marker_server import InteractiveMarkerServer
 import mock
 import rospy
 from std_msgs.msg import String
@@ -14,6 +15,7 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform
 import states
+import visualization
 
 
 class StateMachineBuilder(object):
@@ -73,6 +75,7 @@ class StateMachineBuilder(object):
             # World and Perception
             'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
             'find_centroid': rospy.ServiceProxy('perception/find_centroid', FindCentroid),
+            'interactive_marker_server': InteractiveMarkerServer('pr2_pick_interactive_markers'),
             'localize_object': rospy.ServiceProxy('perception/localize_object',
                                                   LocalizeShelf),
             'markers': rospy.Publisher('pr2_pick_visualization', Marker),
@@ -164,6 +167,10 @@ class StateMachineBuilder(object):
         drive_to_pose.wait_for_service = mock.Mock(return_value=None)
         drive_to_pose.call = mock.Mock(side_effect=self.side_effect('drive_to_pose'))
 
+        interactive_marker_server = InteractiveMarkerServer('pr2_pick_interactive_markers')
+        interactive_marker.insert = mock.Mock(side_effect=self.side_effect('server.insert'))
+        interactive_marker.applyChanges = mock.Mock(side_effect=self.side_effect('server.applyChanges'))
+
         return {
             # Speech
             'tts': tts,
@@ -180,6 +187,7 @@ class StateMachineBuilder(object):
 
             # World and Perception
             'crop_shelf': crop_shelf,
+            'interactive_marker_server': interactive_marker_server,
             'localize_object': localize_object,
             'markers': markers,
             'set_static_tf': set_static_tf,
