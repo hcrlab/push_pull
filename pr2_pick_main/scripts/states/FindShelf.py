@@ -212,7 +212,4 @@ class FindShelf(smach.State):
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
 
-        if userdata.debug:
-            raw_input('(Debug) Press enter to continue: ')
-
         return outcomes.FIND_SHELF_SUCCESS
