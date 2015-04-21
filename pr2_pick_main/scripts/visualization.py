@@ -2,6 +2,7 @@
 """
 
 from visualization_msgs.msg import Marker
+import random
 import rospy
 
 def publish_shelf(publisher, pose_stamped):
@@ -65,6 +66,37 @@ def publish_base(publisher, x, y, frame_id):
     marker.color.g = 1
     marker.color.b = 0
     marker.color.a = 1
+    marker.lifetime = rospy.Duration()
+    _publish(publisher, marker)
+
+
+def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
+    """Publishes a marker representing a cluster.
+    The x and y arguments specify the center of the target.
+
+    Args:
+      publisher: A visualization_msgs/Marker publisher
+      points: A list of geometry_msgs/Point
+      frame_id: The coordinate frame in which to interpret the points.
+      namespace: string, a unique name for a group of clusters.
+      cluster_id: int, a unique number for this cluster in the given namespace.
+    """
+    marker = Marker()
+    # TODO(jstn): Once the point clouds have the correct frame_id,
+    # use them here.
+    marker.header.frame_id = frame_id
+    marker.header.stamp = rospy.Time().now()
+    marker.ns = namespace
+    marker.id = cluster_id
+    marker.type = Marker.POINTS
+    marker.action = Marker.ADD
+    marker.color.r = random.random()
+    marker.color.g = random.random()
+    marker.color.b = random.random()
+    marker.color.a = 1
+    marker.points = points
+    marker.scale.x = 0.01
+    marker.scale.y = 0.01
     marker.lifetime = rospy.Duration()
     _publish(publisher, marker)
 
