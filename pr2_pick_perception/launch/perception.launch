@@ -19,12 +19,23 @@
     <arg name="camera" value="head_mount_kinect" />
   </include>
 
+  <!-- Tilt laser scan -->
+  <node pkg="pr2_mechanism_controllers" type="send_periodic_cmd_srv.py" name="laser_tilt_controller_3dnav_params" 
+    args="laser_tilt_controller linear 10 1.02 .31" />
+
+  <!-- Pretouch optical sensor -->
   <include file="$(find pr2_pretouch_optical_dist)/launch/optical_dist.launch" />
 
+  <!-- Shelf services -->
   <!-- If you want debugging output, run these launch files separately on your local machine. -->
-  <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_KinPR2.launch" />
-  <include unless="$(arg debug_crop)" file="$(find pr2_pick_perception)/launch/crop_cellA.launch" />
+  <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_KinPR2.launch">
+    <arg name="debug" value="false" />
+  </include>
+  <include unless="$(arg debug_crop)" file="$(find pr2_pick_perception)/launch/crop_cellA.launch">
+    <arg name="debug" value="false" />
+  </include>
 
+  <!-- Utilities -->
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />
   <node pkg="pr2_pick_perception" type="pcl_utilities.py" name="pcl_utilities" respawn="true" />
 </launch>
