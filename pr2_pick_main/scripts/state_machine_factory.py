@@ -46,9 +46,9 @@ class StateMachineBuilder(object):
         else:
             services = self.real_robot_services()
 
-        if state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
+        if self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
             build = self.build_sm_for_move_to_bin
-        elif state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
+        elif self.state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
             build = self.build_sm_for_drop_off_item
         else:
             build = self.build_sm
