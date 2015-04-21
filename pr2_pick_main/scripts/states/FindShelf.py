@@ -5,7 +5,7 @@ import rospy
 import smach
 from std_msgs.msg import Header
 import tf
-from visualization_msgs.msg import Marker
+import visualization as viz
 
 import outcomes
 from pr2_pick_perception.msg import ObjectDetectionRequest, ROI2d
@@ -147,27 +147,8 @@ class FindShelf(smach.State):
         self._tf_set = True
 
         # Publish marker
-        marker = Marker()
-        marker.header.frame_id = 'odom_combined'
-        marker.header.stamp = rospy.Time().now()
-        marker.ns = 'shelf'
-        marker.id = 0
-        marker.type = Marker.MESH_RESOURCE
-        marker.mesh_resource = 'package://pr2_pick_perception/models/shelf/shelf.ply'
-        marker.mesh_use_embedded_materials = True
-        marker.action = Marker.ADD
-        marker.pose = shelf_odom.pose
-        marker.scale.x = 1
-        marker.scale.y = 1
-        marker.scale.z = 1
-        marker.lifetime = rospy.Duration()
-
-        # Need to wait for rviz for some reason.
-        rate = rospy.Rate(1)
-        while self._markers.get_num_connections() == 0:
-            rate.sleep()
-        self._markers.publish(marker)
-
+        viz.publish_shelf(self._markers, shelf_odom)
+        
         # Set up static a transform for each bin relative to shelf.
         # Bin origin is the front center of the bin opening, equidistant
         # from top edge and bottom edge of bin.
