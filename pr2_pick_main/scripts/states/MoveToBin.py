@@ -30,7 +30,9 @@ class MoveToBin(smach.State):
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
     robot_distance_from_shelf_d_l = -1.06
-    robot_distance_from_shelf_a_c = -0.95
+    # If too close, it bumps into the shelf and drive service never returns
+    # -0.95 is desired distance, but not achievable in current configuration with sawhorses
+    robot_distance_from_shelf_a_c = -1.03
     robot_distance_from_shelf = -1.1
 
     # speed in meters per second for driving to each bin
