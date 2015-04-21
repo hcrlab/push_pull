@@ -1,7 +1,7 @@
 <!-- Launches crop point cloud -->
 <launch>
   <arg name="debug" default="false" />
-  <param name="/use_sim_time" value="false"/>
+  <param name="/use_sim_time" value="$(arg debug)"/>
   <node ns="perception" pkg="pr2_pick_perception" type="shelf_cropping_service_node" name="shelf_cropper" respawn="true" output="screen"> 
 
 
