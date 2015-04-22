@@ -2,7 +2,6 @@
   <arg name="debug_shelf" default="false" />
   <arg name="debug_crop" default="false" />
   <arg name="alternate_kinect_frames" default="false" />
-  <!--node name="sound_play_node" pkg="sound_play" type="soundplay_node.py" /--> <!-- Already started by the robot -->
   <node name="festival_tts" pkg="festival_tts" type="speak.py" />
   <node name="pr2_pick_inventory" pkg="pr2_pick_contest" type="inventory.py" args="$(find pr2_pick_contest)/config/milestone_1.json" />
   <include file="$(find pr2_pick_manipulation)/launch/manipulation.launch" />
