@@ -92,10 +92,11 @@ class StateMachineBuilder(object):
                                                  PlanarPrincipalComponents),
 
             # Contest
-            'get_items': rospy.ServiceProxy('contest/inventory' GetItems),
-            'set_items': rospy.ServiceProxy('contest/inventory' SetItems),
-            'get_target_items': rospy.ServiceProxy('contest/inventory' GetTargetItems)  
-        }
+
+            'get_items': rospy.ServiceProxy('inventory/get_items', GetItems)
+            'set_items': rospy.ServiceProxy('inventory/set_items', SetItems)
+            'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems)
+             }
 
     def side_effect(self, name, return_value=True):
         '''A side effect for mock functions.
@@ -190,9 +191,9 @@ class StateMachineBuilder(object):
         interactive_marker.applyChanges = mock.Mock(
             side_effect=self.side_effect('server.applyChanges'))
 
-        get_items = rospy.ServiceProxy('contest/inventory', GetItems)
-        set_items = rospy.ServiceProxy('contest/inventory', SetItems)
-        get_target_items = rospy.ServiceProxy('contest/inventory', GetTargetItems)
+        get_items = rospy.ServiceProxy('inventory/get_items', GetItems)
+        set_items = rospy.ServiceProxy('inventory/set_items', SetItems)
+        get_target_items = rospy.ServiceProxy('inventory/get_target_items', GetTargetItems)
 
         return {
             # Speech
