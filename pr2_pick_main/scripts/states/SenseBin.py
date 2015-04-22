@@ -3,11 +3,10 @@ from pr2_pick_perception.srv import CropShelfResponse
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
-from visualization_msgs.msg import Marker
 import outcomes
-import random
 import rospy
 import smach
+import visualization as viz
 
 
 class SenseBin(smach.State):
@@ -48,26 +47,14 @@ class SenseBin(smach.State):
             points = pc2.read_points(cluster.pointcloud,
                                      field_names=['x', 'y', 'z'],
                                      skip_nans=True)
-            marker = Marker()
-            # TODO(jstn): Once the point clouds have the correct frame_id,
-            # use them here.
-            marker.header.frame_id = 'bin_{}'.format(userdata.bin_id)
-            marker.header.stamp = rospy.Time().now()
-            marker.ns = 'bin_{}_items'.format(userdata.bin_id)
-            marker.id = i
-            marker.type = Marker.POINTS
-            marker.action = Marker.ADD
-            marker.color.r = random.random()
-            marker.color.g = random.random()
-            marker.color.b = random.random()
-            marker.color.a = 1
-            marker.points = [Point(x=x, y=y, z=z) for x, y, z in points]
-            marker.scale.x = 0.01
-            marker.scale.y = 0.01
-            marker.lifetime = rospy.Duration()
-
-            self._markers.publish(marker)
-
+            viz.publish_cluster(
+                self._markers,
+                [Point(x=x, y=y, z=z) for x, y, z in points],
+                'bin_{}'.format(userdata.bin_id),
+                'bin_{}_items'.format(userdata.bin_id),
+                i
+            )
+            
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
         return outcomes.SENSE_BIN_SUCCESS

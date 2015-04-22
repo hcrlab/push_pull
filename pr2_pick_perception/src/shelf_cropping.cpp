@@ -403,31 +403,31 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
             clusters.push_back(cluster);
         }
     
-          pcl::visualization::PCLVisualizer::Ptr vis;
+          //pcl::visualization::PCLVisualizer::Ptr vis;
         //transform point cloud to robot_frame (where the point cloud is published)
         
-        if(debug_)
-        {
-            vis.reset(new pcl::visualization::PCLVisualizer("Shelf Crooper -- Debug"));
-            pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZ> scene_handler(shelf_pc, "x");//100, 100, 200);
+        //if(debug_)
+        //{
+        //    vis.reset(new pcl::visualization::PCLVisualizer("Shelf Crooper -- Debug"));
+        //    pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZ> scene_handler(shelf_pc, "x");//100, 100, 200);
 
-            vis->addPointCloud(shelf_pc, scene_handler, "scene");
-            vis->addCoordinateSystem();
-            vis->setCameraPosition(-10,2,4,10,2,0,0,0,1);
-            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cell_handler(cell_pc, 255, 255, 255.0);    
-            vis->addPointCloud(cell_pc, cell_handler, "Crooped cell");           
+        //    vis->addPointCloud(shelf_pc, scene_handler, "scene");
+        //    vis->addCoordinateSystem();
+        //    vis->setCameraPosition(-10,2,4,10,2,0,0,0,1);
+        //    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cell_handler(cell_pc, 255, 255, 255.0);    
+        //    vis->addPointCloud(cell_pc, cell_handler, "Crooped cell");           
        
-            for(int i = 0; i < clusters.size(); ++i)
-            {
-                std::stringstream ss;
-                ss << "cluster_raw_" << i;            
-                pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZ> cluster_handler(clusters[i]);
-                vis->addPointCloud(clusters[i], cluster_handler, ss.str());
-                vis->spinOnce();
-            }
-            vis->spin();
-        
-        }    
+        //    for(int i = 0; i < clusters.size(); ++i)
+        //    {
+        //        std::stringstream ss;
+        //        ss << "cluster_raw_" << i;            
+        //        pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZ> cluster_handler(clusters[i]);
+        //        vis->addPointCloud(clusters[i], cluster_handler, ss.str());
+        //        vis->spinOnce();
+        //    }
+        //    vis->spin();
+        //
+        //}    
 
         // copy the clusters to the object ObjectList
         pr2_pick_perception::ClusterList clusterlist;

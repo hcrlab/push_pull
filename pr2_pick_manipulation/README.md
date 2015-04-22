@@ -53,7 +53,7 @@ Tucks or untucks the arms.
 from pr2_pick_manipulation.srv import TuckArms
 tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
 tuck_arms.wait_for_service()
-tuck_arms(False, True) # Tuck the left arm and untuck the right arm.
+tuck_arms(True, False) # Tuck the left arm and untuck the right arm.
 ```
 
 ## Libraries
