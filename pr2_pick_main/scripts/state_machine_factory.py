@@ -190,9 +190,9 @@ class StateMachineBuilder(object):
         interactive_marker.applyChanges = mock.Mock(
             side_effect=self.side_effect('server.applyChanges'))
 
-        get_items = rospy.ServiceProxy('get_items', GetItems)
-        set_items = rospy.ServiceProxy('set_items', SetItems)
-        get_target_items = rospy.ServiceProxy('get_target_items', GetTargetItems)
+        get_items = rospy.ServiceProxy('contest/inventory', GetItems)
+        set_items = rospy.ServiceProxy('contest/inventory', SetItems)
+        get_target_items = rospy.ServiceProxy('contest/inventory', GetTargetItems)
 
         return {
             # Speech
