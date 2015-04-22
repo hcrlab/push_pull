@@ -14,7 +14,7 @@ class UpdatePlan(smach.State):
     """
     name = 'UPDATE_PLAN'
 
-    def __init__(self, tts, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor for this state.
 
         Args:
@@ -30,15 +30,38 @@ class UpdatePlan(smach.State):
             input_keys=['bin_data'],
             output_keys=['output_bin_data', 'next_bin']
         )
-        self._tts = tts
+        self._tts = kwargs['tts']
+        self._get_items = kwargs['get_items']
+        self._set_items = kwargs['set_items']
+        self._get_target_items = kwargs['get_target_items']
         self._preferred_order = 'JKLGHIDEFABC'
 
     def execute(self, userdata):
         rospy.loginfo('Updating plan.')
         self._tts.publish('Updating plan.')
 
+
+        '''
+        Planning comment:
+        We want to know if the bin we want to acess has any items we want.
+        Obviously, we don't want to go to bins where there is nothing we want
+
+        Sudo-code picking:
+
+        foreach bin
+            if bin has not been visited and has useful item in it
+                chose that bin
+
+        foreach bin
+            if bin has not had sucess and has useful item in it
+                chose that bin
+
+        If we get here there are no bins worth going to
+        '''
+
+
         for bin_id in self._preferred_order:
-            if not userdata.bin_data[bin_id].visited:
+            if not userdata.bin_data[bin_id].visited and len(self.get_target_items(bin_id)) > 0:
                 userdata.next_bin = bin_id
                 bin_data = userdata.bin_data.copy()
                 bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
@@ -46,7 +69,7 @@ class UpdatePlan(smach.State):
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         for bin_id in self._preferred_order:
-            if not userdata.bin_data[bin_id].succeeded:
+            if not userdata.bin_data[bin_id].succeeded and len(self.get_target_items(bin_id)) > 0:
                 userdata.next_bin = bin_id
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 

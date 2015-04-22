@@ -13,6 +13,7 @@ from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform
+from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 import states
 
 
@@ -34,6 +35,10 @@ def test_move_to_bin():
             'move_torso', 'set_grippers',  'markers', 'move_head',
             'drive_angular', 'drive_linear', 'localize_object', 'set_static_tf',
             'tts', 'tuck_arms', 'drive_to_pose'
+            '''
+            Should inventory go here? It's not really needed but could be
+            useful. Is it even the right type of thing?
+            '''
         }
     }
     return build_for_move_to_bin(**services)
@@ -72,6 +77,14 @@ def real_robot_services():
         'set_static_tf': rospy.ServiceProxy('perception/set_static_transform',
                                             SetStaticTransform),
         'tf_listener': tf.TransformListener(),
+
+        # Contest
+        '''
+        Hopefully this stuff is right. Who knows?
+        '''
+        'get_items': rospy.ServiceProxy('contest/inventory' GetItems),
+        'set_items': rospy.ServiceProxy('contest/inventory' SetItems),
+        'get_target_items': rospy.ServiceProxy('contest/inventory' GetTargetItems),
      }
 
 
@@ -158,6 +171,14 @@ def mock_robot():
     drive_to_pose = rospy.ServiceProxy('drive_to_pose_service', DriveToPose)
     drive_to_pose.wait_for_service = mock.Mock(return_value=None)
     drive_to_pose.call = mock.Mock(side_effect=side_effect('drive_to_pose'))
+
+    '''
+    Hopefully this stuff is right. Who knows? I didn't make any changes from
+    the real robot stuff since I figure this should all just carry over. Right?
+    '''
+    get_items = rospy.ServiceProxy('contest/inventory' GetItems),
+    set_items = rospy.ServiceProxy('contest/inventory' SetItems),
+    get_target_items = rospy.ServiceProxy('contest/inventory' GetTargetItems),
 
     return build(tts=tts, tuck_arms=tuck_arms, move_torso=move_torso,
                  set_grippers=set_grippers, move_head=move_head,
@@ -318,13 +339,24 @@ def build_for_move_to_bin(**services):
         )
         smach.StateMachine.add(
             states.UpdatePlan.name,
-            states.UpdatePlan(services['tts']),
+            states.UpdatePlan(services['tts'],
+                              '''
+                              More chages don't really know if we still use
+                              this stuff but i'll put it in anyway since I 
+                              imagine I'll be using it
+                              '''
+                              services['get_items']),
+                              services['set_items']),
+                              services['get_target_items']),
             transitions={
                 outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
                 outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
             },
             remapping={
+                '''
+                I feel like this is probably gonna need to change
+                '''
                 'bin_data': 'bin_data',
                 'output_bin_data': 'bin_data',
                 'next_bin': 'current_bin'
