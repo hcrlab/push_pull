@@ -64,9 +64,9 @@ class StartPose(smach.State):
                     'shelf', self._start_pose.header.frame_id))
 
     def _drive_to_start_pose(self):
+        viz.publish_base(self._markers, self._start_pose)
         self._drive_to_pose.wait_for_service()
         self._drive_to_pose(self._start_pose, 0.1, 0.1)
-        viz.publish_base(self._markers, self._start_pose)
         
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
