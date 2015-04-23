@@ -648,7 +648,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
       /// Filter the points below certain height
       pass2.setInputCloud (scene_filtered);
       pass2.setFilterFieldName ("z");
-      pass2.setFilterLimits (0.75, highplane_);
+      pass2.setFilterLimits ( highplane_,1000);
       pass2.filter (*scene_filtered2);     
       
       std::cout << "Final point cloud without planes size = " << scene_filtered->points.size() << std::endl;
@@ -693,7 +693,7 @@ void ObjDetector::extractClusters(const pcl::PointCloud< pcl::PointXYZ >::ConstP
       //pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = ec.reg.getColoredCloud ();
       pcl::visualization::CloudViewer viewer ("Cluster viewer");     
 //       viewer.showCloud (rgbpc_sampled_cropped, "cloud cropped");
-      viewer.showCloud (scene_filtered, "scene_filtered");
+      viewer.showCloud (scene_filtered_world, "scene_filtered");
       
       std::cout << "Starting visualization " << std::endl;
 

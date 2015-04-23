@@ -30,6 +30,8 @@ class MoveToBin(smach.State):
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
     robot_distance_from_shelf_d_l = -1.11
+    # Careful with this parameter. If too close, it bumps into the shelf and
+    # drive service never returns. 
     robot_distance_from_shelf_a_c = -1
 
     # speed in meters per second for driving to each bin
@@ -102,8 +104,7 @@ class MoveToBin(smach.State):
         )
 
         # Visualize target pose.
-        viz.publish_base(self.markers, target_in_shelf_frame.pose.position.x,
-                         target_in_shelf_frame.pose.position.y, 'shelf')
+        viz.publish_base(self.markers, target_in_shelf_frame)
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')

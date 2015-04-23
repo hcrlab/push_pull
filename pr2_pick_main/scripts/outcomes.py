@@ -19,6 +19,9 @@ SENSE_BIN_SUCCESS = 'success'
 SENSE_BIN_NO_OBJECTS = 'no_objects'
 SENSE_BIN_FAILURE = 'failure'
 
+GRASP_TOOL_SUCCESS = 'success'
+GRASP_TOOL_FAILURE = 'failure'
+
 GRASP_SUCCESS = 'success'
 GRASP_FAILURE = 'failure'
 
