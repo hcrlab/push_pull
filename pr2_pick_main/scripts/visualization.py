@@ -13,7 +13,7 @@ import rospy
 import tf
 
 def publish_shelf(publisher, pose_stamped):
-    """Publishes a shelf marker at a give pose.
+    """Publishes a shelf marker at a given pose.
 
     The pose is assumed to represent the bottom center of the shelf, with the
     +x direction pointing along the depth axis of the bins and +z pointing up.
@@ -36,6 +36,32 @@ def publish_shelf(publisher, pose_stamped):
     marker.scale.x = 1
     marker.scale.y = 1
     marker.scale.z = 1
+    marker.lifetime = rospy.Duration()
+    _publish(publisher, marker)
+
+
+def publish_order_bin(publisher):
+    """Publishes the order bin marker based on tf.
+
+    The pose is assumed to represent the bottom center of the order bin, with the
+    +x direction pointing along the long axis of the bin and +z pointing up.
+
+    Args:
+      publisher: A visualization_msgs/Marker publisher
+    """
+    marker = Marker()
+    marker.header.frame_id = 'order_bin'
+    marker.header.stamp = rospy.Time().now()
+    marker.ns = 'order_bin'
+    marker.id = 0
+    marker.type = Marker.CUBE
+    marker.action = Marker.ADD
+    marker.color.a = 1
+    marker.color.r = 1
+    marker.scale.x = 24 * 0.0254
+    marker.scale.y = 14.5 * 0.0254
+    marker.scale.z = 8 * 0.0254
+    marker.pose.orientation.w = 1
     marker.lifetime = rospy.Duration()
     _publish(publisher, marker)
 

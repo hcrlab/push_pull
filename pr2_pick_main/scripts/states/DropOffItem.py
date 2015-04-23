@@ -114,6 +114,7 @@ class DropOffItem(smach.State):
             # self._set_static_tf(order_bin_tf)
 
             # Do it the simple way! Assumes the shelf is not too tilted
+            # TODO(jstn): move this to FindShelf.
             order_bin_tf = TransformStamped()
             order_bin_tf.header.frame_id = 'shelf'
             order_bin_tf.header.stamp = rospy.Time.now()
@@ -127,28 +128,9 @@ class DropOffItem(smach.State):
 
             self._order_bin_found = True
 
-            # Publish marker
-            marker = Marker()
-            marker.header.frame_id = 'order_bin'
-            marker.header.stamp = rospy.Time().now()
-            marker.ns = 'order_bin'
-            marker.id = 1
-            marker.type = Marker.CUBE
-            marker.action = Marker.ADD
-            marker.color.a = 1
-            marker.color.r = 1
-            marker.scale.x = 24 * 0.0254
-            marker.scale.y = 14.5 * 0.0254
-            marker.scale.z = 8 * 0.0254
-            marker.pose.orientation.w = 1
-            marker.lifetime = rospy.Duration()
+        # TODO(jstn): move this to FindShelf.
+        viz.publish_order_bin(self._markers)
 
-            # Need to wait for rviz for some reason.
-            rate = rospy.Rate(1)
-            while self._markers.get_num_connections() == 0:
-                rate.sleep()
-            self._markers.publish(marker)
-        
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, False)
