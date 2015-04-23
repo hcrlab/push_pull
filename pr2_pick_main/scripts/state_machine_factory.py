@@ -20,8 +20,8 @@ import states
 class StateMachineBuilder(object):
 
     # slugs to represent different state machines
-    TEST_MOVE_TO_BIN = 'test-move-to-bin'
     TEST_DROP_OFF_ITEM = 'test-drop-off-item'
+    TEST_MOVE_TO_BIN = 'test-move-to-bin'
     DEFAULT = 'default'
 
     def __init__(self):
