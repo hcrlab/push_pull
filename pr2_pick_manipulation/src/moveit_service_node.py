@@ -29,6 +29,9 @@ class ArmMover:
 
         while plan is None:
             try: 
+                # TODO(jstn): maybe instead of creating a new commander every service call,
+                # we can just create a commander for each move_group in __init__, and then
+                # choose the appropriate one here?
                 self._group = moveit_commander.MoveGroupCommander(req.group)
 
                 if req.position_tolerance > 0:
