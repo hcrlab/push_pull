@@ -15,14 +15,13 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform
 import states
-import visualization
 
 
 class StateMachineBuilder(object):
 
     # slugs to represent different state machines
-    TEST_MOVE_TO_BIN = 'test-move-to-bin'
     TEST_DROP_OFF_ITEM = 'test-drop-off-item'
+    TEST_MOVE_TO_BIN = 'test-move-to-bin'
     DEFAULT = 'default'
 
     def __init__(self):
@@ -169,7 +168,8 @@ class StateMachineBuilder(object):
 
         interactive_marker_server = InteractiveMarkerServer('pr2_pick_interactive_markers')
         interactive_marker.insert = mock.Mock(side_effect=self.side_effect('server.insert'))
-        interactive_marker.applyChanges = mock.Mock(side_effect=self.side_effect('server.applyChanges'))
+        interactive_marker.applyChanges = mock.Mock(
+            side_effect=self.side_effect('server.applyChanges'))
 
         return {
             # Speech

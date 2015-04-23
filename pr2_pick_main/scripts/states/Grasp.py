@@ -119,8 +119,6 @@ class Grasp(smach.State):
         #        rospy.Time(0),
         #        self._wait_for_transform_duration,
         #)
-       
- 
         item_point = self.locate_one_item(userdata.clusters)
         item_pose = geometry_msgs.msg.PoseStamped()
         item_pose.header.frame_id = item_point.header.frame_id
