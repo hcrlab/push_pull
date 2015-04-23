@@ -68,6 +68,7 @@ class FindShelf(smach.State):
             rospy.loginfo('Shelf pose: {}'.format(shelf))
             shelf_ps.pose = shelf.pose
             shelf_ps.header = shelf.header
+            shelf_ps.header.stamp = rospy.Time(0)
 
             try:
                 shelf_odom = self._tf_listener.transformPose('odom_combined',
