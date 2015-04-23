@@ -7,6 +7,7 @@ import outcomes
 import rospy
 import smach
 import tf
+import visualization as viz
 
 
 class StartPose(smach.State):
@@ -38,12 +39,36 @@ class StartPose(smach.State):
         self._set_grippers = set_grippers
         self._move_head = move_head
         self._tf_listener = tf_listener
+        self._markers = kwargs['markers']
         self._drive_to_pose = kwargs['drive_to_pose']
 
         # The location the robot started at.
         # When the robot relocalizes, it goes back to this start pose.
         self._start_pose = None
 
+    def _adjust_start_pose_orientation(self):
+        # After driving around enough, odom_combined seems to have a lot of
+        # rotation error. Orient ourselves so we're facing the shelf.
+        try:
+            shelf_in_shelf = PoseStamped()
+            shelf_in_shelf.header.frame_id = 'shelf'
+            shelf_in_shelf.header.stamp = rospy.Time(0)
+            shelf_in_shelf.pose.orientation.w = 1
+            shelf_in_odom = self._tf_listener.transformPose('odom_combined',
+                shelf_in_shelf)
+            self._start_pose.pose.orientation = shelf_in_odom.pose.orientation
+        except Exception as e:
+            rospy.logerr(e)
+            rospy.logerr(
+                'No transform between {} and {} in FindShelf'.format(
+                    'shelf', self._start_pose.header.frame_id))
+
+    def _drive_to_start_pose(self):
+        self._drive_to_pose.wait_for_service()
+        self._drive_to_pose(self._start_pose, 0.1, 0.1)
+        viz.publish_base(self._markers, self._start_pose.pose.position.x,
+            self._start_pose.pose.position.y, self._start_pose.header.frame_id)
+        
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
         self._tts.publish('Setting start pose.')
@@ -84,6 +109,7 @@ class StartPose(smach.State):
             try:
                 here = PoseStamped()
                 here.header.frame_id = 'base_footprint'
+                here.header.stamp = rospy.Time(0)
                 here.pose.position.x = 0
                 here.pose.position.y = 0
                 here.pose.position.z = 0
@@ -97,8 +123,8 @@ class StartPose(smach.State):
                 rospy.logerr('No transform for start pose.')
                 return outcomes.START_POSE_FAILURE
         else:
-            self._drive_to_pose.wait_for_service()
-            self._drive_to_pose(self._start_pose, 0.1, 0.1)
+            self._adjust_start_pose_orientation()
+            self._drive_to_start_pose()
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
