@@ -6,6 +6,7 @@ import rospkg
 import rospy
 import smach
 import tf
+import visualization as viz
 
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers
@@ -32,6 +33,7 @@ class Grasp(smach.State):
         self._moveit_move_arm = moveit_move_arm
         self._tts = tts
         self._tf_listener = tf_listener
+        self._im_server = kwargs['interactive_marker_server']
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -229,6 +231,7 @@ class Grasp(smach.State):
                               ', z: ' + str(pose_target.pose.orientation.z) +
                               ', w: ' + str(pose_target.pose.orientation.w))
 
+                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
                 success_pre_grasp = self._moveit_move_arm(pose_target, 0.001, 0.01, 0, 'right_arm').success
             else:
@@ -253,6 +256,7 @@ class Grasp(smach.State):
                               ', z: ' + str(pose_target.pose.orientation.z) +
                               ', w: ' + str(pose_target.pose.orientation.w))
 
+                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
                 success_pre_grasp = self._moveit_move_arm(pose_target, 0.01, 0.01, 0, 'right_arm').success
                 rospy.loginfo('Worked: ' + str(success_pre_grasp))
@@ -302,6 +306,7 @@ class Grasp(smach.State):
                               ', z: ' + str(pose_target.pose.orientation.z) +
                               ', w: ' + str(pose_target.pose.orientation.w))
 
+                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
                 success_grasp = self._moveit_move_arm(pose_target, 0.0001, 0.001, 0, 'right_arm').success
 
@@ -329,6 +334,7 @@ class Grasp(smach.State):
                               ', z: ' + str(pose_target.pose.orientation.z) +
                               ', w: ' + str(pose_target.pose.orientation.w))
 
+                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
                 success_grasp = self._moveit_move_arm(pose_target, 0.01, 0.01, 0, 'right_arm').success
 
