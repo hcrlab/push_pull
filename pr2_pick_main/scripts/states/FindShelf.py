@@ -97,10 +97,6 @@ class FindShelf(smach.State):
                 self._tts.publish('Shelf too tilted for try {}'.format(try_num))
                 rospy.logwarn('[FindShelf]: Shelf too tilted.')
                 continue
-            if yaw_degs < 45:
-                self._tts.publish('Shelf not rotated enough for try {}'.format(try_num))
-                rospy.logwarn('[FindShelf]: Shelf not rotated enough.')
-                continue
 
             success = True
             break
