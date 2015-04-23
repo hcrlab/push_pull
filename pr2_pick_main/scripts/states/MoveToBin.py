@@ -30,7 +30,7 @@ class MoveToBin(smach.State):
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
     robot_distance_from_shelf_d_l = -1.11
-    robot_distance_from_shelf_a_c = -0.95
+    robot_distance_from_shelf_a_c = -1
 
     # speed in meters per second for driving to each bin
     drive_speed = 0.1
@@ -61,6 +61,7 @@ class MoveToBin(smach.State):
         self.move_head = move_head
         self.move_torso = move_torso
         self.markers = markers
+        self.tuck_arms = kwargs['tuck_arms']
 
         self.torso_height_by_bin = \
             {letter: self.top_row_torso_height for letter in ('A', 'B', 'C')}
@@ -81,6 +82,9 @@ class MoveToBin(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
+
+        self.tuck_arms.wait_for_service()
+        self.tuck_arms(tuck_left=True, tuck_right=False)
 
         robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
         if userdata.bin_id > "C":
