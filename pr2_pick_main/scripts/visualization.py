@@ -85,8 +85,8 @@ def publish_base(publisher, pose_stamped):
     marker.id = 0
     marker.type = Marker.CUBE
     marker.action = Marker.ADD
-    marker.pose.position.x = x
-    marker.pose.position.y = y
+    marker.pose.position.x = pose_stamped.pose.position.x
+    marker.pose.position.y = pose_stamped.pose.position.y
     marker.pose.position.z = 0.03 / 2
     marker.pose.orientation = pose_stamped.pose.orientation
     marker.scale.x = 0.67
