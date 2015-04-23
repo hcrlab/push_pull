@@ -271,6 +271,7 @@ class Grasp(smach.State):
                 break
             else:
                 rospy.loginfo('Pre-grasp attempt ' + str(i) + ' failed')
+                self._tts.publish('Pre-grasp attempt ' + str(i) + ' failed')
                 continue
 
         if not success_pre_grasp:
@@ -348,11 +349,14 @@ class Grasp(smach.State):
                 break
             else:
                 rospy.loginfo('Grasp attempt '  + str(i) + ' failed')
+                self._tts.publish('Grasp attempt ' + str(i) + ' failed')
                 continue
 
         if not success_grasp:
             rospy.loginfo('Grasping failed')
+            self._tts.publish('Grasping failed. Giving up.')
             return outcomes.GRASP_FAILURE
         else:
             rospy.loginfo('Grasping succeeded')
+            self._tts.publish('Grasping succeeded.')
             return outcomes.GRASP_SUCCESS
