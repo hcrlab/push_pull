@@ -38,6 +38,11 @@ class StartPose(smach.State):
         self._set_grippers = set_grippers
         self._move_head = move_head
         self._tf_listener = tf_listener
+        self._drive_to_pose = kwargs['drive_to_pose']
+
+        # The location the robot started at.
+        # When the robot relocalizes, it goes back to this start pose.
+        self._start_pose = None
 
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
@@ -75,25 +80,28 @@ class StartPose(smach.State):
         else:
             rospy.loginfo('StartPose: MoveHead success')
 
+        if self._start_pose is None:
+            try:
+                here = PoseStamped()
+                here.header.frame_id = 'base_footprint'
+                here.pose.position.x = 0
+                here.pose.position.y = 0
+                here.pose.position.z = 0
+                here.pose.orientation.w = 1
+                here.pose.orientation.x = 0
+                here.pose.orientation.y = 0
+                here.pose.orientation.z = 0
+                self._start_pose = self._tf_listener.transformPose('odom_combined', here)
+                userdata.start_pose = self._start_pose
+            except:
+                rospy.logerr('No transform for start pose.')
+                return outcomes.START_POSE_FAILURE
+        else:
+            self._drive_to_pose.wait_for_service()
+            self._drive_to_pose(self._start_pose, 0.1, 0.1)
+
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
-
-        start_pose = None
-        try:
-            here = PoseStamped()
-            here.header.frame_id = 'base_footprint'
-            here.pose.position.x = 0
-            here.pose.position.y = 0
-            here.pose.position.z = 0
-            here.pose.orientation.w = 1
-            here.pose.orientation.x = 0
-            here.pose.orientation.y = 0
-            here.pose.orientation.z = 0
-            start_pose = self._tf_listener.transformPose('odom_combined', here)
-            userdata.start_pose = start_pose
-        except:
-            rospy.logerr('No transform for start pose.')
-            start_pose = None
         
         if (tuck_success and torso_success and grippers_success
                 and move_head_success):

@@ -332,7 +332,7 @@ class StateMachineBuilder(object):
                     outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
                 },
                 remapping={
-                    'debug': 'debug'
+                    'debug': 'debug',
                 }
             )
             smach.StateMachine.add(
@@ -340,6 +340,7 @@ class StateMachineBuilder(object):
                 states.UpdatePlan(**services),
                 transitions={
                     outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
+                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
                     outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
                     outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
                 },

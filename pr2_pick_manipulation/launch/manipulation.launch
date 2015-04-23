@@ -1,6 +1,6 @@
 <!-- Launches nodes that are generally useful for manipulation. -->
 <launch>
-  <include file="$(find pr2_pick_manipulation)/launch/move_group.launch" />
+  <!--include file="$(find pr2_pick_manipulation)/launch/move_group.launch" /-->
   <node pkg="pr2_pick_manipulation" type="driver_service_node" name="driver_server" respawn="true" />
   <node pkg="pr2_pick_manipulation" type="gripper_service_node" name="gripper_server" respawn="true" />
   <node pkg="pr2_pick_manipulation" type="torso_service_node" name="torso_server" respawn="true" />

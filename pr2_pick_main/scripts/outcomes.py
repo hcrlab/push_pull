@@ -8,6 +8,7 @@ FIND_SHELF_SUCCESS = 'success'
 FIND_SHELF_FAILURE = 'failure'
 
 UPDATE_PLAN_NEXT_OBJECT = 'next_object'
+UPDATE_PLAN_RELOCALIZE_SHELF = 'relocalize_shelf'
 UPDATE_PLAN_NO_MORE_OBJECTS = 'no_more_objects'
 UPDATE_PLAN_FAILURE = 'failure'
 

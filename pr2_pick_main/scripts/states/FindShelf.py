@@ -32,7 +32,6 @@ class FindShelf(smach.State):
         self._localize_object = localize_object
         self._set_static_tf = set_static_tf
         self._tf_listener = tf_listener
-        self._tf_set = False
         self._tts = tts
         self._markers = markers
 
@@ -50,7 +49,7 @@ class FindShelf(smach.State):
         success = False
         shelf_ps = PoseStamped()  # The shelf pose returned by the service.
         shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
-        for try_num in range(5):
+        for try_num in range(10):
             self._localize_object.wait_for_service()
             obj_request = ObjectDetectionRequest()
             obj_request.obj_type = 'shelf'
@@ -62,6 +61,7 @@ class FindShelf(smach.State):
             request.object = obj_request
             response = self._localize_object(request)
             if len(response.locations.objects) == 0:
+                self._tts.publish('Shelf service returned no results.')
                 rospy.logwarn('[FindShelf]: Shelf service returned no results.')
                 continue
             shelf = response.locations.objects[0]
@@ -76,6 +76,7 @@ class FindShelf(smach.State):
                 rospy.logerr(
                     'No transform between {} and {} in FindShelf'.format(
                         shelf.header.frame_id, 'odom_combined'))
+                self._tts.publish('No odometry transform while finding shelf.')
                 continue
 
             roll, pitch, yaw = tf.transformations.euler_from_quaternion(
@@ -88,8 +89,10 @@ class FindShelf(smach.State):
             # Check that the response is reasonable.
             if shelf_odom.pose.position.z < -0.08 or shelf_odom.pose.position.z > 0.08:
                 rospy.logwarn('[FindShelf]: Shelf not on the ground.')
+                self._tts.publish('Shelf not on the ground for try {}'.format(try_num))
                 continue
             if pitch_degs > 4 or pitch_degs < -4:
+                self._tts.publish('Shelf too tilted for try {}'.format(try_num))
                 rospy.logwarn('[FindShelf]: Shelf too tilted.')
                 continue
 
@@ -101,9 +104,6 @@ class FindShelf(smach.State):
         return success, shelf_odom
 
     def execute(self, userdata):
-        if (self._tf_set):
-            return outcomes.FIND_SHELF_SUCCESS
-
         rospy.loginfo('Finding shelf.')
         self._tts.publish('Finding shelf.')
 
@@ -148,7 +148,6 @@ class FindShelf(smach.State):
         transform.child_frame_id = 'shelf'
         self._set_static_tf.wait_for_service()
         self._set_static_tf(transform)
-        self._tf_set = True
 
         # Publish marker
         viz.publish_shelf(self._markers, shelf_odom)
