@@ -29,11 +29,11 @@
 
    <param name="bottom_crop_offset" value="0.08" />
    <param name="top_crop_offset" value="0.04" />
-   <param name="left_crop_offset" value="0.08" />
-   <param name="right_crop_offset" value="0.03" />
-   <param name="depth_far_crop_offset" value="0.0" />
+   <param name="left_crop_offset" value="0.05" />
+   <param name="right_crop_offset" value="0.05" />
+   <param name="depth_far_crop_offset" value="0.05" />
    <param name="depth_close_crop_offset" value="0.0" />
-   <param name="min_cluster_points" value="150" />
+   <param name="min_cluster_points" value="500" />
    <param name="max_cluster_points" value="100000" />
 
  <!--   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" /> -->
