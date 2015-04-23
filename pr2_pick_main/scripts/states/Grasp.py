@@ -279,7 +279,7 @@ class Grasp(smach.State):
 
         success_grasp = False
 
-        for i in range(10):
+        for i in range(20):
 
             # Move into bin
 
@@ -316,7 +316,7 @@ class Grasp(smach.State):
                 # - Rotation: in Quaternion [0.996, -0.016, 0.080, 0.027]
                 #     in RPY [3.090, -0.162, -0.028]
 
-                rospy.loginfo('Grasping from to row')
+                rospy.loginfo('Grasping from top row')
                 pose_target.pose.orientation.x = 0.996
                 pose_target.pose.orientation.y = -0.016
                 pose_target.pose.orientation.z = 0.080
