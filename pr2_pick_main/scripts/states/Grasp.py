@@ -61,7 +61,7 @@ class Grasp(smach.State):
 
         # Grasp Parameters
 
-        self._pre_grasp_dist = 0.33
+        self._pre_grasp_dist = 0.38
         self._grasp_height = 0.03
         self._pre_grasp_height = self._grasp_height + 0.02
 
