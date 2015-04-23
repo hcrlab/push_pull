@@ -1,6 +1,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <pr2_controllers_msgs/Pr2GripperCommandAction.h>
 #include <ros/ros.h>
+#include <tf/transform_listener.h>
 
 #include "pr2_pick_manipulation/gripper.h"
 
@@ -11,7 +12,7 @@ namespace pr2_pick_manipulation {
 const std::string Gripper::leftGripperTopic = "l_gripper_controller/gripper_action";
 const std::string Gripper::rightGripperTopic = "r_gripper_controller/gripper_action";
 
-Gripper::Gripper(const int gripper_id) {
+Gripper::Gripper(const int gripper_id) : gripper_id_(gripper_id) {
   std::string action_name;
   if (gripper_id == Gripper::LEFT_GRIPPER) {
     action_name = leftGripperTopic;
@@ -51,6 +52,36 @@ bool Gripper::SetPosition(double position, double effort) {
     ROS_ERROR("Gripper goal state: %s\n", state.toString().c_str());
     return false;
   }
+}
+
+double Gripper::GetPosition() {
+  tf::StampedTransform transform;
+  std::string destination_frame;
+  std::string original_frame;
+
+  // set frames based on whether this is a right or left gripper
+  if (gripper_id_ == Gripper::LEFT_GRIPPER) {
+    destination_frame = "l_gripper_l_finger_tip_link";
+    original_frame = "l_gripper_r_finger_tip_link";
+  } else if (gripper_id_ == Gripper::RIGHT_GRIPPER) {
+    destination_frame = "r_gripper_l_finger_tip_link";
+    original_frame = "r_gripper_r_finger_tip_link";
+  }
+  
+  // get the transform between the fingertips
+  try {
+    transform_listener_.waitForTransform(destination_frame, original_frame, ros::Time(0), ros::Duration(10.0) );
+    transform_listener_.lookupTransform(destination_frame, original_frame, ros::Time(0), transform);
+  } catch (tf::TransformException ex) {
+    ROS_ERROR("%s",ex.what());
+  }
+  
+  // subtract small positive offset so that 0 means closed
+  return transform.getOrigin().y() - 0.032;
+}
+
+bool Gripper::IsOpen() {
+  return GetPosition() < Gripper::OPEN_THRESHOLD;
 }
 
 bool Gripper::Open(double effort) {

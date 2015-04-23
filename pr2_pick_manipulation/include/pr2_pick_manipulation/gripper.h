@@ -14,6 +14,7 @@
 //    the goal position.
 
 #include <actionlib/client/simple_action_client.h>
+#include <tf/transform_listener.h>
 #include <pr2_controllers_msgs/Pr2GripperCommandAction.h>
 #include <ros/ros.h>
 
@@ -27,6 +28,10 @@ typedef actionlib::SimpleActionClient<
 class Gripper {
  private:
   GripperClient* gripper_client_;
+  tf::TransformListener transform_listener_;
+  const int gripper_id_;
+  // Gripper open threshold
+  static const double OPEN_THRESHOLD = 0.005;
 
  public:
   // Canonical "open" position.
@@ -42,6 +47,8 @@ class Gripper {
   static const std::string leftGripperTopic;
   static const std::string rightGripperTopic;
 
+
+
   // Constructor that takes the gripper id.
   // @param gripper_id - Gripper::LEFT_GRIPPER or Gripper::RIGHT_GRIPPER
   Gripper(const int gripper_id);
@@ -52,6 +59,12 @@ class Gripper {
   // @param position - how wide to open or close the gripper
   // @param effort - now much force to exert, negative is full force
   bool SetPosition(double position, double effort = -1.0);
+
+  // Gets the gripper's current position. Note: may not agree with "SetPosition"
+  double GetPosition();
+
+  // Returns whether the gripper is open or not.
+  bool IsOpen();
 
   // Opens the gripper. Returns true if the gripper opened successfully, false
   // otherwise.
