@@ -81,12 +81,16 @@ class FindShelf(smach.State):
             roll, pitch, yaw = tf.transformations.euler_from_quaternion(
                 [shelf_odom.pose.orientation.x, shelf_odom.pose.orientation.y,
                  shelf_odom.pose.orientation.z, shelf_odom.pose.orientation.w])
+            pitch_degs = 180 * pitch / math.pi
             rospy.loginfo('roll: {}, pitch: {}, yaw: {}'.format(
-                180*roll/math.pi, 180*pitch/math.pi, 180*yaw/math.pi))
+                180*roll/math.pi, pitch_degs, 180*yaw/math.pi))
 
             # Check that the response is reasonable.
-            if shelf_odom.pose.position.z < -0.1 or shelf_odom.pose.position.z > 0.1:
+            if shelf_odom.pose.position.z < -0.08 or shelf_odom.pose.position.z > 0.08:
                 rospy.logwarn('[FindShelf]: Shelf not on the ground.')
+                continue
+            if pitch_degs > 4 or pitch_degs < -4:
+                rospy.logwarn('[FindShelf]: Shelf too tilted.')
                 continue
 
             success = True
