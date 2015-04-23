@@ -5,6 +5,7 @@
 from bin_data import BinData
 from pr2_pick_manipulation.srv import DriveToPose
 import argparse
+import outcomes
 import rospy
 import smach
 import smach_ros
@@ -66,6 +67,8 @@ def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=Fal
             'state_machine_introspection_server', sm, '/')
         sis.start()
         outcome = sm.execute()
+        if outcome == outcomes.CHALLENGE_FAILURE:
+            rospy.signal_shutdown('Challenge failed.')
     except:
         sis.stop()
         rospy.signal_shutdown('Exception in the state machine.')
