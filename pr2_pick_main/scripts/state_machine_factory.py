@@ -366,7 +366,7 @@ class StateMachineBuilder(object):
                 transitions={
                     outcomes.SENSE_BIN_SUCCESS: states.Grasp.name,
                     outcomes.SENSE_BIN_NO_OBJECTS: states.UpdatePlan.name,
-                    outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.SENSE_BIN_FAILURE: states.UpdatePlan.name
                 },
                 remapping={
                     'bin_id': 'current_bin',
@@ -379,7 +379,7 @@ class StateMachineBuilder(object):
                 transitions={
                     outcomes.GRASP_SUCCESS: states.ExtractItem.name,
                     outcomes.GRASP_FAILURE: (
-                        outcomes.CHALLENGE_FAILURE
+                        states.UpdatePlan.name
                     )
                 },
                 remapping={
