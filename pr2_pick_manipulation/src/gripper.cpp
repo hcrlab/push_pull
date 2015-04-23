@@ -7,7 +7,19 @@
 using actionlib::SimpleClientGoalState;
 
 namespace pr2_pick_manipulation {
-Gripper::Gripper(const std::string& action_name) {
+
+const std::string Gripper::leftGripperTopic = "l_gripper_controller/gripper_action";
+const std::string Gripper::rightGripperTopic = "r_gripper_controller/gripper_action";
+
+Gripper::Gripper(const int gripper_id) {
+  std::string action_name;
+  if (gripper_id == Gripper::LEFT_GRIPPER) {
+    action_name = leftGripperTopic;
+  } else if (gripper_id == Gripper::RIGHT_GRIPPER) {
+    action_name = rightGripperTopic;
+  } else {
+    ROS_ERROR("Bad gripper ID: %d", gripper_id);
+  }
   gripper_client_ = new GripperClient(action_name, true);
   while(!gripper_client_->waitForServer()){
     ROS_INFO("Waiting for the %s action server to come up",

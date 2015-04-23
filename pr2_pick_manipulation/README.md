@@ -62,7 +62,7 @@ C++ action client wrapper for opening and closing the gripper.
 
 Sample usage:
 ```cpp
-Gripper right_gripper("r_gripper_controller/gripper_action");
+Gripper right_gripper(Gripper:RIGHT_GRIPPER);
 right_gripper.Open();
 right_gripper.Close();
 ```

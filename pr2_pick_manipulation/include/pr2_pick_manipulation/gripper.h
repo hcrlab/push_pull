@@ -2,7 +2,7 @@
 //
 // Sample usage:
 //  pr2_pick_manipulation::Gripper right_gripper(
-//    "r_gripper_controller/gripper_action");
+//    Gripper::RIGHT_GRIPPER);
 //  right_gripper.Open();
 //  right_gripper.Close();
 //
@@ -34,15 +34,21 @@ class Gripper {
   // Canonical "closed" position.
   static const double kClosed = 0.00;
 
-  // Constructor that takes the name of the action server to use. For the PR2,
-  // this is "r_gripper_controller/gripper_action" or
-  // "l_gripper_controller/gripper_action".
-  Gripper(const std::string& action_name);
+  // Gripper ids
+  static const int LEFT_GRIPPER = 0;
+  static const int RIGHT_GRIPPER = 1;
+
+  // Gripper action topics
+  static const std::string leftGripperTopic;
+  static const std::string rightGripperTopic;
+
+  // Constructor that takes the gripper id.
+  // @param gripper_id - Gripper::LEFT_GRIPPER or Gripper::RIGHT_GRIPPER
+  Gripper(const int gripper_id);
 
   ~Gripper();
 
-  // Sets the gripper to the given position. Returns true if successful, false
-  // otherwise.
+  // Gets the gripper to the given position. .
   // @param position - how wide to open or close the gripper
   // @param effort - now much force to exert, negative is full force
   bool SetPosition(double position, double effort = -1.0);
@@ -56,6 +62,7 @@ class Gripper {
   // otherwise.
   // @param effort - defaults to 50.0 to close gently
   bool Close(double effort = -1.0);
+
 };
 };  // namespace pr2_pick_manipulation
 

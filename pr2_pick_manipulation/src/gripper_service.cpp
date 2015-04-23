@@ -8,8 +8,8 @@ GripperService::GripperService()
       server_(nh_.advertiseService("gripper_service",
                                    &GripperService::Callback,
                                    this)),
-      left_("l_gripper_controller/gripper_action"),
-      right_("r_gripper_controller/gripper_action") {
+      left_(Gripper::LEFT_GRIPPER),
+      right_(Gripper::RIGHT_GRIPPER) {
 }
 
 bool GripperService::Callback(SetGrippers::Request& request,
