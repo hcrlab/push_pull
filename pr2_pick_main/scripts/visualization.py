@@ -66,7 +66,7 @@ def publish_order_bin(publisher):
     _publish(publisher, marker)
 
 
-def publish_base(publisher, x, y, frame_id):
+def publish_base(publisher, pose_stamped):
     """Publishes a marker representing the robot's navigation goal.
     The x and y arguments specify the center of the target.
 
@@ -79,7 +79,7 @@ def publish_base(publisher, x, y, frame_id):
         base_footprint's +z axis.
     """
     marker = Marker()
-    marker.header.frame_id = frame_id
+    marker.header.frame_id = pose_stamped.header.frame_id
     marker.header.stamp = rospy.Time().now()
     marker.ns = 'target_location'
     marker.id = 0
@@ -88,10 +88,7 @@ def publish_base(publisher, x, y, frame_id):
     marker.pose.position.x = x
     marker.pose.position.y = y
     marker.pose.position.z = 0.03 / 2
-    marker.pose.orientation.w = 1
-    marker.pose.orientation.x = 0
-    marker.pose.orientation.y = 0
-    marker.pose.orientation.z = 0
+    marker.pose.orientation = pose_stamped.pose.orientation
     marker.scale.x = 0.67
     marker.scale.y = 0.67
     marker.scale.z = 0.03

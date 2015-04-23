@@ -159,8 +159,7 @@ class DropOffItem(smach.State):
         )
 
         # Visualize target pose.
-        viz.publish_base(self._markers, target_in_order_bin_frame.pose.position.x,
-            target_in_order_bin_frame.pose.position.y, 'order_bin')
+        viz.publish_base(self._markers, target_in_order_bin_frame)
 
         rospy.loginfo('Sending drive command')
         self._drive_to_pose.wait_for_service()
