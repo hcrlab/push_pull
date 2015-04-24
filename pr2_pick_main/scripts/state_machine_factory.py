@@ -9,18 +9,20 @@ from visualization_msgs.msg import Marker
 import outcomes
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
-    TuckArms
+    TuckArms, GetGrippers
 from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform
 import states
+from states.GraspTool import GraspTool, ReleaseTool
 
 
 class StateMachineBuilder(object):
 
     # slugs to represent different state machines
     TEST_DROP_OFF_ITEM = 'test-drop-off-item'
+    TEST_GRASP_TOOL = 'test-grasp-tool'
     TEST_MOVE_TO_BIN = 'test-move-to-bin'
     DEFAULT = 'default'
 
@@ -47,10 +49,12 @@ class StateMachineBuilder(object):
         else:
             services = self.real_robot_services()
 
-        if self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
-            build = self.build_sm_for_move_to_bin
-        elif self.state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
+        if self.state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
             build = self.build_sm_for_drop_off_item
+        elif self.state_machine_identifier == StateMachineBuilder.TEST_GRASP_TOOL:
+            build = self.build_sm_for_grasp_tool
+        elif self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
+            build = self.build_sm_for_move_to_bin
         else:
             build = self.build_sm
 
@@ -68,7 +72,8 @@ class StateMachineBuilder(object):
             'move_torso': rospy.ServiceProxy('torso_service', MoveTorso),
             'move_head': rospy.ServiceProxy('move_head_service', MoveHead),
             'moveit_move_arm': rospy.ServiceProxy('moveit_service', MoveArm),
-            'set_grippers': rospy.ServiceProxy('gripper_service', SetGrippers),
+            'set_grippers': rospy.ServiceProxy('set_grippers_service', SetGrippers),
+            'get_grippers': rospy.ServiceProxy('get_grippers_service', GetGrippers),
             'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
 
             # World and Perception
@@ -115,7 +120,7 @@ class StateMachineBuilder(object):
         move_torso.wait_for_service = mock.Mock(return_value=None)
         move_torso.call = mock.Mock(side_effect=self.side_effect('move_torso'))
 
-        set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
+        set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
         set_grippers.wait_for_service = mock.Mock(return_value=None)
         set_grippers.call = mock.Mock(side_effect=self.side_effect('set_grippers'))
 
@@ -295,6 +300,31 @@ class StateMachineBuilder(object):
             )
         return sm
 
+    def build_sm_for_grasp_tool(self, **services):
+        ''' Test state machine for grasping tool '''
+        sm = smach.StateMachine(outcomes=[
+            outcomes.CHALLENGE_SUCCESS,
+            outcomes.CHALLENGE_FAILURE
+        ])
+        with sm:
+            smach.StateMachine.add(
+                GraspTool.name,
+                GraspTool(**services),
+                transitions={
+                    outcomes.GRASP_TOOL_SUCCESS: ReleaseTool.name,
+                    outcomes.GRASP_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
+                },
+            )
+            smach.StateMachine.add(
+                ReleaseTool.name,
+                ReleaseTool(**services),
+                transitions={
+                    outcomes.RELEASE_TOOL_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.RELEASE_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
+                },
+            )
+        return sm
+
     def build_sm(self, **services):
         '''Builds the main state machine.
 
@@ -392,11 +422,25 @@ class StateMachineBuilder(object):
                 states.ExtractItem.name,
                 states.ExtractItem(**services),
                 transitions={
-                    outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
+                    outcomes.EXTRACT_ITEM_SUCCESS: states.VerifyGrasp.name,
                     outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
                 },
                 remapping={
                     'bin_id': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.VerifyGrasp.name,
+                states.VerifyGrasp(**services),
+                transitions={
+                    outcomes.VERIFY_GRASP_SUCCESS: states.DropOffItem.name,
+                    outcomes.VERIFY_GRASP_FAILURE: states.UpdatePlan.name,
+                    outcomes.VERIFY_GRASP_RETRY: states.MoveToBin.name,
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data'
                 }
             )
             smach.StateMachine.add(

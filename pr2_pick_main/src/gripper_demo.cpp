@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "gripper_demo");
   ros::NodeHandle node_handle;
 
-  Gripper gripper("l_gripper_controller/gripper_action");
+  Gripper gripper(Gripper::LEFT_GRIPPER);
   double positions[] = {0.03, 0.01, 0.07, 0.1};
   bool status;
 

@@ -182,7 +182,7 @@ class DropOffItem(smach.State):
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
-        pose_target.pose.position.z = 0.40
+        pose_target.pose.position.z = 0.45
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
 
@@ -203,10 +203,10 @@ class DropOffItem(smach.State):
 
     	# report success
         
-        # bin_id = userdata.bin_id
-        # bin_data = userdata.bin_data.copy()
-        # bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
-        # userdata.output_bin_data = bin_data
+        bin_id = userdata.bin_id
+        bin_data = userdata.bin_data.copy()
+        bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
+        userdata.output_bin_data = bin_data
 
         return outcomes.DROP_OFF_ITEM_SUCCESS
 

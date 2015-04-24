@@ -5,15 +5,21 @@
 namespace pr2_pick_manipulation {
 GripperService::GripperService()
     : nh_(),
-      server_(nh_.advertiseService("gripper_service",
-                                   &GripperService::Callback,
+      set_grippers_server_(nh_.advertiseService("set_grippers_service",
+                                   &GripperService::SetGrippersCallback,
                                    this)),
-      left_("l_gripper_controller/gripper_action"),
-      right_("r_gripper_controller/gripper_action") {
+      get_grippers_server_(nh_.advertiseService("get_grippers_service",
+                                   &GripperService::GetGrippersCallback,
+                                   this)),
+      get_gripper_positions_server_(nh_.advertiseService("get_gripper_positions_service",
+                                   &GripperService::GetGripperPositionsCallback,
+                                   this)),
+      left_(Gripper::LEFT_GRIPPER),
+      right_(Gripper::RIGHT_GRIPPER) {
 }
 
-bool GripperService::Callback(SetGrippers::Request& request,
-                              SetGrippers::Response& response) {
+bool GripperService::SetGrippersCallback(SetGrippers::Request& request,
+                                         SetGrippers::Response& response) {
   if (request.open_left) {
     left_.Open(-1);
   } else {
@@ -27,5 +33,20 @@ bool GripperService::Callback(SetGrippers::Request& request,
   response.success = true;
   return true;
 }
+
+bool GripperService::GetGrippersCallback(GetGrippers::Request& request,
+                                         GetGrippers::Response& response) {
+  response.left_open = left_.IsOpen();
+  response.right_open = right_.IsOpen();
+  return true;
+}
+
+bool GripperService::GetGripperPositionsCallback(GetGripperPositions::Request& request,
+                                                 GetGripperPositions::Response& response) {
+  response.left_position = left_.GetPosition();
+  response.right_position = right_.GetPosition();
+  return true;
+}
+
 
 };  // namespace pr2_pick_manipulation

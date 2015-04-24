@@ -55,6 +55,7 @@ class UpdatePlan(smach.State):
                 userdata.output_bin_data = bin_data
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
+        # take another pass at all the bins that did not succeed
         for bin_id in self._preferred_order:
             if not userdata.bin_data[bin_id].succeeded:
                 userdata.next_bin = bin_id

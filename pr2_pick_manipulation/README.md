@@ -42,7 +42,7 @@ move_torso(MoveTorsoRequest.MAX_HEIGHT) # Move torso to maximum height.
 Opens or closes the grippers.
 ```py
 from pr2_pick_manipulation.srv import SetGrippers
-set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
+set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
 set_grippers.wait_for_service()
 set_grippers(False, True) # Close left hand and open right hand.
 ```
@@ -62,7 +62,7 @@ C++ action client wrapper for opening and closing the gripper.
 
 Sample usage:
 ```cpp
-Gripper right_gripper("r_gripper_controller/gripper_action");
+Gripper right_gripper(Gripper:RIGHT_GRIPPER);
 right_gripper.Open();
 right_gripper.Close();
 ```

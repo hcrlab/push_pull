@@ -13,14 +13,23 @@ from state_machine_factory import StateMachineBuilder
 import states
 
 
-def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=False,
-         auto_reset=True):
+def main(
+    mock=False,
+    test_drop_off_item=False,
+    test_grasp_tool=False,
+    test_move_to_bin=False,
+    debug=False,
+    auto_reset=True,
+    attempts_per_bin=3
+):
     rospy.init_node('pr2_pick_state_machine')
 
-    if test_move_to_bin:
-        state_machine_type = StateMachineBuilder.TEST_MOVE_TO_BIN
-    elif test_drop_off_item:
+    if test_drop_off_item:
         state_machine_type = StateMachineBuilder.TEST_DROP_OFF_ITEM
+    elif test_grasp_tool:
+        state_machine_type = StateMachineBuilder.TEST_GRASP_TOOL
+    elif test_move_to_bin:
+        state_machine_type = StateMachineBuilder.TEST_MOVE_TO_BIN
     else:
         state_machine_type = StateMachineBuilder.DEFAULT
 
@@ -40,7 +49,7 @@ def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=Fal
     # Holds data about the state of each bin.
     sm.userdata.bin_data = {}
     for bin_id in 'ABCDEFGHIJKL':
-        sm.userdata.bin_data[bin_id] = BinData(id, False, False)
+        sm.userdata.bin_data[bin_id] = BinData(id, False, False, attempts_per_bin)
 
     # The starting pose of the robot, in odom_combined.
     sm.userdata.start_pose = None
@@ -81,14 +90,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        '--test_move_to_bin', action='store_true',
-        help=('True to create a minimal state machine for testing the'
-              'MoveToBin state.')
-    )
-    group.add_argument(
         '--test_drop_off_item', action='store_true',
         help=('True to create a minimal state machine for testing the'
               'DropOffItem state.')
+    )
+    group.add_argument(
+        '--test_grasp_tool', action='store_true',
+        help=('True to create a minimal state machine for testing the'
+              'GraspTool state.')
+    )
+    group.add_argument(
+        '--test_move_to_bin', action='store_true',
+        help=('True to create a minimal state machine for testing the'
+              'MoveToBin state.')
     )
 
     parser.add_argument(
@@ -105,11 +119,22 @@ if __name__ == '__main__':
         help=('Set to true to make the robot to drive back to its starting'
               ' point when the state machine exits.')
     )
+    parser.add_argument('--attempts_per_bin', default='3', type=int,
+        help=('Number of times to attempt to grasp each item before'
+              ' giving up.')
+    )
     args = parser.parse_args(args=rospy.myargv()[1:])
     sim_time = rospy.get_param('use_sim_time', False)
     if sim_time != False:
         rospy.logwarn('Warning: use_sim_time was set to true. Setting back to '
             'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
-    main(args.mock, args.test_move_to_bin, args.test_drop_off_item, args.debug,
-         args.auto_reset)
+    main(
+        args.mock,
+        args.test_drop_off_item,
+        args.test_grasp_tool,
+        args.test_move_to_bin,
+        args.debug,
+        args.auto_reset,
+        args.attempts_per_bin
+    )

@@ -22,11 +22,19 @@ SENSE_BIN_FAILURE = 'failure'
 GRASP_TOOL_SUCCESS = 'success'
 GRASP_TOOL_FAILURE = 'failure'
 
+RELEASE_TOOL_SUCCESS = 'success'
+RELEASE_TOOL_FAILURE = 'failure'
+
 GRASP_SUCCESS = 'success'
 GRASP_FAILURE = 'failure'
 
 EXTRACT_ITEM_SUCCESS = 'success'
 EXTRACT_ITEM_FAILURE = 'failure'
 
+VERIFY_GRASP_SUCCESS = 'success'
+VERIFY_GRASP_FAILURE = 'failure'
+VERIFY_GRASP_RETRY = 'retry'
+
 DROP_OFF_ITEM_SUCCESS = 'success'
 DROP_OFF_ITEM_FAILURE = 'failure'
+

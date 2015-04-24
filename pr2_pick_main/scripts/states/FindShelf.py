@@ -68,6 +68,7 @@ class FindShelf(smach.State):
             rospy.loginfo('Shelf pose: {}'.format(shelf))
             shelf_ps.pose = shelf.pose
             shelf_ps.header = shelf.header
+            shelf_ps.header.stamp = rospy.Time(0)
 
             try:
                 shelf_odom = self._tf_listener.transformPose('odom_combined',
@@ -95,10 +96,6 @@ class FindShelf(smach.State):
             if pitch_degs > 4 or pitch_degs < -4:
                 self._tts.publish('Shelf too tilted for try {}'.format(try_num))
                 rospy.logwarn('[FindShelf]: Shelf too tilted.')
-                continue
-            if yaw_degs < 45:
-                self._tts.publish('Shelf not rotated enough for try {}'.format(try_num))
-                rospy.logwarn('[FindShelf]: Shelf not rotated enough.')
                 continue
 
             success = True
