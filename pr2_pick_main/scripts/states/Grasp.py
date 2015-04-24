@@ -1,4 +1,4 @@
-import geometry_msgs.msg import Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import json
 import moveit_commander
 import os
@@ -32,7 +32,7 @@ class Grasp(smach.State):
     # Grasp Parameters
     _pre_grasp_dist = 0.38
     half_gripper_height = 0.03
-    pre_grasp_height = self.half_gripper_height + 0.02
+    pre_grasp_height = half_gripper_height + 0.02
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -130,7 +130,7 @@ class Grasp(smach.State):
         shelf_mesh = path + '/config/kiva_pod/meshes/pod_lowres.stl'
         scene.add_mesh('shelf', shelf_pose, shelf_mesh)
 
-    def log_pose_info(pose):
+    def log_pose_info(self, pose):
         position = pose.position
         rospy.loginfo(
             'pose x: {}, y: {}, z: {}'
@@ -194,7 +194,7 @@ class Grasp(smach.State):
         success_pre_grasp = False
         pre_grasp_offsets = [
             self.pre_grasp_attempt_separation * i
-            for i in range(pre_grasp_attempts)
+            for i in range(self.pre_grasp_attempts)
         ]
         for (idx, offset) in enumerate(pre_grasp_offsets):
 
@@ -257,7 +257,7 @@ class Grasp(smach.State):
         success_grasp = False
 
         # Move gripper into bin
-        grasp_attempt_delta = (self.dist_to_fingertips - self.dist_to_palm) / grasp_attempts
+        grasp_attempt_delta = (self.dist_to_fingertips - self.dist_to_palm) / self.grasp_attempts
         grasp_attempt_offsets = [
             grasp_attempt_delta * i
             for i in range(self.grasp_attempts)
