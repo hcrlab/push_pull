@@ -21,6 +21,7 @@ class StateMachineBuilder(object):
 
     # slugs to represent different state machines
     TEST_DROP_OFF_ITEM = 'test-drop-off-item'
+    TEST_GRASP_TOOL = 'test-grasp-tool'
     TEST_MOVE_TO_BIN = 'test-move-to-bin'
     DEFAULT = 'default'
 
@@ -47,10 +48,12 @@ class StateMachineBuilder(object):
         else:
             services = self.real_robot_services()
 
-        if self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
-            build = self.build_sm_for_move_to_bin
-        elif self.state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
+        if self.state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
             build = self.build_sm_for_drop_off_item
+        elif self.state_machine_identifier == StateMachineBuilder.TEST_GRASP_TOOL:
+            build = self.build_sm_for_grasp_tool
+        elif self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
+            build = self.build_sm_for_move_to_bin
         else:
             build = self.build_sm
 
@@ -292,6 +295,23 @@ class StateMachineBuilder(object):
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
                 }
+            )
+        return sm
+
+    def build_sm_for_grasp_tool(self, **services):
+        ''' Test state machine for grasping tool '''
+        sm = smach.StateMachine(outcomes=[
+            outcomes.CHALLENGE_SUCCESS,
+            outcomes.CHALLENGE_FAILURE
+        ])
+        with sm:
+            smach.StateMachine.add(
+                states.GraspTool.name,
+                states.GraspTool(**services),
+                transitions={
+                    outcomes.GRASP_TOOL_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.GRASP_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
+                },
             )
         return sm
 
