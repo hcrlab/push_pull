@@ -10,7 +10,13 @@ import outcomes
 
 
 class GraspTool(smach.State):
-    ''' Grasps tool from the robot's right shoulder holster '''
+    '''
+    Grasps tool from the robot's right shoulder holster.
+    Assumptions:
+    - tool is about 35 cm long
+    - tool is pushed to the rear of our homemade shoulder holster
+    - tool has a valid grasp for gripper to close up and down
+    '''
     name = 'GRASP_TOOL'
 
     reach_for_tool_duration = rospy.Duration(5.0)
