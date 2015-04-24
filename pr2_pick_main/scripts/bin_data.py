@@ -8,4 +8,6 @@ from collections import namedtuple
 #     bin, false otherwise. succeeded = false either means that there was an
 #     unsuccessful attempt, or it hasn't been tried yet, check visited to
 #     distinguish between these two cases.
-BinData = namedtuple('BinData', ['id', 'visited', 'succeeded'])
+#	attempts_remaining: int, indicates the number of attempts remaining
+#	  before this bin should be ignored
+BinData = namedtuple('BinData', ['id', 'visited', 'succeeded', 'attempts_remaining'])

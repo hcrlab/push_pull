@@ -69,6 +69,7 @@ add_service_files(
   FILES
   PushAway.srv
   SetGrippers.srv
+  GetGrippers.srv
   DriveLinear.srv
   DriveAngular.srv
   DriveToPose.srv

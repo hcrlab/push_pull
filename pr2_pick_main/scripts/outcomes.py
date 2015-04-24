@@ -24,5 +24,10 @@ GRASP_FAILURE = 'failure'
 EXTRACT_ITEM_SUCCESS = 'success'
 EXTRACT_ITEM_FAILURE = 'failure'
 
+VERIFY_GRASP_SUCCESS = 'success'
+VERIFY_GRASP_FAILURE = 'failure'
+VERIFY_GRASP_RETRY = 'retry'
+
 DROP_OFF_ITEM_SUCCESS = 'success'
 DROP_OFF_ITEM_FAILURE = 'failure'
+

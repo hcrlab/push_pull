@@ -2,8 +2,8 @@
 //
 // Sample usage (Python):
 // from pr2_pick_manipulation.srv import SetGrippers
-// rospy.wait_for_service('gripper_service')
-// set_grippers = rospy.ServiceProxy('gripper_service', Grippers)
+// rospy.wait_for_service('set_grippers_service')
+// set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
 // set_grippers(False, True) # Close left hand and open right hand.
 
 #include "pr2_pick_manipulation/gripper.h"
@@ -17,10 +17,12 @@ namespace pr2_pick_manipulation {
 class GripperService {
  private:
   ros::NodeHandle nh_;
-  ros::ServiceServer server_;
+  ros::ServiceServer set_grippers_server_;
+  ros::ServiceServer get_grippers_server_;
   Gripper left_;
   Gripper right_;
-  bool Callback(SetGrippers::Request& request, SetGrippers::Response& response);
+  bool SetGrippersCallback(SetGrippers::Request& request, SetGrippers::Response& response);
+  bool GetGrippersCallback(GetGrippers::Request& request, GetGrippers::Response& response);
 
  public:
   GripperService();

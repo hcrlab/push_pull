@@ -11,9 +11,8 @@ import smach_ros
 from state_machine_factory import StateMachineBuilder
 import states
 
-
 def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=False,
-         auto_reset=True):
+         auto_reset=True, attempts_per_bin=3):
     rospy.init_node('pr2_pick_state_machine')
 
     if test_move_to_bin:
@@ -39,7 +38,7 @@ def main(mock=False, test_move_to_bin=False, test_drop_off_item=False, debug=Fal
     # Holds data about the state of each bin.
     sm.userdata.bin_data = {}
     for bin_id in 'ABCDEFGHIJKL':
-        sm.userdata.bin_data[bin_id] = BinData(id, False, False)
+        sm.userdata.bin_data[bin_id] = BinData(id, False, False, attempts_per_bin)
 
     # The starting pose of the robot, in odom_combined.
     sm.userdata.start_pose = None
@@ -102,6 +101,10 @@ if __name__ == '__main__':
         help=('Set to true to make the robot to drive back to its starting'
               ' point when the state machine exits.')
     )
+    parser.add_argument('--attempts_per_bin', default='3', type=int,
+        help=('Number of times to attempt to grasp each item before'
+              ' giving up.')
+    )
     args = parser.parse_args(args=rospy.myargv()[1:])
     sim_time = rospy.get_param('use_sim_time', False)
     if sim_time != False:
@@ -109,4 +112,4 @@ if __name__ == '__main__':
             'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
     main(args.mock, args.test_move_to_bin, args.test_drop_off_item, args.debug,
-         args.auto_reset)
+         args.auto_reset, args.attempts_per_bin)

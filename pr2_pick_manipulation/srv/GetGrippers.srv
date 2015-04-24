@@ -1,0 +1,4 @@
+---
+# True indicates each respective gripper is open.
+bool left_open
+bool right_open

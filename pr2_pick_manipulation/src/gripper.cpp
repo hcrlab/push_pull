@@ -81,7 +81,7 @@ double Gripper::GetPosition() {
 }
 
 bool Gripper::IsOpen() {
-  return GetPosition() < Gripper::OPEN_THRESHOLD;
+  return GetPosition() > Gripper::OPEN_THRESHOLD;
 }
 
 bool Gripper::Open(double effort) {

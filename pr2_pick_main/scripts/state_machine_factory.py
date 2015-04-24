@@ -69,7 +69,8 @@ class StateMachineBuilder(object):
             'move_torso': rospy.ServiceProxy('torso_service', MoveTorso),
             'move_head': rospy.ServiceProxy('move_head_service', MoveHead),
             'moveit_move_arm': rospy.ServiceProxy('moveit_service', MoveArm),
-            'set_grippers': rospy.ServiceProxy('gripper_service', SetGrippers),
+            'set_grippers': rospy.ServiceProxy('set_grippers_service', SetGrippers),
+            'get_grippers': rospy.ServiceProxy('get_grippers_service', GetGrippers),
             'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
 
             # World and Perception
@@ -116,7 +117,7 @@ class StateMachineBuilder(object):
         move_torso.wait_for_service = mock.Mock(return_value=None)
         move_torso.call = mock.Mock(side_effect=self.side_effect('move_torso'))
 
-        set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
+        set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
         set_grippers.wait_for_service = mock.Mock(return_value=None)
         set_grippers.call = mock.Mock(side_effect=self.side_effect('set_grippers'))
 
@@ -396,6 +397,20 @@ class StateMachineBuilder(object):
                 },
                 remapping={
                     'bin_id': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.VerifyGrasp.name,
+                states.VerifyGrasp(**services),
+                transitions={
+                    outcomes.VERIFY_GRASP_SUCCESS: states.DropOffItem.name,
+                    outcomes.VERIFY_GRASP_FAILURE: states.UpdatePlan.name,
+                    outcomes.VERIFY_GRASP_RETRY: states.SenseBin.name,
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data'
                 }
             )
             smach.StateMachine.add(
