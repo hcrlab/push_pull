@@ -188,6 +188,13 @@ target_link_libraries(shelf_localization_service_node
   ${catkin_LIBRARIES}
 )
 
+# target_link_libraries(shelf_localization_service_node_lidar
+#   ${VTK_LIBRARIES}
+#   ${OpenCV_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   ${catkin_LIBRARIES}
+# )
+
 target_link_libraries(shelf_cropping_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}

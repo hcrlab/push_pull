@@ -29,9 +29,10 @@ class MoveToBin(smach.State):
 
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
-    robot_distance_from_shelf_d_l = -1.06
-    robot_distance_from_shelf_a_c = -0.95
-    robot_distance_from_shelf = -1.1
+    robot_distance_from_shelf_d_l = -1.11
+    # Careful with this parameter. If too close, it bumps into the shelf and
+    # drive service never returns. 
+    robot_distance_from_shelf_a_c = -1
 
     # speed in meters per second for driving to each bin
     drive_speed = 0.1
@@ -62,6 +63,7 @@ class MoveToBin(smach.State):
         self.move_head = move_head
         self.move_torso = move_torso
         self.markers = markers
+        self.tuck_arms = kwargs['tuck_arms']
 
         self.torso_height_by_bin = \
             {letter: self.top_row_torso_height for letter in ('A', 'B', 'C')}
@@ -83,17 +85,18 @@ class MoveToBin(smach.State):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
 
-        if userdata.bin_id > "C":
-            self.robot_distance_from_shelf = self.robot_distance_from_shelf_d_l
-        else:
-            self.robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
+        self.tuck_arms.wait_for_service()
+        self.tuck_arms(tuck_left=True, tuck_right=False)
 
+        robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
+        if userdata.bin_id > "C":
+            robot_distance_from_shelf = self.robot_distance_from_shelf_d_l
 
         # find the target pose in robot coordinates
         target_in_shelf_frame = PoseStamped(
             header=Header(frame_id='shelf'),
             pose=Pose(
-                position=Point(x=self.robot_distance_from_shelf,
+                position=Point(x=robot_distance_from_shelf,
                                y=self.strafe_by_bin[userdata.bin_id],
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
@@ -101,8 +104,7 @@ class MoveToBin(smach.State):
         )
 
         # Visualize target pose.
-        viz.publish_base(self.markers, target_in_shelf_frame.pose.position.x,
-                         target_in_shelf_frame.pose.position.y, 'shelf')
+        viz.publish_base(self.markers, target_in_shelf_frame)
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')

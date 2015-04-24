@@ -24,6 +24,7 @@ class UpdatePlan(smach.State):
             self,
             outcomes=[
                 outcomes.UPDATE_PLAN_NEXT_OBJECT,
+                outcomes.UPDATE_PLAN_RELOCALIZE_SHELF,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS,
                 outcomes.UPDATE_PLAN_FAILURE
             ],
@@ -32,10 +33,19 @@ class UpdatePlan(smach.State):
         )
         self._tts = tts
         self._preferred_order = 'JKLGHIDEFABC'
+        # How often this state has been run since the last time we relocalized
+        # the shelf.
+        self._calls_since_shelf_localization = 0
 
     def execute(self, userdata):
         rospy.loginfo('Updating plan.')
         self._tts.publish('Updating plan.')
+
+        if self._calls_since_shelf_localization == 1:
+            self._calls_since_shelf_localization = 0
+            return outcomes.UPDATE_PLAN_RELOCALIZE_SHELF
+        else:
+            self._calls_since_shelf_localization += 1
 
         for bin_id in self._preferred_order:
             if not userdata.bin_data[bin_id].visited:

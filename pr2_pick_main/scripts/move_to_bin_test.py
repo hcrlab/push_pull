@@ -23,7 +23,7 @@ class MockUserdata(object):
 
 if __name__ == '__main__':
     rospy.init_node('MoveToBinTest')
-    mock_userdata = MockUserdata
+    mock_userdata = MockUserdata()
     mock_userdata.bin_id = 'G'
     if len(sys.argv) > 1:
         mock_userdata.bin_id = sys.argv[1]
