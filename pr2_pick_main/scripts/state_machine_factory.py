@@ -435,7 +435,7 @@ class StateMachineBuilder(object):
                 transitions={
                     outcomes.VERIFY_GRASP_SUCCESS: states.DropOffItem.name,
                     outcomes.VERIFY_GRASP_FAILURE: states.UpdatePlan.name,
-                    outcomes.VERIFY_GRASP_RETRY: states.SenseBin.name,
+                    outcomes.VERIFY_GRASP_RETRY: states.MoveToBin.name,
                 },
                 remapping={
                     'bin_id': 'current_bin',
