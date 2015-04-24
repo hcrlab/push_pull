@@ -1,10 +1,11 @@
-import geometry_msgs.msg
+import geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import json
 import moveit_commander
 import os
 import rospkg
 import rospy
 import smach
+from std_msgs.msg import Header
 import tf
 import visualization as viz
 
@@ -16,8 +17,7 @@ class Grasp(smach.State):
     ''' Grasps an item in the bin. '''
     name = 'GRASP'
 
-    def __init__(self, tts, set_grippers, tuck_arms, moveit_move_arm, find_centroid,
-                 tf_listener, **kwargs):
+    def __init__(self, **services):
         smach.State.__init__(
             self,
             outcomes=[
@@ -27,13 +27,13 @@ class Grasp(smach.State):
             input_keys=['bin_id', 'clusters', 'debug']
         )
 
-        self._find_centroid = find_centroid
-        self._set_grippers = set_grippers
-        self._tuck_arms = tuck_arms
-        self._moveit_move_arm = moveit_move_arm
-        self._tts = tts
-        self._tf_listener = tf_listener
-        self._im_server = kwargs['interactive_marker_server']
+        self._find_centroid = services['find_centroid']
+        self._set_grippers = services['set_grippers']
+        self._tuck_arms = services['tuck_arms']
+        self._moveit_move_arm = services['moveit_move_arm']
+        self._tts = services['tts']
+        self._tf_listener = services['tf_listener']
+        self._im_server = services['interactive_marker_server']
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -67,8 +67,9 @@ class Grasp(smach.State):
 
     def locate_hard_coded_items(self):
         '''
-        Locate items in this shelf based on the hard-coded values
-        in the json configuration file ignoring perception data.
+        Locate items in this shelf based on the hard-coded values in the json
+        configuration file ignoring perception data. Intended to bypass
+        perception.
         '''
         current_dir = os.path.dirname(__file__)
         relative_path = '../../config/milestone_1_fake_object_locations.json'
@@ -77,7 +78,7 @@ class Grasp(smach.State):
         with open(file_path) as config_file:
             object_data = json.load(config_file)
 
-        item_pose = geometry_msgs.msg.PoseStamped()
+        item_pose = PoseStamped()
 
         for shelf_bin in object_data['work_order']:
             if (shelf_bin['bin'] == 'bin_' + str(userdata.bin_id) ):
@@ -104,13 +105,24 @@ class Grasp(smach.State):
         response = self._find_centroid(cluster_to_use)
         return response.centroid
 
+    def add_shelf_mesh_to_scene(scene):
+        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
+        shelf_pose = PoseStamped(
+            header=Header(frame_id='/shelf'),
+            pose=Pose(
+                position=Position(x=0.0, y=0.0, z=0.0),
+                orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
+            ),
+        )
+        rospack = rospkg.RosPack()
+        path = rospack.get_path('pr2_pick_contest')
+        shelf_mesh = path + '/config/kiva_pod/meshes/pod_lowres.stl'
+        scene.add_mesh('shelf', shelf_pose, shelf_mesh)
+
     def execute(self, userdata):
         self._tts.publish('Grasping item')
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, False)
-
-        # to bypass perception, do this
-        # item_pose = self.locate_hard_coded_items()[0]
 
         # TODO(sksellio): check whether this works.
         #self._tf_listener.waitForTransform(
@@ -120,57 +132,41 @@ class Grasp(smach.State):
         #        self._wait_for_transform_duration,
         #)
         item_point = self.locate_one_item(userdata.clusters)
-        item_pose = geometry_msgs.msg.PoseStamped()
-        item_pose.header.frame_id = item_point.header.frame_id
-        item_pose.header.stamp = rospy.Time(0)
-        item_pose.pose.position = item_point.point
-        item_pose.pose.orientation.w = 1
-        item_pose.pose.orientation.x = 0
-        item_pose.pose.orientation.y = 0
-        item_pose.pose.orientation.z = 0
-
-        if not item_pose.header.frame_id:
+        if not item_point.header.frame_id:
             rospy.loginfo('Grasping failed. No clusters.')
             self._tts.publish('No clusters. Giving up.')
             return outcomes.GRASP_FAILURE
- 
-        transformed_item_pose = self._tf_listener.transformPose('base_footprint',
+
+        item_pose = PoseStamped(
+            header=Header(
+                frame_id=item_point.header.frame_id,
+                stamp=rospy.Time(0),
+            ),
+            pose=Pose(
+                position=item_point.point,
+                orientation=Quaternion(w=1, x=0, y=0, z=0),
+            )
+        )
+        base_frame_item_pose = self._tf_listener.transformPose('base_footprint',
                                                                 item_pose)
 
         rospy.loginfo(
             'Grasping item in bin {} from pose {}'
-            .format(userdata.bin_id, transformed_item_pose)
+            .format(userdata.bin_id, base_frame_item_pose)
         )
-
         if userdata.debug:
             raw_input('(Debug) Press enter to continue >')
 
         scene = moveit_commander.PlanningSceneInterface()
         scene.remove_world_object('shelf')
-
-        shelf_pose = geometry_msgs.msg.PoseStamped()
-        shelf_pose.header.frame_id = '/shelf'
-        shelf_pose.pose.position.x = 0.0
-        shelf_pose.pose.position.y = 0.0
-        shelf_pose.pose.position.z = 0.0
-        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
-        shelf_pose.pose.orientation.x = q[0]
-        shelf_pose.pose.orientation.y = q[1]
-        shelf_pose.pose.orientation.z = q[2]
-        shelf_pose.pose.orientation.w = q[3]
-        rospack = rospkg.RosPack()
-
-        path = rospack.get_path('pr2_pick_contest')
-
-        shelf_mesh = path + '/config/kiva_pod/meshes/pod_lowres.stl' 
-        #scene.add_mesh('shelf', shelf_pose, shelf_mesh)
+        # self.add_shelf_mesh_to_scene(scene)
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
         # Center Arm
         """
         rospy.loginfo('Center Arm')
-        pose = geometry_msgs.msg.PoseStamped()
+        pose = PoseStamped()
         pose.header.frame_id = 'base_footprint';
 
         if userdata.bin_id > 'F':
@@ -212,7 +208,7 @@ class Grasp(smach.State):
             # Pose in front of bin
 
             rospy.loginfo('Pre-grasp:')
-            pose_target = geometry_msgs.msg.PoseStamped()
+            pose_target = PoseStamped()
             pose_target.header.frame_id = 'base_footprint';
 
             if userdata.bin_id > 'C':
@@ -220,10 +216,10 @@ class Grasp(smach.State):
                 rospy.loginfo('Not in the top row')
                 pose_target.pose.orientation.w = 1
                 pose_target.pose.position.x = self._pre_grasp_dist + 0.01 * i
-                pose_target.pose.position.y = transformed_item_pose.pose.position.y
-                if ((transformed_item_pose.pose.position.z > (shelf_height + self._grasp_height))
-                    and (transformed_item_pose.pose.position.z < (shelf_height + 0.15))):
-                    pose_target.pose.position.z = transformed_item_pose.pose.position.z
+                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
+                if ((base_frame_item_pose.pose.position.z > (shelf_height + self._grasp_height))
+                    and (base_frame_item_pose.pose.position.z < (shelf_height + 0.15))):
+                    pose_target.pose.position.z = base_frame_item_pose.pose.position.z
                 else:
                     pose_target.pose.position.z = shelf_height + \
                         self._grasp_height + self._pre_grasp_height
@@ -249,7 +245,7 @@ class Grasp(smach.State):
                 pose_target.pose.orientation.z = 0.178
                 pose_target.pose.orientation.w = 0.028
                 pose_target.pose.position.x = 0.243 + 0.01 * i
-                pose_target.pose.position.y = transformed_item_pose.pose.position.y
+                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
                 pose_target.pose.position.z = 1.508
 
                 rospy.loginfo('pose x: ' + str(pose_target.pose.position.x) +
@@ -291,17 +287,17 @@ class Grasp(smach.State):
             # Move into bin
 
             rospy.loginfo('Grasp')
-            pose_target = geometry_msgs.msg.PoseStamped()
+            pose_target = PoseStamped()
             pose_target.header.frame_id = 'base_footprint';
             if userdata.bin_id > 'C':
 
                 rospy.loginfo('Not grasping from top row')
                 pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = transformed_item_pose.pose.position.x - dist_to_palm - grasp_attempt_offset * i 
-                pose_target.pose.position.y = transformed_item_pose.pose.position.y
-                if ((transformed_item_pose.pose.position.z > (shelf_height + self._grasp_height))
-                    and (transformed_item_pose.pose.position.z < (shelf_height + 0.15))):
-                    pose_target.pose.position.z = transformed_item_pose.pose.position.z
+                pose_target.pose.position.x = base_frame_item_pose.pose.position.x - dist_to_palm - grasp_attempt_offset * i 
+                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
+                if ((base_frame_item_pose.pose.position.z > (shelf_height + self._grasp_height))
+                    and (base_frame_item_pose.pose.position.z < (shelf_height + 0.15))):
+                    pose_target.pose.position.z = base_frame_item_pose.pose.position.z
                 else:
                     pose_target.pose.position.z = shelf_height + self._grasp_height
 
@@ -329,7 +325,7 @@ class Grasp(smach.State):
                 pose_target.pose.orientation.z = 0.080
                 pose_target.pose.orientation.w = 0.027
                 pose_target.pose.position.x = 0.431 - 0.01 * i
-                pose_target.pose.position.y = transformed_item_pose.pose.position.y
+                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
                 pose_target.pose.position.z = 1.570
 
                 rospy.loginfo('Grasping from top row')

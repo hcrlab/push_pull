@@ -31,7 +31,7 @@ class MoveToBin(smach.State):
     # in shelf coordinates
     robot_distance_from_shelf_d_l = -1.11
     # Careful with this parameter. If too close, it bumps into the shelf and
-    # drive service never returns. 
+    # drive service never returns.
     robot_distance_from_shelf_a_c = -1
 
     # speed in meters per second for driving to each bin
