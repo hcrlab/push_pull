@@ -11,6 +11,9 @@ GripperService::GripperService()
       get_grippers_server_(nh_.advertiseService("get_grippers_service",
                                    &GripperService::GetGrippersCallback,
                                    this)),
+      get_gripper_positions_server_(nh_.advertiseService("get_gripper_positions_service",
+                                   &GripperService::GetGrippersCallback,
+                                   this)),
       left_(Gripper::LEFT_GRIPPER),
       right_(Gripper::RIGHT_GRIPPER) {
 }
