@@ -49,7 +49,7 @@ class FindShelf(smach.State):
         success = False
         shelf_ps = PoseStamped()  # The shelf pose returned by the service.
         shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
-        for try_num in range(10):
+        for try_num in range(100):
             self._localize_object.wait_for_service()
             obj_request = ObjectDetectionRequest()
             obj_request.obj_type = 'shelf'
@@ -68,6 +68,7 @@ class FindShelf(smach.State):
             rospy.loginfo('Shelf pose: {}'.format(shelf))
             shelf_ps.pose = shelf.pose
             shelf_ps.header = shelf.header
+            shelf_ps.header.stamp = rospy.Time(0)
 
             try:
                 shelf_odom = self._tf_listener.transformPose('odom_combined',
@@ -83,8 +84,9 @@ class FindShelf(smach.State):
                 [shelf_odom.pose.orientation.x, shelf_odom.pose.orientation.y,
                  shelf_odom.pose.orientation.z, shelf_odom.pose.orientation.w])
             pitch_degs = 180 * pitch / math.pi
+            yaw_degs = 180 * yaw / math.pi
             rospy.loginfo('roll: {}, pitch: {}, yaw: {}'.format(
-                180*roll/math.pi, pitch_degs, 180*yaw/math.pi))
+                180*roll/math.pi, pitch_degs, yaw_degs))
 
             # Check that the response is reasonable.
             if shelf_odom.pose.position.z < -0.08 or shelf_odom.pose.position.z > 0.08:

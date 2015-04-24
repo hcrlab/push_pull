@@ -119,7 +119,6 @@ class Grasp(smach.State):
         #        rospy.Time(0),
         #        self._wait_for_transform_duration,
         #)
-
         item_point = self.locate_one_item(userdata.clusters)
         item_pose = geometry_msgs.msg.PoseStamped()
         item_pose.header.frame_id = item_point.header.frame_id
@@ -130,6 +129,11 @@ class Grasp(smach.State):
         item_pose.pose.orientation.y = 0
         item_pose.pose.orientation.z = 0
 
+        if not item_pose.header.frame_id:
+            rospy.loginfo('Grasping failed. No clusters.')
+            self._tts.publish('No clusters. Giving up.')
+            return outcomes.GRASP_FAILURE
+ 
         transformed_item_pose = self._tf_listener.transformPose('base_footprint',
                                                                 item_pose)
 
@@ -198,7 +202,7 @@ class Grasp(smach.State):
         self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
         """
         dist_to_palm = 0.11
-        dist_to_fingertips = 0.21
+        dist_to_fingertips = 0.24
         attempts = 3
 
         success_pre_grasp = False
@@ -279,7 +283,10 @@ class Grasp(smach.State):
 
         success_grasp = False
 
-        for i in range(20):
+        grasp_attempts = 20
+        grasp_attempt_offset = (dist_to_fingertips - dist_to_palm) / grasp_attempts
+
+        for i in range(grasp_attempts):
 
             # Move into bin
 
@@ -290,7 +297,7 @@ class Grasp(smach.State):
 
                 rospy.loginfo('Not grasping from top row')
                 pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = transformed_item_pose.pose.position.x - dist_to_palm - 0.01 * i 
+                pose_target.pose.position.x = transformed_item_pose.pose.position.x - dist_to_palm - grasp_attempt_offset * i 
                 pose_target.pose.position.y = transformed_item_pose.pose.position.y
                 if ((transformed_item_pose.pose.position.z > (shelf_height + self._grasp_height))
                     and (transformed_item_pose.pose.position.z < (shelf_height + 0.15))):

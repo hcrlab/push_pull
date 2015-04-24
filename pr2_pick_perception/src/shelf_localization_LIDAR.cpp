@@ -370,7 +370,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
     
     
     if (debug_) {
-  //  pcl_ros::transformPointCloud(*scene,*scene,cloud_to_robot_.inverse()); 
+      pcl_ros::transformPointCloud(*scene,*scene,robot_to_world_); 
       vis->addPointCloud(scene, scene_handler, "scene");
     }
     

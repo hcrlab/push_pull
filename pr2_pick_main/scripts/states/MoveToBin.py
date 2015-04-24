@@ -104,8 +104,7 @@ class MoveToBin(smach.State):
         )
 
         # Visualize target pose.
-        viz.publish_base(self.markers, target_in_shelf_frame.pose.position.x,
-                         target_in_shelf_frame.pose.position.y, 'shelf')
+        viz.publish_base(self.markers, target_in_shelf_frame)
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
