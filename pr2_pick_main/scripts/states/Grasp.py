@@ -17,6 +17,23 @@ class Grasp(smach.State):
     ''' Grasps an item in the bin. '''
     name = 'GRASP'
 
+    # How many pre-grasp gripper positions to attempt
+    pre_grasp_attempts = 3
+    # Separation in meters between attempted pre-grasp positions
+    pre_grasp_attempt_separation = 0.01
+
+    # approximate distance from palm frame origin to palm surface
+    dist_to_palm = 0.11
+    # approximate distance from palm frame origin to fingertip with gripper closed
+    dist_to_fingertips = 0.24
+
+    grasp_attempts = 20
+
+    # Grasp Parameters
+    _pre_grasp_dist = 0.38
+    half_gripper_height = 0.03
+    pre_grasp_height = self.half_gripper_height + 0.02
+
     def __init__(self, **services):
         smach.State.__init__(
             self,
@@ -58,12 +75,6 @@ class Grasp(smach.State):
             'K': self._shelf_height_j_l,
             'L': self._shelf_height_j_l
         }
-
-        # Grasp Parameters
-
-        self._pre_grasp_dist = 0.38
-        self._grasp_height = 0.03
-        self._pre_grasp_height = self._grasp_height + 0.02
 
     def locate_hard_coded_items(self):
         '''
@@ -119,6 +130,21 @@ class Grasp(smach.State):
         shelf_mesh = path + '/config/kiva_pod/meshes/pod_lowres.stl'
         scene.add_mesh('shelf', shelf_pose, shelf_mesh)
 
+    def log_pose_info(pose):
+        position = pose.position
+        rospy.loginfo(
+            'pose x: {}, y: {}, z: {}'
+            .format(position.x, position.y, position.z)
+        )
+        orientation = pose.orientation
+        rospy.loginfo(
+            'orientation x: {}, y: {}, z: {}'
+            .format(orientation.x, orientation.y, orientation.z, orientation.w)
+        )
+
+    # def attempt_pre_grasp(self, userdata):
+    #     pass
+
     def execute(self, userdata):
         self._tts.publish('Grasping item')
         self._tuck_arms.wait_for_service()
@@ -131,12 +157,13 @@ class Grasp(smach.State):
         #        rospy.Time(0),
         #        self._wait_for_transform_duration,
         #)
+
+        # Get the pose of the target item in the base frame
         item_point = self.locate_one_item(userdata.clusters)
         if not item_point.header.frame_id:
             rospy.loginfo('Grasping failed. No clusters.')
             self._tts.publish('No clusters. Giving up.')
             return outcomes.GRASP_FAILURE
-
         item_pose = PoseStamped(
             header=Header(
                 frame_id=item_point.header.frame_id,
@@ -157,104 +184,55 @@ class Grasp(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue >')
 
-        scene = moveit_commander.PlanningSceneInterface()
-        scene.remove_world_object('shelf')
+        # scene = moveit_commander.PlanningSceneInterface()
+        # scene.remove_world_object('shelf')
         # self.add_shelf_mesh_to_scene(scene)
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
-        # Center Arm
-        """
-        rospy.loginfo('Center Arm')
-        pose = PoseStamped()
-        pose.header.frame_id = 'base_footprint';
-
-        if userdata.bin_id > 'F':
-            pose.pose.position.x = 0.3135;
-            pose.pose.position.y = -0.4665;
-            pose.pose.position.z = 0.6905;
-            pose.pose.orientation.x = -0.7969;
-            pose.pose.orientation.y = 0.2719;
-            pose.pose.orientation.z = -0.4802;
-            pose.pose.orientation.w = -0.2458;
-        elif userdata.bin_id > 'C':
-            pose.pose.position.x = 0.3135;
-            pose.pose.position.y = -0.3865;
-            pose.pose.position.z = 0.6905 + 0.23;
-            pose.pose.orientation.x = -0.7969;
-            pose.pose.orientation.y = 0.2719;
-            pose.pose.orientation.z = -0.4802;
-            pose.pose.orientation.w = -0.2458;
-        else:
-            pose.pose.position.x = 0.3135;
-            pose.pose.position.y = -0.3865;
-            pose.pose.position.z = 0.6905 + 2 * 0.23;
-            pose.pose.orientation.x = -0.7969;
-            pose.pose.orientation.y = 0.2719;
-            pose.pose.orientation.z = -0.4802;
-            pose.pose.orientation.w = -0.2458;
-
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
-        """
-        dist_to_palm = 0.11
-        dist_to_fingertips = 0.24
-        attempts = 3
-
+        # Pre-grasp: pose arm in front of bin
         success_pre_grasp = False
-
-        for i in range(attempts):
-
-            # Pose in front of bin
+        pre_grasp_offsets = [
+            self.pre_grasp_attempt_separation * i
+            for i in range(pre_grasp_attempts)
+        ]
+        for (idx, offset) in enumerate(pre_grasp_offsets):
 
             rospy.loginfo('Pre-grasp:')
             pose_target = PoseStamped()
             pose_target.header.frame_id = 'base_footprint';
 
             if userdata.bin_id > 'C':
-
                 rospy.loginfo('Not in the top row')
                 pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = self._pre_grasp_dist + 0.01 * i
+                pose_target.pose.position.x = self._pre_grasp_dist + offset
                 pose_target.pose.position.y = base_frame_item_pose.pose.position.y
-                if ((base_frame_item_pose.pose.position.z > (shelf_height + self._grasp_height))
+
+                # go for centroid if it's vertically inside shelf
+                if ((base_frame_item_pose.pose.position.z > (shelf_height + self.half_gripper_height))
                     and (base_frame_item_pose.pose.position.z < (shelf_height + 0.15))):
                     pose_target.pose.position.z = base_frame_item_pose.pose.position.z
+                # otherwise, centroid is probably wrong, just use lowest possible grasp
                 else:
                     pose_target.pose.position.z = shelf_height + \
-                        self._grasp_height + self._pre_grasp_height
-                rospy.loginfo('pose x: ' + str(pose_target.pose.position.x) +
-                              ', y: ' + str(pose_target.pose.position.y) +
-                              ', z: ' + str(pose_target.pose.position.z))
-                rospy.loginfo('orientation x: ' + str(pose_target.pose.orientation.x) +
-                              ', y: ' + str(pose_target.pose.orientation.y) +
-                              ', z: ' + str(pose_target.pose.orientation.z) +
-                              ', w: ' + str(pose_target.pose.orientation.w))
+                        self.half_gripper_height + self.pre_grasp_height
+
+                self.log_pose_info(pose_target.pose)
 
                 viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
                 success_pre_grasp = self._moveit_move_arm(pose_target, 0.001, 0.01, 0, 'right_arm').success
             else:
-                #   pre  - Translation: [0.253, -0.277, 1.508]
-                # - Rotation: in Quaternion [0.984, -0.013, 0.178, 0.028]
-                #             in RPY [3.087, -0.359, -0.017]
-
                 rospy.loginfo('In top row')
                 pose_target.pose.orientation.x = 0.984
                 pose_target.pose.orientation.y = -0.013
                 pose_target.pose.orientation.z = 0.178
                 pose_target.pose.orientation.w = 0.028
-                pose_target.pose.position.x = 0.243 + 0.01 * i
+                pose_target.pose.position.x = 0.243 + offset
                 pose_target.pose.position.y = base_frame_item_pose.pose.position.y
                 pose_target.pose.position.z = 1.508
 
-                rospy.loginfo('pose x: ' + str(pose_target.pose.position.x) +
-                              ', y: ' + str(pose_target.pose.position.y) +
-                              ', z: ' + str(pose_target.pose.position.z))
-                rospy.loginfo('orientation x: ' + str(pose_target.pose.orientation.x) +
-                              ', y: ' + str(pose_target.pose.orientation.y) +
-                              ', z: ' + str(pose_target.pose.orientation.z) +
-                              ', w: ' + str(pose_target.pose.orientation.w))
+                self.log_pose_info(pose_target.pose)
 
                 viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
@@ -267,11 +245,10 @@ class Grasp(smach.State):
                 rospy.loginfo('Open Hand')
                 self._set_grippers.wait_for_service()
                 grippers_open = self._set_grippers(False, True)
-
                 break
             else:
-                rospy.loginfo('Pre-grasp attempt ' + str(i) + ' failed')
-                self._tts.publish('Pre-grasp attempt ' + str(i) + ' failed')
+                rospy.loginfo('Pre-grasp attempt ' + str(idx) + ' failed')
+                self._tts.publish('Pre-grasp attempt ' + str(idx) + ' failed')
                 continue
 
         if not success_pre_grasp:
@@ -279,13 +256,13 @@ class Grasp(smach.State):
 
         success_grasp = False
 
-        grasp_attempts = 20
-        grasp_attempt_offset = (dist_to_fingertips - dist_to_palm) / grasp_attempts
-
-        for i in range(grasp_attempts):
-
-            # Move into bin
-
+        # Move gripper into bin
+        grasp_attempt_delta = (self.dist_to_fingertips - self.dist_to_palm) / grasp_attempts
+        grasp_attempt_offsets = [
+            grasp_attempt_delta * i
+            for i in range(self.grasp_attempts)
+        ]
+        for (idx, offset) in enumerate(grasp_attempt_offsets):
             rospy.loginfo('Grasp')
             pose_target = PoseStamped()
             pose_target.header.frame_id = 'base_footprint';
@@ -293,50 +270,33 @@ class Grasp(smach.State):
 
                 rospy.loginfo('Not grasping from top row')
                 pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = base_frame_item_pose.pose.position.x - dist_to_palm - grasp_attempt_offset * i 
+                pose_target.pose.position.x = \
+                    base_frame_item_pose.pose.position.x - self.dist_to_palm - offset
                 pose_target.pose.position.y = base_frame_item_pose.pose.position.y
-                if ((base_frame_item_pose.pose.position.z > (shelf_height + self._grasp_height))
+                if ((base_frame_item_pose.pose.position.z > (shelf_height + self.half_gripper_height))
                     and (base_frame_item_pose.pose.position.z < (shelf_height + 0.15))):
                     pose_target.pose.position.z = base_frame_item_pose.pose.position.z
                 else:
-                    pose_target.pose.position.z = shelf_height + self._grasp_height
+                    pose_target.pose.position.z = shelf_height + self.half_gripper_height
 
-
-                rospy.loginfo('pose x: ' + str(pose_target.pose.position.x) +
-                              ', y: ' + str(pose_target.pose.position.y) +
-                              ', z: ' + str(pose_target.pose.position.z))
-                rospy.loginfo('orientation x: ' + str(pose_target.pose.orientation.x) +
-                              ', y: ' + str(pose_target.pose.orientation.y) +
-                              ', z: ' + str(pose_target.pose.orientation.z) +
-                              ', w: ' + str(pose_target.pose.orientation.w))
+                self.log_pose_info(pose_target.pose)
 
                 viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
                 success_grasp = self._moveit_move_arm(pose_target, 0.0001, 0.001, 0, 'right_arm').success
 
             else:
-                # real - Translation: [0.431, -0.280, 1.570]
-                # - Rotation: in Quaternion [0.996, -0.016, 0.080, 0.027]
-                #     in RPY [3.090, -0.162, -0.028]
-
                 rospy.loginfo('Grasping from top row')
                 pose_target.pose.orientation.x = 0.996
                 pose_target.pose.orientation.y = -0.016
                 pose_target.pose.orientation.z = 0.080
                 pose_target.pose.orientation.w = 0.027
-                pose_target.pose.position.x = 0.431 - 0.01 * i
+                pose_target.pose.position.x = 0.431 - offset
                 pose_target.pose.position.y = base_frame_item_pose.pose.position.y
                 pose_target.pose.position.z = 1.570
 
                 rospy.loginfo('Grasping from top row')
-
-                rospy.loginfo('pose x: ' + str(pose_target.pose.position.x) +
-                              ', y: ' + str(pose_target.pose.position.y) +
-                              ', z: ' + str(pose_target.pose.position.z))
-                rospy.loginfo('orientation x: ' + str(pose_target.pose.orientation.x) +
-                              ', y: ' + str(pose_target.pose.orientation.y) +
-                              ', z: ' + str(pose_target.pose.orientation.z) +
-                              ', w: ' + str(pose_target.pose.orientation.w))
+                self.log_pose_info(pose_target.pose)
 
                 viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
                 self._moveit_move_arm.wait_for_service()
@@ -351,8 +311,8 @@ class Grasp(smach.State):
 
                 break
             else:
-                rospy.loginfo('Grasp attempt '  + str(i) + ' failed')
-                self._tts.publish('Grasp attempt ' + str(i) + ' failed')
+                rospy.loginfo('Grasp attempt '  + str(idx) + ' failed')
+                self._tts.publish('Grasp attempt ' + str(idx) + ' failed')
                 continue
 
         if not success_grasp:
