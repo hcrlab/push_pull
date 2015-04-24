@@ -22,6 +22,9 @@ SENSE_BIN_FAILURE = 'failure'
 GRASP_TOOL_SUCCESS = 'success'
 GRASP_TOOL_FAILURE = 'failure'
 
+RELEASE_TOOL_SUCCESS = 'success'
+RELEASE_TOOL_FAILURE = 'failure'
+
 GRASP_SUCCESS = 'success'
 GRASP_FAILURE = 'failure'
 

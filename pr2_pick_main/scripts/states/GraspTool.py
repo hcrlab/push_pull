@@ -9,16 +9,15 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import outcomes
 
 
-class GraspTool(smach.State):
+class GraspOrReleaseTool(smach.State):
     '''
-    Grasps tool from the robot's right shoulder holster.
+    Parent class for grasping and putting back the tool.
     Assumptions:
     - tool is about 35 cm long
     - tool is pushed to the rear of our homemade shoulder holster
-    - tool has a valid grasp for gripper to close up and down
+    - tool's handle is horizontal
+    - handle has a valid grasp for gripper to close vertically
     '''
-    name = 'GRASP_TOOL'
-
     reach_for_tool_duration = rospy.Duration(5.0)
     joints = [
         'shoulder_pan_joint',
@@ -66,7 +65,8 @@ class GraspTool(smach.State):
 
     def execute(self, userdata):
         self._tuck_arms(False, False)  # untuck arms
-        self._set_grippers(True, False)  # open left gripper
+        if not self.dropping_off:
+            self._set_grippers(True, False)  # open left gripper
 
         trajectory = JointTrajectoryGoal(
             trajectory=JointTrajectory(
@@ -95,8 +95,22 @@ class GraspTool(smach.State):
         self.arm.send_goal(trajectory)
         result = self.arm.wait_for_result()
 
-        self._set_grippers(False, False)  # close both grippers
+        if self.dropping_off:
+            self._set_grippers(True, False)  # open left gripper
+        else:
+            self._set_grippers(False, False)  # close both grippers
+
         # TODO (Leah): Untuck left arm in a way that doesn't move right arm
         self._tuck_arms(False, False)  # untuck arms
 
         return outcomes.GRASP_TOOL_SUCCESS
+
+
+class GraspTool(GraspOrReleaseTool):
+    name = 'GRASP_TOOL'
+    dropping_off = False
+
+
+class ReleaseTool(GraspOrReleaseTool):
+    name = 'RELEASE_TOOL'
+    dropping_off = True

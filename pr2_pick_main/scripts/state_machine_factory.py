@@ -15,6 +15,7 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform
 import states
+from states.GraspTool import GraspTool, ReleaseTool
 
 
 class StateMachineBuilder(object):
@@ -306,11 +307,19 @@ class StateMachineBuilder(object):
         ])
         with sm:
             smach.StateMachine.add(
-                states.GraspTool.name,
-                states.GraspTool(**services),
+                GraspTool.name,
+                GraspTool(**services),
                 transitions={
-                    outcomes.GRASP_TOOL_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.GRASP_TOOL_SUCCESS: ReleaseTool.name,
                     outcomes.GRASP_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
+                },
+            )
+            smach.StateMachine.add(
+                ReleaseTool.name,
+                ReleaseTool(**services),
+                transitions={
+                    outcomes.RELEASE_TOOL_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.RELEASE_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
                 },
             )
         return sm
