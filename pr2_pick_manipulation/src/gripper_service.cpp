@@ -38,4 +38,12 @@ bool GripperService::GetGrippersCallback(GetGrippers::Request& request,
   return true;
 }
 
+bool GripperService::GetGripperPositionsCallback(GetGripperPositions::Request& request,
+                                                 GetGripperPositions::Response& response) {
+  response.left_position = left_.GetPosition();
+  response.right_position = right_.GetPosition();
+  return true;
+}
+
+
 };  // namespace pr2_pick_manipulation

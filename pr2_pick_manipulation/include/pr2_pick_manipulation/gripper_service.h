@@ -9,6 +9,7 @@
 #include "pr2_pick_manipulation/gripper.h"
 #include "pr2_pick_manipulation/SetGrippers.h"
 #include "pr2_pick_manipulation/GetGrippers.h"
+#include "pr2_pick_manipulation/GetGripperPositions.h"
 #include <ros/ros.h>
 
 #ifndef _PR2_PICK_MANIPULATION_GRIPPER_SERVICE_H_
@@ -20,10 +21,12 @@ class GripperService {
   ros::NodeHandle nh_;
   ros::ServiceServer set_grippers_server_;
   ros::ServiceServer get_grippers_server_;
+  ros::ServiceServer get_gripper_positions_server_;
   Gripper left_;
   Gripper right_;
   bool SetGrippersCallback(SetGrippers::Request& request, SetGrippers::Response& response);
   bool GetGrippersCallback(GetGrippers::Request& request, GetGrippers::Response& response);
+  bool GetGripperPositionsCallback(GetGripperPositions::Request& request, GetGripperPositions::Response& response);
 
  public:
   GripperService();

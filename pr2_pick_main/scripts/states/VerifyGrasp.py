@@ -11,9 +11,10 @@ class VerifyGrasp(smach.State):
             self,
             outcomes=[
                 outcomes.VERIFY_GRASP_SUCCESS,
-                outcomes.VERIFY_GRASP_FAILURE
+                outcomes.VERIFY_GRASP_FAILURE,
+                outcomes.VERIFY_GRASP_RETRY
             ],
-            input_keys=['bin_id', 'debug', 'bin_data']
+            input_keys=['bin_id', 'debug', 'bin_data'],
             output_keys=['output_bin_data']
         )
 
@@ -28,11 +29,11 @@ class VerifyGrasp(smach.State):
     	userdata.output_bin_data = output_bin_data
 
     	# check if grasp succeeded
-    	gripper_states = get_grippers()
+    	gripper_states = self._get_grippers()
     	# TODO: get this information from JSON file
     	thin_object = False 
     	# for thin objects, a closed gripper is consistent with success
-    	grasp_succeeded = gripper_states['right_open'] or thin_object
+    	grasp_succeeded = gripper_states.right_open or thin_object
 
     	# decide what state to go to next
     	if grasp_succeeded:
@@ -40,7 +41,7 @@ class VerifyGrasp(smach.State):
     		return outcomes.VERIFY_GRASP_SUCCESS
     	else:
     		# check if there are attempts remaining
-    		if output_bin_data[output_bin_data.bin_id].attempts_remaining == 0:
+    		if output_bin_data[bin_id].attempts_remaining == 0:
     			return outcomes.VERIFY_GRASP_FAILURE
     		else:
     			return outcomes.VERIFY_GRASP_RETRY

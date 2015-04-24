@@ -9,7 +9,7 @@ from visualization_msgs.msg import Marker
 import outcomes
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
-    TuckArms
+    TuckArms, GetGrippers
 from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
@@ -422,7 +422,7 @@ class StateMachineBuilder(object):
                 states.ExtractItem.name,
                 states.ExtractItem(**services),
                 transitions={
-                    outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
+                    outcomes.EXTRACT_ITEM_SUCCESS: states.VerifyGrasp.name,
                     outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
                 },
                 remapping={

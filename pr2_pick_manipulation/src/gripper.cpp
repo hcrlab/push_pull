@@ -70,14 +70,16 @@ double Gripper::GetPosition() {
   
   // get the transform between the fingertips
   try {
-    transform_listener_.waitForTransform(destination_frame, original_frame, ros::Time(0), ros::Duration(10.0) );
-    transform_listener_.lookupTransform(destination_frame, original_frame, ros::Time(0), transform);
+    transform_listener_.waitForTransform(original_frame, destination_frame, ros::Time(0), ros::Duration(10.0) );
+    transform_listener_.lookupTransform(original_frame, destination_frame, ros::Time(0), transform);
   } catch (tf::TransformException ex) {
     ROS_ERROR("%s",ex.what());
   }
   
   // subtract small positive offset so that 0 means closed
-  return transform.getOrigin().y() - 0.032;
+  double gripper_offset = transform.getOrigin().y();
+  ROS_INFO("gripper_offset = %f", gripper_offset);
+  return gripper_offset - 0.032;
 }
 
 bool Gripper::IsOpen() {
