@@ -8,6 +8,7 @@
 
 #include "pr2_pick_manipulation/gripper.h"
 #include "pr2_pick_manipulation/SetGrippers.h"
+#include "pr2_pick_manipulation/GetGrippers.h"
 #include <ros/ros.h>
 
 #ifndef _PR2_PICK_MANIPULATION_GRIPPER_SERVICE_H_
