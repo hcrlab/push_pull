@@ -63,23 +63,4 @@ class UpdatePlan(smach.State):
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         return outcomes.UPDATE_PLAN_NO_MORE_OBJECTS
-
-class TestUpdatePlan(unittest.TestCase):
-    def setUp(self):
-        self.kwargs = {
-            'tts':
-            'get_items':
-            'set_items':
-            'get_target_items':
-        }
-        self.userdata = {
-            bin_data :
-            output_bin_data :
-            next_bin :
-        }
-
-    def test_name(self):
-        self.assertEqual(self.thing, aDifferentThing)
-
-if __name__ == '__main__':
-    unittest.main()
+        
