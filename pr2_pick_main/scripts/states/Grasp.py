@@ -21,17 +21,19 @@ class Grasp(smach.State):
     pre_grasp_attempts = 3
     # Separation in meters between attempted pre-grasp positions
     pre_grasp_attempt_separation = 0.01
+    # how many grasp gripper positions to attempt
+    grasp_attempts = 20
 
+    # desired distance from palm frame to object centroid
+    pre_grasp_x_distance = 0.38
+
+    # approximate distance from center to edge of gripper pad
+    half_gripper_height = 0.03
     # approximate distance from palm frame origin to palm surface
     dist_to_palm = 0.11
     # approximate distance from palm frame origin to fingertip with gripper closed
     dist_to_fingertips = 0.24
 
-    grasp_attempts = 20
-
-    # Grasp Parameters
-    _pre_grasp_dist = 0.38
-    half_gripper_height = 0.03
     pre_grasp_height = half_gripper_height + 0.02
 
     def __init__(self, **services):
@@ -142,9 +144,6 @@ class Grasp(smach.State):
             .format(orientation.x, orientation.y, orientation.z, orientation.w)
         )
 
-    # def attempt_pre_grasp(self, userdata):
-    #     pass
-
     def execute(self, userdata):
         self._tts.publish('Grasping item')
         self._tuck_arms.wait_for_service()
@@ -205,7 +204,7 @@ class Grasp(smach.State):
             if userdata.bin_id > 'C':
                 rospy.loginfo('Not in the top row')
                 pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = self._pre_grasp_dist + offset
+                pose_target.pose.position.x = self.pre_grasp_x_distance + offset
                 pose_target.pose.position.y = base_frame_item_pose.pose.position.y
 
                 # go for centroid if it's vertically inside shelf
