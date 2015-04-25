@@ -78,6 +78,7 @@ add_service_files(
   TuckArms.srv
   MoveHead.srv
   MoveArm.srv
+  MoveArmIk.srv
   GetPose.srv
 )
 

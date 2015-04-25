@@ -1,0 +1,9 @@
+# Where to put the end effector.
+geometry_msgs/PoseStamped goal
+
+# Either LEFT_ARM or RIGHT_ARM
+int32 arm
+int32 LEFT_ARM = 1
+int32 RIGHT_ARM = 2
+---
+bool success
