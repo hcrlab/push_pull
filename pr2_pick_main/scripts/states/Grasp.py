@@ -1,10 +1,11 @@
 import actionlib
 from control_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
-from geometry_msgs.msg import Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import Pose, PoseStamped, Quaternion, TransformStamped
 import json
 import moveit_commander
 from moveit_msgs.msg import Grasp
-from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, GetPositionIKRequest
+from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, \
+    GetPositionIKRequest
 from moveit_simple_grasps.msg import GenerateGraspsAction, GenerateGraspsGoal
 from moveit_simple_grasps.msg import GraspGeneratorOptions
 import os
@@ -18,6 +19,7 @@ import visualization as viz
 
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers
+from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest
 
 """ Temporary class for moving arm without collision checking until we have service """
 
@@ -68,17 +70,26 @@ class Grasp(smach.State):
     # desired distance from palm frame to object centroid
     pre_grasp_x_distance = 0.40
 
-    # approximate distance from center to edge of gripper pad
+    # approximately half hand thickness
     half_gripper_height = 0.03
     # approximate distance from palm frame origin to palm surface
     dist_to_palm = 0.13
     # approximate distance from palm frame origin to fingertip with gripper closed
     dist_to_fingertips = 0.22
 
+    # approx dist between fingers when gripper open
+    gripper_palm_width = 0.08
+
+    # approx height of pads of fingertips
+    gripper_finger_height = 0.03
+
     pre_grasp_height = half_gripper_height + 0.02
 
     # minimum required grasp quality
     min_grasp_quality = 0.3
+
+    # minimum number of points from cluster needed inside gripper for grasp
+    min_points_in_gripper = 20
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -97,11 +108,15 @@ class Grasp(smach.State):
         self._tts = services['tts']
         self._tf_listener = services['tf_listener']
         self._im_server = services['interactive_marker_server']
+        self._set_static_tf = services['set_static_tf']
 
         self._fk_client = rospy.ServiceProxy('compute_fk', GetPositionFK)
         self._ik_client = rospy.ServiceProxy('compute_ik', GetPositionIK)
+        self._get_points_in_box = rospy.ServiceProxy('perception/get_points_in_box', BoxPoints)
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
+
+        self._cluster = None
 
         # Shelf heights
 
@@ -347,15 +362,43 @@ class Grasp(smach.State):
     def evaluate_grasp(self, grasp):
         # just a placeholder, returns dict [pre_grasp, grasp, pre_grasp_reachable, grasp_reachable, grasp_quality]
         # may want to make a class
+        viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
 
-        # Check if reachability already evaluated
-        # If so, just check quality
-        if "grasp_reachable" in grasp.keys():
-            rospy.loginfo("Just checking grasp quality")
+        # Check if enough points will be in gripper
+        # TODO: Check if too many points will be inside fingers
+        rospy.loginfo("Just checking grasp quality") 
+
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = grasp["grasp"].pose.position
+        transform.transform.rotation = grasp["grasp"].pose.orientation
+        transform.child_frame_id = 'grasp'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(2.0)
+
+        box_request = BoxPointsRequest()
+        box_request.cluster = self._cluster
+        box_request.frame_id = "grasp"
+        box_request.min_x = self.dist_to_palm
+        box_request.max_x = self.dist_to_fingertips
+        box_request.min_y = -1 * self.gripper_palm_width/2
+        box_request.max_y = self.gripper_palm_width/2
+        box_request.min_z = -1 * self.gripper_finger_height/2
+        box_request.max_z = self.gripper_finger_height/2
+        self._get_points_in_box.wait_for_service()
+        box_response = self._get_points_in_box(box_request)
+
+        rospy.loginfo("Number of points inside gripper: {}".format(box_response.num_points))
+
+        if box_response.num_points >= self.min_points_in_gripper:
             grasp["grasp_quality"] = 1.0
-
-        # Otherwise, do ik and quality check 
         else:
+            grasp["grasp_quality"] = 0.0
+
+        # Only check reachability if not already checked
+        if not "grasp_reachable" in grasp.keys():
             rospy.loginfo("Full grasp evaluation")
             grasp["grasp_quality"] = 1.0
             # Check pre-grasp IK
@@ -541,6 +584,8 @@ class Grasp(smach.State):
         self._tts.publish('Grasping item')
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, False)
+
+        self._cluster = userdata.clusters[0]
 
         # TODO(sksellio): check whether this works.
         #self._tf_listener.waitForTransform(
