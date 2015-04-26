@@ -1,3 +1,5 @@
+import actionlib
+from control_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import json
 import moveit_commander
@@ -11,10 +13,45 @@ import rospy
 import smach
 from std_msgs.msg import Header
 import tf
+from trajectory_msgs.msg import JointTrajectoryPoint
 import visualization as viz
 
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers
+
+""" Temporary class for moving arm without collision checking until we have service """
+
+class Arm:
+    def __init__(self, arm_name):
+        #arm_name should be l_arm or r_arm
+        self.name = arm_name
+        self.jta = actionlib.SimpleActionClient('/'+arm_name+'_controller/joint_trajectory_action',
+                        JointTrajectoryAction)
+        rospy.loginfo('Waiting for joint trajectory action')
+        self.jta.wait_for_server()
+        rospy.loginfo('Found joint trajectory action!')
+
+    def move(self, waypoints):
+        goal = JointTrajectoryGoal()
+        char = self.name[0] #either 'r' or 'l'
+        goal.trajectory.joint_names = [char+'_shoulder_pan_joint',
+                   char+'_shoulder_lift_joint',
+                   char+'_upper_arm_roll_joint',
+                   char+'_elbow_flex_joint',
+                   char+'_forearm_roll_joint',
+                   char+'_wrist_flex_joint',
+                   char+'_wrist_roll_joint']
+        time_offset = 0
+        goal.trajectory.header.stamp = rospy.Time.now() + rospy.Duration(1.0)
+        rospy.loginfo('Sending joint goal')
+        for waypoint in waypoints:
+            point = JointTrajectoryPoint()
+            point.positions = waypoint
+            point.time_from_start = rospy.Duration(1.5 + time_offset*1.5)
+            goal.trajectory.points.append(point)
+            time_offset = time_offset + 1
+            
+        self.jta.send_goal_and_wait(goal)
 
 
 class Grasp(smach.State):
@@ -34,9 +71,9 @@ class Grasp(smach.State):
     # approximate distance from center to edge of gripper pad
     half_gripper_height = 0.03
     # approximate distance from palm frame origin to palm surface
-    dist_to_palm = 0.11
+    dist_to_palm = 0.13
     # approximate distance from palm frame origin to fingertip with gripper closed
-    dist_to_fingertips = 0.24
+    dist_to_fingertips = 0.22
 
     pre_grasp_height = half_gripper_height + 0.02
 
@@ -277,10 +314,10 @@ class Grasp(smach.State):
         grasp_dict["grasp"] = grasp_pose_target
         grasping_pairs.append(grasp_dict)
 
-        grasp_action_client = actionlib.SimpleActionClient('/moveit_simple_grasps_server/generate/', GenerateGraspsAction)
+        grasp_action_client = actionlib.SimpleActionClient('/moveit_simple_grasps_server/generate', GenerateGraspsAction)
         grasp_action_client.wait_for_server()
         goal = GenerateGraspsGoal()
-        goal.pose = base_frame_item_pose.pose
+        goal.pose = object_pose.pose
         goal.width = 0.0
 
         options_1 = GraspGeneratorOptions()
@@ -314,10 +351,12 @@ class Grasp(smach.State):
         # Check if reachability already evaluated
         # If so, just check quality
         if "grasp_reachable" in grasp.keys():
+            rospy.loginfo("Just checking grasp quality")
             grasp["grasp_quality"] = 1.0
 
         # Otherwise, do ik and quality check 
         else:
+            rospy.loginfo("Full grasp evaluation")
             grasp["grasp_quality"] = 1.0
             grasp["pre_grasp_reachable"] = True
             grasp["grasp_reachable"] = True
@@ -349,9 +388,10 @@ class Grasp(smach.State):
                     transformed_pose.pose.position.x = transformed_pose.pose.position.x + offset
 
                     #check ik
+                    rospy.loginfo("Checking ik")
                     ik_request = GetPositionIKRequest()
-                    ik_request.group_name = "right_arm"
-                    ik_request.pose_stamped = transformed_pose
+                    ik_request.ik_request.group_name = "right_arm"
+                    ik_request.ik_request.pose_stamped = transformed_pose
                     ik_response = self._ik_client(ik_request)
 
                     #if reachable, set True, set new pre-grasp, break
@@ -382,8 +422,8 @@ class Grasp(smach.State):
 
                     #check ik
                     ik_request = GetPositionIKRequest()
-                    ik_request.group_name = "right_arm"
-                    ik_request.pose_stamped = transformed_pose
+                    ik_request.ik_request.group_name = "right_arm"
+                    ik_request.ik_request.pose_stamped = transformed_pose
                     ik_response = self._ik_client(ik_request)
 
                     #if reachable, set True, set new grasp, evaluate grasp, append, break
@@ -411,7 +451,7 @@ class Grasp(smach.State):
         for grasp in grasps:
             evaluated_grasp = self.evaluate_grasp(grasp)
             if evaluated_grasp["grasp_quality"] > 0:
-                evaluated_grasps.append(evaluate_grasp)
+                evaluated_grasps.append(evaluated_grasp)
                 if evaluated_grasp["pre_grasp_reachable"] and evaluated_grasp["grasp_reachable"]:
                     num_reachable = num_reachable + 1
 
@@ -431,11 +471,43 @@ class Grasp(smach.State):
  
             if not success_pre_grasp:
                 continue
+            else:
+                rospy.loginfo('Pre-grasp succeeeded')
+                rospy.loginfo('Open Hand')
+                self._set_grippers.wait_for_service()
+                grippers_open = self._set_grippers(False, True)
+            #self._moveit_move_arm.wait_for_service()
+            #success_grasp = self._moveit_move_arm(grasp["grasp"], 0.01, 0.01, 0, 'right_arm').success
+            # Temporary hack for before we have an IK service
 
-            self._moveit_move_arm.wait_for_service()
-            success_grasp = self._moveit_move_arm(grasp["grasp"], 0.01, 0.01, 0, 'right_arm').success
-
+            ik_request = GetPositionIKRequest()
+            ik_request.ik_request.group_name = "right_arm"
+            ik_request.ik_request.pose_stamped = grasp["grasp"]
+            char = 'r'
+            ik_request.ik_request.robot_state.joint_state.name = [char+'_shoulder_pan_joint',
+                   char+'_shoulder_lift_joint',
+                   char+'_upper_arm_roll_joint',
+                   char+'_elbow_flex_joint',
+                   char+'_forearm_roll_joint',
+                   char+'_wrist_flex_joint',
+                   char+'_wrist_roll_joint']
+            ik_response = self._ik_client(ik_request)
+            arm = Arm('r_arm')
+            rospy.loginfo("Joint positions: " + str(ik_response.solution.joint_state.position))
+            rospy.loginfo("Joint names: " + str(ik_response.solution.joint_state.name))
+            positions = [None] * 7
+            for (ind, name) in enumerate(ik_response.solution.joint_state.name):
+                if name in ik_request.ik_request.robot_state.joint_state.name:
+                    idx = ik_request.ik_request.robot_state.joint_state.name.index(name)
+                    positions[idx] = ik_response.solution.joint_state.position[ind]
+                
+            arm.move([positions])
+            success_grasp = True
             if success_grasp:
+                rospy.loginfo('Grasp succeeded')
+                rospy.loginfo('Close Hand')
+                self._set_grippers.wait_for_service()
+                grippers_open = self._set_grippers(False, False)
                 break
         if success_grasp:
             return True
@@ -487,7 +559,7 @@ class Grasp(smach.State):
         # self.add_shelf_mesh_to_scene(scene)
 
         grasping_pairs = self.generate_grasps(base_frame_item_pose, userdata.bin_id)
-        evaluated_grasps = self.evaluated_grasps(grasping_pairs)
+        evaluated_grasps = self.evaluate_grasps(grasping_pairs)
         if len(evaluated_grasps) > 0:
             success_grasp = self.execute_grasp(evaluated_grasps)
         else:
