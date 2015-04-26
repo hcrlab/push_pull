@@ -1,6 +1,10 @@
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import json
 import moveit_commander
+from moveit_msgs.msg import Grasp
+from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, GetPositionIKRequest
+from moveit_simple_grasps.msg import GenerateGraspsAction, GenerateGraspsGoal
+from moveit_simple_grasps.msg import GraspGeneratorOptions
 import os
 import rospkg
 import rospy
@@ -25,7 +29,7 @@ class Grasp(smach.State):
     grasp_attempts = 20
 
     # desired distance from palm frame to object centroid
-    pre_grasp_x_distance = 0.38
+    pre_grasp_x_distance = 0.40
 
     # approximate distance from center to edge of gripper pad
     half_gripper_height = 0.03
@@ -35,6 +39,9 @@ class Grasp(smach.State):
     dist_to_fingertips = 0.24
 
     pre_grasp_height = half_gripper_height + 0.02
+
+    # minimum required grasp quality
+    min_grasp_quality = 0.3
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -53,6 +60,9 @@ class Grasp(smach.State):
         self._tts = services['tts']
         self._tf_listener = services['tf_listener']
         self._im_server = services['interactive_marker_server']
+
+        self._fk_client = rospy.ServiceProxy('compute_fk', GetPositionFK)
+        self._ik_client = rospy.ServiceProxy('compute_ik', GetPositionIK)
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -118,7 +128,7 @@ class Grasp(smach.State):
         response = self._find_centroid(cluster_to_use)
         return response.centroid
 
-    def add_shelf_mesh_to_scene(scene):
+    def add_shelf_mesh_to_scene(self, scene):
         q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
         shelf_pose = PoseStamped(
             header=Header(frame_id='/shelf'),
@@ -143,6 +153,295 @@ class Grasp(smach.State):
             'orientation x: {}, y: {}, z: {}'
             .format(orientation.x, orientation.y, orientation.z, orientation.w)
         )
+
+    def grasp_msg_to_poses(self, grasp_msgs):
+        grasping_pairs = []
+
+        # get rid of every second message because they're just repeats in different frames
+        grasp_msgs = grasp_msgs[::2]
+
+        for grasp in grasp_msgs:
+            if not grasp.grasp_quality >= self.min_grasp_quality:
+                continue
+
+            # rospy.loginfo("Frame_id: " + str(grasp.pre_grasp_approach.direction.header.frame_id))
+            # rospy.loginfo("Vector: {}, {}, {}"
+            #                 .format(grasp.pre_grasp_approach.direction.vector.x, 
+            #                     grasp.pre_grasp_approach.direction.vector.y, 
+            #                     grasp.pre_grasp_approach.direction.vector.z))
+            # rospy.loginfo("Desirec dist: " + str(grasp.pre_grasp_approach.desired_distance))
+            # rospy.loginfo("Min dist: " + str(grasp.pre_grasp_approach.min_distance))
+            # position = grasp.grasp_pose.pose.position
+            # rospy.loginfo(
+            #     'pose x: {}, y: {}, z: {}'
+            #     .format(position.x, position.y, position.z)
+            # )
+            # rospy.loginfo("Grasp Frame_id: " + str(grasp.grasp_pose.header.frame_id))
+
+            # rospy.loginfo("Number of pre_grasp_posture points: " + str(len(grasp.pre_grasp_posture.points)))
+
+
+            
+            fk_request = GetPositionFKRequest()
+            fk_request.header.frame_id = "base_footprint"
+            fk_request.fk_link_names = ["r_wrist_roll_link"]
+            fk_request.robot_state.joint_state.position = grasp.pre_grasp_posture.points[0].positions
+            fk_request.robot_state.joint_state.name = grasp.pre_grasp_posture.joint_names
+            fk_response = self._fk_client(fk_request)
+
+            # rospy.loginfo("FK position: {}, {}, {}".format(fk_response.pose_stamped[0].pose.position.x,
+            #                                                 fk_response.pose_stamped[0].pose.position.y,
+            #                                                 fk_response.pose_stamped[0].pose.position.z))
+
+            grasp_pose = self._tf_listener.transformPose('base_footprint',
+                                                                grasp.grasp_pose)
+            pre_grasp_pose = fk_response.pose_stamped[0]
+
+            rospy.loginfo(" ")
+            rospy.loginfo(" ")
+
+            grasp_dict = {}
+            grasp_dict["pre_grasp"] = pre_grasp_pose
+            grasp_dict["grasp"] = grasp_pose
+            grasping_pairs.append(grasp_dict)
+
+        return grasping_pairs
+
+    def generate_grasps(self, object_pose, bin_id):
+
+        grasping_pairs = [] # list of pre_grasp/grasp dicts 
+
+        shelf_height = self._shelf_heights[bin_id]
+
+        # Pre-grasp: pose arm in front of bin
+
+        pre_grasp_pose_target = PoseStamped()
+        pre_grasp_pose_target.header.frame_id = 'base_footprint';
+
+        if bin_id > 'C':
+            rospy.loginfo('Not in the top row')
+            pre_grasp_pose_target.pose.orientation.w = 1
+            pre_grasp_pose_target.pose.position.x = self.pre_grasp_x_distance 
+            pre_grasp_pose_target.pose.position.y = object_pose.pose.position.y
+
+            # go for centroid if it's vertically inside shelf
+            if ((object_pose.pose.position.z > (shelf_height + self.half_gripper_height))
+                and (object_pose.pose.position.z < (shelf_height + 0.15))):
+                pre_grasp_pose_target.pose.position.z = object_pose.pose.position.z
+            # otherwise, centroid is probably wrong, just use lowest possible grasp
+            else:
+                pre_grasp_pose_target.pose.position.z = shelf_height + \
+                    self.half_gripper_height + self.pre_grasp_height
+
+        else:
+            rospy.loginfo('In top row')
+            pre_grasp_pose_target.pose.orientation.x = 0.984
+            pre_grasp_pose_target.pose.orientation.y = -0.013
+            pre_grasp_pose_target.pose.orientation.z = 0.178
+            pre_grasp_pose_target.pose.orientation.w = 0.028
+            pre_grasp_pose_target.pose.position.x = 0.243 
+            pre_grasp_pose_target.pose.position.y = object_pose.pose.position.y
+            pre_grasp_pose_target.pose.position.z = 1.508
+
+
+        # Move gripper into bin
+        grasp_pose_target = PoseStamped()
+        grasp_pose_target.header.frame_id = 'base_footprint';
+        if bin_id > 'C':
+
+            rospy.loginfo('Not grasping from top row')
+            grasp_pose_target.pose.orientation.w = 1
+            grasp_pose_target.pose.position.x = \
+                object_pose.pose.position.x - self.dist_to_palm
+            grasp_pose_target.pose.position.y = object_pose.pose.position.y
+            if ((object_pose.pose.position.z > (shelf_height + self.half_gripper_height))
+                and (object_pose.pose.position.z < (shelf_height + 0.15))):
+                grasp_pose_target.pose.position.z = object_pose.pose.position.z
+            else:
+                grasp_pose_target.pose.position.z = shelf_height + self.half_gripper_height
+
+
+        else:
+            rospy.loginfo('Grasping from top row')
+            grasp_pose_target.pose.orientation.x = 0.996
+            grasp_pose_target.pose.orientation.y = -0.016
+            grasp_pose_target.pose.orientation.z = 0.080
+            grasp_pose_target.pose.orientation.w = 0.027
+            grasp_pose_target.pose.position.x = 0.431
+            grasp_pose_target.pose.position.y = object_pose.pose.position.y
+            grasp_pose_target.pose.position.z = 1.570
+
+
+        grasp_dict = {}
+        grasp_dict["pre_grasp"] = pre_grasp_pose_target
+        grasp_dict["grasp"] = grasp_pose_target
+        grasping_pairs.append(grasp_dict)
+
+        grasp_action_client = actionlib.SimpleActionClient('/moveit_simple_grasps_server/generate/', GenerateGraspsAction)
+        grasp_action_client.wait_for_server()
+        goal = GenerateGraspsGoal()
+        goal.pose = base_frame_item_pose.pose
+        goal.width = 0.0
+
+        options_1 = GraspGeneratorOptions()
+        options_1.grasp_axis = options_1.GRASP_AXIS_Y
+        options_1.grasp_direction = options_1.GRASP_DIRECTION_UP
+        options_1.grasp_rotation = options_1.GRASP_ROTATION_FULL
+
+        options_2 = GraspGeneratorOptions()
+        options_2.grasp_axis = options_2.GRASP_AXIS_Y
+        options_2.grasp_direction = options_2.GRASP_DIRECTION_UP
+        options_2.grasp_rotation = options_2.GRASP_ROTATION_FULL
+
+        goal.options.append(options_1)
+        goal.options.append(options_2)
+        grasp_action_client.send_goal(goal)
+        grasp_action_client.wait_for_result()
+
+        grasps_result = grasp_action_client.get_result()
+
+        moveit_simple_grasps  = self.grasp_msg_to_poses(grasps_result.grasps)
+
+        # Commented out for testing purposes
+        #grasping_pairs = grasping_pairs + moveit_simple_grasps
+
+        return grasping_pairs
+
+    def evaluate_grasp(self, grasp):
+        # just a placeholder, returns dict [pre_grasp, grasp, pre_grasp_reachable, grasp_reachable, grasp_quality]
+        # may want to make a class
+
+        # Check if reachability already evaluated
+        # If so, just check quality
+        if "grasp_reachable" in grasp.keys():
+            grasp["grasp_quality"] = 1.0
+
+        # Otherwise, do ik and quality check 
+        else:
+            grasp["grasp_quality"] = 1.0
+            grasp["pre_grasp_reachable"] = True
+            grasp["grasp_reachable"] = True
+        return grasp
+
+    def filter_grasps(self, grasps):
+        filtered_grasps = []
+        for grasp in grasps:
+            # Check if both pre-grasp and grasp are reachable
+            if grasp["pre_grasp_reachable"] and grasp["grasp_reachable"]:
+                filtered_grasps.append(grasp)
+        return filtered_grasps
+
+    def get_reachable_grasps(self, grasps):
+        reachable_grasps = []
+        for grasp in grasps:
+            # If pre-grasp not reachable, try
+            if not grasp["pre_grasp_reachable"]:
+                pre_grasp_offsets = [
+                    self.pre_grasp_attempt_separation * i
+                    for i in range(self.pre_grasp_attempts)
+                ]
+                reachable = False
+                for (idx, offset) in enumerate(pre_grasp_offsets):
+                    # transform pre-grasp into r_wrist_roll_link frame
+                    transformed_pose = self._tf_listener.transformPose('r_wrist_roll_link',
+                                                                grasp["pre_grasp"])
+                    # move it forward in x
+                    transformed_pose.pose.position.x = transformed_pose.pose.position.x + offset
+
+                    #check ik
+                    ik_request = GetPositionIKRequest()
+                    ik_request.group_name = "right_arm"
+                    ik_request.pose_stamped = transformed_pose
+                    ik_response = self._ik_client(ik_request)
+
+                    #if reachable, set True, set new pre-grasp, break
+                    if ik_response.error_code == ik_response.error_code.SUCCESS:
+                        reachable = True
+                        pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                transformed_pose)
+                        grasp["pre_grasp"] = pose_in_base_footprint
+                        grasp["pre_grasp_reachable"] = True
+                        break
+
+                if not reachable:
+                    continue 
+
+            if not grasp["grasp_reachable"]:
+                grasp_attempt_delta = (self.dist_to_fingertips - self.dist_to_palm) / self.grasp_attempts
+                grasp_attempt_offsets = [
+                    grasp_attempt_delta * i
+                    for i in range(self.grasp_attempts)
+                ]
+                for (idx, offset) in enumerate(grasp_attempt_offsets):
+                    # transform grasp into r_wrist_roll_link frame
+                    transformed_pose = self._tf_listener.transformPose('r_wrist_roll_link',
+                                                                grasp["grasp"])
+
+                    # move it forward in x
+                    transformed_pose.pose.position.x = transformed_pose.pose.position.x + offset
+
+                    #check ik
+                    ik_request = GetPositionIKRequest()
+                    ik_request.group_name = "right_arm"
+                    ik_request.pose_stamped = transformed_pose
+                    ik_response = self._ik_client(ik_request)
+
+                    #if reachable, set True, set new grasp, evaluate grasp, append, break
+                    if ik_response.error_code == ik_response.error_code.SUCCESS:
+                        pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                transformed_pose)
+                        grasp["grasp"] = pose_in_base_footprint
+                        grasp["grasp_reachable"] = True
+
+                        # Check if shifted grasp still has object in gripper
+                        evaluated_grasp = self.evaluate_grasp(grasp)
+
+                        # If object in gripper, keep 
+                        if evaluated_grasp["grasp_quality"] > self.min_grasp_quality:
+                            reachable_grasps.append(grasp)
+                        break
+
+        return reachable_grasps
+
+    def evaluate_grasps(self, grasps):
+        evaluated_grasps = []
+        num_reachable = 0
+        attempts = 0
+        
+        for grasp in grasps:
+            evaluated_grasp = self.evaluate_grasp(grasp)
+            if evaluated_grasp["grasp_quality"] > 0:
+                evaluated_grasps.append(evaluate_grasp)
+                if evaluated_grasp["pre_grasp_reachable"] and evaluated_grasp["grasp_reachable"]:
+                    num_reachable = num_reachable + 1
+
+        if num_reachable == 0:
+            evaluated_grasps = self.get_reachable_grasps(evaluated_grasps)
+        else:
+            evaluated_grasps = self.filter_grasps(evaluated_grasps)
+
+        return evaluated_grasps
+
+    def execute_grasp(self, grasps):
+        success_pre_grasp = False
+        success_grasp = False
+        for grasp in grasps:
+            self._moveit_move_arm.wait_for_service()
+            success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 0.01, 0.01, 0, 'right_arm').success
+ 
+            if not success_pre_grasp:
+                continue
+
+            self._moveit_move_arm.wait_for_service()
+            success_grasp = self._moveit_move_arm(grasp["grasp"], 0.01, 0.01, 0, 'right_arm').success
+
+            if success_grasp:
+                break
+        if success_grasp:
+            return True
+        else:
+            return False
+
 
     def execute(self, userdata):
         self._tts.publish('Grasping item')
@@ -187,132 +486,16 @@ class Grasp(smach.State):
         # scene.remove_world_object('shelf')
         # self.add_shelf_mesh_to_scene(scene)
 
-        shelf_height = self._shelf_heights[userdata.bin_id]
-
-        # Pre-grasp: pose arm in front of bin
-        success_pre_grasp = False
-        pre_grasp_offsets = [
-            self.pre_grasp_attempt_separation * i
-            for i in range(self.pre_grasp_attempts)
-        ]
-        for (idx, offset) in enumerate(pre_grasp_offsets):
-
-            rospy.loginfo('Pre-grasp:')
-            pose_target = PoseStamped()
-            pose_target.header.frame_id = 'base_footprint';
-
-            if userdata.bin_id > 'C':
-                rospy.loginfo('Not in the top row')
-                pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = self.pre_grasp_x_distance + offset
-                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
-
-                # go for centroid if it's vertically inside shelf
-                if ((base_frame_item_pose.pose.position.z > (shelf_height + self.half_gripper_height))
-                    and (base_frame_item_pose.pose.position.z < (shelf_height + 0.15))):
-                    pose_target.pose.position.z = base_frame_item_pose.pose.position.z
-                # otherwise, centroid is probably wrong, just use lowest possible grasp
-                else:
-                    pose_target.pose.position.z = shelf_height + \
-                        self.half_gripper_height + self.pre_grasp_height
-
-                self.log_pose_info(pose_target.pose)
-
-                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
-                self._moveit_move_arm.wait_for_service()
-                success_pre_grasp = self._moveit_move_arm(pose_target, 0.001, 0.01, 0, 'right_arm').success
-            else:
-                rospy.loginfo('In top row')
-                pose_target.pose.orientation.x = 0.984
-                pose_target.pose.orientation.y = -0.013
-                pose_target.pose.orientation.z = 0.178
-                pose_target.pose.orientation.w = 0.028
-                pose_target.pose.position.x = 0.243 + offset
-                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
-                pose_target.pose.position.z = 1.508
-
-                self.log_pose_info(pose_target.pose)
-
-                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
-                self._moveit_move_arm.wait_for_service()
-                success_pre_grasp = self._moveit_move_arm(pose_target, 0.01, 0.01, 0, 'right_arm').success
-                rospy.loginfo('Worked: ' + str(success_pre_grasp))
-
-            if success_pre_grasp:
-                # Open Hand
-                rospy.loginfo('Pre-grasp succeeeded')
-                rospy.loginfo('Open Hand')
-                self._set_grippers.wait_for_service()
-                grippers_open = self._set_grippers(False, True)
-                break
-            else:
-                rospy.loginfo('Pre-grasp attempt ' + str(idx) + ' failed')
-                self._tts.publish('Pre-grasp attempt ' + str(idx) + ' failed')
-                continue
-
-        if not success_pre_grasp:
+        grasping_pairs = self.generate_grasps(base_frame_item_pose, userdata.bin_id)
+        evaluated_grasps = self.evaluated_grasps(grasping_pairs)
+        if len(evaluated_grasps) > 0:
+            success_grasp = self.execute_grasp(evaluated_grasps)
+        else:
+            rospy.loginfo('No good grasps found')
+            self._tts.publish('No grasps found.')
             return outcomes.GRASP_FAILURE
 
-        success_grasp = False
 
-        # Move gripper into bin
-        grasp_attempt_delta = (self.dist_to_fingertips - self.dist_to_palm) / self.grasp_attempts
-        grasp_attempt_offsets = [
-            grasp_attempt_delta * i
-            for i in range(self.grasp_attempts)
-        ]
-        for (idx, offset) in enumerate(grasp_attempt_offsets):
-            rospy.loginfo('Grasp')
-            pose_target = PoseStamped()
-            pose_target.header.frame_id = 'base_footprint';
-            if userdata.bin_id > 'C':
-
-                rospy.loginfo('Not grasping from top row')
-                pose_target.pose.orientation.w = 1
-                pose_target.pose.position.x = \
-                    base_frame_item_pose.pose.position.x - self.dist_to_palm - offset
-                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
-                if ((base_frame_item_pose.pose.position.z > (shelf_height + self.half_gripper_height))
-                    and (base_frame_item_pose.pose.position.z < (shelf_height + 0.15))):
-                    pose_target.pose.position.z = base_frame_item_pose.pose.position.z
-                else:
-                    pose_target.pose.position.z = shelf_height + self.half_gripper_height
-
-                self.log_pose_info(pose_target.pose)
-
-                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
-                self._moveit_move_arm.wait_for_service()
-                success_grasp = self._moveit_move_arm(pose_target, 0.0001, 0.001, 0, 'right_arm').success
-
-            else:
-                rospy.loginfo('Grasping from top row')
-                pose_target.pose.orientation.x = 0.996
-                pose_target.pose.orientation.y = -0.016
-                pose_target.pose.orientation.z = 0.080
-                pose_target.pose.orientation.w = 0.027
-                pose_target.pose.position.x = 0.431 - offset
-                pose_target.pose.position.y = base_frame_item_pose.pose.position.y
-                pose_target.pose.position.z = 1.570
-
-                rospy.loginfo('Grasping from top row')
-                self.log_pose_info(pose_target.pose)
-
-                viz.publish_gripper(self._im_server, pose_target, 'grasp_target')
-                self._moveit_move_arm.wait_for_service()
-                success_grasp = self._moveit_move_arm(pose_target, 0.01, 0.01, 0, 'right_arm').success
-
-            if success_grasp:
-                # Close hand
-                rospy.loginfo('Grasp succeeded')
-                rospy.loginfo('Close Hand')
-                self._set_grippers.wait_for_service()
-                grippers_open = self._set_grippers(False, False)
-
-                break
-            else:
-                rospy.loginfo('Grasp attempt '  + str(idx) + ' failed')
-                self._tts.publish('Grasp attempt ' + str(idx) + ' failed')
-                continue
 
         if not success_grasp:
             rospy.loginfo('Grasping failed')

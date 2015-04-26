@@ -1,0 +1,8 @@
+<launch>
+
+  <!-- Start the test -->
+  <node name="moveit_simple_grasps_server" pkg="moveit_simple_grasps" type="moveit_simple_grasps_server" output="screen">
+    <rosparam command="load" file="$(find pr2_pick_manipulation)/config/pr2_grasp_data.yaml"/>
+  </node>
+
+</launch>
