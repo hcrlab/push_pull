@@ -358,8 +358,30 @@ class Grasp(smach.State):
         else:
             rospy.loginfo("Full grasp evaluation")
             grasp["grasp_quality"] = 1.0
-            grasp["pre_grasp_reachable"] = True
-            grasp["grasp_reachable"] = True
+            # Check pre-grasp IK
+            rospy.loginfo("Checking pre-grasp ik")
+            ik_request = GetPositionIKRequest()
+            ik_request.ik_request.group_name = "right_arm"
+            ik_request.ik_request.pose_stamped = grasp["pre_grasp"]
+            ik_response = self._ik_client(ik_request)
+
+            if ik_response.error_code.val == ik_response.error_code.SUCCESS:
+                grasp["pre_grasp_reachable"] = True
+            else: 
+                grasp["pre_grasp_reachable"] = False
+
+            # Check grasp IK
+            rospy.loginfo("Checking grasp ik")
+            ik_request = GetPositionIKRequest()
+            ik_request.ik_request.group_name = "right_arm"
+            ik_request.ik_request.pose_stamped = grasp["grasp"]
+            ik_response = self._ik_client(ik_request)
+
+            if ik_response.error_code.val == ik_response.error_code.SUCCESS:
+                grasp["grasp_reachable"] = True
+            else:
+                grasp["grasp_reachable"] = False
+
         return grasp
 
     def filter_grasps(self, grasps):
@@ -395,7 +417,7 @@ class Grasp(smach.State):
                     ik_response = self._ik_client(ik_request)
 
                     #if reachable, set True, set new pre-grasp, break
-                    if ik_response.error_code == ik_response.error_code.SUCCESS:
+                    if ik_response.error_code.val == ik_response.error_code.SUCCESS:
                         reachable = True
                         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                 transformed_pose)
@@ -427,7 +449,7 @@ class Grasp(smach.State):
                     ik_response = self._ik_client(ik_request)
 
                     #if reachable, set True, set new grasp, evaluate grasp, append, break
-                    if ik_response.error_code == ik_response.error_code.SUCCESS:
+                    if ik_response.error_code.val == ik_response.error_code.SUCCESS:
                         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                 transformed_pose)
                         grasp["grasp"] = pose_in_base_footprint
