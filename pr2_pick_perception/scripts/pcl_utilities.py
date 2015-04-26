@@ -81,7 +81,7 @@ class PCLUtilities(object):
                 )
             )
 
-            transformed_point = tf_listener.transformPose('r_wrist_roll_link',
+            transformed_point = tf_listener.transformPose(request.frame_id,
                                                                 point)
             if (transformed_point.point.x => request.min_x and
                 transformed_point.point.x <= request.max_x and
