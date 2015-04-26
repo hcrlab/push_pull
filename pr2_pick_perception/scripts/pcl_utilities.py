@@ -22,10 +22,11 @@ class PCLUtilities(object):
         )
 
         self._points_in_box_service = rospy.Service(
-            'perception/points_in_box',
+            'perception/get_points_in_box',
             BoxPoints,
             self.find_points_in_box
         )
+        self._tf_listener = tf.TransformListener()
 
     def find_centroid(self, request):
         '''Computes the average point in a point cloud. '''
@@ -69,7 +70,6 @@ class PCLUtilities(object):
         )
 
         num_points = 0
-        tf_listener = tf.TransformListener()
         for x, y, z in points:
 
             # Transform point into frame of bounding box
@@ -77,17 +77,21 @@ class PCLUtilities(object):
                 point=Point(x=x, y=y, z=z),
                 header=Header(
                     frame_id=request.cluster.header.frame_id,
-                    stamp=rospy.Time.now(),
+                    stamp=rospy.Time(0),
                 )
             )
 
-            transformed_point = tf_listener.transformPose(request.frame_id,
+            #self._tf_listener.waitForTransform(request.cluster.header.frame_id, 
+            #                                request.frame_id, rospy.Time(0),
+            #                                rospy.Duration(10.0))
+
+            transformed_point = self._tf_listener.transformPoint(request.frame_id,
                                                                 point)
-            if (transformed_point.point.x => request.min_x and
+            if (transformed_point.point.x >= request.min_x and
                 transformed_point.point.x <= request.max_x and
-                transformed_point.point.y => request.min_y and
+                transformed_point.point.y >= request.min_y and
                 transformed_point.point.y <= request.max_y and
-                transformed_point.point.z => request.min_z and
+                transformed_point.point.z >= request.min_z and
                 transformed_point.point.z <= request.max_z):
                 num_points += 1
 
