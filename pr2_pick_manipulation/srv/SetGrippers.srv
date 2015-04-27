@@ -1,5 +1,11 @@
 # Open left or right gripper if true, close otherwise.
 bool open_left
 bool open_right
+# Force to apply, in Newtons (?). Should only be set when closing the gripper.
+# Set to a negative value to use max force.
+float64 effort = -1 
 ---
-bool success
+# Success means whether or not the gripper achieved the open or close position.
+# If it successfully grasps an object, it may return false anyway because it
+# didn't get to fully close its gripper.
+bool success 

@@ -21,14 +21,14 @@ GripperService::GripperService()
 bool GripperService::SetGrippersCallback(SetGrippers::Request& request,
                                          SetGrippers::Response& response) {
   if (request.open_left) {
-    left_.Open(-1);
+    left_.Open(request.effort);
   } else {
-    left_.Close(-1); 
+    left_.Close(request.effort); 
   }
   if (request.open_right) {
-    right_.Open(-1);
+    right_.Open(request.effort);
   } else {
-    right_.Close(-1); 
+    right_.Close(request.effort); 
   }
   response.success = true;
   return true;
