@@ -71,6 +71,12 @@ These are just suggested:
 - [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.html)
 - [Python PEP8](https://www.python.org/dev/peps/pep-0008/)
 
+## Pressure sensor
+We have installed two pressure sensors on the robot's right hand.
+To upload the firmware, go to `pr2_ethercat_drivers/wg006_fingertip_dev` and run `upload_pressure_firmware.sh`
+
+You should be able to specify the max_effort for the right hand gripper actions and have it work appropriately.
+
 ## Fingertip optical sensor
 We have installed an optical sensor on one of the PR2's fingertips.
 [Full documentation for the fingertip sensor](https://bitbucket.org/uwsensors/pr2_pretouch_optical_dist/wiki/Publishing%20Distance%20Data).
