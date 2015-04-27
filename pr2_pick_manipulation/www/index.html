@@ -32,13 +32,39 @@
 
   function toggleState() {
     if (clientSubscribed) {
-      tfClient.unsubscribe('r_wrist_roll_link', handleTfCallback);
+      tfClient.unsubscribe(movingFrame, handleTfCallback);
       document.querySelector('#toggleButton').innerHTML = 'Start';
       clientSubscribed = false;
     } else {
-      tfClient.subscribe('r_wrist_roll_link', handleTfCallback);
+      tfClient.subscribe(movingFrame, handleTfCallback);
       document.querySelector('#toggleButton').innerHTML = 'Pause';
       clientSubscribed = true;
+    }
+  }
+
+  var movingFrame = 'r_wrist_roll_link';
+
+  function updateTfClient() {
+    var wasSubscribed = clientSubscribed;
+    if (wasSubscribed) {
+      // unsubscribe
+      toggleState();
+    }
+    // replace old client (along with fixed frame)
+    var e = document.getElementById("fixedFrame");
+    fixedFrame = e.options[e.selectedIndex].value;
+    tfClient = new ROSLIB.TFClient({
+      ros : ros,
+      fixedFrame : fixedFrame,
+      angularThres : 0.01,
+      transThres : 0.01
+    });
+    // replace moving frame
+    e = document.getElementById("movingFrame");
+    movingFrame = e.options[e.selectedIndex].value;
+    if (wasSubscribed) {
+      // resubscribe
+      toggleState();
     }
   }
 
@@ -64,9 +90,14 @@
 
 <body onload="init()">
   <h1>
-    <select><option value="r_wrist_roll_link">r_wrist_roll_link</option></select>
+    <select id="movingFrame" onchange="updateMovingFrame()">
+      <option value="r_wrist_roll_link">r_wrist_roll_link</option>
+    </select>
     relative to
-    <select><option value="base_footprint">base_footprint</option></select>
+    <select id="fixedFrame" onchange="updateTfClient()">
+      <option value="base_footprint">base_footprint</option>
+      <option value="head_mount_link">head_mount_link</option>
+    </select>
   </h1>
   <button type="button" id="toggleButton" onclick="toggleState()">Pause</button><br />
   p.pose.position.x = <span id="pos_x">?</span>;<br />
