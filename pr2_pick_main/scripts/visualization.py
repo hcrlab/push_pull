@@ -130,6 +130,35 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     marker.lifetime = rospy.Duration()
     _publish(publisher, marker)
 
+def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a, marker_id):
+    """Publishes a marker representing a bounding box.
+
+    Args:
+      publisher: A visualization_msgs/Marker publisher
+      pose_stamped: pose of marker
+      x, y, z: dimensions of bounding box
+      r, g, b, a: colour information for marker
+      marker_id: id # for marker 
+    """
+    marker = Marker()
+    marker.header.frame_id = pose_stamped.header.frame_id
+    marker.header.stamp = rospy.Time().now()
+    marker.ns = 'bounding_box'
+    marker.id = marker_id
+    marker.type = Marker.CUBE
+    marker.action = Marker.ADD
+    marker.pose.position = pose_stamped.pose.position
+    marker.pose.orientation = pose_stamped.pose.orientation
+    marker.scale.x = x
+    marker.scale.y = y
+    marker.scale.z = z
+    marker.color.r = r
+    marker.color.g = g
+    marker.color.b = b
+    marker.color.a = a
+    marker.lifetime = rospy.Duration()
+    _publish(publisher, marker)
+
 def _get_pose_from_transform(transform):
     """Returns pose for transformation matrix.
     Args:

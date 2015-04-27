@@ -391,6 +391,15 @@ class Grasp(smach.State):
         self._get_points_in_box.wait_for_service()
         box_response = self._get_points_in_box(box_request)
 
+        box_pose = PoseStamped()
+        box_pose.pose.position.x = box_request.min_x + (box_request.max_x - box_request.min_x) / 2
+        box_pose.pose.position.y = box_request.min_y + (box_request.max_y - box_request.min_y) / 2
+        box_pose.pose.position.z = box_request.min_z + (box_request.max_z - box_request.min_z) / 2
+
+        viz.publish_bounding_box(self._im_server, box_pose, (box_request.max_x - box_request.min_x), 
+            (box_request.max_x - box_request.min_x), (box_request.max_x - box_request.min_x).
+            1.0, 0.0, 0.0, 0.5, 1)
+
         rospy.loginfo("Number of points inside gripper: {}".format(box_response.num_points))
 
         if box_response.num_points >= self.min_points_in_gripper:
