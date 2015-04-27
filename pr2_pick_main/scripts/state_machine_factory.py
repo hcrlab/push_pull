@@ -9,7 +9,7 @@ from visualization_msgs.msg import Marker
 import outcomes
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
-    TuckArms, GetGrippers
+    TuckArms, GetGrippers, MoveArmIk
 from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
@@ -72,6 +72,7 @@ class StateMachineBuilder(object):
             'move_torso': rospy.ServiceProxy('torso_service', MoveTorso),
             'move_head': rospy.ServiceProxy('move_head_service', MoveHead),
             'moveit_move_arm': rospy.ServiceProxy('moveit_service', MoveArm),
+            'move_arm_ik': rospy.ServiceProxy('move_arm_ik', MoveArmIk),
             'set_grippers': rospy.ServiceProxy('set_grippers_service', SetGrippers),
             'get_grippers': rospy.ServiceProxy('get_grippers_service', GetGrippers),
             'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
@@ -132,6 +133,11 @@ class StateMachineBuilder(object):
         moveit_move_arm.wait_for_service = mock.Mock(return_value=None)
         moveit_move_arm.call = mock.Mock(
             side_effect=self.side_effect('moveit_move_arm'))
+
+        move_arm_ik = rospy.ServiceProxy('move_arm_ik', MoveArm)
+        move_arm_ik.wait_for_service = mock.Mock(return_value=None)
+        move_arm_ik.call = mock.Mock(
+            side_effect=self.side_effect('move_arm_ik'))
 
         shelf_response = LocalizeShelfResponse()
         shelf_obj = Object()
