@@ -89,7 +89,7 @@ class Grasp(smach.State):
     min_grasp_quality = 0.3
 
     # minimum number of points from cluster needed inside gripper for grasp
-    min_points_in_gripper = 20
+    min_points_in_gripper = 90
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -366,6 +366,7 @@ class Grasp(smach.State):
 
         # Check if enough points will be in gripper
         # TODO: Check if too many points will be inside fingers
+        # TODO: Publish marker for bounding box of points
         rospy.loginfo("Just checking grasp quality") 
 
         transform = TransformStamped()
