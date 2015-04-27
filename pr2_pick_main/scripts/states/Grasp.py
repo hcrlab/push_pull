@@ -91,6 +91,9 @@ class Grasp(smach.State):
     # minimum number of points from cluster needed inside gripper for grasp
     min_points_in_gripper = 90
 
+    # max number of points in cluster that can intersect with fingers
+    max_finger_collision_points = 20
+
     def __init__(self, **services):
         smach.State.__init__(
             self,
@@ -109,6 +112,7 @@ class Grasp(smach.State):
         self._tf_listener = services['tf_listener']
         self._im_server = services['interactive_marker_server']
         self._set_static_tf = services['set_static_tf']
+        self._markers = services['markers']
 
         self._fk_client = rospy.ServiceProxy('compute_fk', GetPositionFK)
         self._ik_client = rospy.ServiceProxy('compute_ik', GetPositionIK)
@@ -257,6 +261,68 @@ class Grasp(smach.State):
             grasp_dict["grasp"] = grasp_pose
             grasping_pairs.append(grasp_dict)
 
+            # Make rotated wrist versions of all poses. 
+
+            # Put poses in wrist roll frame
+
+            wrist_frame_pre_grasp = self._tf_listener.transformPose('r_wrist_roll_link',
+                                                                pre_grasp_pose)
+            wrist_frame_grasp = self._tf_listener.transformPose('r_wrist_roll_link',
+                                                                grasp_pose)
+
+
+            pose = wrist_frame_pre_grasp
+            #type(pose) = geometry_msgs.msg.Pose
+            quaternion = (
+                pose.pose.orientation.x,
+                pose.pose.orientation.y,
+                pose.pose.orientation.z,
+                pose.pose.orientation.w)
+            euler = tf.transformations.euler_from_quaternion(quaternion)
+            roll = euler[0]
+            pitch = euler[1]
+            yaw = euler[2]
+
+            roll = roll - 1.57
+
+            quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+            #type(pose) = geometry_msgs.msg.Pose
+            pose.pose.orientation.x = quaternion[0]
+            pose.pose.orientation.y = quaternion[1]
+            pose.pose.orientation.z = quaternion[2]
+            pose.pose.orientation.w = quaternion[3]
+
+            pre_grasp_pose = self._tf_listener.transformPose('base_footprint',
+                                                                pose)
+    
+            pose = wrist_frame_grasp
+            #type(pose) = geometry_msgs.msg.Pose
+            quaternion = (
+                pose.pose.orientation.x,
+                pose.pose.orientation.y,
+                pose.pose.orientation.z,
+                pose.pose.orientation.w)
+            euler = tf.transformations.euler_from_quaternion(quaternion)
+            roll = euler[0]
+            pitch = euler[1]
+            yaw = euler[2]
+        
+            roll = roll - 1.57
+        
+            quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+            #type(pose) = geometry_msgs.msg.Pose
+            pose.pose.orientation.x = quaternion[0]
+            pose.pose.orientation.y = quaternion[1]
+            pose.pose.orientation.z = quaternion[2]
+            pose.pose.orientation.w = quaternion[3]
+
+            grasp_pose = self._tf_listener.transformPose('base_footprint',
+                                                                pose)
+            grasp_dict = {}
+            grasp_dict["pre_grasp"] = pre_grasp_pose
+            grasp_dict["grasp"] = grasp_pose
+            grasping_pairs.append(grasp_dict)
+
         return grasping_pairs
 
     def generate_grasps(self, object_pose, bin_id):
@@ -332,17 +398,40 @@ class Grasp(smach.State):
         grasp_action_client = actionlib.SimpleActionClient('/moveit_simple_grasps_server/generate', GenerateGraspsAction)
         grasp_action_client.wait_for_server()
         goal = GenerateGraspsGoal()
-        goal.pose = object_pose.pose
+        pose = object_pose.pose
+        #type(pose) = geometry_msgs.msg.Pose
+        quaternion = (
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z,
+            pose.orientation.w)
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        roll = euler[0]
+        pitch = euler[1]
+        yaw = euler[2]
+
+        pitch = pitch - 1.57
+
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        #type(pose) = geometry_msgs.msg.Pose
+        pose.orientation.x = quaternion[0]
+        pose.orientation.y = quaternion[1]
+        pose.orientation.z = quaternion[2]
+        pose.orientation.w = quaternion[3]
+
+        goal.pose.position = object_pose.pose.position
+        goal.pose.orientation = pose.orientation
+
         goal.width = 0.0
 
         options_1 = GraspGeneratorOptions()
-        options_1.grasp_axis = options_1.GRASP_AXIS_Y
+        options_1.grasp_axis = options_1.GRASP_AXIS_X
         options_1.grasp_direction = options_1.GRASP_DIRECTION_UP
         options_1.grasp_rotation = options_1.GRASP_ROTATION_FULL
 
         options_2 = GraspGeneratorOptions()
-        options_2.grasp_axis = options_2.GRASP_AXIS_Y
-        options_2.grasp_direction = options_2.GRASP_DIRECTION_UP
+        options_2.grasp_axis = options_2.GRASP_AXIS_X
+        options_2.grasp_direction = options_2.GRASP_DIRECTION_DOWN
         options_2.grasp_rotation = options_2.GRASP_ROTATION_FULL
 
         goal.options.append(options_1)
@@ -354,8 +443,61 @@ class Grasp(smach.State):
 
         moveit_simple_grasps  = self.grasp_msg_to_poses(grasps_result.grasps)
 
+        moveit_simple_grasps = []
+        #goal = GenerateGraspsGoal()
+        #goal.pose = object_pose.pose
+        #goal.width = 0.0
+
+        options_1 = GraspGeneratorOptions()
+        options_1.grasp_axis = options_1.GRASP_AXIS_X
+        options_1.grasp_direction = options_1.GRASP_DIRECTION_UP
+        options_1.grasp_rotation = options_1.GRASP_ROTATION_FULL
+
+        options_2 = GraspGeneratorOptions()
+        options_2.grasp_axis = options_2.GRASP_AXIS_X
+        options_2.grasp_direction = options_2.GRASP_DIRECTION_DOWN
+        options_2.grasp_rotation = options_2.GRASP_ROTATION_FULL
+
+        goal.options = []
+        goal.options.append(options_1)
+        goal.options.append(options_2)
+        grasp_action_client.send_goal(goal)
+        grasp_action_client.wait_for_result()
+
+        grasps_result = grasp_action_client.get_result()
+
+        moveit_simple_grasps  = self.grasp_msg_to_poses(grasps_result.grasps)
+
+        #goal = GenerateGraspsGoal()
+        #goal.pose = object_pose.pose
+        #goal.width = 0.0
+
+        goal.options = []
+
+        options_1 = GraspGeneratorOptions()
+        options_1.grasp_axis = options_1.GRASP_AXIS_Y
+        options_1.grasp_direction = options_1.GRASP_DIRECTION_UP
+        options_1.grasp_rotation = options_1.GRASP_ROTATION_FULL
+
+        options_2 = GraspGeneratorOptions()
+        options_2.grasp_axis = options_2.GRASP_AXIS_Y
+        options_2.grasp_direction = options_2.GRASP_DIRECTION_DOWN
+        options_2.grasp_rotation = options_2.GRASP_ROTATION_FULL
+
+        goal.options.append(options_1)
+        goal.options.append(options_2)
+        grasp_action_client.send_goal(goal)
+        grasp_action_client.wait_for_result()
+
+        grasps_result = grasp_action_client.get_result()
+
+        moveit_simple_grasps  = moveit_simple_grasps + self.grasp_msg_to_poses(grasps_result.grasps)
+
+
+
+
         # Commented out for testing purposes
-        #grasping_pairs = grasping_pairs + moveit_simple_grasps
+        grasping_pairs = grasping_pairs + moveit_simple_grasps
 
         return grasping_pairs
 
@@ -392,25 +534,92 @@ class Grasp(smach.State):
         box_response = self._get_points_in_box(box_request)
 
         box_pose = PoseStamped()
+        box_pose.header.frame_id = 'grasp'
         box_pose.pose.position.x = box_request.min_x + (box_request.max_x - box_request.min_x) / 2
         box_pose.pose.position.y = box_request.min_y + (box_request.max_y - box_request.min_y) / 2
         box_pose.pose.position.z = box_request.min_z + (box_request.max_z - box_request.min_z) / 2
 
-        viz.publish_bounding_box(self._im_server, box_pose, (box_request.max_x - box_request.min_x), 
-            (box_request.max_x - box_request.min_x), (box_request.max_x - box_request.min_x).
+        viz.publish_bounding_box(self._markers, box_pose, (box_request.max_x - box_request.min_x), 
+            (box_request.max_y - box_request.min_y), (box_request.max_z - box_request.min_z),
             1.0, 0.0, 0.0, 0.5, 1)
 
         rospy.loginfo("Number of points inside gripper: {}".format(box_response.num_points))
 
-        if box_response.num_points >= self.min_points_in_gripper:
+        # Check for collisions with fingers
+
+        l_finger_request = BoxPointsRequest()
+        l_finger_request.cluster = self._cluster
+        l_finger_request.frame_id = "grasp"
+        l_finger_request.min_x = self.dist_to_palm
+        l_finger_request.max_x = self.dist_to_fingertips
+        l_finger_request.min_y = -1 * self.gripper_palm_width/2 - 0.025
+        l_finger_request.max_y = -1 * self.gripper_palm_width/2 - 0.005
+        l_finger_request.min_z = -1 * self.gripper_finger_height/2
+        l_finger_request.max_z = self.gripper_finger_height/2
+        self._get_points_in_box.wait_for_service()
+        l_finger_response = self._get_points_in_box(l_finger_request)
+        
+        l_finger_pose = PoseStamped()
+        l_finger_pose.header.frame_id = 'grasp'
+        l_finger_pose.pose.position.x = l_finger_request.min_x +\
+                         (l_finger_request.max_x - l_finger_request.min_x) / 2
+        l_finger_pose.pose.position.y = l_finger_request.min_y +\
+                         (l_finger_request.max_y - l_finger_request.min_y) / 2
+        l_finger_pose.pose.position.z = l_finger_request.min_z +\
+                         (l_finger_request.max_z - l_finger_request.min_z) / 2
+
+        viz.publish_bounding_box(self._markers, l_finger_pose, 
+            (l_finger_request.max_x - l_finger_request.min_x), 
+            (l_finger_request.max_y - l_finger_request.min_y), 
+            (l_finger_request.max_z - l_finger_request.min_z),
+            0.0, 0.0, 1.0, 0.5, 2)
+
+        rospy.loginfo("Number of points inside left finger: {}"
+                        .format(l_finger_response.num_points))
+
+        r_finger_request = BoxPointsRequest()
+        r_finger_request.cluster = self._cluster
+        r_finger_request.frame_id = "grasp"
+        r_finger_request.min_x = self.dist_to_palm
+        r_finger_request.max_x = self.dist_to_fingertips
+        r_finger_request.min_y = self.gripper_palm_width/2 + 0.005
+        r_finger_request.max_y = self.gripper_palm_width/2 + 0.025
+        r_finger_request.min_z = -1 * self.gripper_finger_height/2
+        r_finger_request.max_z = self.gripper_finger_height/2
+        self._get_points_in_box.wait_for_service()
+        r_finger_response = self._get_points_in_box(r_finger_request)
+        
+        r_finger_pose = PoseStamped()
+        r_finger_pose.header.frame_id = 'grasp'
+        r_finger_pose.pose.position.x = r_finger_request.min_x +\
+                         (r_finger_request.max_x - r_finger_request.min_x) / 2
+        r_finger_pose.pose.position.y = r_finger_request.min_y +\
+                         (r_finger_request.max_y - r_finger_request.min_y) / 2
+        r_finger_pose.pose.position.z = r_finger_request.min_z +\
+                         (r_finger_request.max_z - r_finger_request.min_z) / 2
+
+        viz.publish_bounding_box(self._markers, r_finger_pose, 
+            (r_finger_request.max_x - r_finger_request.min_x), 
+            (r_finger_request.max_y - r_finger_request.min_y), 
+            (r_finger_request.max_z - r_finger_request.min_z),
+            0.0, 0.0, 1.0, 0.5, 3)
+
+        rospy.loginfo("Number of points inside right finger: {}"
+                        .format(r_finger_response.num_points))
+
+
+        if box_response.num_points >= self.min_points_in_gripper and \
+            (r_finger_response.num_points + l_finger_response.num_points) <= \
+            self.max_finger_collision_points:
             grasp["grasp_quality"] = 1.0
+            rospy.loginfo("Evaluated good grasp")
         else:
             grasp["grasp_quality"] = 0.0
+            rospy.loginfo("Evaluated bad grasp")
 
         # Only check reachability if not already checked
-        if not "grasp_reachable" in grasp.keys():
+        if not "grasp_reachable" in grasp.keys() and grasp["grasp_quality"] > 0:
             rospy.loginfo("Full grasp evaluation")
-            grasp["grasp_quality"] = 1.0
             # Check pre-grasp IK
             rospy.loginfo("Checking pre-grasp ik")
             ik_request = GetPositionIKRequest()
@@ -576,7 +785,8 @@ class Grasp(smach.State):
                     idx = ik_request.ik_request.robot_state.joint_state.name.index(name)
                     positions[idx] = ik_response.solution.joint_state.position[ind]
                 
-            arm.move([positions])
+            #arm.move([positions])
+            viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
             success_grasp = True
             if success_grasp:
                 rospy.loginfo('Grasp succeeded')
