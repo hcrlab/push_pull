@@ -2,11 +2,47 @@
 
 Contains code for PR2 manipulation and robot control.
 
-For documentation, see .h files.
-
 ## Services
 
 Use manipulation.launch to launch all these services.
+
+### MoveArm
+Moves the arm to the target pose, with collision checking.
+```py
+from pr2_pick_manipulation.srv import MoveArm
+move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
+move_arm.wait_for_service()
+pose_target = PoseStamped()
+# ... fill out pose_target.
+move_arm(pose_target, position_tolerance=0.001, orientation_tolerance=0.01, planning_time=0, 'right_arm')
+```
+
+### MoveArmIk
+Moves the arm in a straight line to the target pose, without using collision checking.
+```py
+from pr2_pick_manipulation.srv import MoveArmIk, MoveArmIkRequest
+move_arm_ik = rospy.ServiceProxy('move_arm_ik', MoveArmIk)
+move_arm_ik.wait_for_service()
+pose_target = PoseStamped()
+# ... fill out pose_target.
+move_arm(pose_target, MoveArmIkRequest.RIGHT)
+```
+
+### DriveToPose
+Drives the robot to a given PoseStamped.
+```py
+from geometry_msgs.msg import PoseStamped()
+from pr2_pick_manipulation.srv import DriveToPose
+drive_to_pose = rospy.ServiceProxy('drive_to_pose', DriveToPose)
+drive_to_pose.wait_for_service()
+target = PoseStamped()
+target.header.frame_id = 'shelf'
+target.pose.position.x = -1
+target.pose.position.y = 0
+target.pose.position.z = 0
+target.pose.orientation.w = 1
+drive_to_pose(target, linearVelocity=0.1, angularVelocity=0.1)
+```
 
 ### DriveAngular
 Rotates the robot. It's recommended to only use the constants `RIGHT_90`, `LEFT_90`, and `TURN_180` for the 2nd parameter.
@@ -54,52 +90,6 @@ from pr2_pick_manipulation.srv import TuckArms
 tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
 tuck_arms.wait_for_service()
 tuck_arms(True, False) # Tuck the left arm and untuck the right arm.
-```
-
-## Libraries
-### gripper.h
-C++ action client wrapper for opening and closing the gripper.
-
-Sample usage:
-```cpp
-Gripper right_gripper(Gripper:RIGHT_GRIPPER);
-right_gripper.Open();
-right_gripper.Close();
-```
-
-### torso.h
-C++ action client wrapper for moving the torso up and down
-
-Sample usage:
-```cpp
-Torso torso;
-torso.SetHeight(0.1);
-torso.SetHeight(Torso::kMaxHeight);
-torso.SetHeight(Torso::kMinHeight);
-```
-
-### driver.h
-Library for driving the robot using the low-level base controller and odometry.
-
-Sample usage:
-```cpp
-pr2_pick_manipulation::RobotDriver driver();
-
-RobotDriver driver;
-// Drive left for 0.25 meters at 0.125 m/s
-driver.DriveLinear(0, 0.125, 0.25);
-// Rotate clockwise 90 degrees.
-driver.DriveAngular(-0.5, M_PI/2);
-```
-
-### arm_navigator.h
-Interface and implementations for moving the arm using motion planning.
-
-Sample usage:
-```cpp
-MoveGroup group("right_arm");
-ArmNavigatorInterface* right_arm = new MoveItArmNavigator(group);
-right_arm.MoveToPoseGoal(pose, false);
 ```
 
 ## End-effector reader tool
