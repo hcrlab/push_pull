@@ -92,6 +92,11 @@ tuck_arms.wait_for_service()
 tuck_arms(True, False) # Tuck the left arm and untuck the right arm.
 ```
 
+## manipulation.launch
+Launch file that contains most services related to manipulation.
+A notable exception is that move_group.launch is not included.
+This is because we've found that MoveIt performs much better in terms of speed and number of plans found when it is run on a separate machine from the robot.
+
 ## End-effector reader tool
 A tool for easily getting the transform for one of the arms relative to the robot.
 Currently, the transform is hard-coded to be `r_wrist_roll_link` relative to `base_footprint`.

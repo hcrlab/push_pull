@@ -1,16 +1,51 @@
 # Perception
 Contains code for the perception side of the Amazon picking challenge.
 
-## perception.launch
-This contains a launch file called perception.launch, which starts the Kinect, the fingertip sensor, and the shelf localization service.
-
 ## Services
 ### Shelf localization
 Localizes the shelf by fitting it to a shelf model.
-The coordinate frame for the shelf is at the bottom center (?)
-```
+The coordinate frame for the shelf is at the bottom center.
+```bash
 roslaunch pr2_pick_perception perception.launch
 rosservice call /perception/localize_shelf
+```
+
+### Item clustering
+Gets the clusters in a particular bin, given the full point cloud, and assuming that the shelf and bin TFs are being published.
+
+Example:
+```py
+from pr2_pick_perception.srv import CropShelf, CropShelfRequest
+crop_shelf = rospy.ServiceProxy('perception/shelf_cropper', CropShelf)
+request = CropShelfRequest(cellID=userdata.bin_id)
+crop_shelf.wait_for_service()
+response = self._crop_shelf(request)
+clusters = response.locations.clusters
+```
+
+### Planar PCA
+Gets the 2 PCA components of a cluster on the XY plane.
+
+Example usage in the state machine:
+```py
+self._get_planar_pca = kwargs['get_planar_pca']
+self._get_planar_pca.wait_for_service()
+response = self._get_planar_pca(cluster) # cluster is a pr2_pick_perception/Cluster
+# response.first_component is the eigenvector with the larger eigenvalue. It is a quaternion relative to the point cloud frame.
+# response.second_component is the eigenvector with the smaller eigenvalue.
+# response.eigenvalue1 is the larger eigenvalue.
+# response.eigenvalue2 is the smaller eigenvalue.
+```
+
+### Find Centroid
+Returns the centroid of a point cloud.
+
+```py
+from pr2_pick_perception.srv import FindCentroid
+find_centroid = rospy.ServiceProxy('perception/find_centroid', FindCentroid)
+find_centroid.wait_for_service()
+# cluster is a pr2_pick_perception/Cluster
+point_stamped = find_centroid(cluster)
 ```
 
 ### Static transform publisher
@@ -45,6 +80,9 @@ This will bring up several visualizations in a row.
 3. Segmented point cloud. Press `r` to fix the reference frame, `q` to continue.
 4. The matched model overlaid with the raw data.
 
+## perception.launch
+This contains a launch file called perception.launch, which starts the Kinect, the tilt laser, and all services defined in this package.
+
 ## Bag file recording
 There are scripts for recording various topics in the scripts folder.
 
@@ -52,17 +90,3 @@ There are scripts for recording various topics in the scripts folder.
 roslaunch pr2_pick_perception perception.launch
 ./record_kinect.sh # Records 2 seconds of Kinect data.
 ```
-
-## Libraries
-### mock_perception.h
-A mock perception library.
-You explicitly specify where the items are in each bin.
-Later, you can get the items back out.
-
-## Executables
-### shelf_localization.cpp
-The code for the shelf localization service.
-
-### mock_perception_easy_boxes.cpp
-An action server for `GetItems` for the travel support demo.
-It just tells the robot that the next object is always at more or less the same pose relative to the robot (since the robot drives to each bin).

@@ -13,9 +13,11 @@ find_package(catkin REQUIRED
   image_transport
   laser_assembler
   message_generation
+  pcl_conversions
   pcl_ros
   pr2_pick_msgs
   roscpp
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -91,6 +93,7 @@ add_service_files(
   FindCentroid.srv
   LocalizeShelf.srv
   SetStaticTransform.srv
+  PlanarPrincipalComponents.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -127,9 +130,11 @@ catkin_package(
     image_geometry
     image_transport
     laser_assembler
+    pcl_conversions
     pcl_ros
     pr2_pick_msgs
     roscpp
+    sensor_msgs
   DEPENDS
     eigen
     boost
@@ -149,6 +154,9 @@ catkin_package(
 include_directories(include)
 
 ## Declare a cpp library
+add_library(pcl_lib
+  src/pcl.cpp
+)
 
 ## Declare a cpp executable
 add_executable(shelf_localization_service_node
@@ -159,9 +167,12 @@ add_executable(shelf_localization_service_node_lidar
   src/shelf_localization_LIDAR.cpp
 )
 
-
 add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
+)
+
+add_executable(planar_pca_service_node
+  src/planar_pca_service.cpp
 )
 
 ## Add cmake target dependencies of the executable/library
@@ -181,6 +192,17 @@ add_dependencies(shelf_cropping_service_node
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
+
+add_dependencies(planar_pca_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+# Hopefully not needed.
+#add_dependencies(pcl_lib
+#  pr2_pick_msgs_generate_messages_cpp
+#  pr2_pick_perception_generate_messages_cpp
+#)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(shelf_localization_service_node
@@ -204,4 +226,20 @@ target_link_libraries(shelf_cropping_service_node
   ${catkin_LIBRARIES}
 )
 
+target_link_libraries(pcl_lib
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(planar_pca_service_node
+  ${catkin_LIBRARIES}
+  pcl_lib
+)
 
+#############
+## Testing ##
+#############
+
+# Add gtest based cpp test target and link libraries
+catkin_add_gtest(pcl_test src/pcl_test.cpp)
+if(TARGET pcl_test)
+  target_link_libraries(pcl_test pcl_lib)
+endif()
