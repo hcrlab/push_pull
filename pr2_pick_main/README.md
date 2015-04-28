@@ -7,31 +7,32 @@ Located in `scripts/main.py`.
 It is implemented using the [smach](http://wiki.ros.org/smach) framework.
 smach has extensive [tutorials](http://wiki.ros.org/smach/Tutorials) on how to use it.
 
-### Getting started
-You may need to install [mock](https://pypi.python.org/pypi/mock): `sudo pip install mock`
+### Running the code
+[Recommended .bashrc](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/recommended_bashrc.md)
 
-Launch the appropriate launch file: `roslaunch pr2_pick_main milestone1.launch`, or launch the prereqs and the main file separately:
-
-```
-roslaunch pr2_pick_main milestone1_prereqs.launch
-python main.py
-```
-
-If the robot is busy, you can still run the state machine by mocking out all the
-ROS services, publishers, etc. Just run the launch file with `mock:=true`, or with `python main.py --mock`.
-
-## Travel support demo
-Picks 3 objects, one from bin G, H, and I.
-The robot is assumed to start fairly close up to the shelf and fairly centered.
-The order bin is on the ground to the robot's right at the start.
-
-Running:
-```
-roslaunch pr2_pick_perception perception.launch
+```bash
+# On a desktop computer
+setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
 roslaunch pr2_moveit_config move_group.launch
-roslaunch pr2_pick_main easy_boxes_demo.launch --screen
+rviz # Use the config file in pr2_pick/config
+
+# On the robot
+# Launch move_group.launch first, otherwise the MoveIt service will crash.
+roslaunch pr2_pick_main main_prereqs.launch
+python main.py --debug
 ```
 
-## Manipulation client demos
-Demonstrations and example code for the usage of the gripper, torso, and other
-clients.
+To see a visualization of the execution, open rviz and use the config file in `pr2_pick/config`
+
+### Adding a new service / publisher / action client to the state machine.
+1. Edit the appropriate launch files so that your service is brought up.
+2. Open `scripts/state_machine_factory.py`
+3. Add your service to `real_robot_services`.
+   You can ignore the mock services.
+4. Inside a state where you'd like to use the service, add to the `__init__` method:
+   `self._do_something = kwargs['do_something']`
+5. When you want to call your service, use the pattern:
+   ```
+   self._do_something.wait_for_service()
+   response = self._do_something(...)
+   ```
