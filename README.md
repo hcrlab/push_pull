@@ -20,15 +20,21 @@ git submodule update
 ```
 
 ## Running the code
+[Recommended .bashrc](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/recommended_bashrc.md)
+
 ```bash
 # On a desktop computer
+setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
 roslaunch pr2_moveit_config move_group.launch
+rviz # Use the config file in pr2_pick/config
 
 # On the robot
 # Launch move_group.launch first, otherwise the MoveIt service will crash.
 roslaunch pr2_pick_main main_prereqs.launch
 python main.py --debug
 ```
+
+To see a visualization of the execution, open rviz and use the config file in `pr2_pick/config`
 
 ## Packages
 
@@ -41,6 +47,7 @@ Contains firmware for the fingertip pressure and optical sensor.
 
 - **pr2_pick**:
 A metapackage for all the other packages.
+Contains the rviz config file.
 
 - **pr2_pick_contest**:
 Contains inventory management services.
