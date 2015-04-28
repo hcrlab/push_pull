@@ -93,8 +93,8 @@ class StateMachineBuilder(object):
 
             # Contest
 
-            'get_items': rospy.ServiceProxy('inventory/get_items', GetItems)
-            'set_items': rospy.ServiceProxy('inventory/set_items', SetItems)
+            'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
+            'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
             'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems)
              }
 
