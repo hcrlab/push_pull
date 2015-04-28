@@ -8,9 +8,23 @@ This contains a launch file called perception.launch, which starts the Kinect, t
 ### Shelf localization
 Localizes the shelf by fitting it to a shelf model.
 The coordinate frame for the shelf is at the bottom center (?)
-```
+```bash
 roslaunch pr2_pick_perception perception.launch
 rosservice call /perception/localize_shelf
+```
+
+### Planar PCA
+Gets the 2 PCA components of a cluster on the XY plane.
+
+Example usage in the state machine:
+```py
+self._get_planar_pca = kwargs['get_planar_pca']
+self._get_planar_pca.wait_for_service()
+response = self._get_planar_pca(cluster) # cluster is a pr2_pick_perception/Cluster
+# response.first_component is the eigenvector with the larger eigenvalue. It is a quaternion relative to the point cloud frame.
+# response.second_component is the eigenvector with the smaller eigenvalue.
+# response.eigenvalue1 is the larger eigenvalue.
+# response.eigenvalue2 is the smaller eigenvalue.
 ```
 
 ### Static transform publisher
