@@ -19,57 +19,74 @@ git submodule init
 git submodule update
 ```
 
+## Running the code
+[Recommended .bashrc](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/recommended_bashrc.md)
+
+```bash
+# On a desktop computer
+setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
+roslaunch pr2_moveit_config move_group.launch
+rviz # Use the config file in pr2_pick/config
+
+# On the robot
+# Launch move_group.launch first, otherwise the MoveIt service will crash.
+roslaunch pr2_pick_main main_prereqs.launch
+python main.py --debug
+```
+
+To see a visualization of the execution, open rviz and use the config file in `pr2_pick/config`
+
 ## Packages
-### festival_tts
+
+- **festival_tts**:
 A text-to-speech node.
 It's useful for debugging purposes to have the robot say stuff aloud as it works.
 
-### joint_states_listener
+- **pr2_ethercat_drivers**:
+Contains firmware for the fingertip pressure and optical sensor.
+
+- **pr2_pick**:
+A metapackage for all the other packages.
+Contains the rviz config file.
+
+- **pr2_pick_contest**:
+Contains inventory management services.
+
+- **pr2_pick_main**:
+Contains the main state machine, and implementation for all the states.
+
+- **pr2_pick_manipulation**:
+Contains services and libraries for controlling the robot, planning with the arms, and reading off the end-effector pose.
+
+- **pr2_pick_perception**:
+Contains services and libraries for localizing the shelf, analyzing point clouds, publishing static TFs, and recording data.
+
+- **pr2_pretouch_optical_dist**:
+Contains launch files and visualizers for the fingertip optical sensor.
+
+- *joint_states_listener*:
+Unused.
 A service that gets the most recent joint states message.
 
-### pr2_ethercat_drivers
-- Contains firmware for the fingertip optical sensor.
+- *pr2_pick_msgs*:
+Unused, put messages in the related package instead.
 
-### pr2_pick
-A metapackage for all the other packages.
-
-### pr2_pick_contest
-Contest interface, inventory management, and strategy.
-
-### pr2_pick_main
-A package that contains the main state machine runner for the picking challenge, as well as other end-to-end demos.
-Test programs for specific components might be in other packages, but end-to-end integration stuff should go here.
-
-- Contains the main state machine.
-- Contains demo code for other programs.
-
-### pr2_pick_manipulation
-- Contains services for controlling the robot (torso, base, grippers, etc.)
-- Contains a launch file for the above services.
-- Contains C++ libraries for controlling the robot.
-- Contains a tool for reading the current end-effector pose, using your phone.
-
-### pr2_pick_msgs
-Contains common message types for the picking challenge.
-
-### pr2_pick_perception
-- Contains a launch file which starts the Kinect, shelf localization, and fingertip sensor.
-- Contains a shelf localization service.
-- Contains a static tf transform publisher.
-- Contains a script for recording point cloud data.
-- Contains a "mock perception" class for testing purposes.
-
-### pr2_pretouch_optical_dist
-- Contains a launch file for running the fingertip optical sensor.
-- Contains a visualizer for the fingertip optical sensor data.
-
-### trajopt_test
-- Contains a service that uses trajopt to do motion planning and trajectory execution.
+- *trajopt_test*:
+Unused.
+A service that moves the arm using trajopt.
 
 ## Style guides
 These are just suggested:
 - [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.html)
 - [Python PEP8](https://www.python.org/dev/peps/pep-0008/)
+
+You can read about [auto code formatting](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/auto_code_formatting.md) if you're interested.
+
+## Pressure sensor
+We have installed two pressure sensors on the robot's right hand.
+To upload the firmware, go to `pr2_ethercat_drivers/wg006_fingertip_dev` and run `upload_pressure_firmware.sh`
+
+You should be able to specify the max_effort for the right hand gripper actions and have it work appropriately.
 
 ## Fingertip optical sensor
 We have installed an optical sensor on one of the PR2's fingertips.

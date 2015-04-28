@@ -24,6 +24,7 @@ class UpdatePlan(smach.State):
             self,
             outcomes=[
                 outcomes.UPDATE_PLAN_NEXT_OBJECT,
+                outcomes.UPDATE_PLAN_RELOCALIZE_SHELF,
                 outcomes.UPDATE_PLAN_NO_MORE_OBJECTS,
                 outcomes.UPDATE_PLAN_FAILURE
             ],
@@ -35,30 +36,19 @@ class UpdatePlan(smach.State):
         self._set_items = kwargs['set_items']
         self._get_target_items = kwargs['get_target_items']
         self._preferred_order = 'JKLGHIDEFABC'
+        # How often this state has been run since the last time we relocalized
+        # the shelf.
+        self._calls_since_shelf_localization = 0
 
     def execute(self, userdata):
         rospy.loginfo('Updating plan.')
         self._tts.publish('Updating plan.')
 
-
-        '''
-        Planning comment:
-        We want to know if the bin we want to acess has any items we want.
-        Obviously, we don't want to go to bins where there is nothing we want
-
-        Sudo-code picking:
-
-        foreach bin
-            if bin has not been visited and has useful item in it
-                chose that bin
-
-        foreach bin
-            if bin has not had sucess and has useful item in it
-                chose that bin
-
-        If we get here there are no bins worth going to
-        '''
-
+        if self._calls_since_shelf_localization == 1:
+            self._calls_since_shelf_localization = 0
+            return outcomes.UPDATE_PLAN_RELOCALIZE_SHELF
+        else:
+            self._calls_since_shelf_localization += 1
 
         for bin_id in self._preferred_order:
             if not userdata.bin_data[bin_id].visited and len(self.get_target_items(bin_id)) > 0:
@@ -68,6 +58,7 @@ class UpdatePlan(smach.State):
                 userdata.output_bin_data = bin_data
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
+        # take another pass at all the bins that did not succeed
         for bin_id in self._preferred_order:
             if not userdata.bin_data[bin_id].succeeded and len(self.get_target_items(bin_id)) > 0:
                 userdata.next_bin = bin_id

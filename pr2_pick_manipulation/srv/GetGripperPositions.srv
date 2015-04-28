@@ -1,0 +1,4 @@
+---
+# Indicates how wide open each gripper is.
+float64 left_position
+float64 right_position

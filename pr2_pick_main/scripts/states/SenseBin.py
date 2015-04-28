@@ -33,10 +33,13 @@ class SenseBin(smach.State):
         self._tts = tts
         self._crop_shelf = crop_shelf
         self._markers = markers
+        self._tuck_arms = kwargs['tuck_arms']
 
     def execute(self, userdata):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
+        self._tuck_arms.wait_for_service()
+        self._tuck_arms(tuck_left=True, tuck_right=True)
         # TODO(jstn): Move the head here.
         request = CropShelfRequest(cellID=userdata.bin_id)
         response = self._crop_shelf(request)

@@ -2,11 +2,47 @@
 
 Contains code for PR2 manipulation and robot control.
 
-For documentation, see .h files.
-
 ## Services
 
 Use manipulation.launch to launch all these services.
+
+### MoveArm
+Moves the arm to the target pose, with collision checking.
+```py
+from pr2_pick_manipulation.srv import MoveArm
+move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
+move_arm.wait_for_service()
+pose_target = PoseStamped()
+# ... fill out pose_target.
+move_arm(pose_target, position_tolerance=0.001, orientation_tolerance=0.01, planning_time=0, 'right_arm')
+```
+
+### MoveArmIk
+Moves the arm in a straight line to the target pose, without using collision checking.
+```py
+from pr2_pick_manipulation.srv import MoveArmIk, MoveArmIkRequest
+move_arm_ik = rospy.ServiceProxy('move_arm_ik', MoveArmIk)
+move_arm_ik.wait_for_service()
+pose_target = PoseStamped()
+# ... fill out pose_target.
+move_arm(pose_target, MoveArmIkRequest.RIGHT)
+```
+
+### DriveToPose
+Drives the robot to a given PoseStamped.
+```py
+from geometry_msgs.msg import PoseStamped()
+from pr2_pick_manipulation.srv import DriveToPose
+drive_to_pose = rospy.ServiceProxy('drive_to_pose', DriveToPose)
+drive_to_pose.wait_for_service()
+target = PoseStamped()
+target.header.frame_id = 'shelf'
+target.pose.position.x = -1
+target.pose.position.y = 0
+target.pose.position.z = 0
+target.pose.orientation.w = 1
+drive_to_pose(target, linearVelocity=0.1, angularVelocity=0.1)
+```
 
 ### DriveAngular
 Rotates the robot. It's recommended to only use the constants `RIGHT_90`, `LEFT_90`, and `TURN_180` for the 2nd parameter.
@@ -42,7 +78,7 @@ move_torso(MoveTorsoRequest.MAX_HEIGHT) # Move torso to maximum height.
 Opens or closes the grippers.
 ```py
 from pr2_pick_manipulation.srv import SetGrippers
-set_grippers = rospy.ServiceProxy('gripper_service', SetGrippers)
+set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
 set_grippers.wait_for_service()
 set_grippers(False, True) # Close left hand and open right hand.
 ```
@@ -56,51 +92,10 @@ tuck_arms.wait_for_service()
 tuck_arms(True, False) # Tuck the left arm and untuck the right arm.
 ```
 
-## Libraries
-### gripper.h
-C++ action client wrapper for opening and closing the gripper.
-
-Sample usage:
-```cpp
-Gripper right_gripper("r_gripper_controller/gripper_action");
-right_gripper.Open();
-right_gripper.Close();
-```
-
-### torso.h
-C++ action client wrapper for moving the torso up and down
-
-Sample usage:
-```cpp
-Torso torso;
-torso.SetHeight(0.1);
-torso.SetHeight(Torso::kMaxHeight);
-torso.SetHeight(Torso::kMinHeight);
-```
-
-### driver.h
-Library for driving the robot using the low-level base controller and odometry.
-
-Sample usage:
-```cpp
-pr2_pick_manipulation::RobotDriver driver();
-
-RobotDriver driver;
-// Drive left for 0.25 meters at 0.125 m/s
-driver.DriveLinear(0, 0.125, 0.25);
-// Rotate clockwise 90 degrees.
-driver.DriveAngular(-0.5, M_PI/2);
-```
-
-### arm_navigator.h
-Interface and implementations for moving the arm using motion planning.
-
-Sample usage:
-```cpp
-MoveGroup group("right_arm");
-ArmNavigatorInterface* right_arm = new MoveItArmNavigator(group);
-right_arm.MoveToPoseGoal(pose, false);
-```
+## manipulation.launch
+Launch file that contains most services related to manipulation.
+A notable exception is that move_group.launch is not included.
+This is because we've found that MoveIt performs much better in terms of speed and number of plans found when it is run on a separate machine from the robot.
 
 ## End-effector reader tool
 A tool for easily getting the transform for one of the arms relative to the robot.

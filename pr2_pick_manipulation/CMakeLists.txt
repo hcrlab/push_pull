@@ -69,6 +69,8 @@ add_service_files(
   FILES
   PushAway.srv
   SetGrippers.srv
+  GetGrippers.srv
+  GetGripperPositions.srv
   DriveLinear.srv
   DriveAngular.srv
   DriveToPose.srv
@@ -76,6 +78,7 @@ add_service_files(
   TuckArms.srv
   MoveHead.srv
   MoveArm.srv
+  MoveArmIk.srv
   GetPose.srv
 )
 
@@ -113,6 +116,7 @@ catkin_package(
     gripper_service
     torso_service
     tuck_arms_service
+    move_arm_service
     move_head_service
   CATKIN_DEPENDS tf
 #  DEPENDS system_lib
@@ -154,6 +158,9 @@ add_library(tuck_arms_service
 add_library(move_head_service
   src/move_head_service.cpp
 )
+add_library(move_arm_service
+  src/move_arm_service.cpp
+)
 
 ## Declare a cpp executable
 add_executable(driver_service_node src/driver_service_node.cpp)
@@ -161,6 +168,7 @@ add_executable(gripper_service_node src/gripper_service_node.cpp)
 add_executable(torso_service_node src/torso_service_node.cpp)
 add_executable(tuck_arms_service_node src/tuck_arms_service_node.cpp)
 add_executable(move_head_service_node src/move_head_service_node.cpp)
+add_executable(move_arm_service_node src/move_arm_service_node.cpp)
 add_executable(moveit_service_node src/moveit_service_node.cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -174,6 +182,7 @@ add_dependencies(gripper_service_node pr2_pick_manipulation_generate_messages_cp
 add_dependencies(torso_service_node pr2_pick_manipulation_generate_messages_cpp)
 add_dependencies(tuck_arms_service_node pr2_pick_manipulation_generate_messages_cpp)
 add_dependencies(move_head_service_node pr2_pick_manipulation_generate_messages_cpp)
+add_dependencies(move_arm_service_node pr2_pick_manipulation_generate_messages_cpp)
 add_dependencies(moveit_service_node pr2_pick_manipulation_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
@@ -226,6 +235,13 @@ target_link_libraries(move_head_service
 target_link_libraries(move_head_service_node
   ${catkin_LIBRARIES}
   move_head_service
+)
+target_link_libraries(move_arm_service
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(move_arm_service_node
+  ${catkin_LIBRARIES}
+  move_arm_service
 )
 target_link_libraries(moveit_service_node
   ${catkin_LIBRARIES}

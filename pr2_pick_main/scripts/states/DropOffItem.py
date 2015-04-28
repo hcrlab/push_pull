@@ -6,6 +6,7 @@ import tf
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Header
+import visualization as viz
 
 
 class DropOffItem(smach.State):
@@ -113,11 +114,12 @@ class DropOffItem(smach.State):
             # self._set_static_tf(order_bin_tf)
 
             # Do it the simple way! Assumes the shelf is not too tilted
+            # TODO(jstn): move this to FindShelf.
             order_bin_tf = TransformStamped()
             order_bin_tf.header.frame_id = 'shelf'
             order_bin_tf.header.stamp = rospy.Time.now()
             order_bin_tf.transform.translation.x = -36 * 0.0254
-            order_bin_tf.transform.translation.y = -32 * 0.0254 # -27
+            order_bin_tf.transform.translation.y = -27 * 0.0254 # -27
             order_bin_tf.transform.translation.z = 12 * 0.0254
             order_bin_tf.transform.rotation.w = 1
             order_bin_tf.child_frame_id = 'order_bin'
@@ -126,28 +128,9 @@ class DropOffItem(smach.State):
 
             self._order_bin_found = True
 
-            # Publish marker
-            marker = Marker()
-            marker.header.frame_id = 'order_bin'
-            marker.header.stamp = rospy.Time().now()
-            marker.ns = 'order_bin'
-            marker.id = 1
-            marker.type = Marker.CUBE
-            marker.action = Marker.ADD
-            marker.color.a = 1
-            marker.color.r = 1
-            marker.scale.x = 24 * 0.0254
-            marker.scale.y = 14.5 * 0.0254
-            marker.scale.z = 8 * 0.0254
-            marker.pose.orientation.w = 1
-            marker.lifetime = rospy.Duration()
+        # TODO(jstn): move this to FindShelf.
+        viz.publish_order_bin(self._markers)
 
-            # Need to wait for rviz for some reason.
-            rate = rospy.Rate(1)
-            while self._markers.get_num_connections() == 0:
-                rate.sleep()
-            self._markers.publish(marker)
-        
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, False)
@@ -176,28 +159,7 @@ class DropOffItem(smach.State):
         )
 
         # Visualize target pose.
-        marker = Marker()
-        marker.header.frame_id = 'order_bin'
-        marker.header.stamp = rospy.Time().now()
-        marker.ns = 'target_location'
-        marker.id = 2
-        marker.type = Marker.CUBE
-        marker.action = Marker.ADD
-        marker.pose = target_in_order_bin_frame.pose
-        marker.pose.position.z = 0.03 / 2
-        marker.scale.x = 0.67
-        marker.scale.y = 0.67
-        marker.scale.z = 0.03
-        marker.color.r = 0
-        marker.color.g = 1
-        marker.color.b = 0
-        marker.color.a = 1
-        marker.lifetime = rospy.Duration(5)
-
-        rate = rospy.Rate(1)
-        while self._markers.get_num_connections() == 0:
-            rate.sleep()
-        self._markers.publish(marker)
+        viz.publish_base(self._markers, target_in_order_bin_frame)
 
         rospy.loginfo('Sending drive command')
         self._drive_to_pose.wait_for_service()
@@ -220,7 +182,7 @@ class DropOffItem(smach.State):
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
-        pose_target.pose.position.z = 0.40
+        pose_target.pose.position.z = 0.45
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
 
@@ -241,10 +203,10 @@ class DropOffItem(smach.State):
 
     	# report success
         
-        # bin_id = userdata.bin_id
-        # bin_data = userdata.bin_data.copy()
-        # bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
-        # userdata.output_bin_data = bin_data
+        bin_id = userdata.bin_id
+        bin_data = userdata.bin_data.copy()
+        bin_data[bin_id] = bin_data[bin_id]._replace(succeeded=True)
+        userdata.output_bin_data = bin_data
 
         return outcomes.DROP_OFF_ITEM_SUCCESS
 
