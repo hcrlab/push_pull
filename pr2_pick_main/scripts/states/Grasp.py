@@ -672,7 +672,7 @@ class Grasp(smach.State):
             # Check if both pre-grasp and grasp are reachable
             if grasp["pre_grasp_reachable"] and grasp["grasp_reachable"]:
                 filtered_grasps.append(grasp)
-        return sort_grasps(filtered_grasps)
+        return self.sort_grasps(filtered_grasps)
 
     def get_reachable_grasps(self, grasps):
         reachable_grasps = []
@@ -745,11 +745,12 @@ class Grasp(smach.State):
                             reachable_grasps.append(grasp)
                         break
 
-        return sort_grasps(reachable_grasps)
+        return self.sort_grasps(reachable_grasps)
 
     def evaluate_grasps(self, grasps):
         evaluated_grasps = []
         num_reachable = 0
+        num_good = 0
         attempts = 0
         
         for grasp in grasps:

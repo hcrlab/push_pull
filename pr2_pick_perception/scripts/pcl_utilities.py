@@ -69,7 +69,7 @@ class PCLUtilities(object):
             skip_nans=True,
         )
 
-        num_points = []
+        num_points = [0] * len(request.boxes)
         for x, y, z in points:
 
             # Transform point into frame of bounding box
