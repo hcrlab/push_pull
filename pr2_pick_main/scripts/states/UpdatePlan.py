@@ -14,7 +14,7 @@ class UpdatePlan(smach.State):
     """
     name = 'UPDATE_PLAN'
 
-    def __init__(self, tts, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor for this state.
 
         Args:
@@ -31,7 +31,7 @@ class UpdatePlan(smach.State):
             input_keys=['bin_data'],
             output_keys=['output_bin_data', 'next_bin']
         )
-        self._tts = tts
+        self._tts = kwargs['tts']
         self._preferred_order = 'JKLGHIDEFABC'
         # How often this state has been run since the last time we relocalized
         # the shelf.

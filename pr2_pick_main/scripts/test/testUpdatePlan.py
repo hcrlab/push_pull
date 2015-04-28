@@ -27,13 +27,17 @@ class TestUpdatePlan(unittest.TestCase):
 
         def get_items(bin_id):
             if bin_id == 'J':
-                return ['oreo_mega_stuf']
+                response = mock.Mock()
+                response.items = ['oreo_mega_stuf']
+                return response
             else:
                 return []
 
         def get_target_items(bin_id):
             if bin_id == 'J':
-                return ['oreo_mega_stuf']
+                response = mock.Mock()
+                response.items = ['oreo_mega_stuf']
+                return response
             else:
                 return []
 
@@ -44,10 +48,11 @@ class TestUpdatePlan(unittest.TestCase):
         user_data = mock.Mock()
         user_data.bin_data = {}
         for bin_id in 'ABCDEFGHIJKL':
-            user_data.bin_data[bin_id] = BinData(id, False, False, 3)
+            user_data.bin_data[bin_id] = BinData(bin_id, False, False, 3)
 
         outcome = self.state.execute(user_data)
         self.assertEqual(user_data.next_bin, 'J')
+        self.assertEqual(user_data.output_bin_data['J'].visited, True)
 
 
 if __name__ == '__main__':
