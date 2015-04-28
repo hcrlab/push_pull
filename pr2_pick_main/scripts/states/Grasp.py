@@ -510,10 +510,10 @@ class Grasp(smach.State):
         rospy.sleep(2.0)
 
         points_in_box_request = BoxPointsRequest()
+        points_in_box_request.frame_id = "grasp"
         points_in_box_request.cluster = self._cluster
 
         box_request = Box()
-        box_request.frame_id = "grasp"
         box_request.min_x = self.dist_to_palm
         box_request.max_x = self.dist_to_fingertips
         box_request.min_y = -1 * self.gripper_palm_width/2
@@ -536,7 +536,6 @@ class Grasp(smach.State):
         # Check for collisions with fingers
         # Left Finger
         l_finger_request = Box()
-        l_finger_request.frame_id = "grasp"
         l_finger_request.min_x = self.dist_to_palm
         l_finger_request.max_x = self.dist_to_fingertips
         l_finger_request.min_y = -1 * self.gripper_palm_width/2 - 0.025
@@ -562,7 +561,6 @@ class Grasp(smach.State):
 
         # Right Finger
         r_finger_request = Box()
-        r_finger_request.frame_id = "grasp"
         r_finger_request.min_x = self.dist_to_palm
         r_finger_request.max_x = self.dist_to_fingertips
         r_finger_request.min_y = self.gripper_palm_width/2 + 0.005
@@ -588,7 +586,6 @@ class Grasp(smach.State):
 
         # Check for collisions with palm
         palm_request = Box()
-        palm_request.frame_id = "grasp"
         palm_request.min_x = 0.05
         palm_request.max_x = self.dist_to_palm
         palm_request.min_y = -1 * self.gripper_palm_width/2
