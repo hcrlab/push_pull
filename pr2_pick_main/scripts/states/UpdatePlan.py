@@ -2,7 +2,6 @@ from bin_data import BinData
 import outcomes
 import rospy
 import smach
-import unittest
 
 
 class UpdatePlan(smach.State):
@@ -27,7 +26,7 @@ class UpdatePlan(smach.State):
                 outcomes.UPDATE_PLAN_FAILURE
             ],
             input_keys=['bin_data'],
-            output_keys=['output_bin_data', 'next_bin']
+            output_keys=['output_bin_data', 'next_bin', 'next_item']
         )
         self._tts = kwargs['tts']
         self._get_items = kwargs['get_items']
@@ -48,19 +47,34 @@ class UpdatePlan(smach.State):
         else:
             self._calls_since_shelf_localization += 1
 
-        for bin_id in self._preferred_order:
-            if not userdata.bin_data[bin_id].visited and len(self.get_target_items(bin_id)) > 0:
+        for bin_id in self._preferred_order:            
+            has_target_item, target_item = self.bin_contains_target_item(bin_id)
+            if not userdata.bin_data[bin_id].visited and has_target_item:
                 userdata.next_bin = bin_id
                 bin_data = userdata.bin_data.copy()
                 bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
                 userdata.output_bin_data = bin_data
+                userdata.next_item = target_item
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         # take another pass at all the bins that did not succeed
         for bin_id in self._preferred_order:
-            if not userdata.bin_data[bin_id].succeeded and len(self.get_target_items(bin_id)) > 0:
+            has_target_item, target_item = self.bin_contains_target_item(bin_id)
+            if not userdata.bin_data[bin_id].succeeded and has_target_item:
                 userdata.next_bin = bin_id
+                userdata.next_item = target_item
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         return outcomes.UPDATE_PLAN_NO_MORE_OBJECTS
+
+    def bin_contains_target_item(self, bin_id):
+        self._get_target_items.wait_for_service()
+        self._get_items.wait_for_service()
+
+        target_items = self._get_target_items(bin_id).items
+        if len(target_items) == 0:
+            return False, None
+        target_item = target_items[0]
+        items = self._get_items(bin_id).items
+        return target_item in items, target_item
         

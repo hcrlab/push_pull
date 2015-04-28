@@ -401,7 +401,8 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
-                    'next_bin': 'current_bin'
+                    'next_bin': 'current_bin',
+                    'next_item' : 'current_item'
                 }
             )
             smach.StateMachine.add(
@@ -477,7 +478,7 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_id': 'current_bin',
                     'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data'
                 }
             )
         return sm
