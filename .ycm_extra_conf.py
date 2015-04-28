@@ -53,7 +53,11 @@ flags = [
 '-I',
 'pr2_pick_perception/include',
 '-I',
-'pr2_pick_manipulation/include'
+'pr2_pick_manipulation/include',
+'-I',
+'/usr/include/pcl-1.7',
+'-I',
+'/usr/include/eigen3'
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the

@@ -1,0 +1,9 @@
+# Computes the principal components of the given point cloud cluster in the XY
+# plane. The XY plane is relative to the header specified in the cluster.
+pr2_pick_perception/Cluster cluster
+---
+# Rotations relative to the frame specified in the input cluster.
+geometry_msgs/Quaternion first_orientation # The principal component.
+geometry_msgs/Quaternion second_orientation # Smaller component.
+float64 eigenvalue1 # Eigenvalue of principal component.
+float64 eigenvalue2 # Eigenvalue of smaller component.
