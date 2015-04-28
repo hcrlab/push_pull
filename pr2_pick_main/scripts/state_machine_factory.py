@@ -13,7 +13,7 @@ from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
 from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
-    SetStaticTransform
+    SetStaticTransform, PlanarPrincipalComponents
 import states
 from states.GraspTool import GraspTool, ReleaseTool
 
@@ -87,6 +87,8 @@ class StateMachineBuilder(object):
             'set_static_tf': rospy.ServiceProxy('perception/set_static_transform',
                                                 SetStaticTransform),
             'tf_listener': tf.TransformListener(),
+            'get_planar_pca': rospy.ServiceProxy('planar_principal_components',
+                                                 PlanarPrincipalComponents)
          }
 
     def side_effect(self, name, return_value=True):
