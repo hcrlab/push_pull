@@ -14,11 +14,13 @@ class VerifyGrasp(smach.State):
                 outcomes.VERIFY_GRASP_FAILURE,
                 outcomes.VERIFY_GRASP_RETRY
             ],
-            input_keys=['bin_id', 'debug', 'bin_data'],
+            input_keys=['bin_id', 'debug', 'bin_data', 'current_item'],
             output_keys=['output_bin_data']
         )
 
         self._get_grippers = get_grippers
+        self._get_items = kwargs['get_items']
+        self._set_items = kwargs['set_items']
 
     def execute(self, userdata):
     	# update bin_data
@@ -38,6 +40,11 @@ class VerifyGrasp(smach.State):
     	# decide what state to go to next
     	if grasp_succeeded:
     		# go to DropOffItem
+            self._get_items.wait_for_service()
+            self._set_items.wait_for_service()
+            items = self._get_items(bin_id).items
+            items.remove(userdata.current_item)
+            self._set_items(items, bin_id)
     		return outcomes.VERIFY_GRASP_SUCCESS
     	else:
     		# check if there are attempts remaining

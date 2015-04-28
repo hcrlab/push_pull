@@ -30,7 +30,6 @@ class UpdatePlan(smach.State):
         )
         self._tts = kwargs['tts']
         self._get_items = kwargs['get_items']
-        self._set_items = kwargs['set_items']
         self._get_target_items = kwargs['get_target_items']
         self._preferred_order = 'JKLGHIDEFABC'
         # How often this state has been run since the last time we relocalized
