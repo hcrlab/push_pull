@@ -28,12 +28,13 @@ void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
   pcl::PCA<pcl::PointXYZ> pca(true);
   pca.setInputCloud(pcl_cloud_filtered.makeShared());
 
+  // Return eigenvalues.
   Eigen::Vector3f values = pca.getEigenValues();
   *value1 = values(0);
   *value2 = values(1);
 
+  // Return eigenvectors.
   Eigen::Matrix3f vectors = pca.getEigenVectors();
-
   double theta0 = atan2(vectors(1, 0), vectors(0, 0));
   double theta1 = atan2(vectors(1, 1), vectors(0, 1));
 

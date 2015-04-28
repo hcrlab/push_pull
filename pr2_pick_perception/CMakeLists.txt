@@ -231,3 +231,13 @@ target_link_libraries(planar_pca_service_node
   ${catkin_LIBRARIES}
   pcl_lib
 )
+
+#############
+## Testing ##
+#############
+
+# Add gtest based cpp test target and link libraries
+catkin_add_gtest(pcl_test src/pcl_test.cpp)
+if(TARGET pcl_test)
+  target_link_libraries(pcl_test pcl_lib)
+endif()
