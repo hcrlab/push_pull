@@ -90,12 +90,12 @@ class Grasp(smach.State):
     min_grasp_quality = 0.3
 
     # minimum number of points from cluster needed inside gripper for grasp
-    min_points_in_gripper = 90
+    min_points_in_gripper = 20
 
     # max number of points in cluster that can intersect with fingers
-    max_finger_collision_points = 20
+    max_finger_collision_points = 10
 
-    max_palm_collision_points = 20
+    max_palm_collision_points = 5
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -246,6 +246,9 @@ class Grasp(smach.State):
             # Make rotated wrist versions of all poses. 
 
             # Put poses in wrist roll frame
+
+            pre_grasp_pose.header.stamp = rospy.Time(0)
+            grasp_pose.header.stamp = rospy.Time(0)
 
             wrist_frame_pre_grasp = self._tf_listener.transformPose('r_wrist_roll_link',
                                                                 pre_grasp_pose)
@@ -402,6 +405,7 @@ class Grasp(smach.State):
         pose.orientation.z = quaternion[2]
         pose.orientation.w = quaternion[3]
 
+        moveit_simple_grasps = []
         goal.pose.position = object_pose.pose.position
         goal.pose.orientation = pose.orientation
 
@@ -497,8 +501,8 @@ class Grasp(smach.State):
         box_request.max_x = self.dist_to_fingertips
         box_request.min_y = -1 * self.gripper_palm_width/2
         box_request.max_y = self.gripper_palm_width/2
-        box_request.min_z = -1 * self.gripper_finger_height/2
-        box_request.max_z = self.gripper_finger_height/2
+        box_request.min_z = -3 * self.gripper_finger_height/2
+        box_request.max_z = 3 * self.gripper_finger_height/2
         points_in_box_request.boxes.append(box_request)
 
         box_pose = PoseStamped()
@@ -678,10 +682,7 @@ class Grasp(smach.State):
                                                             transformed_pose)
                     grasp["pre_grasp"] = pose_in_base_footprint
                     grasp["pre_grasp_reachable"] = True
-                    break
-
-            if not reachable:
-                continue 
+                    break 
 
         if not grasp["grasp_reachable"]:
             grasp_attempt_delta = \
@@ -739,7 +740,7 @@ class Grasp(smach.State):
                 grasp_attempt_offsets = [grasp_attempt_delta * i 
                                         for i in range(grasp_attempts)]
                 transformed_pose = self._tf_listener.transformPose(
-                                                                'r_wrist_roll_link',
+                                                                'grasp',
                                                                 grasp["grasp"])
                 # Good grasp but too many points in palm
                 for offset in grasp_attempt_offsets:
