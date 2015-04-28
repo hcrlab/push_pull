@@ -47,3 +47,4 @@ To see a visualization of the execution, open rviz and use the config file in `p
    visualization.publish_base(self._markers, target_in_shelf_frame)
    visualization.publish_gripper(self._im_server, pose_target, 'grasp_target')
    ```
+4. If your visualization requires a new display to be added, then set your rviz config to some sane defaults, and commit your rviz config to `pr2_pick/config`.
