@@ -69,7 +69,7 @@ class PCLUtilities(object):
             skip_nans=True,
         )
 
-        num_points = 0
+        num_points = []
         for x, y, z in points:
 
             # Transform point into frame of bounding box
@@ -87,13 +87,15 @@ class PCLUtilities(object):
 
             transformed_point = self._tf_listener.transformPoint(request.frame_id,
                                                                 point)
-            if (transformed_point.point.x >= request.min_x and
-                transformed_point.point.x <= request.max_x and
-                transformed_point.point.y >= request.min_y and
-                transformed_point.point.y <= request.max_y and
-                transformed_point.point.z >= request.min_z and
-                transformed_point.point.z <= request.max_z):
-                num_points += 1
+
+            for (idx, box) in enumerate(request.boxes):
+                if (transformed_point.point.x >= box.min_x and
+                    transformed_point.point.x <= box.max_x and
+                    transformed_point.point.y >= box.min_y and
+                    transformed_point.point.y <= box.max_y and
+                    transformed_point.point.z >= box.min_z and
+                    transformed_point.point.z <= box.max_z):
+                    num_points[idx] += 1
 
         return BoxPointsResponse(num_points=num_points)
 

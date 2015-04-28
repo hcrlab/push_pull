@@ -1,11 +1,5 @@
 # return the number of points from point cloud that are inside box
 pr2_pick_perception/Cluster cluster
-string frame_id
-float64 min_x
-float64 max_x
-float64 min_y
-float64 max_y
-float64 min_z
-float64 max_z
+pr2_pick_perception/Box[] boxes
 ---
-int32 num_points
+int32[] num_points

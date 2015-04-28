@@ -19,6 +19,7 @@ import visualization as viz
 
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers
+from pr2_pick_perception.msg import Box
 from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest
 
 """ Temporary class for moving arm without collision checking until we have service """
@@ -93,6 +94,8 @@ class Grasp(smach.State):
 
     # max number of points in cluster that can intersect with fingers
     max_finger_collision_points = 20
+
+    max_palm_collision_points = 20
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -413,7 +416,7 @@ class Grasp(smach.State):
         pitch = pitch - 1.57
 
         quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-        #type(pose) = geometry_msgs.msg.Pose
+
         pose.orientation.x = quaternion[0]
         pose.orientation.y = quaternion[1]
         pose.orientation.z = quaternion[2]
@@ -425,12 +428,12 @@ class Grasp(smach.State):
         goal.width = 0.0
 
         options_1 = GraspGeneratorOptions()
-        options_1.grasp_axis = options_1.GRASP_AXIS_X
+        options_1.grasp_axis = options_1.GRASP_AXIS_Z
         options_1.grasp_direction = options_1.GRASP_DIRECTION_UP
         options_1.grasp_rotation = options_1.GRASP_ROTATION_FULL
 
         options_2 = GraspGeneratorOptions()
-        options_2.grasp_axis = options_2.GRASP_AXIS_X
+        options_2.grasp_axis = options_2.GRASP_AXIS_Z
         options_2.grasp_direction = options_2.GRASP_DIRECTION_DOWN
         options_2.grasp_rotation = options_2.GRASP_ROTATION_FULL
 
@@ -443,10 +446,6 @@ class Grasp(smach.State):
 
         moveit_simple_grasps  = self.grasp_msg_to_poses(grasps_result.grasps)
 
-        moveit_simple_grasps = []
-        #goal = GenerateGraspsGoal()
-        #goal.pose = object_pose.pose
-        #goal.width = 0.0
 
         options_1 = GraspGeneratorOptions()
         options_1.grasp_axis = options_1.GRASP_AXIS_X
@@ -466,13 +465,7 @@ class Grasp(smach.State):
 
         grasps_result = grasp_action_client.get_result()
 
-        moveit_simple_grasps  = self.grasp_msg_to_poses(grasps_result.grasps)
-
-        #goal = GenerateGraspsGoal()
-        #goal.pose = object_pose.pose
-        #goal.width = 0.0
-
-        goal.options = []
+        moveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(grasps_result.grasps)
 
         options_1 = GraspGeneratorOptions()
         options_1.grasp_axis = options_1.GRASP_AXIS_Y
@@ -493,9 +486,6 @@ class Grasp(smach.State):
 
         moveit_simple_grasps  = moveit_simple_grasps + self.grasp_msg_to_poses(grasps_result.grasps)
 
-
-
-
         # Commented out for testing purposes
         grasping_pairs = grasping_pairs + moveit_simple_grasps
 
@@ -507,8 +497,6 @@ class Grasp(smach.State):
         viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
 
         # Check if enough points will be in gripper
-        # TODO: Check if too many points will be inside fingers
-        # TODO: Publish marker for bounding box of points
         rospy.loginfo("Just checking grasp quality") 
 
         transform = TransformStamped()
@@ -521,8 +509,10 @@ class Grasp(smach.State):
         self._set_static_tf(transform)
         rospy.sleep(2.0)
 
-        box_request = BoxPointsRequest()
-        box_request.cluster = self._cluster
+        points_in_box_request = BoxPointsRequest()
+        points_in_box_request.cluster = self._cluster
+
+        box_request = Box()
         box_request.frame_id = "grasp"
         box_request.min_x = self.dist_to_palm
         box_request.max_x = self.dist_to_fingertips
@@ -530,8 +520,7 @@ class Grasp(smach.State):
         box_request.max_y = self.gripper_palm_width/2
         box_request.min_z = -1 * self.gripper_finger_height/2
         box_request.max_z = self.gripper_finger_height/2
-        self._get_points_in_box.wait_for_service()
-        box_response = self._get_points_in_box(box_request)
+        points_in_box_request.boxes.append(box_request)
 
         box_pose = PoseStamped()
         box_pose.header.frame_id = 'grasp'
@@ -542,13 +531,11 @@ class Grasp(smach.State):
         viz.publish_bounding_box(self._markers, box_pose, (box_request.max_x - box_request.min_x), 
             (box_request.max_y - box_request.min_y), (box_request.max_z - box_request.min_z),
             1.0, 0.0, 0.0, 0.5, 1)
-
-        rospy.loginfo("Number of points inside gripper: {}".format(box_response.num_points))
+        
 
         # Check for collisions with fingers
-
-        l_finger_request = BoxPointsRequest()
-        l_finger_request.cluster = self._cluster
+        # Left Finger
+        l_finger_request = Box()
         l_finger_request.frame_id = "grasp"
         l_finger_request.min_x = self.dist_to_palm
         l_finger_request.max_x = self.dist_to_fingertips
@@ -556,8 +543,7 @@ class Grasp(smach.State):
         l_finger_request.max_y = -1 * self.gripper_palm_width/2 - 0.005
         l_finger_request.min_z = -1 * self.gripper_finger_height/2
         l_finger_request.max_z = self.gripper_finger_height/2
-        self._get_points_in_box.wait_for_service()
-        l_finger_response = self._get_points_in_box(l_finger_request)
+        points_in_box_request.boxes.append(l_finger_request)
         
         l_finger_pose = PoseStamped()
         l_finger_pose.header.frame_id = 'grasp'
@@ -574,11 +560,8 @@ class Grasp(smach.State):
             (l_finger_request.max_z - l_finger_request.min_z),
             0.0, 0.0, 1.0, 0.5, 2)
 
-        rospy.loginfo("Number of points inside left finger: {}"
-                        .format(l_finger_response.num_points))
-
-        r_finger_request = BoxPointsRequest()
-        r_finger_request.cluster = self._cluster
+        # Right Finger
+        r_finger_request = Box()
         r_finger_request.frame_id = "grasp"
         r_finger_request.min_x = self.dist_to_palm
         r_finger_request.max_x = self.dist_to_fingertips
@@ -586,8 +569,7 @@ class Grasp(smach.State):
         r_finger_request.max_y = self.gripper_palm_width/2 + 0.025
         r_finger_request.min_z = -1 * self.gripper_finger_height/2
         r_finger_request.max_z = self.gripper_finger_height/2
-        self._get_points_in_box.wait_for_service()
-        r_finger_response = self._get_points_in_box(r_finger_request)
+        points_in_box_request.boxes.append(r_finger_request)
         
         r_finger_pose = PoseStamped()
         r_finger_pose.header.frame_id = 'grasp'
@@ -604,14 +586,50 @@ class Grasp(smach.State):
             (r_finger_request.max_z - r_finger_request.min_z),
             0.0, 0.0, 1.0, 0.5, 3)
 
+        # Check for collisions with palm
+        palm_request = Box()
+        palm_request.frame_id = "grasp"
+        palm_request.min_x = 0.05
+        palm_request.max_x = self.dist_to_palm
+        palm_request.min_y = -1 * self.gripper_palm_width/2
+        palm_request.max_y = self.gripper_palm_width/2
+        palm_request.min_z = -1 * self.gripper_finger_height/2
+        palm_request.max_z = self.gripper_finger_height/2
+        points_in_box_request.boxes.append(palm_request)
+        
+        palm_pose = PoseStamped()
+        palm_pose.header.frame_id = 'grasp'
+        palm_pose.pose.position.x = palm_request.min_x +\
+                         (palm_request.max_x - palm_request.min_x) / 2
+        palm_pose.pose.position.y = palm_request.min_y +\
+                         (palm_request.max_y - palm_request.min_y) / 2
+        palm_pose.pose.position.z = palm_request.min_z +\
+                         (palm_request.max_z - palm_request.min_z) / 2
+
+        viz.publish_bounding_box(self._markers, palm_pose, 
+            (palm_request.max_x - palm_request.min_x), 
+            (palm_request.max_y - palm_request.min_y), 
+            (palm_request.max_z - palm_request.min_z),
+            0.0, 0.0, 1.0, 0.5, 4)
+
+        self._get_points_in_box.wait_for_service()
+        box_response = self._get_points_in_box(points_in_box_request)
+        rospy.loginfo("Number of points inside gripper: {}".format(box_response.num_points[0]))
+        rospy.loginfo("Number of points inside left finger: {}"
+                        .format(box_response.num_points[1]))
         rospy.loginfo("Number of points inside right finger: {}"
-                        .format(r_finger_response.num_points))
+                        .format(box_response.num_points[2]))
+        rospy.loginfo("Number of points inside palm: {}"
+                        .format(box_response.num_points[3]))
 
+        finger_collision_points = box_response.num_points[1] + box_response.num_points[2]
+        palm_collision_points = box_response.num_points[3]
+        points_in_gripper = box_response.num_points[0]
 
-        if box_response.num_points >= self.min_points_in_gripper and \
-            (r_finger_response.num_points + l_finger_response.num_points) <= \
-            self.max_finger_collision_points:
-            grasp["grasp_quality"] = 1.0
+        if points_in_gripper >= self.min_points_in_gripper and \
+            finger_collision_points <= self.max_finger_collision_points and \
+            palm_collision_points <= self.max_palm_collision_points:
+            grasp["grasp_quality"] = 1.0 - 0.01 * finger_collision_points - 0.01 * palm_collision_points
             rospy.loginfo("Evaluated good grasp")
         else:
             grasp["grasp_quality"] = 0.0
@@ -646,13 +664,18 @@ class Grasp(smach.State):
 
         return grasp
 
+    def sort_grasps(self, grasps):
+        sorted_grasps = sorted(grasps, key=lambda k: k['grasp_quality'])
+        sorted_grasps.reverse()
+        return sorted_grasps
+
     def filter_grasps(self, grasps):
         filtered_grasps = []
         for grasp in grasps:
             # Check if both pre-grasp and grasp are reachable
             if grasp["pre_grasp_reachable"] and grasp["grasp_reachable"]:
                 filtered_grasps.append(grasp)
-        return filtered_grasps
+        return sort_grasps(filtered_grasps)
 
     def get_reachable_grasps(self, grasps):
         reachable_grasps = []
@@ -725,7 +748,7 @@ class Grasp(smach.State):
                             reachable_grasps.append(grasp)
                         break
 
-        return reachable_grasps
+        return sort_grasps(reachable_grasps)
 
     def evaluate_grasps(self, grasps):
         evaluated_grasps = []

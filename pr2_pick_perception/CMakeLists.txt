@@ -71,6 +71,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  Box.msg
   Cell.msg
   Object.msg
   ObjectList.msg
