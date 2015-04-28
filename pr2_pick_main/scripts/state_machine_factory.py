@@ -14,6 +14,7 @@ from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform, PlanarPrincipalComponents
+from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 import states
 from states.GraspTool import GraspTool, ReleaseTool
 
@@ -88,8 +89,14 @@ class StateMachineBuilder(object):
                                                 SetStaticTransform),
             'tf_listener': tf.TransformListener(),
             'get_planar_pca': rospy.ServiceProxy('planar_principal_components',
-                                                 PlanarPrincipalComponents)
-         }
+                                                 PlanarPrincipalComponents),
+
+            # Contest
+
+            'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
+            'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
+            'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems)
+             }
 
     def side_effect(self, name, return_value=True):
         '''A side effect for mock functions.
@@ -184,6 +191,10 @@ class StateMachineBuilder(object):
         interactive_marker.applyChanges = mock.Mock(
             side_effect=self.side_effect('server.applyChanges'))
 
+        get_items = mock.Mock(side_effect=self.side_effect('get_items'))
+        set_items = mock.Mock(side_effect=self.side_effect('set_items'))
+        get_target_items = mock.Mock(side_effect=self.side_effect('get_target_items'))
+
         return {
             # Speech
             'tts': tts,
@@ -204,6 +215,11 @@ class StateMachineBuilder(object):
             'localize_object': localize_object,
             'markers': markers,
             'set_static_tf': set_static_tf,
+
+            # Contest
+            'get_items': get_items,
+            'set_items': set_items,
+            'get_target_items': get_target_items,
          }
 
     def build_sm_for_move_to_bin(self, **services):
@@ -385,7 +401,8 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
-                    'next_bin': 'current_bin'
+                    'next_bin': 'current_bin',
+                    'next_item' : 'current_item'
                 }
             )
             smach.StateMachine.add(
@@ -448,7 +465,8 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_id': 'current_bin',
                     'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data'
+                    'output_bin_data': 'bin_data',
+                    'current_item': 'current_item'
                 }
             )
             smach.StateMachine.add(
@@ -461,7 +479,7 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_id': 'current_bin',
                     'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data'
                 }
             )
         return sm
