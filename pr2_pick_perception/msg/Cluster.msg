@@ -5,7 +5,7 @@
 Header header
 
 #unique ID assigned to the object
-string id  
+string id
 
 #the object's pose in space
 sensor_msgs/PointCloud2 pointcloud

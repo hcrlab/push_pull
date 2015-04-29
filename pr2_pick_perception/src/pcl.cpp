@@ -52,4 +52,11 @@ void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
   component2->y = q2.y();
   component2->z = q2.z();
 }
+
+void BoundingBox(const sensor_msgs::PointCloud2& cloud,
+                 geometry_msgs::TransformStamped* transform,
+                 geometry_msgs::Point* bbox) {
+
+}
+
 }  // namespace pr2_pick_perception
