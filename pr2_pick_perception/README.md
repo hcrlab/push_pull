@@ -69,7 +69,14 @@ set_static_tf.wait_for_service()
 set_static_tf(transform)
 ```
 
-#### Debugging
+### Running unit tests.
+`catkin_make run_tests`, or if using [catkin_tools](http://catkin-tools.readthedocs.org/en/latest/index.html):
+```
+catkin build --catkin-make-args run_tests
+rosrun pr2_pick_perception pcl_test
+```
+
+### Debugging
 You need to remove `shelf_recognition_KinPR2.launch` from `perception.launch`.
 `perception.launch` needs to be run on the robot, because it splits the Kinect work across the robot's computers.
 `roslaunch shelf_recognition_KinPR2.launch debug:=true` needs to be run on your desktop, because the visualization doesn't work over `ssh -X`.
