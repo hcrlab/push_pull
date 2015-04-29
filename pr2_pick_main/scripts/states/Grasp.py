@@ -95,7 +95,9 @@ class Grasp(smach.State):
     # max number of points in cluster that can intersect with fingers
     max_finger_collision_points = 10
 
-    max_palm_collision_points = 5
+    max_palm_collision_points = 10
+
+    shelf_height = None
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -213,7 +215,7 @@ class Grasp(smach.State):
             .format(orientation.x, orientation.y, orientation.z, orientation.w)
         )
 
-    def grasp_msg_to_poses(self, grasp_msgs, rotate=False):
+    def grasp_msg_to_poses(self, grasp_msgs, object_pose, rotate=False):
         grasping_pairs = []
 
         # get rid of every second message because they're just repeats in different frames
@@ -232,6 +234,13 @@ class Grasp(smach.State):
 
             grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 grasp.grasp_pose)
+
+
+            # Check if grasp is from behind or too high or low
+            if grasp_pose.pose.position.x > object_pose.pose.position.x or \
+                grasp_pose.pose.position.z > (self.shelf_height + 0.24) or \
+                grasp_pose.pose.position.z < self.shelf_height:
+                continue
             pre_grasp_pose = fk_response.pose_stamped[0]
 
             rospy.loginfo(" ")
@@ -315,7 +324,7 @@ class Grasp(smach.State):
 
         grasping_pairs = [] # list of pre_grasp/grasp dicts 
 
-        shelf_height = self._shelf_heights[bin_id]
+        self.shelf_height = self._shelf_heights[bin_id]
 
         # Pre-grasp: pose arm in front of bin
 
@@ -329,12 +338,12 @@ class Grasp(smach.State):
             pre_grasp_pose_target.pose.position.y = object_pose.pose.position.y
 
             # go for centroid if it's vertically inside shelf
-            if ((object_pose.pose.position.z > (shelf_height + self.half_gripper_height))
-                and (object_pose.pose.position.z < (shelf_height + 0.15))):
+            if ((object_pose.pose.position.z > (self.shelf_height + self.half_gripper_height))
+                and (object_pose.pose.position.z < (self.shelf_height + 0.15))):
                 pre_grasp_pose_target.pose.position.z = object_pose.pose.position.z
             # otherwise, centroid is probably wrong, just use lowest possible grasp
             else:
-                pre_grasp_pose_target.pose.position.z = shelf_height + \
+                pre_grasp_pose_target.pose.position.z = self.shelf_height + \
                     self.half_gripper_height + self.pre_grasp_height
 
         else:
@@ -358,11 +367,11 @@ class Grasp(smach.State):
             grasp_pose_target.pose.position.x = \
                 object_pose.pose.position.x - self.dist_to_palm
             grasp_pose_target.pose.position.y = object_pose.pose.position.y
-            if ((object_pose.pose.position.z > (shelf_height + self.half_gripper_height))
-                and (object_pose.pose.position.z < (shelf_height + 0.15))):
+            if ((object_pose.pose.position.z > (self.shelf_height + self.half_gripper_height))
+                and (object_pose.pose.position.z < (self.shelf_height + 0.15))):
                 grasp_pose_target.pose.position.z = object_pose.pose.position.z
             else:
-                grasp_pose_target.pose.position.z = shelf_height + self.half_gripper_height
+                grasp_pose_target.pose.position.z = self.shelf_height + self.half_gripper_height
 
 
         else:
@@ -448,7 +457,9 @@ class Grasp(smach.State):
 
         grasps_result = grasp_action_client.get_result()
 
-        moveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(grasps_result.grasps, True)
+        moveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(
+                                                                                grasps_result.grasps,
+                                                                                object_pose, True)
 
         options_1 = GraspGeneratorOptions()
         options_1.grasp_axis = options_1.GRASP_AXIS_Y
@@ -467,7 +478,10 @@ class Grasp(smach.State):
 
         grasps_result = grasp_action_client.get_result()
 
-        moveit_simple_grasps  = moveit_simple_grasps + self.grasp_msg_to_poses(grasps_result.grasps, False)
+        mmoveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(
+                                                                                grasps_result.grasps,
+                                                                                object_pose, False)
+
 
         # Commented out for testing purposes
         grasping_pairs = grasping_pairs + moveit_simple_grasps
@@ -481,6 +495,7 @@ class Grasp(smach.State):
 
         # Check if enough points will be in gripper
         rospy.loginfo("Just checking grasp quality") 
+        y_offset = 0.005
 
         transform = TransformStamped()
         transform.header.frame_id = 'base_footprint'
@@ -499,8 +514,8 @@ class Grasp(smach.State):
         box_request = Box()
         box_request.min_x = self.dist_to_palm
         box_request.max_x = self.dist_to_fingertips
-        box_request.min_y = -1 * self.gripper_palm_width/2
-        box_request.max_y = self.gripper_palm_width/2
+        box_request.min_y = -1 * self.gripper_palm_width/2 + y_offset
+        box_request.max_y = self.gripper_palm_width/2 + y_offset
         box_request.min_z = -3 * self.gripper_finger_height/2
         box_request.max_z = 3 * self.gripper_finger_height/2
         points_in_box_request.boxes.append(box_request)
@@ -521,8 +536,8 @@ class Grasp(smach.State):
         l_finger_request = Box()
         l_finger_request.min_x = self.dist_to_palm
         l_finger_request.max_x = self.dist_to_fingertips
-        l_finger_request.min_y = -1 * self.gripper_palm_width/2 - 0.025
-        l_finger_request.max_y = -1 * self.gripper_palm_width/2 - 0.005
+        l_finger_request.min_y = -1 * self.gripper_palm_width/2 - 0.025 + y_offset
+        l_finger_request.max_y = -1 * self.gripper_palm_width/2 - 0.005 + y_offset
         l_finger_request.min_z = -1 * self.gripper_finger_height/2
         l_finger_request.max_z = self.gripper_finger_height/2
         points_in_box_request.boxes.append(l_finger_request)
@@ -546,8 +561,8 @@ class Grasp(smach.State):
         r_finger_request = Box()
         r_finger_request.min_x = self.dist_to_palm
         r_finger_request.max_x = self.dist_to_fingertips
-        r_finger_request.min_y = self.gripper_palm_width/2 + 0.005
-        r_finger_request.max_y = self.gripper_palm_width/2 + 0.025
+        r_finger_request.min_y = self.gripper_palm_width/2 + 0.005 + y_offset
+        r_finger_request.max_y = self.gripper_palm_width/2 + 0.025 + y_offset
         r_finger_request.min_z = -1 * self.gripper_finger_height/2
         r_finger_request.max_z = self.gripper_finger_height/2
         points_in_box_request.boxes.append(r_finger_request)
@@ -571,8 +586,8 @@ class Grasp(smach.State):
         palm_request = Box()
         palm_request.min_x = 0.05
         palm_request.max_x = self.dist_to_palm
-        palm_request.min_y = -1 * self.gripper_palm_width/2
-        palm_request.max_y = self.gripper_palm_width/2
+        palm_request.min_y = -1 * self.gripper_palm_width/2 + y_offset
+        palm_request.max_y = self.gripper_palm_width/2 + y_offset
         palm_request.min_z = -1 * self.gripper_finger_height/2
         palm_request.max_z = self.gripper_finger_height/2
         points_in_box_request.boxes.append(palm_request)
@@ -609,29 +624,34 @@ class Grasp(smach.State):
         if grasp["points_in_gripper"] >= self.min_points_in_gripper and \
             grasp["finger_collision_points"] <= self.max_finger_collision_points and \
             grasp["palm_collision_points"] <= self.max_palm_collision_points:
-            grasp["grasp_quality"] = 1.0 - 0.01 * grasp["finger_collision_points"] - 0.01 * grasp["palm_collision_points"]
+            grasp["grasp_quality"] = (grasp["points_in_gripper"] -  
+                                      grasp["finger_collision_points"] - 
+                                      grasp["palm_collision_points"])  
             rospy.loginfo("Evaluated good grasp")
         else:
             grasp["grasp_quality"] = 0.0
             rospy.loginfo("Evaluated bad grasp")
-
+        rospy.loginfo("Grasp quality: " + str(grasp["grasp_quality"]))
         return grasp
 
     def check_reachable(self, grasp):
 
-        rospy.loginfo("Full grasp evaluation")
         # Check pre-grasp IK
         rospy.loginfo("Checking pre-grasp ik")
-        ik_request = GetPositionIKRequest()
-        ik_request.ik_request.group_name = "right_arm"
-        ik_request.ik_request.pose_stamped = grasp["pre_grasp"]
-        ik_response = self._ik_client(ik_request)
+        #ik_request = GetPositionIKRequest()
+        #ik_request.ik_request.group_name = "right_arm"
+        #ik_request.ik_request.pose_stamped = grasp["pre_grasp"]
+        #ik_response = self._ik_client(ik_request)
 
-        if ik_response.error_code.val == ik_response.error_code.SUCCESS:
-            grasp["pre_grasp_reachable"] = True
-        else: 
-            grasp["pre_grasp_reachable"] = False
-
+        #if ik_response.error_code.val == ik_response.error_code.SUCCESS:
+        #    grasp["pre_grasp_reachable"] = True
+        #else: 
+        #    grasp["pre_grasp_reachable"] = False
+        self._moveit_move_arm.wait_for_service()
+        success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"],
+                                                  0.01, 0.01, 0, 'right_arm', 
+                                                  True).success
+        grasp["pre_grasp_reachable"] = success_pre_grasp
         # Check grasp IK
         rospy.loginfo("Checking grasp ik")
         ik_request = GetPositionIKRequest()
@@ -660,6 +680,7 @@ class Grasp(smach.State):
                 self.pre_grasp_attempt_separation * i
                 for i in range(self.pre_grasp_attempts)
             ]
+            rospy.loginfo("Pre-grasp not reachable")
             reachable = False
             for (idx, offset) in enumerate(pre_grasp_offsets):
                 # transform pre-grasp into r_wrist_roll_link frame
@@ -670,19 +691,30 @@ class Grasp(smach.State):
 
                 #check ik
                 rospy.loginfo("Checking ik")
-                ik_request = GetPositionIKRequest()
-                ik_request.ik_request.group_name = "right_arm"
-                ik_request.ik_request.pose_stamped = transformed_pose
-                ik_response = self._ik_client(ik_request)
+                #ik_request = GetPositionIKRequest()
+                #ik_request.ik_request.group_name = "right_arm"
+                #ik_request.ik_request.pose_stamped = transformed_pose
+                #ik_response = self._ik_client(ik_request)
 
                 #if reachable, set True, set new pre-grasp, break
-                if ik_response.error_code.val == ik_response.error_code.SUCCESS:
-                    reachable = True
-                    pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                            transformed_pose)
-                    grasp["pre_grasp"] = pose_in_base_footprint
-                    grasp["pre_grasp_reachable"] = True
-                    break 
+                #if ik_response.error_code.val == ik_response.error_code.SUCCESS:
+                #    reachable = True
+                #    pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                #                                            transformed_pose)
+                #    grasp["pre_grasp"] = pose_in_base_footprint
+                #    grasp["pre_grasp_reachable"] = True
+                #    break 
+
+                self._moveit_move_arm.wait_for_service()
+                success_pre_grasp = self._moveit_move_arm(transformed_pose,
+                                                  0.01, 0.01, 0, 'right_arm',
+                                                  True).success
+                grasp["pre_grasp_reachable"] = success_pre_grasp
+                grasp["pre_grasp"] = transformed_pose
+                if success_pre_grasp:
+                    rospy.loginfo("Found reachable.")
+                    break
+                    
 
         if not grasp["grasp_reachable"]:
             grasp_attempt_delta = \
@@ -691,6 +723,7 @@ class Grasp(smach.State):
                 grasp_attempt_delta * i
                 for i in range(self.grasp_attempts)
             ]
+            rospy.loginfo("Grasp not reachable.")
             for (idx, offset) in enumerate(grasp_attempt_offsets):
                 # transform grasp into r_wrist_roll_link frame
                 transformed_pose = self._tf_listener.transformPose('r_wrist_roll_link',
@@ -714,7 +747,7 @@ class Grasp(smach.State):
 
                     # Check if shifted grasp still has object in gripper
                     grasp = self.get_grasp_intersections(grasp)
-
+                    rospy.loginfo("Found reachable")
                     break
 
         return grasp
@@ -743,8 +776,10 @@ class Grasp(smach.State):
                                                                 'grasp',
                                                                 grasp["grasp"])
                 # Good grasp but too many points in palm
-                for offset in grasp_attempt_offsets:
+                rospy.loginfo("Good grasp but too many points in the palm.")
+                for (idx, offset) in enumerate(grasp_attempt_offsets):
 
+                    rospy.loginfo("Backing off attempt {}.".format(idx))
                     # move it forward in x
                     transformed_pose.pose.position.x = \
                         transformed_pose.pose.position.x - offset
@@ -760,8 +795,11 @@ class Grasp(smach.State):
                     if grasp["points_in_gripper"] >= self.min_points_in_gripper and \
                         grasp["finger_collision_points"] <= self.max_finger_collision_points and \
                         grasp["palm_collision_points"] <= self.max_palm_collision_points:
-
+                        rospy.loginfo("Good grasp.")
                         good_grasps.append(grasp)
+                        break
+                    if grasp["points_in_gripper"] == 0:
+                        rospy.loginfo("Giving up on this grasp, no more points in gripper.")
                         break
 
 
@@ -769,15 +807,18 @@ class Grasp(smach.State):
                 grasp["finger_collision_points"] <= self.max_finger_collision_points and \
                 grasp["palm_collision_points"] <= self.max_palm_collision_points:
 
+                rospy.loginfo("Good grasp.")
                 good_grasps.append(grasp)
 
 
         for grasp in good_grasps:
             grasp = self.check_reachable(grasp)
             if grasp["pre_grasp_reachable"] and grasp["grasp_reachable"]:
+                rospy.loginfo("Grasp reachable")
                 reachable_good_grasps.append(grasp)
             else:
                 # Move and try to check IK
+                rospy.loginfo("Trying to make grasp reachable.")
                 grasp = self.get_reachable_grasp(grasp)
                 if grasp["grasp_quality"] > self.min_grasp_quality and \
                     grasp["pre_grasp_reachable"] and grasp["grasp_reachable"]:
@@ -792,7 +833,8 @@ class Grasp(smach.State):
         for grasp in grasps:
             self._moveit_move_arm.wait_for_service()
             success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
-                                                    0.01, 0.01, 0, 'right_arm').success
+                                                    0.01, 0.01, 0, 'right_arm',
+                                                    False).success
  
             if not success_pre_grasp:
                 continue
