@@ -80,7 +80,6 @@ bool ObjDetector::initialize()
     
     nh_local.param("RobotReference", robot_frame_id_,std::string("/base_footprint"));
     nh_local.param("WorldReference", world_frame_id_,std::string("/map"));
-    nh_local.param("ModelReference", model_frame_id_,std::string("/model_frame"));
     
     
     
@@ -117,11 +116,11 @@ bool ObjDetector::initialize()
    
     std::string camera_info = nh.resolveName("/cam_info");
     sensor_msgs::CameraInfoConstPtr cam_info;
-    cam_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camera_info);//,nh,ros::Duration(15.));
-    leftcamproj_.fromCameraInfo(cam_info);  
-    camera_frame_id_ = cam_info->header.frame_id;
-    im_size_.height = cam_info->height;
-    im_size_.width = cam_info->width;    
+//     cam_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>(camera_info);//,nh,ros::Duration(15.));
+//     leftcamproj_.fromCameraInfo(cam_info);  
+//     camera_frame_id_ = cam_info->header.frame_id;
+//     im_size_.height = cam_info->height;
+//     im_size_.width = cam_info->width;    
 
 
     
@@ -258,18 +257,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
       world_frame_id_ = robot_frame_id_;
     }
     
-   if (tf_.canTransform(model_frame_id_, cloud_frame_id_,ros::Time::now(), &error_msg)){
-      tf_.lookupTransform(model_frame_id_, cloud_frame_id_,ros::Time::now(), cloud_to_model_);
-    }
-    else
-    {
-      ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to be available, " "will assume it as identity!",
-            model_frame_id_.c_str(),cloud_frame_id_.c_str());
-      ROS_WARN("Transform error: %s", error_msg.c_str());
-      cloud_to_model_.setIdentity();
-      model_frame_id_ = cloud_frame_id_;
-    }
-    
+
    
    
     
@@ -400,23 +388,7 @@ bool ObjDetector::detectCallback(pr2_pick_perception::LocalizeShelfRequest& requ
         // transform the detections into the camera reference frame system
 
         
-        //Copy the tf matrix to eigen format
-        for (int j=0; j<3; j++)    
-        {
-            tras(j) = cloud_to_model_.inverse().getOrigin()[j];
-            for (int k=0; k<3; k++)    
-                R(j,k) = cloud_to_model_.inverse().getBasis()[j][k];
-        }
-        TtoOrigin.block<3,3>(0,0) = R; TtoOrigin.block<3,1>(0,3) = tras;
-        
-        std::cout <<"detected transform \n" << detection_transform << std::endl;
-        std::cout << "Back to origin \n" << TtoOrigin << std::endl;
-        
-        
-        detection_transform = TtoOrigin * detection_transform;
-        detection_transform2 = TtoOrigin * detection_transform2;
-        std::cout <<"after applying \n" << detection_transform << std::endl;
-        
+       
         
         
         ROS_DEBUG("Detection for cluster %d took %fs\n", (int) i, (float) t.getTimeSeconds());

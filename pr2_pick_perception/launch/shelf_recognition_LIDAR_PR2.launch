@@ -29,15 +29,13 @@
   <!--  <param name="ModelReference" value="/head_mount_kinect_rgb_optical_frame" /> -->
 
    <param name="RobotReference" value="/base_footprint" />
-   <param name="WorldReference" value="/map" />
+   <param name="WorldReference" value="/base_footprint" />
 
    <param name="manual_segmentation" value="false" />
    <param name="pca_alignment" value="false"/>
    <param name="debug" value="$(arg debug)"/>
 
-   <remap from="/image" to="/head_mount_kinect/rgb/image_rect_color" />
-   <remap from="/cam_info" to="/head_mount_kinect/rgb/camera_info" />
-   <remap from="/pc_topic" to="/head_mount_kinect/depth_registered/points"/>
+ 
   </node>
 
 
