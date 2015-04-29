@@ -151,16 +151,28 @@ class ExtractItem(smach.State):
                 
                 self._moveit_move_arm.wait_for_service()
                 try:
-                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                    success_lift = self._moveit_move_arm(pose_target, 
+                                                         0.01 + 0.005 * i, 
+                                                         0.015 + 0.005 * i, 0, 
+                                                         "right_arm", False).success
                 except rospy.ServiceException:
                     rospy.sleep(5.0)
                     self._moveit_move_arm.wait_for_service()
-                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                    success_lift = self._moveit_move_arm(pose_target, 
+                                                         0.01 + 0.005 * i, 
+                                                         0.015 + 0.005 * i, 0, 
+                                                         "right_arm", False).success
             else:
-                euler_tuple = tf.transformations.euler_from_quaternion([current_pose.pose.orientation.x, current_pose.pose.orientation.y, current_pose.pose.orientation.z, current_pose.pose.orientation.w])
+                euler_tuple = tf.transformations.euler_from_quaternion(
+                                                        [current_pose.pose.orientation.x, 
+                                                        current_pose.pose.orientation.y, 
+                                                        current_pose.pose.orientation.z, 
+                                                        current_pose.pose.orientation.w])
                 euler = list(euler_tuple)
                 euler[1] = euler[1] + 3.14/6.0
-                quaternion = tf.transformations.quaternion_from_euler(euler[0], euler[1], euler[2])
+                quaternion = tf.transformations.quaternion_from_euler(euler[0], 
+                                                                      euler[1], 
+                                                                      euler[2])
                 # Lift item to clear bin lip
                 pose_target = geometry_msgs.msg.PoseStamped()
                 pose_target.header.frame_id = 'base_footprint'
@@ -185,11 +197,15 @@ class ExtractItem(smach.State):
             
                 self._moveit_move_arm.wait_for_service()
                 try:
-                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 
+                                                         0.015 + 0.005 * i, 0, 
+                                                         "right_arm", False).success
                 except rospy.ServiceException:
                     rospy.sleep(5.0)
                     self._moveit_move_arm.wait_for_service()
-                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 0.015 + 0.005 * i, 0, "right_arm").success
+                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 
+                                                         0.015 + 0.005 * i, 0, 
+                                                         "right_arm", False).success
             if success_lift:
                 rospy.loginfo("Lift success")
                 break
@@ -326,7 +342,7 @@ class ExtractItem(smach.State):
             pose.pose.orientation.w = -0.2458;
 
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm')
+        self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm', False)
 
 
         if success:

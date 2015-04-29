@@ -65,7 +65,11 @@ class ArmMover:
 
                 plan = group.plan()
 
-                success = group.go(wait=True)
+                if not req.plan_only:
+                    success = group.go(wait=True)
+                else:
+                    if plan.joint_trajectory.points:
+                        success = True
 
                 print "Plan: " + str(len(plan.joint_trajectory.points))
                 print "Success: " + str(success)

@@ -3,5 +3,6 @@ float64 position_tolerance
 float64 orientation_tolerance
 float64 planning_time
 string group
+bool plan_only
 ---
 bool success

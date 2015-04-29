@@ -37,8 +37,10 @@ class DropOffItem(smach.State):
         self._order_bin_found = False
 
     def get_position(self, base_frame="odom_combined"):
-        self._tf_listener.waitForTransform(base_frame,"base_footprint",rospy.Time(0), rospy.Duration(1.0))
-        (pos,orient) = self._tf_listener.lookupTransform(base_frame,"base_footprint", rospy.Time(0))
+        self._tf_listener.waitForTransform(base_frame,"base_footprint",rospy.Time(0), 
+                                           rospy.Duration(1.0))
+        (pos,orient) = self._tf_listener.lookupTransform(base_frame,"base_footprint", 
+                                                         rospy.Time(0))
         return pos
 
     def planningscene_create_box(self, position, size, name):
@@ -178,13 +180,13 @@ class DropOffItem(smach.State):
         pose_target.pose.orientation.z = -0.1941
         pose_target.pose.orientation.w = -0.1897
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
+        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = 0.45
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
+        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
 
         # open gripper
         rospy.loginfo('Open gripper')
@@ -194,7 +196,7 @@ class DropOffItem(smach.State):
         # raise arm
         pose_target.pose.position.z = 0.70
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm")
+        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
 
         # get back to "untucked" position
         rospy.loginfo('Untucking right arm')
