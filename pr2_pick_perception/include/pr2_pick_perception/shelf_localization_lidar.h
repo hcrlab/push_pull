@@ -187,8 +187,6 @@ private:
     std::string cloud_frame_id_;
     /// camera reference system    
     std::string camera_frame_id_;
-    /// model reference system
-    std::string model_frame_id_;
     
     /// refence transform listener
     tf::TransformListener tf_;
