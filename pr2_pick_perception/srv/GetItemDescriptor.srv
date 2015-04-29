@@ -1,0 +1,4 @@
+# Computes a descriptor for the given cluster.
+pr2_pick_perception/Cluster cluster
+---
+pr2_pick_perception/ItemDescriptor descriptor
