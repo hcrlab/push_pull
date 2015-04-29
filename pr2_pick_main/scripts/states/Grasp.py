@@ -492,6 +492,7 @@ class Grasp(smach.State):
         # just a placeholder, returns dict [pre_grasp, grasp, pre_grasp_reachable, grasp_reachable, grasp_quality]
         # may want to make a class
         viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
+        viz.publish_gripper(self._im_server, grasp["pre_grasp"], 'pre_grasp_target')
 
         # Check if enough points will be in gripper
         rospy.loginfo("Just checking grasp quality") 
