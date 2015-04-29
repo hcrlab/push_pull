@@ -71,10 +71,7 @@ set_static_tf(transform)
 
 ### Running unit tests.
 `catkin_make run_tests`, or if using [catkin_tools](http://catkin-tools.readthedocs.org/en/latest/index.html):
-```
-catkin build --catkin-make-args run_tests
-rosrun pr2_pick_perception pcl_test
-```
+`catkin build --this --verbose --catkin-make-args run_tests`
 
 ### Debugging
 You need to remove `shelf_recognition_KinPR2.launch` from `perception.launch`.
