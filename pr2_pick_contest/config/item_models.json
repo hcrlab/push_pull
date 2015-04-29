@@ -3,150 +3,150 @@
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": 10
   },
   "champion_copper_plus_spark_plug": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "expo_dry_erase_board_eraser": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "genuine_joe_plastic_stir_sticks": {
     "graspable": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "munchkin_white_hot_duck_bath_toy": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "crayola_64_ct": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "mommys_helper_outlet_plugs": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": 10
   },
   "sharpie_accent_tank_style_highlighters": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "stanley_66_052": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 3,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "safety_works_safety_glasses": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": 10,
+    "grasp_effort": 10
   },
   "cheezit_big_original": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": 10
   },
   "paper_mate_12_count_mirado_black_warrior": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "feline_greenies_dental_treats": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": 10
   },
   "elmers_washable_no_run_school_glue": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "mead_index_cards": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "rolodex_jumbo_pencil_cup": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 2,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "first_years_take_and_toss_straw_cup": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "highland_6539_self_stick_notes": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "mark_twain_huckleberry_finn": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "kyjen_squeakin_eggs_plush_puppies": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "kong_sitting_frog_dog_toy": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "kong_air_dog_squeakair_tennis_ball": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "dr_browns_bottle_brush": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "kong_duck_dog_toy": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
+    "grasp_effort": -1
   },
   "laugh_out_loud_joke_book": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1,
-  },
+    "grasp_effort": -1
+  }
 }
