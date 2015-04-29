@@ -585,7 +585,7 @@ class Grasp(smach.State):
         # Check for collisions with palm
         palm_request = Box()
         palm_request.min_x = 0.05
-        palm_request.max_x = self.dist_to_palm
+        palm_request.max_x = self.dist_to_palm - 0.01
         palm_request.min_y = -1 * self.gripper_palm_width/2 + y_offset
         palm_request.max_y = self.gripper_palm_width/2 + y_offset
         palm_request.min_z = -1 * self.gripper_finger_height/2
