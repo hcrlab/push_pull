@@ -30,7 +30,7 @@ bool ItemDescriptorService::Callback(GetItemDescriptor::Request& request,
 
   // Get color histogram.
   std::vector<int> histogram;
-  int num_bins = 4;
+  int num_bins = 8;
   ComputeColorHistogram(pcl_cloud, num_bins, &histogram);
   ColorHistogram histogram_msg;
   histogram_msg.num_bins = num_bins;
