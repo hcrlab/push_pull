@@ -74,13 +74,14 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 add_message_files(
   FILES
   Cell.msg
-  Object.msg
-  ObjectList.msg
-  ObjectDetectionRequest.msg
-  ROI2d.msg
-  Cell.msg
   Cluster.msg
   ClusterList.msg
+  ColorHistogram.msg
+  ItemDescriptor.msg
+  Object.msg
+  ObjectDetectionRequest.msg
+  ObjectList.msg
+  ROI2d.msg
 )
 
 ## Generate services in the 'srv' folder
