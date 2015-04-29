@@ -28,12 +28,15 @@ void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
  * Given a cluster, construct a bounding box determined by the cluster's planar
  * principal components, with a reference frame at one corner of the bounding
  * box.
+ *
+ * Preconditions: cloud does not contain any NaN points
+ *
  * @param cloud (in) cluster of points representing an item
  * @param transform (out) transform from cloud's frame to item's frame
  * @param bbox (out) corner of the item's axis-aligned bounding box opposite
  *                   the item's origin
  */
-void BoundingBox(const sensor_msgs::PointCloud2& cloud,
+void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                  geometry_msgs::TransformStamped* transform,
                  geometry_msgs::Point* bbox);
 
