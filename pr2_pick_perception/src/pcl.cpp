@@ -57,6 +57,19 @@ void BoundingBox(const sensor_msgs::PointCloud2& cloud,
                  geometry_msgs::TransformStamped* transform,
                  geometry_msgs::Point* bbox) {
 
+  // Build a provisional frame. Axes in the right orientation, but we don't know the
+  // origin yet.
+
+  // for each point:
+  //   transform it into the provisional frame
+  //   cumulatively track greatest and smallest x, y, z
+
+  // Build the item frame
+  // origin at smallest x, y, z
+  // orientation same as provisional frame
+
+  // construct the bbox point
+  // largest - smallest x, y, z
 }
 
 }  // namespace pr2_pick_perception
