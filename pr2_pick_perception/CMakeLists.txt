@@ -75,13 +75,14 @@ add_message_files(
   FILES
   Box.msg
   Cell.msg
-  Object.msg
-  ObjectList.msg
-  ObjectDetectionRequest.msg
-  ROI2d.msg
-  Cell.msg
   Cluster.msg
   ClusterList.msg
+  ColorHistogram.msg
+  ItemDescriptor.msg
+  Object.msg
+  ObjectDetectionRequest.msg
+  ObjectList.msg
+  ROI2d.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -94,6 +95,7 @@ add_service_files(
   LocalizeShelf.srv
   SetStaticTransform.srv
   PlanarPrincipalComponents.srv
+  GetItemDescriptor.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -175,6 +177,10 @@ add_executable(planar_pca_service_node
   src/planar_pca_service.cpp
 )
 
+add_executable(item_descriptor_service_node
+  src/item_descriptor_service.cpp
+)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 
@@ -194,6 +200,11 @@ add_dependencies(shelf_cropping_service_node
 )
 
 add_dependencies(planar_pca_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+add_dependencies(item_descriptor_service_node
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
@@ -230,6 +241,10 @@ target_link_libraries(pcl_lib
   ${catkin_LIBRARIES}
 )
 target_link_libraries(planar_pca_service_node
+  ${catkin_LIBRARIES}
+  pcl_lib
+)
+target_link_libraries(item_descriptor_service_node
   ${catkin_LIBRARIES}
   pcl_lib
 )

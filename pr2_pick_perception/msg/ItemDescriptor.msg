@@ -7,3 +7,6 @@ geometry_msgs/TransformStamped transform
 # with the item frame, and located in the first octant, with corners at
 # (0, 0, 0) and (bbox.x, bbox.y, bbox.z) in the item frame.
 geometry_msgs/Point bbox
+
+# A color histogram.
+pr2_pick_perception/ColorHistogram histogram
