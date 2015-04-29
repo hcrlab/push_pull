@@ -48,8 +48,8 @@ void BoundingBox(const sensor_msgs::PointCloud2& cloud,
 //   histogram: The output histogram. The vector is laid out with num_bins
 //     values for the red channel, num_bins values for the blue channel, and
 //     num_bins values for the green channel.
-void ColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-                    const int num_bins, std::vector<int>* histogram);
+void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                           const int num_bins, std::vector<int>* histogram);
 
 }  // namespace pr2_pick_perception
 

@@ -77,8 +77,8 @@ void BoundingBox(const sensor_msgs::PointCloud2& cloud,
   // largest - smallest x, y, z
 }
 
-void ColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-                    const int num_bins, std::vector<int>* histogram) {
+void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                           const int num_bins, std::vector<int>* histogram) {
   double bin_size = 255.0 / num_bins;
   histogram->clear();
   histogram->resize(3 * num_bins);

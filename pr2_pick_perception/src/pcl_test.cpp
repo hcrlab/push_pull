@@ -51,8 +51,8 @@ TEST_F(PclTest, PlanarPcaXAxis) {
   EXPECT_FLOAT_EQ(0.707107, q2.z);
 }
 
-// Test ColorHistogram with a black point.
-TEST_F(PclTest, ColorHistogramAll0s) {
+// Test ComputeColorHistogram with a black point.
+TEST_F(PclTest, ComputeColorHistogramAll0s) {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
   cloud.width = 1;
   cloud.height = 1;
@@ -62,7 +62,7 @@ TEST_F(PclTest, ColorHistogramAll0s) {
   cloud.points[0].b = 0;
 
   std::vector<int> histogram;
-  ColorHistogram(cloud, 4, &histogram);
+  ComputeColorHistogram(cloud, 4, &histogram);
   for (size_t i = 0; i < histogram.size(); ++i) {
     if (i % 4 == 0) {
       EXPECT_EQ(1, histogram[i]);
@@ -72,8 +72,9 @@ TEST_F(PclTest, ColorHistogramAll0s) {
   }
 }
 
-// Test ColorHistogram with colors near the upper and lower bounds of a bin.
-TEST_F(PclTest, ColorHistogramBoundaries) {
+// Test ComputeColorHistogram with colors near the upper and lower bounds of a
+// bin.
+TEST_F(PclTest, ComputeColorHistogramBoundaries) {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
   cloud.width = 2;
   cloud.height = 1;
@@ -86,7 +87,7 @@ TEST_F(PclTest, ColorHistogramBoundaries) {
   cloud.points[1].b = 192;  // Bin 3
 
   std::vector<int> histogram;
-  ColorHistogram(cloud, 4, &histogram);
+  ComputeColorHistogram(cloud, 4, &histogram);
 
   // Expect red 0, red 2.
   EXPECT_EQ(1, histogram[0]);
@@ -107,8 +108,8 @@ TEST_F(PclTest, ColorHistogramBoundaries) {
   EXPECT_EQ(1, histogram[11]);
 }
 
-// Test ColorHistogram with a white point.
-TEST_F(PclTest, ColorHistogramAll255s) {
+// Test ComputeColorHistogram with a white point.
+TEST_F(PclTest, ComputeColorHistogramAll255s) {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
   cloud.width = 1;
   cloud.height = 1;
@@ -118,7 +119,7 @@ TEST_F(PclTest, ColorHistogramAll255s) {
   cloud.points[0].b = 255;
 
   std::vector<int> histogram;
-  ColorHistogram(cloud, 4, &histogram);
+  ComputeColorHistogram(cloud, 4, &histogram);
   for (size_t i = 0; i < histogram.size(); ++i) {
     if (i % 4 == 3) {
       EXPECT_EQ(1, histogram[i]);
@@ -128,10 +129,10 @@ TEST_F(PclTest, ColorHistogramAll255s) {
   }
 }
 
-// Test ColorHistogram with a white pixel with 5 bins. If each bin is of size
-// 255 / 5 = 51, then a pixel value of 255 would be put into bin 255 / 51 = 5,
-// which is out of bounds. Check that the boundary detection works.
-TEST_F(PclTest, ColorHistogram5Bins) {
+// Test ComputeColorHistogram with a white pixel with 5 bins. If each bin is of
+// size 255 / 5 = 51, then a pixel value of 255 would be put into bin 255 / 51 =
+// 5, which is out of bounds. Check that the boundary detection works.
+TEST_F(PclTest, ComputeColorHistogram5Bins) {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
   cloud.width = 1;
   cloud.height = 1;
@@ -141,7 +142,7 @@ TEST_F(PclTest, ColorHistogram5Bins) {
   cloud.points[0].b = 255;
 
   std::vector<int> histogram;
-  ColorHistogram(cloud, 5, &histogram);
+  ComputeColorHistogram(cloud, 5, &histogram);
   for (size_t i = 0; i < histogram.size(); ++i) {
     if (i % 5 == 4) {
       EXPECT_EQ(1, histogram[i]);
