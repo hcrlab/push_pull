@@ -3,150 +3,205 @@
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10
+    "grasp_effort": 10,
+    "color_histograms": [
+      [2528, 919, 707, 267, 1886, 1543, 734, 258, 1704, 600, 1050, 1067]
+    ]
   },
   "champion_copper_plus_spark_plug": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+      [133, 122, 163, 47, 360, 60, 18, 27, 372, 50, 23, 20],
+      [27, 11, 10, 17, 40, 4, 8, 13, 42, 10, 7, 6]
+    ]
   },
   "expo_dry_erase_board_eraser": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "genuine_joe_plastic_stir_sticks": {
     "graspable": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "munchkin_white_hot_duck_bath_toy": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "crayola_64_ct": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "mommys_helper_outlet_plugs": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10
+    "grasp_effort": 10,
+    "color_histograms": [
+    ]
   },
   "sharpie_accent_tank_style_highlighters": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "stanley_66_052": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 3,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "safety_works_safety_glasses": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": 10
+    "grasp_effort": 10,
+    "color_histograms": [
+    ]
   },
   "cheezit_big_original": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": 10
+    "grasp_effort": 10,
+    "color_histograms": [
+      [469, 542, 572, 1773, 2201, 389, 209, 557, 2252, 447, 211, 446],
+      [816, 1154, 1336, 2808, 2800, 989, 997, 1328, 3212, 1026, 735, 1141]
+    ]
   },
   "paper_mate_12_count_mirado_black_warrior": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "feline_greenies_dental_treats": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10
+    "grasp_effort": 10,
+    "color_histograms": [
+    ]
   },
   "elmers_washable_no_run_school_glue": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "mead_index_cards": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "rolodex_jumbo_pencil_cup": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 2,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "first_years_take_and_toss_straw_cup": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "highland_6539_self_stick_notes": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "mark_twain_huckleberry_finn": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "kyjen_squeakin_eggs_plush_puppies": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "kong_sitting_frog_dog_toy": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "kong_air_dog_squeakair_tennis_ball": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "dr_browns_bottle_brush": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "kong_duck_dog_toy": {
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   },
   "laugh_out_loud_joke_book": {
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "color_histograms": [
+    ]
   }
 }
