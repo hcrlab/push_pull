@@ -94,6 +94,7 @@ add_service_files(
   SetStaticTransform.srv
   PlanarPrincipalComponents.srv
   GetItemDescriptor.srv
+  ClassifyTargetItem.srv
 )
 
 ## Generate actions in the 'action' folder
