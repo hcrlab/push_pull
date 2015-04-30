@@ -92,7 +92,7 @@ class CropShelf {
 
   ros::NodeHandle nh_;
   // original point cloud
-  pcl::PointCloud<pcl::PointXYZ> kinect_pc_;
+  pcl::PointCloud<pcl::PointXYZRGB> kinect_pc_;
 
   sensor_msgs::PointCloud2Ptr kinect_pc_ros_;
   ros::Time pc_timestamp_;
@@ -101,8 +101,8 @@ class CropShelf {
 
   void pcCallBack(const sensor_msgs::PointCloud2ConstPtr &pcloud);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cropPC(
-      const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, float width,
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cropPC(
+      const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &shelf_pc, float width,
       float height, float depth, int cellID);
 };
 

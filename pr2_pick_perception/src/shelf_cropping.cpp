@@ -69,8 +69,8 @@ void CropShelf::pcCallBack(const sensor_msgs::PointCloud2::ConstPtr &pc_msg) {
   pc_ready_ = true;
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr CropShelf::cropPC(
-    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &shelf_pc, float width,
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
+    const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &shelf_pc, float width,
     float height, float depth, int cellID) {
   // total of cells in row 3
   int cellsrow = 3;
@@ -84,13 +84,13 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CropShelf::cropPC(
   // float p1y = width * timesx;    float p1z = height * timesy;
   // float p2y = p1y + width;    float p2z = p1z + height;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cell_pc(
-      new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cell_pc(
+      new pcl::PointCloud<pcl::PointXYZRGB>);
 
   printf("The number of points %d\n", (int)shelf_pc->points.size());
   // printf("point limits = [%f, %f, %f, %f, %f]\n", p1y,p2y,p1z,p2z,depth);
   for (int i = 0; i < shelf_pc->points.size(); i++) {
-    pcl::PointXYZ point = shelf_pc->points[i];
+    pcl::PointXYZRGB point = shelf_pc->points[i];
     // The point cloud has been transformed around the frame of the bin.
     // The origin of the bin's frame is in the front bottom center of the bin.
     if (point.x < (depth - depth_far_crop_offset_) &&
@@ -115,10 +115,10 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     ROS_ERROR("No point cloud or no shelf detected\n");
     return false;
   } else {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cell_pc(
-        new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr shelf_pc(
-        new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cell_pc(
+        new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr shelf_pc(
+        new pcl::PointCloud<pcl::PointXYZRGB>);
 
     if ("A" == request.cellID) {
       bin_frame_id_ = "bin_A";
@@ -362,17 +362,17 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       cell_pc = cropPC(shelf_pc, cell_height1_, cell_height1_, depth_cell_, 11);
     }
     // compute Euclidean clusters
-    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
 
     std::cout << "Final point cloud without planes size = "
               << cell_pc->points.size() << std::endl;
     // extract clusters EUclidean
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
-        new pcl::search::KdTree<pcl::PointXYZ>);
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(
+        new pcl::search::KdTree<pcl::PointXYZRGB>);
     tree->setInputCloud(cell_pc);
     std::vector<pcl::PointIndices> clustersInd;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance(0.01);  // 25cm
+    pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
+    ec.setClusterTolerance(0.01);               // 25cm
     ec.setMinClusterSize(min_cluster_points_);  // need to go low for standpipe
     ec.setMaxClusterSize(max_cluster_points_);
     ec.setSearchMethod(tree);
@@ -380,9 +380,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     ec.extract(clustersInd);
 
     for (int i = 0; i < clustersInd.size(); ++i) {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(
-          new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointXYZ point;
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(
+          new pcl::PointCloud<pcl::PointXYZRGB>);
+      pcl::PointXYZRGB point;
       for (int j = 0; j < clustersInd[i].indices.size(); j++) {
         int index = clustersInd[i].indices[j];
         point.x = cell_pc->points[index].x;
@@ -403,13 +403,13 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     //{
     //    vis.reset(new pcl::visualization::PCLVisualizer("Shelf Crooper --
     //    Debug"));
-    //    pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZ>
+    //    pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZRGB>
     //    scene_handler(shelf_pc, "x");//100, 100, 200);
 
     //    vis->addPointCloud(shelf_pc, scene_handler, "scene");
     //    vis->addCoordinateSystem();
     //    vis->setCameraPosition(-10,2,4,10,2,0,0,0,1);
-    //    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>
+    //    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
     //    cell_handler(cell_pc, 255, 255, 255.0);
     //    vis->addPointCloud(cell_pc, cell_handler, "Crooped cell");
 
@@ -417,7 +417,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
     //    {
     //        std::stringstream ss;
     //        ss << "cluster_raw_" << i;
-    //        pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZ>
+    //        pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZRGB>
     //        cluster_handler(clusters[i]);
     //        vis->addPointCloud(clusters[i], cluster_handler, ss.str());
     //        vis->spinOnce();
@@ -524,11 +524,11 @@ be available, " "will assume it as identity!",
         pcl::visualization::PCLVisualizer::Ptr vis;
         //transform point cloud to robot_frame (where the point cloud is
 published)
-        pcl::PointCloud<pcl::PointXYZ>::Ptr shelf_pc(new
-pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr shelf_pc(new
+pcl::PointCloud<pcl::PointXYZRGB>);
         pcl_ros::transformPointCloud(kinect_pc_,*shelf_pc,cloud_to_robot_);
 
-        pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZ>
+        pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZRGB>
 scene_handler(shelf_pc, "x");//100, 100, 200);
         if (debug_) {
             vis.reset(new pcl::visualization::PCLVisualizer("Shelf Crooper --
@@ -544,7 +544,7 @@ Debug"));
 
 //         if (debug_) {
 //            // vis->removePointCloud("scene");
-//             pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>
+// pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
 cell_handler(shelf_pc, 255, 255, 255.0);
 //             vis->addPointCloud(shelf_pc, cell_handler, request.cellID);
 //
@@ -552,13 +552,13 @@ cell_handler(shelf_pc, 255, 255, 255.0);
 //         }
 
      // move the origin of the shelf to the left top corner
-       // pcl::PointCloud<pcl::PointXYZ>::Ptr shelf_origin(new
-pcl::PointCloud<pcl::PointXYZ>);
+       // pcl::PointCloud<pcl::PointXYZRGB>::Ptr shelf_origin(new
+pcl::PointCloud<pcl::PointXYZRGB>);
         pcl_ros::transformPointCloud(*shelf_pc,*shelf_pc,shelf_to_origin_.inverse());
 
 //         if (debug_) {
 //             vis->removePointCloud(request.cellID);
-//             pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>
+// pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
 cell_handler(shelf_pc, 255, 0, 255.0);
 //             vis->addPointCloud(shelf_pc, cell_handler, request.cellID);
 //
@@ -567,8 +567,8 @@ cell_handler(shelf_pc, 255, 0, 255.0);
 
 
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cell_pc(new
-pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cell_pc(new
+pcl::PointCloud<pcl::PointXYZRGB>);
 
         if ( "A" == request.cellID)
             cell_pc = cropPC(shelf_pc,cell_width1_,cell_height1_,
@@ -614,17 +614,17 @@ published)
         pcl_ros::transformPointCloud(*cell_pc,*cell_pc,shelf_transform_);
 
         //compute Euclidean clusters
-        std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;
+        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
 
 
         std::cout << "Final point cloud without planes size = " <<
 cell_pc->points.size() << std::endl;
         //extract clusters EUclidean
-        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new
-pcl::search::KdTree<pcl::PointXYZ>);
+        pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new
+pcl::search::KdTree<pcl::PointXYZRGB>);
         tree->setInputCloud(cell_pc);
         std::vector<pcl::PointIndices> clustersInd;
-        pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+        pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
         ec.setClusterTolerance(0.01); //25cm
         ec.setMinClusterSize(150); //need to go low for standpipe
         ec.setMaxClusterSize(100000);
@@ -634,9 +634,9 @@ pcl::search::KdTree<pcl::PointXYZ>);
 
 
         for(int i = 0; i < clustersInd.size(); ++i) {
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cluster (new
-pcl::PointCloud<pcl::PointXYZ>);
-            pcl::PointXYZ point;
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster (new
+pcl::PointCloud<pcl::PointXYZRGB>);
+            pcl::PointXYZRGB point;
             for(int j=0; j < clustersInd[i].indices.size();j++){
                 int index = clustersInd[i].indices[j];
                 point.x = cell_pc->points[index].x;
@@ -653,7 +653,7 @@ pcl::PointCloud<pcl::PointXYZ>);
         if(debug_)
         {
 
-            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>
+            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
 cell_handler(cell_pc, 255, 255, 255.0);
             vis->addPointCloud(cell_pc, cell_handler, "Crooped cell");
 
@@ -664,7 +664,7 @@ cell_handler(cell_pc, 255, 255, 255.0);
             {
                 std::stringstream ss;
                 ss << "cluster_raw_" << i;
-                pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZ>
+                pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZRGB>
 cluster_handler(clusters[i]);
                 vis->addPointCloud(clusters[i], cluster_handler, ss.str());
                 vis->spinOnce();
