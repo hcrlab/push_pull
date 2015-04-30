@@ -364,7 +364,7 @@ class StateMachineBuilder(object):
         def mock_update_plan_execute(userdata):
             ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
             default_next_bin = 'J'
-            input_bin = raw_input('(Debug) Enter the next bin [{}]:'.format(default_next_bin))
+            input_bin = raw_input('(Debug) Enter the next bin [{}]: '.format(default_next_bin))
             if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
                 bin_letter = input_bin[0]
             else:
@@ -488,7 +488,8 @@ class StateMachineBuilder(object):
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
                     'next_bin': 'current_bin',
-                    'next_item' : 'current_item'
+                    'next_target' : 'current_target',
+                    'next_bin_items': 'current_bin_items'
                 }
             )
             smach.StateMachine.add(
@@ -512,6 +513,8 @@ class StateMachineBuilder(object):
                 },
                 remapping={
                     'bin_id': 'current_bin',
+                    'current_target': 'current_target',
+                    'current_bin_items': 'current_bin_items',
                     'clusters': 'clusters'
                 }
             )
@@ -552,7 +555,7 @@ class StateMachineBuilder(object):
                     'bin_id': 'current_bin',
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
-                    'current_item': 'current_item'
+                    'current_target': 'current_target'
                 }
             )
             smach.StateMachine.add(

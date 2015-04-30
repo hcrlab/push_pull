@@ -22,14 +22,11 @@ class SenseBin(smach.State):
         """
         smach.State.__init__(
             self,
-            outcomes=[
-                outcomes.SENSE_BIN_SUCCESS,
-                outcomes.SENSE_BIN_NO_OBJECTS,
-                outcomes.SENSE_BIN_FAILURE
-            ],
-            input_keys=['bin_id', 'debug'],
-            output_keys=['clusters']
-        )
+            outcomes=[outcomes.SENSE_BIN_SUCCESS, outcomes.SENSE_BIN_NO_OBJECTS,
+                      outcomes.SENSE_BIN_FAILURE],
+            input_keys=['bin_id', 'debug', 'current_target',
+                        'current_bin_items'],
+            output_keys=['clusters'])
         self._tts = tts
         self._crop_shelf = crop_shelf
         self._markers = markers
@@ -38,6 +35,9 @@ class SenseBin(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
+
+        rospy.loginfo('Expecting target: {}, items: {}'.format(
+            userdata.current_target, userdata.current_bin_items))
         self._tuck_arms.wait_for_service()
         self._tuck_arms(tuck_left=True, tuck_right=True)
         # TODO(jstn): Move the head here.
@@ -48,16 +48,12 @@ class SenseBin(smach.State):
             len(response.locations.clusters)))
         for i, cluster in enumerate(response.locations.clusters):
             points = pc2.read_points(cluster.pointcloud,
-                                     field_names=['x', 'y', 'z'],
                                      skip_nans=True)
-            viz.publish_cluster(
-                self._markers,
-                [Point(x=x, y=y, z=z) for x, y, z in points],
-                'bin_{}'.format(userdata.bin_id),
-                'bin_{}_items'.format(userdata.bin_id),
-                i
-            )
-            
+            point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
+            viz.publish_cluster(self._markers, point_list,
+                                'bin_{}'.format(userdata.bin_id),
+                                'bin_{}_items'.format(userdata.bin_id), i)
+
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
         return outcomes.SENSE_BIN_SUCCESS
