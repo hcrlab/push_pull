@@ -15,6 +15,7 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform, PlanarPrincipalComponents, GetItemDescriptor
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
+from pr2_pick_contest.srv import LookupItem
 import states
 from states.GraspTool import GraspTool, ReleaseTool
 
@@ -99,7 +100,8 @@ class StateMachineBuilder(object):
             # Contest
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
             'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
-            'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems)
+            'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems),
+            'lookup_item': rospy.ServiceProxy('item_database/lookup_item', LookupItem)
         }
 
     def side_effect(self, name, return_value=True):
@@ -198,6 +200,7 @@ class StateMachineBuilder(object):
         get_items = mock.Mock(side_effect=self.side_effect('get_items'))
         set_items = mock.Mock(side_effect=self.side_effect('set_items'))
         get_target_items = mock.Mock(side_effect=self.side_effect('get_target_items'))
+        lookup_item = mock.Mock(side_effect=self.side_effect('lookup_item'))
 
         return {
             # Speech
@@ -224,6 +227,7 @@ class StateMachineBuilder(object):
             'get_items': get_items,
             'set_items': set_items,
             'get_target_items': get_target_items,
+            'lookup_item': lookup_item
          }
 
     def build_sm_for_move_to_bin(self, **services):

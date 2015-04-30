@@ -13,15 +13,8 @@ rosservice call /perception/localize_shelf
 ### Item clustering
 Gets the clusters in a particular bin, given the full point cloud, and assuming that the shelf and bin TFs are being published.
 
-Example:
-```py
-from pr2_pick_perception.srv import CropShelf, CropShelfRequest
-crop_shelf = rospy.ServiceProxy('perception/shelf_cropper', CropShelf)
-request = CropShelfRequest(cellID=userdata.bin_id)
-crop_shelf.wait_for_service()
-response = self._crop_shelf(request)
-clusters = response.locations.clusters
-```
+### Item descriptors
+Given a cluster, returns a descriptor of it.
 
 ### Planar PCA
 Gets the 2 PCA components of a cluster on the XY plane.
