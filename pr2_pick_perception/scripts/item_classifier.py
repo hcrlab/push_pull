@@ -1,9 +1,11 @@
+#!/usr/bin/env python
 """Classifies objects based on descriptors.
 """
 from __future__ import division
 from __future__ import print_function
 from pr2_pick_perception.srv import ClassifyTargetItem, ClassifyTargetItemResponse
 import argparse
+import json
 import numpy as np
 import rospy
 
@@ -36,7 +38,7 @@ class ItemClassifier(object):
         descriptor: The descriptor to classify, a pr2_pick_perception/ItemDescriptor.
         labels: A list of item names to possibly classify the descriptor as.
         """
-        histogram = np.array(descriptor.color_histogram)
+        histogram = np.array(descriptor.histogram.histogram)
         second_min_distance = None
         min_distance = None
         best_label = None
@@ -81,10 +83,13 @@ class TargetItemClassifier(object):
             for i, descriptor in possible_descriptors:
                 label, confidence = self._item_classifier.classify(
                     descriptor, possible_labels)
+                rospy.loginfo('Classified cluster {} as {} with confidence {}'.format(
+                    i, label, confidence
+                ))
                 if highest_confidence is None or confidence > highest_confidence:
                     highest_confidence = confidence
                     most_confident_label = label
-                    most_confident_index = index
+                    most_confident_index = i
                 if label == target_item:
                     target_labels.append((i, confidence))
             if len(target_labels) == 1:
@@ -92,9 +97,9 @@ class TargetItemClassifier(object):
             # Otherwise, accept the most confident label as true, and narrow
             # down the set of possible labels.
             possible_labels.remove(most_confident_label)
-            possible_descriptors = possible_descriptors[:
-                                                        i] + possible_descriptors[i +
-                                                                                  1:]
+            possible_descriptors = (
+                possible_descriptors[: i] + possible_descriptors[i + 1:]
+            )
 
     def classify_request(self, request):
         target_item_index, confidence = self.classify(

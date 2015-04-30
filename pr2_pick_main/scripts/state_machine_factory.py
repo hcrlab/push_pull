@@ -13,7 +13,7 @@ from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
 from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
-    SetStaticTransform, PlanarPrincipalComponents, GetItemDescriptor
+    SetStaticTransform, PlanarPrincipalComponents, GetItemDescriptor, ClassifyTargetItem
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
 import states
@@ -96,6 +96,8 @@ class StateMachineBuilder(object):
                                                  PlanarPrincipalComponents),
             'get_item_descriptor': rospy.ServiceProxy('perception/get_item_descriptor',
                                                  GetItemDescriptor),
+            'classify_target_item': rospy.ServiceProxy('item_classifier/classify_target_item',
+                                                       ClassifyTargetItem),
 
             # Contest
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
@@ -519,7 +521,8 @@ class StateMachineBuilder(object):
                     'bin_id': 'current_bin',
                     'current_target': 'current_target',
                     'current_bin_items': 'current_bin_items',
-                    'clusters': 'clusters'
+                    'clusters': 'clusters',
+                    'target_cluster': 'target_cluster'
                 }
             )
             smach.StateMachine.add(
@@ -533,7 +536,7 @@ class StateMachineBuilder(object):
                 },
                 remapping={
                     'bin_id': 'current_bin',
-                    'clusters': 'clusters'
+                    'target_cluster': 'target_cluster'
                 }
             )
             smach.StateMachine.add(

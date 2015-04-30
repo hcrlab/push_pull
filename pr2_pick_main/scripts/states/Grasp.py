@@ -43,7 +43,7 @@ class Grasp(smach.State):
                 outcomes.GRASP_SUCCESS,
                 outcomes.GRASP_FAILURE
             ],
-            input_keys=['bin_id', 'clusters', 'debug']
+            input_keys=['bin_id', 'debug', 'target_cluster']
         )
 
         self._find_centroid = services['find_centroid']
@@ -102,22 +102,6 @@ class Grasp(smach.State):
         item_pose.header.frame_id = 'shelf'
         return [item_pose,]
 
-    def locate_one_item(self, clusters):
-        '''
-        Locate one items in this shelf based on clusters from perception data.
-        If there is more than one cluster (unexpected) use the largest one.
-        '''
-        cluster_to_use = None
-        largest_size = 0
-        for cluster in clusters:
-            size = cluster.pointcloud.height * cluster.pointcloud.width
-            if size > largest_size:
-                largest_size = size
-                cluster_to_use = cluster
-
-        response = self._find_centroid(cluster_to_use)
-        return response.centroid
-
     def add_shelf_mesh_to_scene(scene):
         q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
         shelf_pose = PoseStamped(
@@ -158,11 +142,8 @@ class Grasp(smach.State):
         #)
 
         # Get the pose of the target item in the base frame
-        item_point = self.locate_one_item(userdata.clusters)
-        if not item_point.header.frame_id:
-            rospy.loginfo('Grasping failed. No clusters.')
-            self._tts.publish('No clusters. Giving up.')
-            return outcomes.GRASP_FAILURE
+        response = self._find_centroid(userdata.target_cluster)
+        item_point = response.centroid
         item_pose = PoseStamped(
             header=Header(
                 frame_id=item_point.header.frame_id,
