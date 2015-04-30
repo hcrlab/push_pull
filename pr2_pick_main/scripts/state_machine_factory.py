@@ -364,7 +364,7 @@ class StateMachineBuilder(object):
         def mock_update_plan_execute(userdata):
             ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
             default_next_bin = 'J'
-            input_bin = raw_input('(Debug) Enter the next bin [{}]:'.format(default_next_bin))
+            input_bin = raw_input('(Debug) Enter the next bin [{}]: '.format(default_next_bin))
             if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
                 bin_letter = input_bin[0]
             else:
