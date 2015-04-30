@@ -18,43 +18,11 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 import visualization as viz
 
 import outcomes
-from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers
+from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers, MoveArmIkRequest
 from pr2_pick_perception.msg import Box
 from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest
 
 """ Temporary class for moving arm without collision checking until we have service """
-
-class Arm:
-    def __init__(self, arm_name):
-        #arm_name should be l_arm or r_arm
-        self.name = arm_name
-        self.jta = actionlib.SimpleActionClient('/'+arm_name+'_controller/joint_trajectory_action',
-                        JointTrajectoryAction)
-        rospy.loginfo('Waiting for joint trajectory action')
-        self.jta.wait_for_server()
-        rospy.loginfo('Found joint trajectory action!')
-
-    def move(self, waypoints):
-        goal = JointTrajectoryGoal()
-        char = self.name[0] #either 'r' or 'l'
-        goal.trajectory.joint_names = [char+'_shoulder_pan_joint',
-                   char+'_shoulder_lift_joint',
-                   char+'_upper_arm_roll_joint',
-                   char+'_elbow_flex_joint',
-                   char+'_forearm_roll_joint',
-                   char+'_wrist_flex_joint',
-                   char+'_wrist_roll_joint']
-        time_offset = 0
-        goal.trajectory.header.stamp = rospy.Time.now() + rospy.Duration(1.0)
-        rospy.loginfo('Sending joint goal')
-        for waypoint in waypoints:
-            point = JointTrajectoryPoint()
-            point.positions = waypoint
-            point.time_from_start = rospy.Duration(1.5 + time_offset*1.5)
-            goal.trajectory.points.append(point)
-            time_offset = time_offset + 1
-            
-        self.jta.send_goal_and_wait(goal)
 
 
 class Grasp(smach.State):
@@ -118,6 +86,7 @@ class Grasp(smach.State):
         self._im_server = services['interactive_marker_server']
         self._set_static_tf = services['set_static_tf']
         self._markers = services['markers']
+        self._move_arm_ik = services['move_arm_ik']
 
         self._fk_client = rospy.ServiceProxy('compute_fk', GetPositionFK)
         self._ik_client = rospy.ServiceProxy('compute_ik', GetPositionIK)
@@ -866,32 +835,10 @@ class Grasp(smach.State):
                 rospy.loginfo('Open Hand')
                 self._set_grippers.wait_for_service()
                 grippers_open = self._set_grippers(False, True)
-            #self._moveit_move_arm.wait_for_service()
-            #success_grasp = self._moveit_move_arm(grasp["grasp"], 0.01, 0.01, 0, 'right_arm').success
-            # Temporary hack for before we have an IK service
+            self._move_arm_ik.wait_for_service()
 
-            ik_request = GetPositionIKRequest()
-            ik_request.ik_request.group_name = "right_arm"
-            ik_request.ik_request.pose_stamped = grasp["grasp"]
-            char = 'r'
-            ik_request.ik_request.robot_state.joint_state.name = [char+'_shoulder_pan_joint',
-                   char+'_shoulder_lift_joint',
-                   char+'_upper_arm_roll_joint',
-                   char+'_elbow_flex_joint',
-                   char+'_forearm_roll_joint',
-                   char+'_wrist_flex_joint',
-                   char+'_wrist_roll_joint']
-            ik_response = self._ik_client(ik_request)
-            arm = Arm('r_arm')
-            rospy.loginfo("Joint positions: " + str(ik_response.solution.joint_state.position))
-            rospy.loginfo("Joint names: " + str(ik_response.solution.joint_state.name))
-            positions = [None] * 7
-            for (ind, name) in enumerate(ik_response.solution.joint_state.name):
-                if name in ik_request.ik_request.robot_state.joint_state.name:
-                    idx = ik_request.ik_request.robot_state.joint_state.name.index(name)
-                    positions[idx] = ik_response.solution.joint_state.position[ind]
-                
-            #arm.move([positions])
+            success_grasp = self._move_arm_ik(grasp["grasp"], MoveArmIkRequest().RIGHT_ARM).success
+
             viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
             success_grasp = True
             if success_grasp:

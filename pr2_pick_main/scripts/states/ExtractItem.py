@@ -6,7 +6,7 @@ import smach
 import moveit_commander
 import geometry_msgs.msg
 from pr2_pick_manipulation.srv import GetPose
-from pr2_pick_manipulation.srv import MoveArm
+from pr2_pick_manipulation.srv import MoveArm, MoveArmIkRequest
 from std_msgs.msg import Header
 import json
 import os
@@ -17,7 +17,7 @@ class ExtractItem(smach.State):
     """
     name = 'EXTRACT_ITEM'
 
-    def __init__(self, tts, moveit_move_arm, tf_listener, drive_to_pose, markers, **kwargs):
+    def __init__(self, **services):
         smach.State.__init__(
             self,
             outcomes=[
@@ -27,11 +27,12 @@ class ExtractItem(smach.State):
             input_keys=['bin_id', 'debug']
         )
 
-        self._moveit_move_arm = moveit_move_arm
-        self._tts = tts
-        self._tf_listener = tf_listener
-        self._drive_to_pose = drive_to_pose
-        self._markers = markers
+        self._moveit_move_arm = services['moveit_move_arm']
+        self._tts = services['tts']
+        self._tf_listener = services['tf_listener']
+        self._drive_to_pose = services['drive_to_pose']
+        self._markers = services['markers']
+        self._move_arm_ik = services['move_arm_ik']
 
         # Shelf heights
 
@@ -197,15 +198,12 @@ class ExtractItem(smach.State):
             
                 self._moveit_move_arm.wait_for_service()
                 try:
-                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 
-                                                         0.015 + 0.005 * i, 0, 
-                                                         "right_arm", False).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
                     rospy.sleep(5.0)
                     self._moveit_move_arm.wait_for_service()
-                    success_lift = self._moveit_move_arm(pose_target, 0.01 + 0.005 * i, 
-                                                         0.015 + 0.005 * i, 0, 
-                                                         "right_arm", False).success
+
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
             if success_lift:
                 rospy.loginfo("Lift success")
                 break
@@ -217,54 +215,7 @@ class ExtractItem(smach.State):
 
         # Pull item out of bin
         success = False
-        """
-        for i in range(attempts):
 
-            # Pose in front of bin
-
-            if userdata.bin_id > "C":
-                rospy.loginfo("Extract:")
-                extract_pose_target = geometry_msgs.msg.PoseStamped()
-                extract_pose_target.header.frame_id = "base_footprint";
-                extract_pose_target.pose.orientation.w = 1
-                extract_pose_target.pose.position.x = self._extract_dist + 0.01 * i 
-                extract_pose_target.pose.position.y = transformed_item_pose.pose.position.y
-                extract_pose_target.pose.position.z = pose_target.pose.position.z
-                
-
-                rospy.loginfo("pose x: " + str(extract_pose_target.pose.position.x) + ", y: " + str(extract_pose_target.pose.position.y) + ", z: " + str(extract_pose_target.pose.position.z))
-                rospy.loginfo("orientation x: " + str(extract_pose_target.pose.orientation.x) + ", y: " + str(extract_pose_target.pose.orientation.y) + ", z: " + str(extract_pose_target.pose.orientation.z) + ", w: " + str(extract_pose_target.pose.orientation.w))
-                
-                self._moveit_move_arm.wait_for_service()
-                success = self._moveit_move_arm(extract_pose_target, 0.01, 0.01, 8.0, "right_arm").success
-            else:
-                rospy.loginfo("Extract:")
-                extract_pose_target = geometry_msgs.msg.PoseStamped()
-                extract_pose_target.header.frame_id = "base_footprint";
-               
-                rospy.loginfo("In top row")
-                extract_pose_target.pose.orientation.x = 0.984
-                extract_pose_target.pose.orientation.y = -0.013
-                extract_pose_target.pose.orientation.z = 0.178
-                extract_pose_target.pose.orientation.w = 0.028
-                extract_pose_target.pose.position.x = 0.243 + 0.01 * i
-                extract_pose_target.pose.position.y = transformed_item_pose.pose.position.y
-                extract_pose_target.pose.position.z = 1.508
- 
-
-                rospy.loginfo("pose x: " + str(extract_pose_target.pose.position.x) + ", y: " + str(extract_pose_target.pose.position.y) + ", z: " + str(extract_pose_target.pose.position.z))
-                rospy.loginfo("orientation x: " + str(extract_pose_target.pose.orientation.x) + ", y: " + str(extract_pose_target.pose.orientation.y) + ", z: " + str(extract_pose_target.pose.orientation.z) + ", w: " + str(extract_pose_target.pose.orientation.w))
-                
-                self._moveit_move_arm.wait_for_service()
-                success = self._moveit_move_arm(extract_pose_target, 0.01, 0.01, 8.0, "right_arm").success
-            if success:
-                # Open Hand
-                rospy.loginfo("Extract success")
-                break
-            else:
-                rospy.loginfo("Extract attempt " + str(i) + " failed")
-                continue
-        """
         t = rospy.Time(0)
         position, quaternion = self._tf_listener.lookupTransform("shelf", "base_footprint", t)
 
