@@ -388,6 +388,9 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
         point.x = cell_pc->points[index].x;
         point.y = cell_pc->points[index].y;
         point.z = cell_pc->points[index].z;
+        point.r = cell_pc->points[index].r;
+        point.g = cell_pc->points[index].g;
+        point.b = cell_pc->points[index].b;
         cluster->points.push_back(point);
       }
       cluster->width = cluster->points.size();

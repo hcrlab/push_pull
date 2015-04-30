@@ -17,7 +17,10 @@ ItemDescriptorService::ItemDescriptorService(const std::string& name)
     : name_(name),
       nh_(),
       server_(
-          nh_.advertiseService(name, &ItemDescriptorService::Callback, this)) {}
+          nh_.advertiseService(name, &ItemDescriptorService::Callback, this)),
+      num_bins_(4) {
+  ros::param::param<double>("color_histogram/num_bins", num_bins_, 4);
+}
 
 bool ItemDescriptorService::Callback(GetItemDescriptor::Request& request,
                                      GetItemDescriptor::Response& response) {
@@ -30,10 +33,9 @@ bool ItemDescriptorService::Callback(GetItemDescriptor::Request& request,
 
   // Get color histogram.
   std::vector<int> histogram;
-  int num_bins = 8;
-  ComputeColorHistogram(pcl_cloud, num_bins, &histogram);
+  ComputeColorHistogram(pcl_cloud, num_bins_, &histogram);
   ColorHistogram histogram_msg;
-  histogram_msg.num_bins = num_bins;
+  histogram_msg.num_bins = num_bins_;
   histogram_msg.histogram = histogram;
 
   ItemDescriptor descriptor;

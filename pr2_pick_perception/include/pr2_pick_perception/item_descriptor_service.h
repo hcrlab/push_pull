@@ -16,6 +16,7 @@ class ItemDescriptorService {
   ros::ServiceServer server_;
   bool Callback(GetItemDescriptor::Request& request,
                 GetItemDescriptor::Response& response);
+  double num_bins_;  // Number of color histogram bins.
 
  public:
   ItemDescriptorService(const std::string& name);
