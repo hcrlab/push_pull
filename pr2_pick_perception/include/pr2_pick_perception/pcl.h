@@ -12,6 +12,9 @@ namespace pr2_pick_perception {
 // Computes the principal components of the given point cloud on the XY plane.
 // The XY plane is defined by the frame_id given in the cloud.
 //
+// NOTE: this does not mean-shift the data for you! You must supply a
+// mean-shifted point cloud to it.
+//
 // Args:
 //   cloud: The input point cloud to get the principal components of.
 //   component1: The orientation of the principal component in the input cloud's
