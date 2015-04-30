@@ -43,7 +43,7 @@ class ItemClassifier(object):
         for label in labels:
             item_data = self._data[label]
             label_histograms = [np.array(x)
-                                for x in item_data.color_histograms]
+                                for x in item_data['color_histograms']]
             for label_histogram in label_histograms:
                 distance = self._distance(histogram, label_histogram)
                 if min_distance is None or distance < min_distance:
