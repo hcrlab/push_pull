@@ -48,9 +48,10 @@ class CaptureItemDescriptor(smach.State):
         cluster = response.locations.clusters[0]
         points = pc2.read_points(cluster.pointcloud,
                                  skip_nans=True)
+        point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
         viz.publish_cluster(
             self._markers,
-            [Point(x=x, y=y, z=z) for x, y, z in points],
+            point_list,
             'bin_{}'.format(userdata.bin_id),
             'bin_{}_items'.format(userdata.bin_id),
             0
