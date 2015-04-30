@@ -5,6 +5,7 @@
   <arg name="alternate_kinect_frames" default="false" />
   <node name="festival_tts" pkg="festival_tts" type="speak.py" />
   <node name="pr2_pick_inventory" pkg="pr2_pick_contest" type="inventory.py" args="$(find pr2_pick_contest)/config/random1.json" />
+  <node name="pr2_pick_item_db" pkg="pr2_pick_contest" type="item_database.py" args="$(find pr2_pick_contest)/config/item_models.json" />
   <include file="$(find pr2_pick_manipulation)/launch/manipulation.launch" />
   <include file="$(find pr2_pick_perception)/launch/perception.launch">
     <arg name="debug_shelf" value="$(arg debug_shelf)" />
