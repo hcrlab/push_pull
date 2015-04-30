@@ -12,6 +12,7 @@ from __future__ import print_function
 import collections
 import json
 import numpy as np
+from sklearn.metrics import precision_recall_curve
 import sys
 
 
@@ -40,11 +41,13 @@ class ColorHistogramClassifier(object):
         self._printed = 0  # Set to non-zero to debug classifications
 
     def classify(self, histogram, labels):
-        """Returns the most likely label assignment for the given histogram.
+        """Returns the most likely label assignment for the given histogram,
+        and a confidence for that label.
 
         histogram: The histogram to classify.
         labels: A list of item names to possibly classify the histogram as.
         """
+        second_min_distance = None
         min_distance = None
         best_label = None
         if self._printed > 0:
@@ -57,11 +60,16 @@ class ColorHistogramClassifier(object):
                     print('  label: {}, histogram: {}, distance: {}'.format(
                         label, label_histogram, distance))
                 if min_distance is None or distance < min_distance:
+                    second_min_distance = min_distance
                     min_distance = distance
                     best_label = label
         if self._printed > 0:
             self._printed -= 1
-        return best_label
+        ambiguity = 0
+        if second_min_distance is not None:
+            ambiguity = min_distance / second_min_distance
+        confidence = 1 - ambiguity
+        return best_label, confidence
 
     def get_details(self, test_histogram, predicted, actual):
         """Returns details about a classification error.
@@ -164,25 +172,26 @@ def run_experiment(training_set, test_set, items_in_bin, distance_name):
 
         for other_items in other_item_generator(items, item):
             item_list = [item] + other_items
-            predicted = classifier.classify(item_histogram, item_list)
-            results.append((item_histogram, item, predicted, other_items))
+            predicted, confidence = classifier.classify(item_histogram, item_list)
+            results.append((item_histogram, item, predicted, confidence, other_items))
 
     print_accuracy(results, items_in_bin, distance_name)
     write_results_file(results, items_in_bin, distance_name, classifier)
+    write_precision_recall(results, items_in_bin, distance_name, classifier)
 
 
 def print_accuracy(results, items_in_bin, distance_name):
     """Computes and prints the accuracy results.
 
     results: The results from run_experiment. A list of (item histogram, item
-      name, predicted item name, list of other item names) tuples.
+      name, predicted item name, confidence, list of other item names) tuples.
     items_in_bin: The number of items in the bin for these results.
     distance_name: The distance metric for these results.
     """
     num_correct = 0
     num_correct_by_item = collections.Counter()
     total_by_item = collections.Counter()
-    for histogram, item, predicted, other_items in results:
+    for histogram, item, predicted, confidence, other_items in results:
         if item == predicted:
             num_correct_by_item[item] += 1
             num_correct += 1
@@ -197,13 +206,13 @@ def write_results_file(results, items_in_bin, distance_name, classifier):
     """Writes the results out to a .tsv file.
 
     results: The results from run_experiment. A list of (item histogram, item
-      name, predicted item name, list of other item names) tuples.
+      name, predicted item name, confidence, list of other item names) tuples.
     items_in_bin: The number of items in the bin for these results.
     distance_name: The distance metric for these results.
     classifier: The classifier used for these results.
     """
     output_file = open('{}_{}.tsv'.format(items_in_bin, distance_name), 'w')
-    for histogram, item, predicted, other_items in results:
+    for histogram, item, predicted, confidence, other_items in results:
         correct = 1 if item == predicted else 0
         other_string = '\t'.join(other_items)
 
@@ -215,10 +224,26 @@ def write_results_file(results, items_in_bin, distance_name, classifier):
             detail = '\t' + '\t'.join(
                 [str(histogram), str(predicted_histogram), str(actual_histogram),
                  str(predicted_distance), str(actual_distance)])
-        print('{}\t{}\t{}\t{}{}'.format(item, predicted, correct, other_string,
+        print('{}\t{}\t{}\t{}\t{}{}'.format(item, predicted, correct, confidence, other_string,
                                         detail),
               file=output_file)
 
+def write_precision_recall(results, items_in_bin, distance_name, classifier):
+    """Writes the precision-recall curve to a file.
+
+    results: The results from run_experiment. A list of (item histogram, item
+      name, predicted item name, confidence, list of other item names) tuples.
+    items_in_bin: The number of items in the bin for these results.
+    distance_name: The distance metric for these results.
+    classifier: The classifier used for these results.
+    """
+    output_file = open('prcurve_{}_{}.tsv'.format(items_in_bin, distance_name), 'w')
+    corrects = [1 if actual == predicted else 0 for _, actual, predicted, _, _ in results]
+    confidences = [c for _, _, _, c, _ in results]
+    precisions, recalls, thresholds = precision_recall_curve(corrects, confidences)
+    for precision, recall, threshold in zip(precisions, recalls, thresholds):
+        print('{}\t{}\t{}'.format(precision, recall, threshold), file=output_file)
+        
 
 if __name__ == '__main__':
     training_set_file = open(sys.argv[1])
