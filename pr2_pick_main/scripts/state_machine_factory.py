@@ -13,7 +13,7 @@ from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
 from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
-    SetStaticTransform, PlanarPrincipalComponents
+    SetStaticTransform, PlanarPrincipalComponents, GetItemDescriptor
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 import states
 from states.GraspTool import GraspTool, ReleaseTool
@@ -25,6 +25,7 @@ class StateMachineBuilder(object):
     TEST_DROP_OFF_ITEM = 'test-drop-off-item'
     TEST_GRASP_TOOL = 'test-grasp-tool'
     TEST_MOVE_TO_BIN = 'test-move-to-bin'
+    CAPTURE_ITEM_DESCRIPTOR = 'capture-item-descriptor'
     DEFAULT = 'default'
 
     def __init__(self):
@@ -56,6 +57,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_grasp_tool
         elif self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
             build = self.build_sm_for_move_to_bin
+        elif self.state_machine_identifier == StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR:
+            build = self.build_sm_for_item_descriptor_capture
         else:
             build = self.build_sm
 
@@ -90,13 +93,14 @@ class StateMachineBuilder(object):
             'tf_listener': tf.TransformListener(),
             'get_planar_pca': rospy.ServiceProxy('planar_principal_components',
                                                  PlanarPrincipalComponents),
+            'get_item_descriptor': rospy.ServiceProxy('perception/get_item_descriptor',
+                                                 GetItemDescriptor),
 
             # Contest
-
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
             'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
             'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems)
-             }
+        }
 
     def side_effect(self, name, return_value=True):
         '''A side effect for mock functions.
@@ -348,6 +352,88 @@ class StateMachineBuilder(object):
                 },
             )
         return sm
+
+    def build_sm_for_item_descriptor_capture(self, **services):
+        """State machine for calling CaptureItemDescriptor.
+        """
+        sm = smach.StateMachine(outcomes=[
+            outcomes.CHALLENGE_SUCCESS,
+            outcomes.CHALLENGE_FAILURE
+        ])
+
+        def mock_update_plan_execute(userdata):
+            ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
+            default_next_bin = 'J'
+            input_bin = raw_input('(Debug) Enter the next bin [{}]:'.format(default_next_bin))
+            if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
+                bin_letter = input_bin[0]
+            else:
+                bin_letter = default_next_bin
+
+            userdata.next_bin = bin_letter
+            return outcomes.UPDATE_PLAN_NEXT_OBJECT
+
+        mock_update_plan = states.UpdatePlan(**services)
+        mock_update_plan.execute = mock_update_plan_execute
+
+        with sm:
+            smach.StateMachine.add(
+                states.StartPose.name,
+                states.StartPose(**services),
+                transitions={
+                    outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                    outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
+                }
+            )
+            smach.StateMachine.add(
+                states.FindShelf.name,
+                states.FindShelf(**services),
+                transitions={
+                    outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
+                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+                }
+            )
+            smach.StateMachine.add(
+                states.UpdatePlan.name,
+                mock_update_plan,
+                transitions={
+                    outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
+                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
+                    outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data',
+                    'next_bin': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.MoveToBin.name,
+                states.MoveToBin(**services),
+                transitions={
+                    outcomes.MOVE_TO_BIN_SUCCESS: states.CaptureItemDescriptor.name,
+                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_id': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.CaptureItemDescriptor.name,
+                states.CaptureItemDescriptor(**services),
+                transitions={
+                    outcomes.CAPTURE_ITEM_NEXT: states.CaptureItemDescriptor.name,
+                    outcomes.CAPTURE_ITEM_DONE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'clusters': 'clusters'
+                }
+            )
+
+        return sm
+
 
     def build_sm(self, **services):
         '''Builds the main state machine.

@@ -1,12 +1,13 @@
 <launch>
   <arg name="kinect_frame_prefix" default="/head_mount_kinect" />
   <arg name="kinect_camera_name" default="head_mount_kinect" />
-  <arg name="debug_shelf" default="false" />
-  <arg name="debug_crop" default="false" />
+  <arg name="debug_shelf" default="false" /> <!-- Set to true to not run the shelf localization node in this launch file. -->
+  <arg name="debug_crop" default="false" /> <!-- Set to true to not run the shelf cropping node in this launch file. -->
+  <arg name="debug_openni" default="false" /> <!-- Set to true to not run openni in this launch file. -->
   <arg name="alternate_kinect_frames" default="false" />
 
   <!-- Turn on the Kinect -->
-  <include file="$(find openni_launch)/launch/openni.launch">
+  <include file="$(find openni_launch)/launch/openni.launch" unless="$(arg debug_openni)">
     <arg name="depth_registration" value="true"/>
     <arg name="camera" value="head_mount_kinect"/>
     <arg unless="$(arg alternate_kinect_frames)" name="rgb_frame_id" value="$(arg kinect_frame_prefix)_rgb_optical_frame"/>
@@ -37,7 +38,9 @@
 
   <!-- Point cloud processors. -->
   <node pkg="pr2_pick_perception" type="planar_pca_service_node" name="planar_pca_service_node" respawn="true" />
-  <node pkg="pr2_pick_perception" type="item_descriptor_service_node" name="item_descriptor_service_node" respawn="true" />
+  <node pkg="pr2_pick_perception" type="item_descriptor_service_node" name="item_descriptor_service_node" respawn="true">
+    <param name="color_histogram/num_bins" value="4" />
+  </node>
 
   <!-- Utilities -->
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />
