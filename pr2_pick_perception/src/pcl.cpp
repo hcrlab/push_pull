@@ -9,7 +9,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <Eigen/Dense>
-#include <tf/Transform.h>
 
 #include <algorithm>
 #include <math.h>
@@ -59,19 +58,12 @@ void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
   component2->z = q2.z();
 }
 
-void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+void BoundingBox(const sensor_msgs::PointCloud2& cloud,
                  geometry_msgs::TransformStamped* transform,
                  geometry_msgs::Point* bbox) {
-
-  // Get principal components
-  geometry_msgs::Quaternion component1, component2;
-  double value1, value2;
-  PlanarPrincipalComponents(cloud, &component1, &component2, &value1, &value2);
-
   // Build a provisional frame. Axes in the right orientation, but we don't know
-  // the origin yet. Use centroid.
-  Transform provisional_frame = Transform(orientation, origin);
-
+  // the
+  // origin yet.
 
   // for each point:
   //   transform it into the provisional frame
