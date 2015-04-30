@@ -63,6 +63,35 @@ class ColorHistogramClassifier(object):
             self._printed -= 1
         return best_label
 
+    def get_details(self, test_histogram, predicted, actual):
+        """Returns details about a classification error.
+
+        Specifically, returns the closest histogram for the predicted item,
+        the closest histogram for the actual item, the distance to the
+        predicted histogram, and the distance to the actual item as a tuple.
+
+        test_histogram: The histogram whose classification was incorrect.
+        predicted: The predicted item.
+        actual: The actual item.
+        """
+        min_predicted = None
+        best_predicted = None
+        for predicted_histogram in self._data[predicted]:
+            distance = self._distance(predicted_histogram, test_histogram)
+            if min_predicted is None or distance < min_predicted:
+                min_predicted = distance
+                best_predicted = predicted_histogram
+
+        min_actual = None
+        best_actual = None
+        for actual_histogram in self._data[actual]:
+            distance = self._distance(actual_histogram, test_histogram)
+            if min_actual is None or distance < min_actual:
+                min_actual = distance
+                best_actual = actual_histogram
+
+        return (best_predicted, best_actual, min_predicted, min_actual)
+
 
 def read_data(f):
     """Loads training/test set data from a JSON file.
@@ -136,24 +165,24 @@ def run_experiment(training_set, test_set, items_in_bin, distance_name):
         for other_items in other_item_generator(items, item):
             item_list = [item] + other_items
             predicted = classifier.classify(item_histogram, item_list)
-            results.append((item, predicted, other_items))
+            results.append((item_histogram, item, predicted, other_items))
 
     print_accuracy(results, items_in_bin, distance_name)
-    write_results_file(results, items_in_bin, distance_name)
+    write_results_file(results, items_in_bin, distance_name, classifier)
 
 
 def print_accuracy(results, items_in_bin, distance_name):
     """Computes and prints the accuracy results.
 
-    results: The results from run_experiment. A list of (item name, predicted
-      item name, list of other item names).
+    results: The results from run_experiment. A list of (item histogram, item
+      name, predicted item name, list of other item names) tuples.
     items_in_bin: The number of items in the bin for these results.
     distance_name: The distance metric for these results.
     """
     num_correct = 0
     num_correct_by_item = collections.Counter()
     total_by_item = collections.Counter()
-    for item, predicted, other_items in results:
+    for histogram, item, predicted, other_items in results:
         if item == predicted:
             num_correct_by_item[item] += 1
             num_correct += 1
@@ -164,19 +193,30 @@ def print_accuracy(results, items_in_bin, distance_name):
         print('{}\t{}'.format(item, num_correct / total_by_item[item]))
 
 
-def write_results_file(results, items_in_bin, distance_name):
+def write_results_file(results, items_in_bin, distance_name, classifier):
     """Writes the results out to a .tsv file.
 
-    results: The results from run_experiment. A list of (item name, predicted
-      item name, list of other item names).
+    results: The results from run_experiment. A list of (item histogram, item
+      name, predicted item name, list of other item names) tuples.
     items_in_bin: The number of items in the bin for these results.
     distance_name: The distance metric for these results.
+    classifier: The classifier used for these results.
     """
     output_file = open('{}_{}.tsv'.format(items_in_bin, distance_name), 'w')
-    for item, predicted, other_items in results:
+    for histogram, item, predicted, other_items in results:
         correct = 1 if item == predicted else 0
         other_string = '\t'.join(other_items)
-        print('{}\t{}\t{}\t{}'.format(item, predicted, correct, other_string),
+
+        # Show extra columns if the classification was wrong.
+        detail = ''
+        if predicted != item:
+            predicted_histogram, actual_histogram, predicted_distance, actual_distance = classifier.get_details(
+                histogram, predicted, item)
+            detail = '\t' + '\t'.join(
+                [str(predicted_histogram), str(actual_histogram),
+                 str(predicted_distance), str(actual_distance)])
+        print('{}\t{}\t{}\t{}{}'.format(item, predicted, correct, other_string,
+                                        detail),
               file=output_file)
 
 
