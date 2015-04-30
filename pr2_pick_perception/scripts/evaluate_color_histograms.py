@@ -213,7 +213,7 @@ def write_results_file(results, items_in_bin, distance_name, classifier):
             predicted_histogram, actual_histogram, predicted_distance, actual_distance = classifier.get_details(
                 histogram, predicted, item)
             detail = '\t' + '\t'.join(
-                [str(predicted_histogram), str(actual_histogram),
+                [str(histogram), str(predicted_histogram), str(actual_histogram),
                  str(predicted_distance), str(actual_distance)])
         print('{}\t{}\t{}\t{}{}'.format(item, predicted, correct, other_string,
                                         detail),
