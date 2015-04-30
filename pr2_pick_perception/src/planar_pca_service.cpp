@@ -1,6 +1,7 @@
 #include "pr2_pick_perception/planar_pca_service.h"
 
 #include "geometry_msgs/Quaternion.h"
+#include "pcl_conversions/pcl_conversions.h"
 #include "pr2_pick_perception/PlanarPrincipalComponents.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <ros/ros.h>
@@ -14,12 +15,18 @@ PlanarPcaService::PlanarPcaService()
 bool PlanarPcaService::Callback(PlanarPrincipalComponents::Request& request,
                                 PlanarPrincipalComponents::Response& response) {
   const sensor_msgs::PointCloud2& cloud = request.cluster.pointcloud;
+  pcl::PointCloud<pcl::PointXYZRGB> pcl_cloud;
+  pcl::fromROSMsg(cloud, pcl_cloud);
+  pcl::PointCloud<pcl::PointXYZRGB> pcl_cloud_filtered;
+  std::vector<int> index;
+  pcl::removeNaNFromPointCloud(pcl_cloud, pcl_cloud_filtered, index);
 
   geometry_msgs::Quaternion component1;
   geometry_msgs::Quaternion component2;
   double value1;
   double value2;
-  PlanarPrincipalComponents(cloud, &component1, &component2, &value1, &value2);
+  PlanarPrincipalComponents(pcl_cloud_filtered, &component1, &component2,
+                            &value1, &value2);
   response.first_orientation = component1;
   response.second_orientation = component2;
   response.eigenvalue1 = value1;

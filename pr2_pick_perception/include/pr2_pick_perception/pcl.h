@@ -19,7 +19,7 @@ namespace pr2_pick_perception {
 //   component2: The orientation of the smaller component.
 //   value1: The eigenvalue of the principal component.
 //   value2: The eigenvalue of the smaller component.
-void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
+void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                                geometry_msgs::Quaternion* component1,
                                geometry_msgs::Quaternion* component2,
                                double* value1, double* value2);

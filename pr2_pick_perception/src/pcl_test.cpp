@@ -16,7 +16,7 @@ void PrintQuaternion(const geometry_msgs::Quaternion& q) {
 
 // Create points along the X axis and verify that planar PCA works.
 TEST_F(PclTest, PlanarPcaXAxis) {
-  pcl::PointCloud<pcl::PointXYZ> cloud;
+  pcl::PointCloud<pcl::PointXYZRGB> cloud;
   cloud.width = 12;
   cloud.height = 1;
   cloud.points.resize(cloud.width * cloud.height);
@@ -29,14 +29,12 @@ TEST_F(PclTest, PlanarPcaXAxis) {
     cloud.points[2 * i + 1].y = 1;
     cloud.points[2 * i + 1].z = i;
   }
-  sensor_msgs::PointCloud2 ros_cloud;
-  pcl::toROSMsg(cloud, ros_cloud);
 
   geometry_msgs::Quaternion q1;
   geometry_msgs::Quaternion q2;
   double v1;
   double v2;
-  PlanarPrincipalComponents(ros_cloud, &q1, &q2, &v1, &v2);
+  PlanarPrincipalComponents(cloud, &q1, &q2, &v1, &v2);
   EXPECT_GT(v1, v2);  // First component should be largest.
   EXPECT_FLOAT_EQ(0.74468085, v1 / (v1 + v2));  // Verified with scipy.
   // First quaternion should be aligned with x-axis.
