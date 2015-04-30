@@ -53,6 +53,6 @@ if __name__ == "__main__":
     item_db = ItemDatabase(json.load(open(args.filename, 'r')))
 
     # start node and services
-    rospy.Service('item_models/lookup_item', LookupItem, item_db.lookup_item)
+    rospy.Service('item_database/lookup_item', LookupItem, item_db.lookup_item)
 
     rospy.spin()
