@@ -38,7 +38,9 @@
 
   <!-- Point cloud processors. -->
   <node pkg="pr2_pick_perception" type="planar_pca_service_node" name="planar_pca_service_node" respawn="true" />
-  <node pkg="pr2_pick_perception" type="item_descriptor_service_node" name="item_descriptor_service_node" respawn="true" />
+  <node pkg="pr2_pick_perception" type="item_descriptor_service_node" name="item_descriptor_service_node" respawn="true">
+    <param name="color_histogram/num_bins" value="4" />
+  </node>
 
   <!-- Utilities -->
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />
