@@ -225,12 +225,12 @@ class Grasp(smach.State):
             if not grasp.grasp_quality >= self.min_grasp_quality:
                 continue
  
-            fk_request = GetPositionFKRequest()
-            fk_request.header.frame_id = "base_footprint"
-            fk_request.fk_link_names = ["r_wrist_roll_link"]
-            fk_request.robot_state.joint_state.position = grasp.pre_grasp_posture.points[0].positions
-            fk_request.robot_state.joint_state.name = grasp.pre_grasp_posture.joint_names
-            fk_response = self._fk_client(fk_request)
+            # fk_request = GetPositionFKRequest()
+            # fk_request.header.frame_id = "base_footprint"
+            # fk_request.fk_link_names = ["r_wrist_roll_link"]
+            # fk_request.robot_state.joint_state.position = grasp.pre_grasp_posture.points[0].positions
+            # fk_request.robot_state.joint_state.name = grasp.pre_grasp_posture.joint_names
+            # fk_response = self._fk_client(fk_request)
 
             grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 grasp.grasp_pose)
@@ -241,13 +241,33 @@ class Grasp(smach.State):
                 grasp_pose.pose.position.z > (self.shelf_height + 0.24) or \
                 grasp_pose.pose.position.z < self.shelf_height:
                 continue
-            pre_grasp_pose = fk_response.pose_stamped[0]
+
+            transform = TransformStamped()
+            transform.header.frame_id = 'base_footprint'
+            transform.header.stamp = rospy.Time.now()
+            transform.transform.translation = grasp_pose.pose.position
+            transform.transform.rotation = grasp_pose.pose.orientation
+            transform.child_frame_id = 'grasp'
+            self._set_static_tf.wait_for_service()
+            self._set_static_tf(transform)
+            rospy.sleep(0.5)
+
+
+            pre_grasp_pose = PoseStamped()
+            pre_grasp_pose.header.stamp = rospy.Time(0)
+            pre_grasp_pose.header.frame_id = "grasp"
+            pre_grasp_pose.pose.position.x = -0.05
+            pre_grasp_pose.pose.orientation.w = 1
+
+            base_footprint_pre_grasp_pose = self._tf_listener.transformPose('base_footprint',
+                                                                pre_grasp_pose)
+
 
             rospy.loginfo(" ")
             rospy.loginfo(" ")
 
             grasp_dict = {}
-            grasp_dict["pre_grasp"] = pre_grasp_pose
+            grasp_dict["pre_grasp"] = pre_grasp_pose_base_footprint
             grasp_dict["grasp"] = grasp_pose
             if not rotate:
                 grasping_pairs.append(grasp_dict)
@@ -259,19 +279,18 @@ class Grasp(smach.State):
             pre_grasp_pose.header.stamp = rospy.Time(0)
             grasp_pose.header.stamp = rospy.Time(0)
 
-            wrist_frame_pre_grasp = self._tf_listener.transformPose('r_wrist_roll_link',
-                                                                pre_grasp_pose)
-            wrist_frame_grasp = self._tf_listener.transformPose('r_wrist_roll_link',
-                                                                grasp_pose)
-
-
-            pose = wrist_frame_pre_grasp
+            #wrist_frame_pre_grasp = self._tf_listener.transformPose('grasp',
+            #                                                   pre_grasp_pose)
+            #wrist_frame_grasp = self._tf_listener.transformPose('grasp',
+            #                                                    grasp_pose)
             #type(pose) = geometry_msgs.msg.Pose
+
+
             quaternion = (
-                pose.pose.orientation.x,
-                pose.pose.orientation.y,
-                pose.pose.orientation.z,
-                pose.pose.orientation.w)
+                pre_grasp_pose.pose.orientation.x,
+                pre_grasp_pose.pose.orientation.y,
+                pre_grasp_pose.pose.orientation.z,
+                pre_grasp_pose.pose.orientation.w)
             euler = tf.transformations.euler_from_quaternion(quaternion)
             roll = euler[0]
             pitch = euler[1]
@@ -281,15 +300,16 @@ class Grasp(smach.State):
 
             quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
             #type(pose) = geometry_msgs.msg.Pose
-            pose.pose.orientation.x = quaternion[0]
-            pose.pose.orientation.y = quaternion[1]
-            pose.pose.orientation.z = quaternion[2]
-            pose.pose.orientation.w = quaternion[3]
+            pre_grasp_pose.pose.orientation.x = quaternion[0]
+            pre_grasp_pose.pose.orientation.y = quaternion[1]
+            pre_grasp_pose.pose.orientation.z = quaternion[2]
+            pre_grasp_pose.pose.orientation.w = quaternion[3]
 
-            pre_grasp_pose = self._tf_listener.transformPose('base_footprint',
-                                                                pose)
+            base_footprint_pre_grasp_pose = self._tf_listener.transformPose('base_footprint',
+                                                                pre_grasp_pose)
     
-            pose = wrist_frame_grasp
+            pose = PoseStamped()
+            pose.pose.orientation.w = 1
             #type(pose) = geometry_msgs.msg.Pose
             quaternion = (
                 pose.pose.orientation.x,
@@ -313,7 +333,8 @@ class Grasp(smach.State):
             grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 pose)
             grasp_dict = {}
-            grasp_dict["pre_grasp"] = pre_grasp_pose
+            grasp_dict["pre_grasp"] = base_footprint_pre_grasp_pose
+
             grasp_dict["grasp"] = grasp_pose
             if rotate:
                 grasping_pairs.append(grasp_dict)
@@ -685,7 +706,7 @@ class Grasp(smach.State):
             reachable = False
             for (idx, offset) in enumerate(pre_grasp_offsets):
                 # transform pre-grasp into r_wrist_roll_link frame
-                transformed_pose = self._tf_listener.transformPose('r_wrist_roll_link',
+                transformed_pose = self._tf_listener.transformPose('grasp',
                                                             grasp["pre_grasp"])
                 # move it forward in x
                 transformed_pose.pose.position.x = transformed_pose.pose.position.x - offset
@@ -700,9 +721,9 @@ class Grasp(smach.State):
                 #if reachable, set True, set new pre-grasp, break
                 #if ik_response.error_code.val == ik_response.error_code.SUCCESS:
                 #    reachable = True
-                #    pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                #                                            transformed_pose)
-                #    grasp["pre_grasp"] = pose_in_base_footprint
+                pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                        transformed_pose)
+                grasp["pre_grasp"] = pose_in_base_footprint
                 #    grasp["pre_grasp_reachable"] = True
                 #    break 
 
@@ -711,7 +732,7 @@ class Grasp(smach.State):
                                                   0.01, 0.01, 0, 'right_arm',
                                                   True).success
                 grasp["pre_grasp_reachable"] = success_pre_grasp
-                grasp["pre_grasp"] = transformed_pose
+                grasp["pre_grasp"] =  pose_in_base_footprint
                 if success_pre_grasp:
                     rospy.loginfo("Found reachable.")
                     break
@@ -727,7 +748,7 @@ class Grasp(smach.State):
             rospy.loginfo("Grasp not reachable.")
             for (idx, offset) in enumerate(grasp_attempt_offsets):
                 # transform grasp into r_wrist_roll_link frame
-                transformed_pose = self._tf_listener.transformPose('r_wrist_roll_link',
+                transformed_pose = self._tf_listener.transformPose('grasp',
                                                             grasp["grasp"])
 
                 # move it forward in x
@@ -763,6 +784,7 @@ class Grasp(smach.State):
         attempts = 0
         
         for grasp in grasps:
+
             grasp = self.get_grasp_intersections(grasp)
 
             if grasp["points_in_gripper"] >= self.min_points_in_gripper and \
