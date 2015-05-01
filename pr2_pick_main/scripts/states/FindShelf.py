@@ -49,6 +49,7 @@ class FindShelf(smach.State):
         success = False
         shelf_ps = PoseStamped()  # The shelf pose returned by the service.
         shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
+        rospy.sleep(10)
         for try_num in range(100):
             self._localize_object.wait_for_service()
             obj_request = ObjectDetectionRequest()
@@ -65,7 +66,7 @@ class FindShelf(smach.State):
                 rospy.logwarn('[FindShelf]: Shelf service returned no results.')
                 continue
             shelf = response.locations.objects[0]
-            rospy.loginfo('Shelf pose: {}'.format(shelf))
+            rospy.loginfo('Returned shelf pose: {}'.format(shelf))
             shelf_ps.pose = shelf.pose
             shelf_ps.header = shelf.header
             shelf_ps.header.stamp = rospy.Time(0)
@@ -89,7 +90,7 @@ class FindShelf(smach.State):
                 180*roll/math.pi, pitch_degs, yaw_degs))
 
             # Check that the response is reasonable.
-            if shelf_odom.pose.position.z < -0.08 or shelf_odom.pose.position.z > 0.08:
+            if shelf_odom.pose.position.z < -0.30 or shelf_odom.pose.position.z > 0.30:
                 rospy.logwarn('[FindShelf]: Shelf not on the ground.')
                 self._tts.publish('Shelf not on the ground for try {}'.format(try_num))
                 continue
@@ -115,31 +116,9 @@ class FindShelf(smach.State):
             return outcomes.FIND_SHELF_FAILURE
 
         # Project onto the floor.
-        # Adjusting pitch and roll to be 0 seems to make the model worse than just
-        # letting it be slightly tilted.
         shelf_odom.pose.position.z = 0
-        #_, _, yaw = tf.transformations.euler_from_quaternion(
-        #    [shelf_odom.pose.orientation.x, shelf_odom.pose.orientation.y,
-        #     shelf_odom.pose.orientation.z, shelf_odom.pose.orientation.w])
-        #quat = tf.transformations.quaternion_from_euler(0, 0, yaw)
-        #shelf_odom.pose.orientation.x = quat[0]
-        #shelf_odom.pose.orientation.y = quat[1]
-        #shelf_odom.pose.orientation.z = quat[2]
-        #shelf_odom.pose.orientation.w = quat[3]
 
         self._tts.publish('Found shelf.')
-
-        # Possibly hard code the position of the shelf
-        #shelf_base = PoseStamped()
-        #shelf_base.header.frame_id = 'base_footprint'
-        #shelf_base.pose.position.x = 2.27
-        #shelf_base.pose.position.y = -0.61
-        #shelf_base.pose.position.z = 0
-        #shelf_base.pose.orientation.w = 1
-        #shelf_base.pose.orientation.x = 0
-        #shelf_base.pose.orientation.y = 0
-        #shelf_base.pose.orientation.z = 0
-        #shelf_odom = self._tf_listener.transformPose('odom_combined', shelf_base)
 
         # Publish static transform.
         transform = TransformStamped()
