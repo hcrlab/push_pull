@@ -44,9 +44,9 @@ class Grasp(smach.State):
     # approximately half hand thickness
     half_gripper_height = 0.03
     # approximate distance from palm frame origin to palm surface
-    dist_to_palm = 0.13
+    dist_to_palm = 0.11
     # approximate distance from palm frame origin to fingertip with gripper closed
-    dist_to_fingertips = 0.22
+    dist_to_fingertips = 0.20
 
     # approx dist between fingers when gripper open
     gripper_palm_width = 0.08
@@ -324,12 +324,14 @@ class Grasp(smach.State):
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
             rospy.sleep(0.5)
+            self._tf_listener.waitForTransform("object_axis", "bin_" + str(bin_id), rospy.Time(0), rospy.Duration(4.0))
 
             grasp_in_axis_frame = PoseStamped()
             grasp_in_axis_frame.header.stamp = rospy.Time(0)
             grasp_in_axis_frame.header.frame_id = 'object_axis'
             grasp_in_axis_frame.pose.orientation.w = 1
             grasp_in_axis_frame.pose.position.x = -1 * self.dist_to_palm
+            grasp_in_axis_frame.pose.position.y = -0.005
 
             # Transform into base_footprint
 
@@ -889,10 +891,11 @@ class Grasp(smach.State):
                 grasp["finger_collision_points"] <= self.max_finger_collision_points and \
                 grasp["palm_collision_points"] > self.max_palm_collision_points:
 
-                grasp_attempt_delta = 0.01
+                grasp_attempt_delta = 0.005
                 grasp_attempts = 20
                 grasp_attempt_offsets = [grasp_attempt_delta * i 
                                         for i in range(grasp_attempts)]
+                rospy.loginfo("Grasp offsets: " + str(grasp_attempt_offsets))
                 transformed_pose = self._tf_listener.transformPose(
                                                                 'grasp',
                                                                 grasp["grasp"])
