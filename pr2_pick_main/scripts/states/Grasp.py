@@ -20,7 +20,7 @@ import visualization as viz
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers, MoveArmIkRequest
 from pr2_pick_perception.msg import Box
-from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest
+from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest, PlanarPrincipalComponentsRequest
 
 """ Temporary class for moving arm without collision checking until we have service """
 
@@ -38,6 +38,8 @@ class Grasp(smach.State):
 
     # desired distance from palm frame to object centroid
     pre_grasp_x_distance = 0.40
+
+    pre_grasp_offset = 0.10
 
     # approximately half hand thickness
     half_gripper_height = 0.03
@@ -92,6 +94,7 @@ class Grasp(smach.State):
         self._ik_client = rospy.ServiceProxy('compute_ik', GetPositionIK)
         self._get_points_in_box = rospy.ServiceProxy('perception/get_points_in_box', BoxPoints)
         self._lookup_item = services['lookup_item']
+        self._get_planar_pca = services['get_planar_pca']
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -185,10 +188,12 @@ class Grasp(smach.State):
             # fk_request.robot_state.joint_state.position = grasp.pre_grasp_posture.points[0].positions
             # fk_request.robot_state.joint_state.name = grasp.pre_grasp_posture.joint_names
             # fk_response = self._fk_client(fk_request)
+            rospy.loginfo("Pose tranforming... 1")
 
             grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 grasp.grasp_pose)
 
+            rospy.loginfo("Pose tranformed... 1")
 
             # Check if grasp is from behind or too high or low
             if grasp_pose.pose.position.x > object_pose.pose.position.x or \
@@ -210,18 +215,20 @@ class Grasp(smach.State):
             pre_grasp_pose = PoseStamped()
             pre_grasp_pose.header.stamp = rospy.Time(0)
             pre_grasp_pose.header.frame_id = "grasp"
-            pre_grasp_pose.pose.position.x = -0.05
+            pre_grasp_pose.pose.position.x = -1 * self.pre_grasp_offset
             pre_grasp_pose.pose.orientation.w = 1
 
+            rospy.loginfo("Pose tranforming... 2")
             base_footprint_pre_grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 pre_grasp_pose)
 
+            rospy.loginfo("Pose tranformed... 2")
 
             rospy.loginfo(" ")
             rospy.loginfo(" ")
 
             grasp_dict = {}
-            grasp_dict["pre_grasp"] = pre_grasp_pose_base_footprint
+            grasp_dict["pre_grasp"] = base_footprint_pre_grasp_pose
             grasp_dict["grasp"] = grasp_pose
             if not rotate:
                 grasping_pairs.append(grasp_dict)
@@ -259,10 +266,13 @@ class Grasp(smach.State):
             pre_grasp_pose.pose.orientation.z = quaternion[2]
             pre_grasp_pose.pose.orientation.w = quaternion[3]
 
+            rospy.loginfo("Pose tranforming... 3")
             base_footprint_pre_grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 pre_grasp_pose)
     
+            rospy.loginfo("Pose tranformed... 3")
             pose = PoseStamped()
+            pose.header.frame_id = "grasp"
             pose.pose.orientation.w = 1
             #type(pose) = geometry_msgs.msg.Pose
             quaternion = (
@@ -284,8 +294,10 @@ class Grasp(smach.State):
             pose.pose.orientation.z = quaternion[2]
             pose.pose.orientation.w = quaternion[3]
 
+            rospy.loginfo("Pose tranforming... 4")
             grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 pose)
+            rospy.loginfo("Pose tranformed... 4")
             grasp_dict = {}
             grasp_dict["pre_grasp"] = base_footprint_pre_grasp_pose
 
@@ -294,6 +306,60 @@ class Grasp(smach.State):
                 grasping_pairs.append(grasp_dict)
 
         return grasping_pairs
+
+    def get_pca_aligned_grasps(self, object_pose, axes_poses, bin_id):
+        # Put wrist_roll_link at that location and then move it back along x-axis
+
+        grasps = []
+        for axis_pose in axes_poses:
+            transform = TransformStamped()
+            transform.header.frame_id = 'bin_' + str(bin_id)
+            transform.header.stamp = rospy.Time.now()
+            transform.transform.translation = axis_pose.pose.position
+            transform.transform.rotation = axis_pose.pose.orientation
+            transform.child_frame_id = 'object_axis'
+            self._set_static_tf.wait_for_service()
+            self._set_static_tf(transform)
+            rospy.sleep(0.5)
+
+            grasp_in_axis_frame = PoseStamped()
+            grasp_in_axis_frame.header.stamp = rospy.Time(0)
+            grasp_in_axis_frame.header.frame_id = 'object_axis'
+            grasp_in_axis_frame.pose.orientation.w = 1
+            grasp_in_axis_frame.pose.position.x = -1 * self.dist_to_palm
+
+            # Transform into base_footprint
+
+            grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                grasp_in_axis_frame)
+
+            if grasp_in_base_footprint.pose.position.x > object_pose.pose.position.x:
+                # Wrong way along axis
+                grasp_in_axis_frame.pose.position.x = self.dist_to_palm
+                grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                grasp_in_axis_frame)
+                pre_grasp_in_axis_frame = PoseStamped()
+                pre_grasp_in_axis_frame.header.stamp = rospy.Time(0)
+                pre_grasp_in_axis_frame.header.frame_id = "object_axis"
+                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x + self.pre_grasp_offset
+                
+                pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                pre_grasp_in_axis_frame) 
+            else:
+                pre_grasp_in_axis_frame = PoseStamped()
+                pre_grasp_in_axis_frame.header.stamp = rospy.Time(0)
+                pre_grasp_in_axis_frame.header.frame_id = "object_axis"
+                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x - self.pre_grasp_offset
+                
+                pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                pre_grasp_in_axis_frame)
+            grasp_dict = {}
+            grasp_dict["grasp"] = grasp_in_base_footprint
+            grasp_dict["pre_grasp"] = pre_grasp_in_base_footprint
+            grasps.append(grasp_dict)
+
+        return grasps
+
 
     def generate_grasps(self, object_pose, bin_id):
 
@@ -453,13 +519,38 @@ class Grasp(smach.State):
 
         grasps_result = grasp_action_client.get_result()
 
-        mmoveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(
+        moveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(
                                                                                 grasps_result.grasps,
                                                                                 object_pose, False)
 
+        # Removing moveit generated grasps for now
+        moveit_simple_grasps = []
+
+        # Get pca aligned grasps
+        rospy.loginfo("Getting pca grasps")
+        object_pose_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
+                                                                object_pose)
+
+        self._get_planar_pca.wait_for_service()
+        pca_resp = self._get_planar_pca(self._cluster)
+        first_pose = PoseStamped()
+        first_pose.header.stamp = rospy.Time(0)
+        first_pose.header.frame_id = "bin_" + str(bin_id)
+        first_pose.pose.position = object_pose_in_bin_frame.pose.position
+        first_pose.pose.orientation = pca_resp.first_orientation
+
+        second_pose = PoseStamped()
+        second_pose.header.stamp = rospy.Time(0)
+        second_pose.header.frame_id = "bin_" + str(bin_id)
+        second_pose.pose.position = object_pose_in_bin_frame.pose.position
+        second_pose.pose.orientation = pca_resp.second_orientation
+
+        axes_poses = [first_pose, second_pose]
+        pca_grasps = self.get_pca_aligned_grasps(object_pose, axes_poses, bin_id)
+
 
         # Commented out for testing purposes
-        grasping_pairs = grasping_pairs + moveit_simple_grasps
+        grasping_pairs = grasping_pairs + moveit_simple_grasps + pca_grasps
 
         return grasping_pairs
 
@@ -611,6 +702,16 @@ class Grasp(smach.State):
         return grasp
 
     def check_reachable(self, grasp):
+
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = grasp["grasp"].pose.position
+        transform.transform.rotation = grasp["grasp"].pose.orientation
+        transform.child_frame_id = 'grasp'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.5)
 
         # Check pre-grasp IK
         rospy.loginfo("Checking pre-grasp ik")
@@ -824,7 +925,7 @@ class Grasp(smach.State):
 
             self._move_arm_ik.wait_for_service()
 
-            success_grasp = self._move_arm_ik(grasp["grasp"], MoveArmIkRequest().RIGHT_ARM).success
+            #success_grasp = self._move_arm_ik(grasp["grasp"], MoveArmIkRequest().RIGHT_ARM).success
 
             viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
             success_grasp = True
@@ -849,7 +950,7 @@ class Grasp(smach.State):
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, False)
 
-        self._cluster = userdata.clusters[0]
+        self._cluster = userdata.target_cluster
 
         # TODO(sksellio): check whether this works.
         #self._tf_listener.waitForTransform(
