@@ -22,42 +22,66 @@ class SenseBin(smach.State):
         """
         smach.State.__init__(
             self,
-            outcomes=[
-                outcomes.SENSE_BIN_SUCCESS,
-                outcomes.SENSE_BIN_NO_OBJECTS,
-                outcomes.SENSE_BIN_FAILURE
-            ],
-            input_keys=['bin_id', 'debug'],
-            output_keys=['clusters']
-        )
+            outcomes=[outcomes.SENSE_BIN_SUCCESS, outcomes.SENSE_BIN_NO_OBJECTS,
+                      outcomes.SENSE_BIN_FAILURE],
+            input_keys=['bin_id', 'debug', 'current_target',
+                        'current_bin_items'],
+            output_keys=['clusters', 'target_cluster'])
         self._tts = tts
         self._crop_shelf = crop_shelf
         self._markers = markers
         self._tuck_arms = kwargs['tuck_arms']
+        self._get_item_descriptor = kwargs['get_item_descriptor']
+        self._classify_target_item = kwargs['classify_target_item']
 
     def execute(self, userdata):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
+
+        rospy.loginfo('Expecting target: {}, items: {}'.format(
+            userdata.current_target, userdata.current_bin_items))
         self._tuck_arms.wait_for_service()
         self._tuck_arms(tuck_left=True, tuck_right=True)
-        # TODO(jstn): Move the head here.
+        # If the arms are already tucked (usually true), then give some
+        # time for the point cloud to update.
+        rospy.sleep(5)
+
+        # Get clusters
         request = CropShelfRequest(cellID=userdata.bin_id)
+        self._crop_shelf.wait_for_service()
         response = self._crop_shelf(request)
-        userdata.clusters = response.locations.clusters
+        clusters = response.locations.clusters
+        userdata.clusters = clusters
         rospy.loginfo('[SenseBin] Found {} clusters.'.format(
             len(response.locations.clusters)))
-        for i, cluster in enumerate(response.locations.clusters):
+
+        descriptors = []
+        for i, cluster in enumerate(clusters):
+            # Publish visualization
             points = pc2.read_points(cluster.pointcloud,
-                                     field_names=['x', 'y', 'z'],
                                      skip_nans=True)
-            viz.publish_cluster(
-                self._markers,
-                [Point(x=x, y=y, z=z) for x, y, z in points],
-                'bin_{}'.format(userdata.bin_id),
-                'bin_{}_items'.format(userdata.bin_id),
-                i
-            )
-            
+            point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
+            viz.publish_cluster(self._markers, point_list,
+                                'bin_{}'.format(userdata.bin_id),
+                                'bin_{}_items'.format(userdata.bin_id), i)
+
+            # Get descriptor
+            self._get_item_descriptor.wait_for_service()
+            response = self._get_item_descriptor(cluster=cluster)
+            descriptors.append(response.descriptor)
+
+        # Classify which cluster is the target item.
+        self._classify_target_item.wait_for_service()
+        response = self._classify_target_item(
+            descriptors=descriptors,
+            target_item=userdata.current_target,
+            all_items=userdata.current_bin_items)
+        index = response.target_item_index
+        userdata.target_cluster = clusters[index]
+        rospy.loginfo('Classified cluster #{} as target item ({} confidence)'.format(
+            index, response.confidence
+        ))
+
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
         return outcomes.SENSE_BIN_SUCCESS

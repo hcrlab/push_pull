@@ -1,6 +1,8 @@
 """Visualization utilties for the state machine.
 """
 
+from __future__ import division
+
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
@@ -117,7 +119,7 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     marker.header.frame_id = frame_id
     marker.header.stamp = rospy.Time().now()
     marker.ns = namespace
-    marker.id = cluster_id
+    marker.id = 2*cluster_id
     marker.type = Marker.POINTS
     marker.action = Marker.ADD
     marker.color.r = random.random()
@@ -128,7 +130,36 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     marker.scale.x = 0.01
     marker.scale.y = 0.01
     marker.lifetime = rospy.Duration()
+
+    center = [0, 0, 0]
+    for point in points:
+        center[0] += point.x
+        center[1] += point.y
+        center[2] += point.z
+    center[0] /= len(points)
+    center[1] /= len(points)
+    center[2] /= len(points)
+
+    text_marker = Marker()
+    text_marker.header.frame_id = frame_id
+    text_marker.header.stamp = rospy.Time().now()
+    text_marker.ns = namespace
+    text_marker.id = 2*cluster_id + 1
+    text_marker.type = Marker.TEXT_VIEW_FACING
+    text_marker.action = Marker.ADD
+    text_marker.pose.position.x = center[0] - 0.1
+    text_marker.pose.position.y = center[1]
+    text_marker.pose.position.z = center[2]
+    text_marker.color.r = 1
+    text_marker.color.g = 1
+    text_marker.color.b = 1
+    text_marker.color.a = 1
+    text_marker.scale.z = 0.05
+    text_marker.text = '{}'.format(cluster_id)
+    text_marker.lifetime = rospy.Duration()
+
     _publish(publisher, marker)
+    _publish(publisher, text_marker)
 
 def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a, marker_id):
     """Publishes a marker representing a bounding box.

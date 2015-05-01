@@ -12,6 +12,9 @@ namespace pr2_pick_perception {
 // Computes the principal components of the given point cloud on the XY plane.
 // The XY plane is defined by the frame_id given in the cloud.
 //
+// NOTE: this does not mean-shift the data for you! You must supply a
+// mean-shifted point cloud to it.
+//
 // Args:
 //   cloud: The input point cloud to get the principal components of.
 //   component1: The orientation of the principal component in the input cloud's
@@ -19,7 +22,7 @@ namespace pr2_pick_perception {
 //   component2: The orientation of the smaller component.
 //   value1: The eigenvalue of the principal component.
 //   value2: The eigenvalue of the smaller component.
-void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
+void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                                geometry_msgs::Quaternion* component1,
                                geometry_msgs::Quaternion* component2,
                                double* value1, double* value2);

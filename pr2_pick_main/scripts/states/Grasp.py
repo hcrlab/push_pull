@@ -74,7 +74,7 @@ class Grasp(smach.State):
                 outcomes.GRASP_SUCCESS,
                 outcomes.GRASP_FAILURE
             ],
-            input_keys=['bin_id', 'clusters', 'debug']
+            input_keys=['bin_id', 'debug', 'target_cluster', 'current_target']
         )
 
         self._find_centroid = services['find_centroid']
@@ -91,6 +91,7 @@ class Grasp(smach.State):
         self._fk_client = rospy.ServiceProxy('compute_fk', GetPositionFK)
         self._ik_client = rospy.ServiceProxy('compute_ik', GetPositionIK)
         self._get_points_in_box = rospy.ServiceProxy('perception/get_points_in_box', BoxPoints)
+        self._lookup_item = services['lookup_item']
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -141,22 +142,6 @@ class Grasp(smach.State):
                 break
         item_pose.header.frame_id = 'shelf'
         return [item_pose,]
-
-    def locate_one_item(self, clusters):
-        '''
-        Locate one items in this shelf based on clusters from perception data.
-        If there is more than one cluster (unexpected) use the largest one.
-        '''
-        cluster_to_use = None
-        largest_size = 0
-        for cluster in clusters:
-            size = cluster.pointcloud.height * cluster.pointcloud.width
-            if size > largest_size:
-                largest_size = size
-                cluster_to_use = cluster
-
-        response = self._find_centroid(cluster_to_use)
-        return response.centroid
 
     def add_shelf_mesh_to_scene(self, scene):
         q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
@@ -834,7 +819,9 @@ class Grasp(smach.State):
                 rospy.loginfo('Pre-grasp succeeeded')
                 rospy.loginfo('Open Hand')
                 self._set_grippers.wait_for_service()
-                grippers_open = self._set_grippers(False, True)
+ 
+                grippers_open = self._set_grippers(False, True, -1)
+
             self._move_arm_ik.wait_for_service()
 
             success_grasp = self._move_arm_ik(grasp["grasp"], MoveArmIkRequest().RIGHT_ARM).success
@@ -844,8 +831,12 @@ class Grasp(smach.State):
             if success_grasp:
                 rospy.loginfo('Grasp succeeded')
                 rospy.loginfo('Close Hand')
+                self._lookup_item.wait_for_service()
+                lookup_response = self._lookup_item(item=userdata.current_target)
+                item_model = lookup_response.model
                 self._set_grippers.wait_for_service()
-                grippers_open = self._set_grippers(False, False)
+                grippers_open = self._set_grippers(open_left=False, open_right=False,
+                                                   effort=item_model.grasp_effort)
                 break
         if success_grasp:
             return True
@@ -869,11 +860,8 @@ class Grasp(smach.State):
         #)
 
         # Get the pose of the target item in the base frame
-        item_point = self.locate_one_item(userdata.clusters)
-        if not item_point.header.frame_id:
-            rospy.loginfo('Grasping failed. No clusters.')
-            self._tts.publish('No clusters. Giving up.')
-            return outcomes.GRASP_FAILURE
+        response = self._find_centroid(userdata.target_cluster)
+        item_point = response.centroid
         item_pose = PoseStamped(
             header=Header(
                 frame_id=item_point.header.frame_id,
@@ -906,7 +894,6 @@ class Grasp(smach.State):
             rospy.loginfo('No good grasps found')
             self._tts.publish('No grasps found.')
             return outcomes.GRASP_FAILURE
-
 
 
         if not success_grasp:

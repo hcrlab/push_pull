@@ -1,0 +1,6 @@
+pr2_pick_perception/ItemDescriptor[] descriptors
+string target_item
+string[] all_items
+---
+int32 target_item_index
+float64 confidence

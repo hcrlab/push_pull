@@ -14,7 +14,7 @@ class VerifyGrasp(smach.State):
                 outcomes.VERIFY_GRASP_FAILURE,
                 outcomes.VERIFY_GRASP_RETRY
             ],
-            input_keys=['bin_id', 'debug', 'bin_data', 'current_item'],
+            input_keys=['bin_id', 'debug', 'bin_data', 'current_target'],
             output_keys=['output_bin_data']
         )
 
@@ -43,7 +43,7 @@ class VerifyGrasp(smach.State):
             self._get_items.wait_for_service()
             self._set_items.wait_for_service()
             items = self._get_items(bin_id).items
-            items.remove(userdata.current_item)
+            items.remove(userdata.current_target)
             self._set_items(items, bin_id)
             return outcomes.VERIFY_GRASP_SUCCESS
         else:

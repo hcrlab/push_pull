@@ -9,29 +9,26 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <Eigen/Dense>
+#include <tf/transform_listener.h>
 
 #include <algorithm>
 #include <math.h>
 #include <vector>
 
 namespace pr2_pick_perception {
-void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
+void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                                geometry_msgs::Quaternion* component1,
                                geometry_msgs::Quaternion* component2,
                                double* value1, double* value2) {
-  pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
-  pcl::PointCloud<pcl::PointXYZ> pcl_cloud_filtered;
-  pcl::fromROSMsg(cloud, pcl_cloud);
-  std::vector<int> index;
-  pcl::removeNaNFromPointCloud(pcl_cloud, pcl_cloud_filtered, index);
+  pcl::PointCloud<pcl::PointXYZRGB> projected(cloud);
 
   // Project points onto XY plane.
-  for (size_t i = 0; i < pcl_cloud_filtered.points.size(); ++i) {
-    pcl::PointXYZ& point = pcl_cloud_filtered[i];
+  for (size_t i = 0; i < projected.points.size(); ++i) {
+    pcl::PointXYZRGB& point = projected[i];
     point.z = 0;
   }
-  pcl::PCA<pcl::PointXYZ> pca(true);
-  pca.setInputCloud(pcl_cloud_filtered.makeShared());
+  pcl::PCA<pcl::PointXYZRGB> pca(true);
+  pca.setInputCloud(projected.makeShared());
 
   // Return eigenvalues.
   Eigen::Vector3f values = pca.getEigenValues();
@@ -61,9 +58,15 @@ void PlanarPrincipalComponents(const sensor_msgs::PointCloud2& cloud,
 void BoundingBox(const sensor_msgs::PointCloud2& cloud,
                  geometry_msgs::TransformStamped* transform,
                  geometry_msgs::Point* bbox) {
+  // Get principal components
+  // geometry_msgs::Quaternion component1, component2;
+  // double value1, value2;
+  // PlanarPrincipalComponents(cloud, &component1, &component2, &value1,
+  // &value2);
+
   // Build a provisional frame. Axes in the right orientation, but we don't know
-  // the
-  // origin yet.
+  // the origin yet. Use centroid.
+  // tf::Transform provisional_frame = tf::Transform(orientation, origin);
 
   // for each point:
   //   transform it into the provisional frame
