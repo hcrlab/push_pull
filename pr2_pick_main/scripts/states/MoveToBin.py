@@ -63,6 +63,7 @@ class MoveToBin(smach.State):
         self.move_head = move_head
         self.move_torso = move_torso
         self.markers = markers
+        self._tuck_arms = kwargs['tuck_arms']
 
         self.torso_height_by_bin = \
             {letter: self.top_row_torso_height for letter in ('A', 'B', 'C')}
@@ -83,6 +84,8 @@ class MoveToBin(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
+        self._tuck_arms.wait_for_service()
+        tuck_success = self._tuck_arms(True, True)
 
         robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
         if userdata.bin_id > "C":

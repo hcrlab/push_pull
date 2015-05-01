@@ -91,6 +91,8 @@ class StateMachineBuilder(object):
             'markers': rospy.Publisher('pr2_pick_visualization', Marker),
             'set_static_tf': rospy.ServiceProxy('perception/set_static_transform',
                                                 SetStaticTransform),
+            'delete_static_tf': rospy.ServiceProxy('perception/delete_static_transform',
+                                                 DeleteStaticTransform),
             'tf_listener': tf.TransformListener(),
             'get_planar_pca': rospy.ServiceProxy('planar_principal_components',
                                                  PlanarPrincipalComponents),

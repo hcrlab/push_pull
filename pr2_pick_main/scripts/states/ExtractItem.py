@@ -59,7 +59,7 @@ class ExtractItem(smach.State):
         self._pre_grasp_dist = 0.35
         self._grasp_height = 0.02
         self._pre_grasp_height = self._grasp_height + 0.01
-        self._lift_height = 0.03
+        self._lift_height = 0.05
         self._extract_dist = 0.3
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -150,19 +150,13 @@ class ExtractItem(smach.State):
                 rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
-                self._moveit_move_arm.wait_for_service()
+                self._move_arm_ik.wait_for_service()
                 try:
-                    success_lift = self._moveit_move_arm(pose_target, 
-                                                         0.01 + 0.005 * i, 
-                                                         0.015 + 0.005 * i, 0, 
-                                                         "right_arm", False).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
                     rospy.sleep(5.0)
-                    self._moveit_move_arm.wait_for_service()
-                    success_lift = self._moveit_move_arm(pose_target, 
-                                                         0.01 + 0.005 * i, 
-                                                         0.015 + 0.005 * i, 0, 
-                                                         "right_arm", False).success
+                    self._move_arm_ik.wait_for_service()
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
             else:
                 euler_tuple = tf.transformations.euler_from_quaternion(
                                                         [current_pose.pose.orientation.x, 
@@ -196,12 +190,12 @@ class ExtractItem(smach.State):
                 rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
             
-                self._moveit_move_arm.wait_for_service()
+                self._move_arm_ik.wait_for_service()
                 try:
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
                     rospy.sleep(5.0)
-                    self._moveit_move_arm.wait_for_service()
+                    self._move_arm_ik.wait_for_service()
 
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
             if success_lift:
