@@ -49,6 +49,41 @@ TEST_F(PclTest, PlanarPcaXAxis) {
   EXPECT_FLOAT_EQ(0.707107, q2.z);
 }
 
+// Create points along the X axis, but not centered.
+TEST_F(PclTest, PlanarPcaXAxisShifted) {
+  pcl::PointCloud<pcl::PointXYZRGB> cloud;
+  cloud.width = 12;
+  cloud.height = 1;
+  cloud.points.resize(cloud.width * cloud.height);
+  for (unsigned int i = 0; i < 6; ++i) {
+    cloud.points[2 * i].x = i + 10;
+    cloud.points[2 * i].y = 39;
+    cloud.points[2 * i].z = i;
+
+    cloud.points[2 * i + 1].x = i + 10;
+    cloud.points[2 * i + 1].y = 41;
+    cloud.points[2 * i + 1].z = i;
+  }
+
+  geometry_msgs::Quaternion q1;
+  geometry_msgs::Quaternion q2;
+  double v1;
+  double v2;
+  PlanarPrincipalComponents(cloud, &q1, &q2, &v1, &v2);
+  EXPECT_GT(v1, v2);  // First component should be largest.
+  EXPECT_FLOAT_EQ(0.74468085, v1 / (v1 + v2));  // Verified with scipy.
+  // First quaternion should be aligned with x-axis.
+  EXPECT_FLOAT_EQ(1, q1.w);
+  EXPECT_FLOAT_EQ(0, q1.x);
+  EXPECT_FLOAT_EQ(0, q1.y);
+  EXPECT_FLOAT_EQ(0, q1.z);
+  // Second quaternion should be 90 degrees.
+  EXPECT_FLOAT_EQ(0.707107, q2.w);
+  EXPECT_FLOAT_EQ(0, q2.x);
+  EXPECT_FLOAT_EQ(0, q2.y);
+  EXPECT_FLOAT_EQ(0.707107, q2.z);
+}
+
 // Test ComputeColorHistogram with a black point.
 TEST_F(PclTest, ComputeColorHistogramAll0s) {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
