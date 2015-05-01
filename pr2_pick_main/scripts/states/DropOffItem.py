@@ -189,7 +189,7 @@ class DropOffItem(smach.State):
         # open gripper
         rospy.loginfo('Open gripper')
         self._set_grippers.wait_for_service()
-        grippers_open = self._set_grippers(False, True)
+        grippers_open = self._set_grippers(False, True, -1)
 
         # raise arm
         pose_target.pose.position.z = 0.70

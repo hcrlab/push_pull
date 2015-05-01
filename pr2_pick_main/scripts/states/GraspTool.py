@@ -66,7 +66,7 @@ class GraspOrReleaseTool(smach.State):
     def execute(self, userdata):
         self._tuck_arms(False, False)  # untuck arms
         if not self.dropping_off:
-            self._set_grippers(True, False)  # open left gripper
+            self._set_grippers(True, False, -1)  # open left gripper
 
         trajectory = JointTrajectoryGoal(
             trajectory=JointTrajectory(
@@ -96,9 +96,9 @@ class GraspOrReleaseTool(smach.State):
         result = self.arm.wait_for_result()
 
         if self.dropping_off:
-            self._set_grippers(True, False)  # open left gripper
+            self._set_grippers(True, False, -1)  # open left gripper
         else:
-            self._set_grippers(False, False)  # close both grippers
+            self._set_grippers(False, False, -1)  # close both grippers
 
         # TODO (Leah): Untuck left arm in a way that doesn't move right arm
         self._tuck_arms(False, False)  # untuck arms

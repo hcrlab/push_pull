@@ -3,7 +3,7 @@ bool open_left
 bool open_right
 # Force to apply, in Newtons (?). Should only be set when closing the gripper.
 # Set to a negative value to use max force.
-float64 effort = -1 
+float64 effort
 ---
 # Success means whether or not the gripper achieved the open or close position.
 # If it successfully grasps an object, it may return false anyway because it

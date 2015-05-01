@@ -89,7 +89,7 @@ class StartPose(smach.State):
             rospy.loginfo('StartPose: MoveTorso success')
         
         self._set_grippers.wait_for_service()
-        grippers_success = self._set_grippers(False, False)
+        grippers_success = self._set_grippers(False, False, -1)
         if not grippers_success:
             rospy.logerr('StartPose: SetGrippers failed')
             self._tts.publish('Failed to close grippers.')

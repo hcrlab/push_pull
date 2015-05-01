@@ -536,7 +536,8 @@ class StateMachineBuilder(object):
                 },
                 remapping={
                     'bin_id': 'current_bin',
-                    'target_cluster': 'target_cluster'
+                    'target_cluster': 'target_cluster',
+                    'current_target': 'current_target'
                 }
             )
             smach.StateMachine.add(

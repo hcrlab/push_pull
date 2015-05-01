@@ -43,7 +43,7 @@ class Grasp(smach.State):
                 outcomes.GRASP_SUCCESS,
                 outcomes.GRASP_FAILURE
             ],
-            input_keys=['bin_id', 'debug', 'target_cluster']
+            input_keys=['bin_id', 'debug', 'target_cluster', 'current_target']
         )
 
         self._find_centroid = services['find_centroid']
@@ -225,7 +225,7 @@ class Grasp(smach.State):
                 rospy.loginfo('Pre-grasp succeeeded')
                 rospy.loginfo('Open Hand')
                 self._set_grippers.wait_for_service()
-                grippers_open = self._set_grippers(False, True)
+                grippers_open = self._set_grippers(False, True, -1)
                 break
             else:
                 rospy.loginfo('Pre-grasp attempt ' + str(idx) + ' failed')
@@ -288,11 +288,11 @@ class Grasp(smach.State):
                 rospy.loginfo('Grasp succeeded')
                 rospy.loginfo('Close Hand')
                 self._lookup_item.wait_for_service()
-                lookup_response = self._lookup_item(item=userdata.bin_id)
-                grasp_effort = lookup_response.grasp_effort
+                lookup_response = self._lookup_item(item=userdata.current_target)
+                item_model = lookup_response.model
                 self._set_grippers.wait_for_service()
                 grippers_open = self._set_grippers(open_left=False, open_right=False,
-                                                   effort=grasp_effort)
+                                                   effort=item_model.grasp_effort)
 
                 break
             else:
