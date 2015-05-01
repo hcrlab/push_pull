@@ -73,6 +73,16 @@ class TargetItemClassifier(object):
         Returns: the index of the target item in the descriptors list, and a
         confidence score.
         """
+        # Handle edge cases.
+        if len(descriptors) == 0:
+            rospy.logwarn('[ItemClassifier]: no descriptors passed to classify!')
+            return 0, 0
+        if len(all_items) == 0:
+            rospy.logwarn('[ItemClassifier]: empty bin passed to classify!')
+            return 0, 0
+        if len(all_items) == 1:
+            return 0, 1
+
         possible_descriptors = [(i, x) for (i, x) in enumerate(descriptors)]
         possible_labels = [x for x in all_items]
         while True:
@@ -96,7 +106,8 @@ class TargetItemClassifier(object):
                 return target_labels[0]
             # Otherwise, accept the most confident label as true, and narrow
             # down the set of possible labels.
-            possible_labels.remove(most_confident_label)
+            if most_confident_label in possible_labels:
+                possible_labels.remove(most_confident_label)
             possible_descriptors = (
                 possible_descriptors[: i] + possible_descriptors[i + 1:]
             )
