@@ -23,9 +23,20 @@ void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
   pcl::PointCloud<pcl::PointXYZRGB> projected(cloud);
 
   // Project points onto XY plane.
+  float center_x = 0;
+  float center_y = 0;
   for (size_t i = 0; i < projected.points.size(); ++i) {
     pcl::PointXYZRGB& point = projected[i];
     point.z = 0;
+    center_x += point.x;
+    center_y += point.y;
+  }
+  center_x /= projected.points.size();
+  center_y /= projected.points.size();
+  for (size_t i = 0; i < projected.points.size(); ++i) {
+    pcl::PointXYZRGB& point = projected[i];
+    point.x -= center_x;
+    point.y -= center_y;
   }
   pcl::PCA<pcl::PointXYZRGB> pca(true);
   pca.setInputCloud(projected.makeShared());
