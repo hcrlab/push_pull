@@ -54,6 +54,9 @@ class SenseBin(smach.State):
         userdata.clusters = clusters
         rospy.loginfo('[SenseBin] Found {} clusters.'.format(
             len(response.locations.clusters)))
+        if len(clusters) == 0:
+            rospy.logerr('[SenseBin]: No clusters found!')
+            return outcomes.SENSE_BIN_FAILURE
 
         descriptors = []
         for i, cluster in enumerate(clusters):
@@ -61,6 +64,9 @@ class SenseBin(smach.State):
             points = pc2.read_points(cluster.pointcloud,
                                      skip_nans=True)
             point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
+            if len(point_list) == 0:
+                rospy.logwarn('[SenseBin]: Cluster with 0 points returned!')
+                continue
             viz.publish_cluster(self._markers, point_list,
                                 'bin_{}'.format(userdata.bin_id),
                                 'bin_{}_items'.format(userdata.bin_id), i)
@@ -71,6 +77,9 @@ class SenseBin(smach.State):
             descriptors.append(response.descriptor)
 
         # Classify which cluster is the target item.
+        if len(descriptors) == 0:
+            rospy.logerr('[SenseBin]: No descriptors found!')
+            return outcomes.SENSE_BIN_FAILURE
         self._classify_target_item.wait_for_service()
         response = self._classify_target_item(
             descriptors=descriptors,
