@@ -53,6 +53,7 @@ class Grasp(smach.State):
         self._tts = services['tts']
         self._tf_listener = services['tf_listener']
         self._im_server = services['interactive_marker_server']
+        self._lookup_item = services['lookup_item']
 
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
@@ -286,8 +287,12 @@ class Grasp(smach.State):
                 # Close hand
                 rospy.loginfo('Grasp succeeded')
                 rospy.loginfo('Close Hand')
+                self._lookup_item.wait_for_service()
+                lookup_response = self._lookup_item(item=userdata.bin_id)
+                grasp_effort = lookup_response.grasp_effort
                 self._set_grippers.wait_for_service()
-                grippers_open = self._set_grippers(False, False)
+                grippers_open = self._set_grippers(open_left=False, open_right=False,
+                                                   effort=grasp_effort)
 
                 break
             else:
