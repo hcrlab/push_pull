@@ -29,6 +29,9 @@ class StaticTransformManager(object):
         parent_frame = rospy.resolve_name(req.transform.header.frame_id)
         child_frame = rospy.resolve_name(req.transform.child_frame_id)
         self._transforms[(parent_frame, child_frame)] = req.transform
+        # Publish the transform at least once before returning.
+        req.transform.header.stamp = rospy.Time.now()
+        self._broadcaster.sendTransform(req.transform)
         return SetStaticTransformResponse(True)
 
     def delete_transform(self, req):
