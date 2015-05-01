@@ -3,7 +3,7 @@
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": -1,
     "color_histograms": [
       [2528, 919, 707, 267, 1886, 1543, 734, 258, 1704, 600, 1050, 1067]
     ],
@@ -66,7 +66,7 @@
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": 15,
     "color_histograms": [
       [84, 867, 565, 1120, 132, 889, 556, 1059, 504, 552, 533, 1047],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -99,7 +99,7 @@
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": 10,
+    "grasp_effort": 15,
     "color_histograms": [
       [9, 177, 451, 322, 29, 164, 389, 377, 201, 315, 270, 173],
       [8, 453, 857, 151, 13, 259, 1013, 184, 405, 348, 604, 112]
@@ -110,7 +110,7 @@
     "graspable": true,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": 15,
     "color_histograms": [
       [469, 542, 572, 1773, 2201, 389, 209, 557, 2252, 447, 211, 446],
       [816, 1154, 1336, 2808, 2800, 989, 997, 1328, 3212, 1026, 735, 1141]
@@ -132,7 +132,7 @@
     "graspable": true,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 10,
+    "grasp_effort": 15,
     "color_histograms": [
     ],
     "color_histogram_num_bins": 4
