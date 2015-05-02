@@ -4,6 +4,8 @@
 #include "geometry_msgs/TransformStamped.h"
 #include "geometry_msgs/Quaternion.h"
 #include "geometry_msgs/Point.h"
+#include "geometry_msgs/Vector3.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "pcl/point_types.h"
 #include "pcl/filters/filter.h"
@@ -39,6 +41,18 @@ void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
 void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                  geometry_msgs::TransformStamped* transform,
                  geometry_msgs::Point* bbox);
+
+// Computes the minimum bounding box for the given point cloud. This does not
+// necessarily lie on any plane.
+//
+// The bounding box is represented by its centroid and its dimensions. The
+// location of the centroid corresponds to the centroid of the point cloud, and
+// the orientation of the centroid is such that x-axis is along the principal
+// component of the point cloud in the XY plane. The dimensions of the box are
+// given such that dimensions.x is the length of the box in the x direction.
+void MinimumBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                        geometry_msgs::Pose* centroid,
+                        geometry_msgs::Vector3* dimensions);
 
 // Computes the color histogram of the given point cloud with RGB information.
 //
