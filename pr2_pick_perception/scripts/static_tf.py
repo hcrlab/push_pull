@@ -35,7 +35,6 @@ class StaticTransformManager(object):
         return SetStaticTransformResponse(True)
 
     def delete_transform(self, req):
-        req = DeleteStaticTransformRequest()
         parent_frame = rospy.resolve_name(req.parent_frame)
         child_frame = rospy.resolve_name(req.child_frame)
         if (parent_frame, child_frame) in self._transforms:

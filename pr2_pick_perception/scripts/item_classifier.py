@@ -74,13 +74,20 @@ class TargetItemClassifier(object):
         confidence score.
         """
         # Handle edge cases.
+        if len(descriptors) != len(all_items):
+            rospy.logwarn(
+                '[ItemClassifier]: # of descriptors ({}) did not match # of labels ({}).'.format(
+                    len(descriptors), len(all_items)))
         if len(descriptors) == 0:
-            rospy.logwarn('[ItemClassifier]: no descriptors passed to classify!')
+            rospy.logwarn(
+                '[ItemClassifier]: no descriptors passed to classify!')
             return 0, 0
         if len(all_items) == 0:
             rospy.logwarn('[ItemClassifier]: empty bin passed to classify!')
             return 0, 0
         if len(all_items) == 1:
+            return 0, 1
+        if len(descriptors) == 1:
             return 0, 1
 
         possible_descriptors = [(i, x) for (i, x) in enumerate(descriptors)]
@@ -93,28 +100,35 @@ class TargetItemClassifier(object):
             for i, descriptor in possible_descriptors:
                 label, confidence = self._item_classifier.classify(
                     descriptor, possible_labels)
-                rospy.loginfo('Classified cluster {} as {} with confidence {}'.format(
-                    i, label, confidence
-                ))
+                rospy.loginfo(
+                    'Classified cluster {} as {} with confidence {}'.format(
+                        i, label, confidence))
                 if highest_confidence is None or confidence > highest_confidence:
                     highest_confidence = confidence
                     most_confident_label = label
                     most_confident_index = i
                 if label == target_item:
                     target_labels.append((i, confidence))
-            if len(target_labels) == 1:
-                return target_labels[0]
+            if len(target_labels) > 0:
+                sorted_target_labels = sorted(target_labels,
+                                              key=lambda x: x[1],
+                                              reverse=True)
+                return sorted_target_labels[0]
             # Otherwise, accept the most confident label as true, and narrow
             # down the set of possible labels.
             if most_confident_label in possible_labels:
                 possible_labels.remove(most_confident_label)
+            else:
+                rospy.logerr('Most confident label {} not possible! {}'.format(
+                    most_confident_label, possible_labels))
             possible_descriptors = (
-                possible_descriptors[: i] + possible_descriptors[i + 1:]
+                possible_descriptors[:i] + possible_descriptors[i + 1:]
             )
 
     def classify_request(self, request):
-        target_item_index, confidence = self.classify(
-            request.descriptors, request.target_item, request.all_items)
+        target_item_index, confidence = self.classify(request.descriptors,
+                                                      request.target_item,
+                                                      request.all_items)
         response = ClassifyTargetItemResponse()
         response.target_item_index = target_item_index
         response.confidence = confidence
