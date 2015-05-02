@@ -26,13 +26,14 @@ class SenseBin(smach.State):
                       outcomes.SENSE_BIN_FAILURE],
             input_keys=['bin_id', 'debug', 'current_target',
                         'current_bin_items'],
-            output_keys=['clusters', 'target_cluster'])
+            output_keys=['clusters', 'target_cluster', 'item_model'])
         self._tts = tts
         self._crop_shelf = crop_shelf
         self._markers = markers
         self._tuck_arms = kwargs['tuck_arms']
         self._get_item_descriptor = kwargs['get_item_descriptor']
         self._classify_target_item = kwargs['classify_target_item']
+        self._lookup_item = kwargs['lookup_item']
 
     def execute(self, userdata):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
@@ -40,6 +41,11 @@ class SenseBin(smach.State):
 
         rospy.loginfo('Expecting target: {}, items: {}'.format(
             userdata.current_target, userdata.current_bin_items))
+        self._lookup_item.wait_for_service()
+        lookup_response = self._lookup_item(item=userdata.current_target)
+        item_model = lookup_response.model
+        userdata.item_model = item_model
+
         self._tuck_arms.wait_for_service()
         self._tuck_arms(tuck_left=True, tuck_right=True)
         # If the arms are already tucked (usually true), then give some

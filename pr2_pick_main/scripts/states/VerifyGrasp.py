@@ -14,7 +14,7 @@ class VerifyGrasp(smach.State):
                 outcomes.VERIFY_GRASP_FAILURE,
                 outcomes.VERIFY_GRASP_RETRY
             ],
-            input_keys=['bin_id', 'debug', 'bin_data', 'current_target'],
+            input_keys=['bin_id', 'debug', 'bin_data', 'current_target', 'item_model'],
             output_keys=['output_bin_data']
         )
 
@@ -33,7 +33,8 @@ class VerifyGrasp(smach.State):
         # check if grasp succeeded
         gripper_states = self._get_grippers()
         # TODO: get this information from JSON file
-        thin_object = False 
+        thin_object = userdata.item_model.zero_width_grasp
+        rospy.loginfo("Zero width object: " + str(thin_object))
         # for thin objects, a closed gripper is consistent with success
         grasp_succeeded = gripper_states.right_open or thin_object
 
