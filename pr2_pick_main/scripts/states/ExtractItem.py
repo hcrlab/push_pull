@@ -68,34 +68,6 @@ class ExtractItem(smach.State):
         self._tts.publish('Extracting item in bin {}'.format(userdata.bin_id))
 
 
-        # Get fake object locations
-
-        current_dir = os.path.dirname(__file__)
-        relative_path = "../../config/milestone_1_fake_object_locations.json"
-        file_path = os.path.join(current_dir, relative_path)
-
-        with open(file_path) as config_file:
-            object_data = json.load(config_file)
-
-        item_pose = geometry_msgs.msg.PoseStamped()
-
-        for shelf_bin in object_data["work_order"]:
-            if (shelf_bin["bin"] == "bin_" + str(userdata.bin_id) ):
-                item_pose.pose.position.x = shelf_bin["pose"]["x"]
-                item_pose.pose.position.y = shelf_bin["pose"]["y"]
-                item_pose.pose.position.z = shelf_bin["pose"]["z"]
-                break
-        item_pose.header.frame_id = "shelf"
-        self._tf_listener.waitForTransform(
-                'base_footprint',
-                'shelf',
-                rospy.Time(0),
-                self._wait_for_transform_duration
-            )
-
-
-        transformed_item_pose = self._tf_listener.transformPose("base_footprint", item_pose)
-
         shelf_height = self._shelf_heights[userdata.bin_id]
 
         #self._ee_pose.wait_for_service()

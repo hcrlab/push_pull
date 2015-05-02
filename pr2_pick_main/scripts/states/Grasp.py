@@ -40,7 +40,7 @@ class Grasp(smach.State):
     # desired distance from palm frame to object centroid
     pre_grasp_x_distance = 0.40
 
-    pre_grasp_offset = 0.10
+    pre_grasp_offset = 0.13
 
     # approximately half hand thickness
     half_gripper_height = 0.03
@@ -79,7 +79,7 @@ class Grasp(smach.State):
                 outcomes.GRASP_SUCCESS,
                 outcomes.GRASP_FAILURE
             ],
-            input_keys=['bin_id', 'debug', 'target_cluster', 'current_target']
+            input_keys=['bin_id', 'debug', 'target_cluster', 'current_target', 'item_model']
         )
 
         self._find_centroid = services['find_centroid']
@@ -745,8 +745,8 @@ class Grasp(smach.State):
             rospy.loginfo("Evaluated good grasp")
             rospy.loginfo("Grasp quality: " + str(grasp["grasp_quality"]))
             if 'front_grasp' in grasp:
-                rospy.loginfo("Front grasp! Making Quality Max = 10000")
-                grasp["grasp_quality"] = self.max_grasp_quality
+                #rospy.loginfo("Front grasp! Making Quality Max = 10000")
+                grasp["grasp_quality"] = 0.75 * grasp["grasp_quality"]  #self.max_grasp_quality
         else:
             grasp["grasp_quality"] = 0.0
             rospy.loginfo("Evaluated bad grasp")
@@ -977,7 +977,7 @@ class Grasp(smach.State):
 
         return self.sort_grasps(reachable_good_grasps)
 
-    def execute_grasp(self, grasps, current_target):
+    def execute_grasp(self, grasps, item_model):
         success_pre_grasp = False
         success_grasp = False
         rospy.loginfo("Executing grasp")
@@ -1014,9 +1014,6 @@ class Grasp(smach.State):
             if success_grasp:
                 rospy.loginfo('Grasp succeeded')
                 rospy.loginfo('Close Hand')
-                self._lookup_item.wait_for_service()
-                lookup_response = self._lookup_item(item=current_target)
-                item_model = lookup_response.model
                 self._set_grippers.wait_for_service()
                 grippers_open = self._set_grippers(open_left=False, open_right=False,
                                                    effort=item_model.grasp_effort)
@@ -1082,7 +1079,7 @@ class Grasp(smach.State):
         grasping_pairs = self.generate_grasps(base_frame_item_pose, userdata.bin_id)
         filtered_grasps = self.filter_grasps(grasping_pairs)
         if len(filtered_grasps) > 0:
-            success_grasp = self.execute_grasp(filtered_grasps, userdata.current_target)
+            success_grasp = self.execute_grasp(filtered_grasps, userdata.item_model)
         else:
             rospy.loginfo('No good grasps found')
             self._tts.publish('No grasps found.')
