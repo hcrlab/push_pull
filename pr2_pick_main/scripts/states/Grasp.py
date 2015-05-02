@@ -72,6 +72,8 @@ class Grasp(smach.State):
 
     shelf_height = None
 
+    low_object  = False
+
     def __init__(self, **services):
         smach.State.__init__(
             self,
@@ -110,7 +112,7 @@ class Grasp(smach.State):
         self._shelf_height_a_c = 1.56
         self._shelf_height_d_f = 1.33
         self._shelf_height_g_i = 1.10
-        self._shelf_height_j_l = 0.84
+        self._shelf_height_j_l = 0.85
 
         self._shelf_heights = {
             'A': self._shelf_height_a_c,
@@ -312,6 +314,43 @@ class Grasp(smach.State):
 
         return grasping_pairs
 
+
+    def modify_grasp(self, pose, r, p, y, x, y_pos, z):
+        new_pose = PoseStamped()
+        new_pose.header.frame_id = pose.header.frame_id
+        new_pose.header.stamp = rospy.Time(0)
+        new_pose.pose.position.x = pose.pose.position.x + x
+        new_pose.pose.position.y = pose.pose.position.y + y_pos 
+        new_pose.pose.position.z = pose.pose.position.z + z
+        new_pose.pose.orientation.x = pose.pose.orientation.x
+        new_pose.pose.orientation.y = pose.pose.orientation.y
+        new_pose.pose.orientation.z = pose.pose.orientation.z
+        new_pose.pose.orientation.w = pose.pose.orientation.w
+
+        quaternion = (
+            new_pose.pose.orientation.x,
+            new_pose.pose.orientation.y,
+            new_pose.pose.orientation.z,
+            new_pose.pose.orientation.w)
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        roll = euler[0]
+        pitch = euler[1]
+        yaw = euler[2]
+
+        roll = roll + r
+        pitch = pitch + p
+        yaw = yaw + y
+
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        #type(pose) = geometry_msgs.msg.Pose
+        new_pose.pose.orientation.x = quaternion[0]
+        new_pose.pose.orientation.y = quaternion[1]
+        new_pose.pose.orientation.z = quaternion[2]
+        new_pose.pose.orientation.w = quaternion[3]
+
+        return new_pose
+
+
     def get_pca_aligned_grasps(self, object_pose, axes_poses, bin_id):
         # Put wrist_roll_link at that location and then move it back along x-axis
 
@@ -377,7 +416,12 @@ class Grasp(smach.State):
                 pre_grasp_in_base_footprint.pose.orientation.w = quaternion[3]
                 
                 grasp_in_base_footprint.pose.orientation = pre_grasp_in_base_footprint.pose.orientation
+                pre_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                pre_grasp_in_base_footprint)
 
+
+                grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                grasp_in_base_footprint)
 
             else:
                 pre_grasp_in_axis_frame = PoseStamped()
@@ -391,10 +435,46 @@ class Grasp(smach.State):
                 #wrist_roll_transform, temp = self._tf_listener.lookupTransform('base_footprint', 'r_wrist_roll_link', rospy.Time(0))
                 #fingertip_transform, temp = self._tf_listener.lookupTransform('base_footprint', 'r', rospy.Time(0))
 
+            
         
             grasp_dict = {}
             grasp_dict["grasp"] = grasp_in_base_footprint
             grasp_dict["pre_grasp"] = pre_grasp_in_base_footprint
+            grasps.append(grasp_dict)
+
+            # Make rotated version
+            rolled_pre_grasp_in_axis_frame = self.modify_grasp(pre_grasp_in_axis_frame,
+                                                                 -1.57, 0, 0, 0, 0, 0)
+
+            rolled_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                rolled_pre_grasp_in_axis_frame)
+
+            rolled_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame, 
+                                                                 -1.57, 0, 0, 0, 0, 0)
+            rolled_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                rolled_grasp_in_axis_frame)
+
+            grasp_dict = {}
+            grasp_dict["grasp"] = rolled_grasp_in_base_footprint
+            grasp_dict["pre_grasp"] = rolled_pre_grasp_in_base_footprint
+            grasps.append(grasp_dict)
+
+            # Make pitched down
+            #pitched_pre_grasp_in_axis_frame = self.modify_grasp(pre_grasp_in_axis_frame, 
+            #                                                  0, 3.14/6, 0, 0, 0, 0.05)
+
+            #pitched_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+            #                                                    pitched_pre_grasp_in_axis_frame)
+
+            pitched_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame,
+                                                             0, 3.14/6, 0, 0, 0, 0.05)
+            pitched_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                pitched_grasp_in_axis_frame)
+
+            grasp_dict = {}
+            grasp_dict["grasp"] = pitched_grasp_in_base_footprint
+            grasp_dict["pre_grasp"] = pre_grasp_in_base_footprint
+            grasp_dict["pitched_down"] = True 
             grasps.append(grasp_dict)
 
             self._delete_static_tf.wait_for_service()
@@ -431,6 +511,7 @@ class Grasp(smach.State):
             else:
                 pre_grasp_pose_target.pose.position.z = self.shelf_height + \
                     self.half_gripper_height + self.pre_grasp_height
+                self.low_object = True
 
         else:
             rospy.loginfo('In top row')
@@ -458,7 +539,7 @@ class Grasp(smach.State):
                 grasp_pose_target.pose.position.z = object_pose.pose.position.z
             else:
                 grasp_pose_target.pose.position.z = self.shelf_height + self.half_gripper_height
-
+                self.low_object = True
 
         else:
             rospy.loginfo('Grasping from top row')
@@ -746,7 +827,10 @@ class Grasp(smach.State):
             rospy.loginfo("Grasp quality: " + str(grasp["grasp_quality"]))
             if 'front_grasp' in grasp:
                 #rospy.loginfo("Front grasp! Making Quality Max = 10000")
-                grasp["grasp_quality"] = 0.75 * grasp["grasp_quality"]  #self.max_grasp_quality
+                grasp["grasp_quality"] = grasp["grasp_quality"]  #self.max_grasp_quality
+            if ('pitched_down' in grasp) and self.low_object:
+                rospy.loginfo("Low object!")
+                grasp["grasp_quality"] = 1.5 * grasp["grasp_quality"]  
         else:
             grasp["grasp_quality"] = 0.0
             rospy.loginfo("Evaluated bad grasp")
@@ -1033,6 +1117,11 @@ class Grasp(smach.State):
             req.parent_frame = "bin_" + str(bin_id)
             req.child_frame = "object_axis"
             self._delete_static_tf(req)
+            req = DeleteStaticTransformRequest()
+            req.child_frame = "bin_" + str(bin_id)
+            req.parent_frame = "object_axis"
+            self._delete_static_tf(req)
+
 
         self._debug = userdata.debug
         self._tts.publish('Grasping item')
