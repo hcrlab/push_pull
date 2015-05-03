@@ -48,8 +48,9 @@ void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
 // The bounding box is represented by its centroid and its dimensions. The
 // location of the centroid corresponds to the centroid of the point cloud, and
 // the orientation of the centroid is such that x-axis is along the principal
-// component of the point cloud in the XY plane. The dimensions of the box are
-// given such that dimensions.x is the length of the box in the x direction.
+// component of the point cloud, the y-axis is along the second component, etc.
+// The dimensions of the box are given such that dimensions.x is the length of
+// the box in the x direction.
 void MinimumBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                         geometry_msgs::Pose* centroid,
                         geometry_msgs::Vector3* dimensions);

@@ -185,19 +185,19 @@ TEST_F(PclTest, ComputeColorHistogram5Bins) {
   }
 }
 
-// Create points along the X axis.
-TEST_F(PclTest, MinimumBoundingBoxXAxis) {
+// Create points going up diagonally in the XZ plane.
+TEST_F(PclTest, MinimumBoundingBoxDiagonal) {
   pcl::PointCloud<pcl::PointXYZRGB> cloud;
   cloud.width = 12;
   cloud.height = 1;
   cloud.points.resize(cloud.width * cloud.height);
   for (unsigned int i = 0; i < 6; ++i) {
     cloud.points[2 * i].x = i;
-    cloud.points[2 * i].y = -1;
+    cloud.points[2 * i].y = 59;
     cloud.points[2 * i].z = i;
 
     cloud.points[2 * i + 1].x = i;
-    cloud.points[2 * i + 1].y = 1;
+    cloud.points[2 * i + 1].y = 61;
     cloud.points[2 * i + 1].z = i;
   }
 
@@ -205,21 +205,62 @@ TEST_F(PclTest, MinimumBoundingBoxXAxis) {
   geometry_msgs::Vector3 dimensions;
   MinimumBoundingBox(cloud, &centroid, &dimensions);
 
-  // Centroid is at 3.5, 0, 3.5.
+  // Centroid is at 3.5, 60, 3.5.
   // Orientation is pi, pi/4, pi (roll, pitch, yaw).
   // Translation to/from quaternion verified using tf.transformations.
   // Dimensions are sqrt(50) in the principal component, 2 in the 2nd, and 0 for
   // the last.
   EXPECT_FLOAT_EQ(2.5, centroid.position.x);
-  EXPECT_FLOAT_EQ(0, centroid.position.y);
+  EXPECT_FLOAT_EQ(60, centroid.position.y);
   EXPECT_FLOAT_EQ(2.5, centroid.position.z);
   EXPECT_FLOAT_EQ(0, centroid.orientation.x);
-  EXPECT_FLOAT_EQ(0.92388, centroid.orientation.y);
+  EXPECT_FLOAT_EQ(0.92387956, centroid.orientation.y);
   EXPECT_FLOAT_EQ(0, centroid.orientation.z);
   EXPECT_FLOAT_EQ(0.3826834, centroid.orientation.w);
   EXPECT_FLOAT_EQ(7.07106781187, dimensions.x);
   EXPECT_FLOAT_EQ(2, dimensions.y);
   EXPECT_FLOAT_EQ(0, dimensions.z);
+}
+
+// Create a 2x4 box that is longest in the x direction and 2nd longest in the z
+// direction..
+TEST_F(PclTest, MinimumBoundingBoxRotateAxis) {
+  pcl::PointCloud<pcl::PointXYZRGB> cloud;
+  cloud.width = 8;
+  cloud.height = 1;
+  cloud.points.resize(cloud.width * cloud.height);
+  double points[8][3] = {{0, 1, 0},
+                         {0, 1, 4},
+                         {0, -1, 0},
+                         {0, -1, 4},
+                         {12, 1, 0},
+                         {12, 1, 4},
+                         {12, -1, 0},
+                         {12, -1, 4}};
+  for (unsigned int i = 0; i < 8; ++i) {
+    cloud.points[i].x = points[i][0];
+    cloud.points[i].y = points[i][1];
+    cloud.points[i].z = points[i][2];
+  }
+
+  geometry_msgs::Pose centroid;
+  geometry_msgs::Vector3 dimensions;
+  MinimumBoundingBox(cloud, &centroid, &dimensions);
+
+  // Centroid is at 6, 0, 2
+  // Orientation is pi/2, 0, 0 (roll, pitch, yaw).
+  // Translation to/from quaternion verified using tf.transformations.
+  // Dimensions are 12, 4, and 2.
+  EXPECT_FLOAT_EQ(6, centroid.position.x);
+  EXPECT_FLOAT_EQ(0, centroid.position.y);
+  EXPECT_FLOAT_EQ(2, centroid.position.z);
+  EXPECT_FLOAT_EQ(0.70710678, centroid.orientation.x);
+  EXPECT_FLOAT_EQ(0, centroid.orientation.y);
+  EXPECT_FLOAT_EQ(0, centroid.orientation.z);
+  EXPECT_FLOAT_EQ(0.70710678, centroid.orientation.w);
+  EXPECT_FLOAT_EQ(12, dimensions.x);
+  EXPECT_FLOAT_EQ(4, dimensions.y);
+  EXPECT_FLOAT_EQ(2, dimensions.z);
 }
 }  // namespace pr2_pick_perception
 

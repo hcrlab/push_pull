@@ -108,12 +108,10 @@ void MinimumBoundingBox(const PointCloud<PointXYZRGB>& cloud,
 
   // Get eigenvectors.
   Eigen::Matrix3f eigenvectors = pca.getEigenVectors();
-  Eigen::Vector3f eigenvalues = pca.getEigenValues();
+  eigenvectors.col(2) = eigenvectors.col(0).cross(eigenvectors.col(1));
+  Eigen::Quaternionf q1(eigenvectors);
 
-  // Get rotation from x-axis to principal component.
-  Eigen::Quaternion<float> q1;
-  q1.setFromTwoVectors(Eigen::Vector3f::UnitX(), eigenvectors.col(0));
-
+  // Output centroid.
   centroid->position.x = centroid_vector(0);
   centroid->position.y = centroid_vector(1);
   centroid->position.z = centroid_vector(2);
@@ -122,10 +120,10 @@ void MinimumBoundingBox(const PointCloud<PointXYZRGB>& cloud,
   centroid->orientation.y = q1.y();
   centroid->orientation.z = q1.z();
 
+  // Find min/max x, y, and z.
   PointCloud<PointXYZRGB>::Ptr eigen_projected(new PointCloud<PointXYZRGB>());
   pca.project(cloud, *eigen_projected);
 
-  // Find min/max x, y, and z.
   pcl::PointXYZRGB eigen_min;
   pcl::PointXYZRGB eigen_max;
   pcl::getMinMax3D(*eigen_projected, eigen_min, eigen_max);
@@ -133,6 +131,7 @@ void MinimumBoundingBox(const PointCloud<PointXYZRGB>& cloud,
   double y_length = eigen_max.y - eigen_min.y;
   double z_length = eigen_max.z - eigen_min.z;
 
+  // Output dimensions.
   dimensions->x = x_length;
   dimensions->y = y_length;
   dimensions->z = z_length;
