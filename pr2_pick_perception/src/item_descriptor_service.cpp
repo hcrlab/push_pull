@@ -47,6 +47,7 @@ bool ItemDescriptorService::Callback(GetItemDescriptor::Request& request,
   MinimumBoundingBox(pcl_cloud, &min_bbox_centroid, &min_bbox_dimensions);
 
   geometry_msgs::PoseStamped min_bbox_centroid_stamped;
+  min_bbox_centroid_stamped.header.frame_id = request.cluster.header.frame_id;
   min_bbox_centroid_stamped.pose = min_bbox_centroid;
 
   ItemDescriptor descriptor;
