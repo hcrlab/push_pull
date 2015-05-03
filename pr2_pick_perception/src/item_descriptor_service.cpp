@@ -1,5 +1,8 @@
 #include "pr2_pick_perception/item_descriptor_service.h"
 
+#include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/Pose.h"
+#include "geometry_msgs/Vector3.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "pcl_conversions/pcl_conversions.h"
@@ -38,9 +41,18 @@ bool ItemDescriptorService::Callback(GetItemDescriptor::Request& request,
   histogram_msg.num_bins = num_bins_;
   histogram_msg.histogram = histogram;
 
+  // Get oriented bounding box.
+  geometry_msgs::Pose min_bbox_centroid;
+  geometry_msgs::Vector3 min_bbox_dimensions;
+  MinimumBoundingBox(pcl_cloud, &min_bbox_centroid, &min_bbox_dimensions);
+
+  geometry_msgs::PoseStamped min_bbox_centroid_stamped;
+  min_bbox_centroid_stamped.pose = min_bbox_centroid;
+
   ItemDescriptor descriptor;
-  // TODO(lperlmu): Fill out bounding box.
   descriptor.histogram = histogram_msg;
+  descriptor.min_bbox_centroid = min_bbox_centroid_stamped;
+  descriptor.min_bbox_dimensions = min_bbox_dimensions;
   response.descriptor = descriptor;
   return true;
 }
