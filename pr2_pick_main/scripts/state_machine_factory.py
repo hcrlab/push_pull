@@ -318,7 +318,21 @@ class StateMachineBuilder(object):
         )
 
     def build_sm_for_push_item(self, **services):
-        pass
+        sm = self.build_interactive_bin_choosing_sm(
+            states.PushItem.name,
+            outcomes.CHALLENGE_FAILURE,
+            **services,
+        )
+        with sm:
+            smach.StateMachine.add(
+                states.PushItem.name,
+                states.PushItem(**services),
+                transitions={
+                    outcomes.PUSH_ITEM_SUCCESS: states.MoveToBin.name,
+                    outcomes.PUSH_ITEM_FAILURE: states.MoveToBin.name,
+                },
+            )
+        return sm
 
     def build_sm_for_drop_off_item(self, **services):
         sm = smach.StateMachine(outcomes=[
