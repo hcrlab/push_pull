@@ -106,6 +106,34 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
   return cell_pc;
 }
 
+
+CropShelf::visualizeShelf(   
+    float width, float height, float depth, int cellID) {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = bin_frame_id_;
+    marker.header.stamp = ros::Time();
+    marker.ns = "shelf_visualization";
+    marker.id = bin_frame_id_[bin_frame_id_.length() - 1]; // I can't remember if this is good syntax
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = 0;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = ((height - top_crop_offset_) - (bottom_crop_offset_)) / 2;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = (depth - depth_far_crop_offset_) - (depth_close_crop_offset_);
+    marker.scale.y = (width / 2 - left_crop_offset_) - (-width / 2 + right_crop_offset_);
+    marker.scale.z = (height - top_crop_offset_) - (bottom_crop_offset_);
+    marker.color.a = 0.5;
+    marker.color.r = 0.9;
+    marker.color.g = 0.0;
+    marker.color.b = 0.1;
+    marker.lifetime = 10;
+    vis_pub.publish( marker );
+}
+
 bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
                              pr2_pick_perception::CropShelfResponse &response) {
   pr2_pick_perception::Cell cell;
@@ -140,6 +168,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
 
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("B" == request.cellID) {
       bin_frame_id_ = "bin_B";
@@ -160,6 +189,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width2_, cell_height1_, depth_cell_, 1);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("C" == request.cellID) {
       bin_frame_id_ = "bin_C";
@@ -180,6 +210,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 2);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("D" == request.cellID) {
       bin_frame_id_ = "bin_D";
@@ -200,6 +231,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 3);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("E" == request.cellID) {
       bin_frame_id_ = "bin_E";
@@ -220,6 +252,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width2_, cell_height2_, depth_cell_, 4);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("F" == request.cellID) {
       bin_frame_id_ = "bin_F";
@@ -240,6 +273,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 5);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("G" == request.cellID) {
       bin_frame_id_ = "bin_G";
@@ -260,6 +294,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 6);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("H" == request.cellID) {
       bin_frame_id_ = "bin_H";
@@ -280,6 +315,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width2_, cell_height2_, depth_cell_, 7);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("I" == request.cellID) {
       bin_frame_id_ = "bin_I";
@@ -300,6 +336,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 8);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("J" == request.cellID) {
       bin_frame_id_ = "bin_J";
@@ -320,6 +357,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 9);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("K" == request.cellID) {
       bin_frame_id_ = "bin_K";
@@ -340,6 +378,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_height1_, cell_height1_, depth_cell_, 10);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     if ("L" == request.cellID) {
       bin_frame_id_ = "bin_L";
@@ -360,6 +399,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_height1_, cell_height1_, depth_cell_, 11);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
     }
     // compute Euclidean clusters
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
