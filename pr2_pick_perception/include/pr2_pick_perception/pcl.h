@@ -38,9 +38,9 @@ void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
  * @param bbox (out) corner of the item's axis-aligned bounding box opposite
  *                   the item's origin
  */
-void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-                 geometry_msgs::TransformStamped* transform,
-                 geometry_msgs::Point* bbox);
+void GetBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                    geometry_msgs::TransformStamped* transform,
+                    geometry_msgs::Point* bbox);
 
 // Computes the bounding box for the given point cloud on the XY plane.
 //
@@ -53,9 +53,9 @@ void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
 //     component, and the z direction points up.
 //   dimensions: A vector containing the length of the cloud in the x, y, and z
 //   directions.
-void PlanarBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-                       geometry_msgs::Pose* midpoint,
-                       geometry_msgs::Vector3* dimensions);
+void GetPlanarBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                          geometry_msgs::Pose* midpoint,
+                          geometry_msgs::Vector3* dimensions);
 
 // Computes the color histogram of the given point cloud with RGB information.
 //

@@ -71,9 +71,9 @@ void PlanarPrincipalComponents(const PointCloud<PointXYZRGB>& cloud,
   component2->z = q2.z();
 }
 
-void BoundingBox(const sensor_msgs::PointCloud2& cloud,
-                 geometry_msgs::TransformStamped* transform,
-                 geometry_msgs::Point* bbox) {
+void GetBoundingBox(const sensor_msgs::PointCloud2& cloud,
+                    geometry_msgs::TransformStamped* transform,
+                    geometry_msgs::Point* bbox) {
   // Get principal components
   // geometry_msgs::Quaternion component1, component2;
   // double value1, value2;
@@ -96,9 +96,9 @@ void BoundingBox(const sensor_msgs::PointCloud2& cloud,
   // largest - smallest x, y, z
 }
 
-void PlanarBoundingBox(const PointCloud<PointXYZRGB>& cloud,
-                       geometry_msgs::Pose* midpoint,
-                       geometry_msgs::Vector3* dimensions) {
+void GetPlanarBoundingBox(const PointCloud<PointXYZRGB>& cloud,
+                          geometry_msgs::Pose* midpoint,
+                          geometry_msgs::Vector3* dimensions) {
   // Project points onto XY plane.
   PointCloud<PointXYZRGB>::Ptr projected(new PointCloud<PointXYZRGB>(cloud));
   for (size_t i = 0; i < projected->points.size(); ++i) {
