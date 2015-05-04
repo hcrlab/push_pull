@@ -10,3 +10,8 @@ geometry_msgs/Point bbox
 
 # A color histogram.
 pr2_pick_perception/ColorHistogram histogram
+
+# Planar bounding box.
+# The x direction points in the direction of the principal component.
+# The z direction points up.
+pr2_pick_perception/BoundingBox planar_bounding_box

@@ -4,6 +4,8 @@
 #include "geometry_msgs/TransformStamped.h"
 #include "geometry_msgs/Quaternion.h"
 #include "geometry_msgs/Point.h"
+#include "geometry_msgs/Vector3.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "pcl/point_types.h"
 #include "pcl/filters/filter.h"
@@ -36,9 +38,24 @@ void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
  * @param bbox (out) corner of the item's axis-aligned bounding box opposite
  *                   the item's origin
  */
-void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-                 geometry_msgs::TransformStamped* transform,
-                 geometry_msgs::Point* bbox);
+void GetBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                    geometry_msgs::TransformStamped* transform,
+                    geometry_msgs::Point* bbox);
+
+// Computes the bounding box for the given point cloud on the XY plane.
+//
+// Args:
+//   cloud: The input cloud. Assumed to not have any NaN points.
+//   midpoint: The geometric center of the cloud, i.e., the midpoint between the
+//     minimum and maximum points in each of the x, y, and z directions. The
+//     orientation is such that the x direction points along the principal
+//     component in the XY plane, the y direction points along the smaller
+//     component, and the z direction points up.
+//   dimensions: A vector containing the length of the cloud in the x, y, and z
+//   directions.
+void GetPlanarBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                          geometry_msgs::Pose* midpoint,
+                          geometry_msgs::Vector3* dimensions);
 
 // Computes the color histogram of the given point cloud with RGB information.
 //

@@ -2,6 +2,8 @@
 
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/TransformStamped.h"
+#include "pcl/common/centroid.h"
+#include "pcl/common/common.h"
 #include "pcl/common/pca.h"
 #include "pcl/filters/filter.h"
 #include "pcl/point_types.h"
@@ -15,31 +17,34 @@
 #include <math.h>
 #include <vector>
 
+using geometry_msgs::PoseStamped;
+using geometry_msgs::Quaternion;
+using geometry_msgs::Vector3;
+using pcl::PointCloud;
+using pcl::PointXYZRGB;
+
 namespace pr2_pick_perception {
-void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+void PlanarPrincipalComponents(const PointCloud<PointXYZRGB>& cloud,
                                geometry_msgs::Quaternion* component1,
                                geometry_msgs::Quaternion* component2,
                                double* value1, double* value2) {
-  pcl::PointCloud<pcl::PointXYZRGB> projected(cloud);
+  PointCloud<PointXYZRGB>::Ptr projected(new PointCloud<PointXYZRGB>(cloud));
+
+  Eigen::Vector4d centroid;
+  pcl::compute3DCentroid(cloud, centroid);
 
   // Project points onto XY plane.
-  float center_x = 0;
-  float center_y = 0;
-  for (size_t i = 0; i < projected.points.size(); ++i) {
-    pcl::PointXYZRGB& point = projected[i];
+  for (size_t i = 0; i < projected->points.size(); ++i) {
+    PointXYZRGB& point = projected->at(i);
     point.z = 0;
-    center_x += point.x;
-    center_y += point.y;
   }
-  center_x /= projected.points.size();
-  center_y /= projected.points.size();
-  for (size_t i = 0; i < projected.points.size(); ++i) {
-    pcl::PointXYZRGB& point = projected[i];
-    point.x -= center_x;
-    point.y -= center_y;
+  for (size_t i = 0; i < projected->points.size(); ++i) {
+    PointXYZRGB& point = projected->at(i);
+    point.x -= centroid(0);
+    point.y -= centroid(1);
   }
-  pcl::PCA<pcl::PointXYZRGB> pca(true);
-  pca.setInputCloud(projected.makeShared());
+  pcl::PCA<PointXYZRGB> pca(true);
+  pca.setInputCloud(projected);
 
   // Return eigenvalues.
   Eigen::Vector3f values = pca.getEigenValues();
@@ -66,9 +71,9 @@ void PlanarPrincipalComponents(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
   component2->z = q2.z();
 }
 
-void BoundingBox(const sensor_msgs::PointCloud2& cloud,
-                 geometry_msgs::TransformStamped* transform,
-                 geometry_msgs::Point* bbox) {
+void GetBoundingBox(const sensor_msgs::PointCloud2& cloud,
+                    geometry_msgs::TransformStamped* transform,
+                    geometry_msgs::Point* bbox) {
   // Get principal components
   // geometry_msgs::Quaternion component1, component2;
   // double value1, value2;
@@ -91,7 +96,73 @@ void BoundingBox(const sensor_msgs::PointCloud2& cloud,
   // largest - smallest x, y, z
 }
 
-void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+void GetPlanarBoundingBox(const PointCloud<PointXYZRGB>& cloud,
+                          geometry_msgs::Pose* midpoint,
+                          geometry_msgs::Vector3* dimensions) {
+  // Project points onto XY plane.
+  PointCloud<PointXYZRGB>::Ptr projected(new PointCloud<PointXYZRGB>(cloud));
+  for (size_t i = 0; i < projected->points.size(); ++i) {
+    PointXYZRGB& point = projected->at(i);
+    point.z = 0;
+  }
+
+  // Compute PCA.
+  pcl::PCA<PointXYZRGB> pca(true);
+  pca.setInputCloud(projected);
+
+  // Get eigenvectors.
+  Eigen::Matrix3f eigenvectors = pca.getEigenVectors();
+  // Because we projected points on the XY plane, we add in the Z vector as the
+  // 3rd eigenvector.
+  eigenvectors.col(2) = eigenvectors.col(0).cross(eigenvectors.col(1));
+  Eigen::Quaternionf q1(eigenvectors);
+
+  // Find min/max x and y, based on the points in eigenspace.
+  PointCloud<PointXYZRGB>::Ptr eigen_projected(
+      new PointCloud<PointXYZRGB>(cloud));
+  pca.project(cloud, *eigen_projected);
+
+  pcl::PointXYZRGB eigen_min;
+  pcl::PointXYZRGB eigen_max;
+  pcl::getMinMax3D(*eigen_projected, eigen_min, eigen_max);
+  double x_length = eigen_max.x - eigen_min.x;
+  double y_length = eigen_max.y - eigen_min.y;
+
+  // The points in eigenspace all have z values of 0. Get min/max z from the
+  // original point cloud data.
+  pcl::PointXYZRGB cloud_min;
+  pcl::PointXYZRGB cloud_max;
+  pcl::getMinMax3D(cloud, cloud_min, cloud_max);
+  double z_length = cloud_max.z - cloud_min.z;
+
+  // Compute midpoint, defined as the midpoint between the minimum and maximum
+  // points, in x, y, and z directions. The centroid is an average that depends
+  // on the density of points, which doesn't give you the geometric center of
+  // the point cloud.
+  PointXYZRGB eigen_center;
+  eigen_center.x = eigen_min.x + x_length / 2;
+  eigen_center.y = eigen_min.y + y_length / 2;
+  eigen_center.z = 0;
+  PointXYZRGB center;
+  pca.reconstruct(eigen_center, center);
+  center.z = z_length / 2 + cloud_min.z;
+
+  // Output midpoint.
+  midpoint->position.x = center.x;
+  midpoint->position.y = center.y;
+  midpoint->position.z = center.z;
+  midpoint->orientation.w = q1.w();
+  midpoint->orientation.x = q1.x();
+  midpoint->orientation.y = q1.y();
+  midpoint->orientation.z = q1.z();
+
+  // Output dimensions.
+  dimensions->x = x_length;
+  dimensions->y = y_length;
+  dimensions->z = z_length;
+}
+
+void ComputeColorHistogram(const PointCloud<PointXYZRGB>& cloud,
                            const int num_bins, std::vector<int>* histogram) {
   double bin_size = 255.0 / num_bins;
   histogram->clear();
@@ -101,7 +172,7 @@ void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
   }
 
   for (size_t i = 0; i < cloud.size(); ++i) {
-    const pcl::PointXYZRGB& point = cloud[i];
+    const PointXYZRGB& point = cloud[i];
     uint8_t red = point.r;
     uint8_t green = point.g;
     uint8_t blue = point.b;

@@ -184,6 +184,26 @@ TEST_F(PclTest, ComputeColorHistogram5Bins) {
     }
   }
 }
+
+// Test that PlanarBoundingBox returns the midpoint, not the centroid.
+TEST_F(PclTest, PlanarBoundingBoxMidpoint) {
+  pcl::PointCloud<pcl::PointXYZRGB> cloud;
+  cloud.width = 4;
+  cloud.height = 1;
+  cloud.points.resize(cloud.width * cloud.height);
+  double points[4][3] = {{1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {5, 0, 0}};
+  for (unsigned int i = 0; i < 4; ++i) {
+    cloud.points[i].x = points[i][0];
+    cloud.points[i].y = points[i][1];
+    cloud.points[i].z = points[i][2];
+  }
+
+  geometry_msgs::Pose midpoint;
+  geometry_msgs::Vector3 dimensions;
+  GetPlanarBoundingBox(cloud, &midpoint, &dimensions);
+  EXPECT_FLOAT_EQ(3, midpoint.position.x);
+  EXPECT_FLOAT_EQ(4, dimensions.x);
+}
 }  // namespace pr2_pick_perception
 
 int main(int argc, char** argv) {
