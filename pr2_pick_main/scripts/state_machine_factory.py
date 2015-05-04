@@ -26,6 +26,7 @@ class StateMachineBuilder(object):
     TEST_DROP_OFF_ITEM = 'test-drop-off-item'
     TEST_GRASP_TOOL = 'test-grasp-tool'
     TEST_MOVE_TO_BIN = 'test-move-to-bin'
+    TEST_PUSH_ITEM = 'test-push-item'
     CAPTURE_ITEM_DESCRIPTOR = 'capture-item-descriptor'
     DEFAULT = 'default'
 
@@ -58,6 +59,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_grasp_tool
         elif self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
             build = self.build_sm_for_move_to_bin
+        elif self.state_machine_identifier == StateMachineBuilder.PUSH_ITEM:
+            build = self.build_sm_for_push_item
         elif self.state_machine_identifier == StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR:
             build = self.build_sm_for_item_descriptor_capture
         else:
@@ -246,7 +249,13 @@ class StateMachineBuilder(object):
         userdata.next_bin = bin_letter
         return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
-    def build_sm_for_move_to_bin(self, **services):
+    def build_interactive_bin_choosing_sm(self, success_transition, failure_transition, **services):
+        '''
+        Build state machine stub that starts by asking the user which bin to go to
+        and going to that bin.
+        @param success_transition - transition target for MoveToBin success
+        @param failure_transition - transition target for MoveToBin failure
+        '''
         sm = smach.StateMachine(outcomes=[
             outcomes.CHALLENGE_SUCCESS,
             outcomes.CHALLENGE_FAILURE
@@ -291,14 +300,24 @@ class StateMachineBuilder(object):
                 states.MoveToBin.name,
                 states.MoveToBin(**services),
                 transitions={
-                    outcomes.MOVE_TO_BIN_SUCCESS: states.UpdatePlan.name,
-                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.MOVE_TO_BIN_SUCCESS: success_transition,
+                    outcomes.MOVE_TO_BIN_FAILURE: failure_transition,
                 },
                 remapping={
                     'bin_id': 'current_bin'
                 }
             )
         return sm
+
+    def build_sm_for_move_to_bin(self, **services):
+        return self.build_interactive_bin_choosing_sm(
+            states.UpdatePlan.name,
+            outcomes.CHALLENGE_FAILURE,
+            **services,
+        )
+
+    def build_sm_for_push_item(self, **services):
+        pass
 
     def build_sm_for_drop_off_item(self, **services):
         sm = smach.StateMachine(outcomes=[
