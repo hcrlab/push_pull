@@ -1,6 +1,7 @@
 from pr2_pick_perception.srv import CropShelfRequest
 from pr2_pick_perception.srv import CropShelfResponse
 from geometry_msgs.msg import Point
+from geometry_msgs.msg import PointStamped
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 import outcomes
@@ -32,6 +33,7 @@ class CaptureItemDescriptor(smach.State):
         rospy.loginfo(
             'Capturing item descriptor in bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
+        rospy.sleep(5)
         self._tuck_arms.wait_for_service()
         self._tuck_arms(tuck_left=True, tuck_right=True)
         request = CropShelfRequest(cellID=userdata.bin_id)
@@ -54,6 +56,19 @@ class CaptureItemDescriptor(smach.State):
 
         rospy.loginfo('Color histogram ({} bins):\n{}'.format(
             descriptor.histogram.num_bins, descriptor.histogram.histogram))
+
+        bbox_centroid = descriptor.min_bbox_centroid
+        bbox_dimensions = descriptor.min_bbox_dimensions
+        rospy.loginfo('Bounding box centroid: {}'.format(bbox_centroid))
+        rospy.loginfo('Bounding box dimensions: {}'.format(bbox_dimensions))
+        viz.publish_bounding_box(
+            self._markers, bbox_centroid, bbox_dimensions.x, bbox_dimensions.y,
+            bbox_dimensions.z, 0.33, 0.69, 0.31, 0.25, 1234)
+
+        centroid_ps = PointStamped()
+        centroid_ps.header.frame_id = bbox_centroid.header.frame_id
+        centroid_ps.point = bbox_centroid.pose.position
+        viz.publish_pose(self._markers, bbox_centroid, 1, 0, 0, 1, 1234)
 
         action = None
         while action is None:
