@@ -42,18 +42,20 @@ void BoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                  geometry_msgs::TransformStamped* transform,
                  geometry_msgs::Point* bbox);
 
-// Computes the minimum bounding box for the given point cloud. This does not
-// necessarily lie on any plane.
+// Computes the bounding box for the given point cloud on the XY plane.
 //
-// The bounding box is represented by its centroid and its dimensions. The
-// location of the centroid corresponds to the centroid of the point cloud, and
-// the orientation of the centroid is such that x-axis is along the principal
-// component of the point cloud, the y-axis is along the second component, etc.
-// The dimensions of the box are given such that dimensions.x is the length of
-// the box in the x direction.
-void MinimumBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-                        geometry_msgs::Pose* centroid,
-                        geometry_msgs::Vector3* dimensions);
+// Args:
+//   cloud: The input cloud. Assumed to not have any NaN points.
+//   midpoint: The geometric center of the cloud, i.e., the midpoint between the
+//     minimum and maximum points in each of the x, y, and z directions. The
+//     orientation is such that the x direction points along the principal
+//     component in the XY plane, the y direction points along the smaller
+//     component, and the z direction points up.
+//   dimensions: A vector containing the length of the cloud in the x, y, and z
+//   directions.
+void PlanarBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+                       geometry_msgs::Pose* midpoint,
+                       geometry_msgs::Vector3* dimensions);
 
 // Computes the color histogram of the given point cloud with RGB information.
 //
