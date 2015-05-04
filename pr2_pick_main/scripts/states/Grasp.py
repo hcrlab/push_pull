@@ -79,7 +79,7 @@ class Grasp(smach.State):
                 outcomes.GRASP_SUCCESS,
                 outcomes.GRASP_FAILURE
             ],
-            input_keys=['bin_id', 'debug', 'target_cluster', 'current_target', 'item_model']
+            input_keys=['bin_id', 'debug', 'target_cluster', 'current_target', 'item_model', 'target_descriptor']
         )
 
         self._find_centroid = services['find_centroid']

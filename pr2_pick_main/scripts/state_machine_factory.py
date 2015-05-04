@@ -524,7 +524,9 @@ class StateMachineBuilder(object):
                     'current_target': 'current_target',
                     'current_bin_items': 'current_bin_items',
                     'clusters': 'clusters',
-                    'target_cluster': 'target_cluster'
+                    'target_cluster': 'target_cluster',
+                    'target_descriptor': 'target_descriptor',
+                    'target_model': 'target_model'
                 }
             )
             smach.StateMachine.add(
@@ -539,7 +541,9 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_id': 'current_bin',
                     'target_cluster': 'target_cluster',
-                    'current_target': 'current_target'
+                    'current_target': 'current_target',
+                    'item_model': 'target_model',
+                    'target_descriptor': 'target_descriptor'
                 }
             )
             smach.StateMachine.add(
@@ -565,7 +569,8 @@ class StateMachineBuilder(object):
                     'bin_id': 'current_bin',
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
-                    'current_target': 'current_target'
+                    'current_target': 'current_target',
+                    'item_model': 'target_model'
                 }
             )
             smach.StateMachine.add(

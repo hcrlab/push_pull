@@ -26,7 +26,7 @@ class SenseBin(smach.State):
                       outcomes.SENSE_BIN_FAILURE],
             input_keys=['bin_id', 'debug', 'current_target',
                         'current_bin_items'],
-            output_keys=['clusters', 'target_cluster', 'item_model'])
+            output_keys=['clusters', 'target_cluster', 'target_descriptor', 'target_model'])
         self._tts = tts
         self._crop_shelf = crop_shelf
         self._markers = markers
@@ -43,8 +43,8 @@ class SenseBin(smach.State):
             userdata.current_target, userdata.current_bin_items))
         self._lookup_item.wait_for_service()
         lookup_response = self._lookup_item(item=userdata.current_target)
-        item_model = lookup_response.model
-        userdata.item_model = item_model
+        target_model = lookup_response.model
+        userdata.target_model = target_model
 
         self._tuck_arms.wait_for_service()
         self._tuck_arms(tuck_left=True, tuck_right=True)
@@ -93,6 +93,7 @@ class SenseBin(smach.State):
             all_items=userdata.current_bin_items)
         index = response.target_item_index
         userdata.target_cluster = clusters[index]
+        userdata.target_descriptor = descriptors[index]
         rospy.loginfo('Classified cluster #{} as target item ({} confidence)'.format(
             index, response.confidence
         ))
