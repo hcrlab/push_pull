@@ -234,26 +234,26 @@ class StateMachineBuilder(object):
             'lookup_item': lookup_item
          }
 
+    def mock_update_plan_execute(self, userdata):
+        ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
+        default_next_bin = 'A'
+        input_bin = raw_input('(Debug) Enter the next bin [{}]:'.format(default_next_bin))
+        if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
+            bin_letter = input_bin[0]
+        else:
+            bin_letter = default_next_bin
+
+        userdata.next_bin = bin_letter
+        return outcomes.UPDATE_PLAN_NEXT_OBJECT
+
     def build_sm_for_move_to_bin(self, **services):
         sm = smach.StateMachine(outcomes=[
             outcomes.CHALLENGE_SUCCESS,
             outcomes.CHALLENGE_FAILURE
         ])
 
-        def mock_update_plan_execute(userdata):
-            ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
-            default_next_bin = 'A'
-            input_bin = raw_input('(Debug) Enter the next bin [{}]:'.format(default_next_bin))
-            if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
-                bin_letter = input_bin[0]
-            else:
-                bin_letter = default_next_bin
-
-            userdata.next_bin = bin_letter
-            return outcomes.UPDATE_PLAN_NEXT_OBJECT
-
         mock_update_plan = states.UpdatePlan(**services)
-        mock_update_plan.execute = mock_update_plan_execute
+        mock_update_plan.execute = self.mock_update_plan_execute
 
         with sm:
             smach.StateMachine.add(
@@ -277,6 +277,7 @@ class StateMachineBuilder(object):
                 mock_update_plan,
                 transitions={
                     outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
+                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
                     outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
                     outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
                 },
@@ -362,27 +363,15 @@ class StateMachineBuilder(object):
         return sm
 
     def build_sm_for_item_descriptor_capture(self, **services):
-        """State machine for calling CaptureItemDescriptor.
-        """
+        '''State machine for calling CaptureItemDescriptor.
+        '''
         sm = smach.StateMachine(outcomes=[
             outcomes.CHALLENGE_SUCCESS,
             outcomes.CHALLENGE_FAILURE
         ])
 
-        def mock_update_plan_execute(userdata):
-            ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
-            default_next_bin = 'J'
-            input_bin = raw_input('(Debug) Enter the next bin [{}]: '.format(default_next_bin))
-            if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
-                bin_letter = input_bin[0]
-            else:
-                bin_letter = default_next_bin
-
-            userdata.next_bin = bin_letter
-            return outcomes.UPDATE_PLAN_NEXT_OBJECT
-
         mock_update_plan = states.UpdatePlan(**services)
-        mock_update_plan.execute = mock_update_plan_execute
+        mock_update_plan.execute = self.mock_update_plan_execute
 
         with sm:
             smach.StateMachine.add(
