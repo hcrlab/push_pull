@@ -14,6 +14,7 @@ import random
 import rospy
 import tf
 
+
 def publish_shelf(publisher, pose_stamped):
     """Publishes a shelf marker at a given pose.
 
@@ -119,7 +120,7 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     marker.header.frame_id = frame_id
     marker.header.stamp = rospy.Time().now()
     marker.ns = namespace
-    marker.id = 2*cluster_id
+    marker.id = 2 * cluster_id
     marker.type = Marker.POINTS
     marker.action = Marker.ADD
     marker.color.r = random.random()
@@ -144,7 +145,7 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     text_marker.header.frame_id = frame_id
     text_marker.header.stamp = rospy.Time().now()
     text_marker.ns = namespace
-    text_marker.id = 2*cluster_id + 1
+    text_marker.id = 2 * cluster_id + 1
     text_marker.type = Marker.TEXT_VIEW_FACING
     text_marker.action = Marker.ADD
     text_marker.pose.position.x = center[0] - 0.1
@@ -161,7 +162,9 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     _publish(publisher, marker)
     _publish(publisher, text_marker)
 
-def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a, marker_id):
+
+def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
+                         marker_id):
     """Publishes a marker representing a bounding box.
 
     Args:
@@ -190,6 +193,36 @@ def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a, marker_id
     marker.lifetime = rospy.Duration()
     _publish(publisher, marker)
 
+
+def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
+    """Publishes a marker representing a bounding box.
+
+    Args:
+      publisher: A visualization_msgs/Marker publisher
+      pose_stamped: pose of marker
+      x, y, z: dimensions of bounding box
+      r, g, b, a: colour information for marker
+      marker_id: id # for marker 
+    """
+    marker = Marker()
+    marker.header.frame_id = pose_stamped.header.frame_id
+    marker.header.stamp = rospy.Time().now()
+    marker.ns = 'pose'
+    marker.id = marker_id
+    marker.type = Marker.ARROW
+    marker.action = Marker.ADD
+    marker.pose = pose_stamped.pose
+    marker.scale.x = 0.07
+    marker.scale.y = 0.01
+    marker.scale.z = 0.01
+    marker.color.r = r
+    marker.color.g = g
+    marker.color.b = b
+    marker.color.a = a
+    marker.lifetime = rospy.Duration()
+    _publish(publisher, marker)
+
+
 def _get_pose_from_transform(transform):
     """Returns pose for transformation matrix.
     Args:
@@ -200,10 +233,8 @@ def _get_pose_from_transform(transform):
     """
     pos = transform[:3, 3].copy()
     rot = tf.transformations.quaternion_from_matrix(transform)
-    return Pose(
-        Point(pos[0], pos[1], pos[2]),
-        Quaternion(rot[0], rot[1], rot[2], rot[3])
-    )
+    return Pose(Point(pos[0], pos[1], pos[2]),
+                Quaternion(rot[0], rot[1], rot[2], rot[3]))
 
 
 def publish_gripper(server, pose_stamped, name):
@@ -217,7 +248,7 @@ def publish_gripper(server, pose_stamped, name):
       name: string, a unique name for this gripper.
     """
     # Set angle of meshes based on gripper open vs closed.
-    angle = 28 * math.pi / 180.0 # Fully open.
+    angle = 28 * math.pi / 180.0  # Fully open.
     STR_MESH_GRIPPER_FOLDER = 'package://pr2_description/meshes/gripper_v0/'
     STR_GRIPPER_PALM_FILE = STR_MESH_GRIPPER_FOLDER + 'gripper_palm.dae'
     STR_GRIPPER_FINGER_FILE = STR_MESH_GRIPPER_FOLDER + 'l_finger.dae'
@@ -234,8 +265,7 @@ def publish_gripper(server, pose_stamped, name):
     transform2 = tf.transformations.euler_matrix(0, 0, -angle)
     transform2[:3, 3] = [0.09137, 0.00495, 0]
     t_proximal = transform1
-    t_distal = tf.transformations.concatenate_matrices(
-        transform1, transform2)
+    t_distal = tf.transformations.concatenate_matrices(transform1, transform2)
 
     # Create mesh 1 (palm).
     mesh1 = Marker()
@@ -271,15 +301,13 @@ def publish_gripper(server, pose_stamped, name):
     # Make transforms in preparation for meshes 4 and 5.
     quat = tf.transformations.quaternion_multiply(
         tf.transformations.quaternion_from_euler(math.pi, 0, 0),
-        tf.transformations.quaternion_from_euler(0, 0, angle)
-    )
+        tf.transformations.quaternion_from_euler(0, 0, angle))
     transform1 = tf.transformations.quaternion_matrix(quat)
     transform1[:3, 3] = [0.07691, -0.01, 0]
     transform2 = tf.transformations.euler_matrix(0, 0, -angle)
     transform2[:3, 3] = [0.09137, 0.00495, 0]
     t_proximal = transform1
-    t_distal = tf.transformations.concatenate_matrices(
-        transform1, transform2)
+    t_distal = tf.transformations.concatenate_matrices(transform1, transform2)
 
     # Create mesh 4 (other finger).
     mesh4 = Marker()
@@ -314,6 +342,7 @@ def publish_gripper(server, pose_stamped, name):
     server.insert(interactive_marker)
     server.applyChanges()
 
+
 def _publish(publisher, marker):
     """Publishes a marker to the given publisher.
 
@@ -326,4 +355,5 @@ def _publish(publisher, marker):
             publisher.publish(marker)
             return
         rate.sleep()
-    rospy.logwarn('No subscribers to the marker publisher, did not publish marker.')
+    rospy.logwarn(
+        'No subscribers to the marker publisher, did not publish marker.')
