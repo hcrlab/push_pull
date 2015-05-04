@@ -6,4 +6,4 @@
 geometry_msgs/PoseStamped pose 
 
 # The lengths of the bounding box in each of the x, y, and z directions.
-geometry_msgs/Vector3 dimension
+geometry_msgs/Vector3 dimensions
