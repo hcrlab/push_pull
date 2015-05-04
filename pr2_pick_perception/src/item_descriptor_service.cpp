@@ -1,14 +1,15 @@
 #include "pr2_pick_perception/item_descriptor_service.h"
 
-#include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/Pose.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/Vector3.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "pcl_conversions/pcl_conversions.h"
-#include "pr2_pick_perception/ItemDescriptor.h"
-#include "pr2_pick_perception/GetItemDescriptor.h"
+#include "pr2_pick_perception/BoundingBox.h"
 #include "pr2_pick_perception/ColorHistogram.h"
+#include "pr2_pick_perception/GetItemDescriptor.h"
+#include "pr2_pick_perception/ItemDescriptor.h"
 #include "pr2_pick_perception/pcl.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <ros/ros.h>
@@ -41,19 +42,26 @@ bool ItemDescriptorService::Callback(GetItemDescriptor::Request& request,
   histogram_msg.num_bins = num_bins_;
   histogram_msg.histogram = histogram;
 
-  // Get oriented bounding box.
-  geometry_msgs::Pose min_bbox_centroid;
-  geometry_msgs::Vector3 min_bbox_dimensions;
-  MinimumBoundingBox(pcl_cloud, &min_bbox_centroid, &min_bbox_dimensions);
+  // Get planar bounding box.
+  geometry_msgs::Pose planar_bbox_midpoint;
+  geometry_msgs::Vector3 planar_bbox_dimensions;
+  GetPlanarBoundingBox(pcl_cloud, &planar_bbox_midpoint,
+                       &planar_bbox_dimensions);
 
-  geometry_msgs::PoseStamped min_bbox_centroid_stamped;
-  min_bbox_centroid_stamped.header.frame_id = request.cluster.header.frame_id;
-  min_bbox_centroid_stamped.pose = min_bbox_centroid;
+  geometry_msgs::PoseStamped planar_bbox_midpoint_stamped;
+  planar_bbox_midpoint_stamped.header.frame_id =
+      request.cluster.header.frame_id;
+  planar_bbox_midpoint_stamped.pose = planar_bbox_midpoint;
 
+  pr2_pick_perception::BoundingBox bounding_box;
+  bounding_box.pose = planar_bbox_midpoint_stamped;
+  bounding_box.dimensions = planar_bbox_dimensions;
+
+  // Return descriptor.
   ItemDescriptor descriptor;
   descriptor.histogram = histogram_msg;
-  descriptor.min_bbox_centroid = min_bbox_centroid_stamped;
-  descriptor.min_bbox_dimensions = min_bbox_dimensions;
+  descriptor.planar_bounding_box = bounding_box;
+
   response.descriptor = descriptor;
   return true;
 }
