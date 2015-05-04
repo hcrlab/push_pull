@@ -310,6 +310,7 @@ class StateMachineBuilder(object):
         return sm
 
     def build_sm_for_move_to_bin(self, **services):
+        ''' Minimal state machine for testing MoveToBin state '''
         return self.build_interactive_bin_choosing_sm(
             states.UpdatePlan.name,
             outcomes.CHALLENGE_FAILURE,
