@@ -57,18 +57,15 @@ class CaptureItemDescriptor(smach.State):
         rospy.loginfo('Color histogram ({} bins):\n{}'.format(
             descriptor.histogram.num_bins, descriptor.histogram.histogram))
 
-        bbox_centroid = descriptor.min_bbox_centroid
-        bbox_dimensions = descriptor.min_bbox_dimensions
-        rospy.loginfo('Bounding box centroid: {}'.format(bbox_centroid))
+        bounding_box = descriptor.planar_bounding_box
+        bbox_pose = bounding_box.pose
+        bbox_dimensions = bounding_box.dimensions
+        rospy.loginfo('Bounding box centroid: {}'.format(bbox_pose))
         rospy.loginfo('Bounding box dimensions: {}'.format(bbox_dimensions))
         viz.publish_bounding_box(
-            self._markers, bbox_centroid, bbox_dimensions.x, bbox_dimensions.y,
+            self._markers, bbox_pose, bbox_dimensions.x, bbox_dimensions.y,
             bbox_dimensions.z, 0.33, 0.69, 0.31, 0.25, 1234)
-
-        centroid_ps = PointStamped()
-        centroid_ps.header.frame_id = bbox_centroid.header.frame_id
-        centroid_ps.point = bbox_centroid.pose.position
-        viz.publish_pose(self._markers, bbox_centroid, 1, 0, 0, 1, 1234)
+        viz.publish_pose(self._markers, bbox_pose, 1, 0, 0, 1, 1234)
 
         action = None
         while action is None:
