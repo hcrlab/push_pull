@@ -18,6 +18,7 @@ def main(
     test_drop_off_item=False,
     test_grasp_tool=False,
     test_move_to_bin=False,
+    test_push_item=False,
     capture_item_descriptor=False,
     debug=False,
     auto_reset=True,
@@ -108,6 +109,11 @@ if __name__ == '__main__':
               'MoveToBin state.')
     )
     group.add_argument(
+        '--test_push_item', action='store_true',
+        help=('True to create a minimal state machine for testing the'
+              'PushItem state.')
+    )
+    group.add_argument(
         '--capture_item_descriptor', action='store_true',
         help=('True to create a minimal state machine for capturing item '
               'descriptors.')
@@ -142,6 +148,7 @@ if __name__ == '__main__':
         args.test_drop_off_item,
         args.test_grasp_tool,
         args.test_move_to_bin,
+        args.test_push_item,
         args.capture_item_descriptor,
         args.debug,
         args.auto_reset,
