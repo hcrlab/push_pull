@@ -13,6 +13,9 @@
 #include <pr2_pick_perception/Cluster.h>
 #include <pr2_pick_perception/ClusterList.h>
 
+// markers
+#include <visualization_msgs/Marker.h>
+
 CropShelf::CropShelf() {}
 
 bool CropShelf::initialize() {
@@ -106,32 +109,41 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
   return cell_pc;
 }
 
-
-CropShelf::visualizeShelf(   
-    float width, float height, float depth, int cellID) {
+// Given width, height, and depth of a shelf and the id for the shelf, publishes
+// a marker demonstrating the area considered to be part of the shelf. This area
+// exactly matches the point cloud cropping of CropShelf::cropPC.
+int CropShelf::visualizeShelf(float width, float height, float depth,
+    int cellID) {
+    ros::NodeHandle node_handle;
+    ros::Publisher vis_pub = node_handle.advertise<visualization_msgs::Marker>
+        ("shelf_marker_" + cellID, 0);
     visualization_msgs::Marker marker;
     marker.header.frame_id = bin_frame_id_;
     marker.header.stamp = ros::Time();
     marker.ns = "shelf_visualization";
-    marker.id = bin_frame_id_[bin_frame_id_.length() - 1]; // I can't remember if this is good syntax
+    marker.id = bin_frame_id_[bin_frame_id_.length() - 1];
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position.x = 0;
     marker.pose.position.y = 0;
-    marker.pose.position.z = ((height - top_crop_offset_) - (bottom_crop_offset_)) / 2;
+    marker.pose.position.z = ((height - top_crop_offset_) -
+        (bottom_crop_offset_)) / 2;
     marker.pose.orientation.x = 0.0;
     marker.pose.orientation.y = 0.0;
     marker.pose.orientation.z = 0.0;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = (depth - depth_far_crop_offset_) - (depth_close_crop_offset_);
-    marker.scale.y = (width / 2 - left_crop_offset_) - (-width / 2 + right_crop_offset_);
+    marker.scale.x = (depth - depth_far_crop_offset_) -
+        (depth_close_crop_offset_);
+    marker.scale.y = (width / 2 - left_crop_offset_) -
+        (-width / 2 + right_crop_offset_);
     marker.scale.z = (height - top_crop_offset_) - (bottom_crop_offset_);
     marker.color.a = 0.5;
     marker.color.r = 0.9;
     marker.color.g = 0.0;
     marker.color.b = 0.1;
-    marker.lifetime = 10;
+    marker.lifetime = ros::Duration(10);
     vis_pub.publish( marker );
+    return 0;
 }
 
 bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
