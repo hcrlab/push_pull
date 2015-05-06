@@ -108,9 +108,8 @@ class CropShelf {
       const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &shelf_pc, float width,
       float height, float depth, int cellID);
 
-  int visualizeShelf(float width, float height, float depth,
-      int cellID);
-
+  ros::Publisher vis_pub_;
+  void visualizeShelf(float width, float height, float depth);
 };
 
 #endif

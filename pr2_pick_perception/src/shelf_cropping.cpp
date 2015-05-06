@@ -58,6 +58,9 @@ bool CropShelf::initialize() {
   nh_local.param("max_cluster_points", max_cluster_points_, 100000);
   nh_local.param("min_cluster_points", min_cluster_points_, 150);
 
+  vis_pub_ =
+      nh.advertise<visualization_msgs::Marker>("/pr2_pick_visualization", 0);
+
   return true;
 }
 
@@ -112,38 +115,43 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
 // Given width, height, and depth of a shelf and the id for the shelf, publishes
 // a marker demonstrating the area considered to be part of the shelf. This area
 // exactly matches the point cloud cropping of CropShelf::cropPC.
-int CropShelf::visualizeShelf(float width, float height, float depth,
-    int cellID) {
-    ros::NodeHandle node_handle;
-    ros::Publisher vis_pub = node_handle.advertise<visualization_msgs::Marker>
-        ("shelf_marker_" + cellID, 0);
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = bin_frame_id_;
-    marker.header.stamp = ros::Time();
-    marker.ns = "shelf_visualization";
-    marker.id = bin_frame_id_[bin_frame_id_.length() - 1];
-    marker.type = visualization_msgs::Marker::CUBE;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = 0;
-    marker.pose.position.y = 0;
-    marker.pose.position.z = ((height - top_crop_offset_) -
-        (bottom_crop_offset_)) / 2;
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = (depth - depth_far_crop_offset_) -
-        (depth_close_crop_offset_);
-    marker.scale.y = (width / 2 - left_crop_offset_) -
-        (-width / 2 + right_crop_offset_);
-    marker.scale.z = (height - top_crop_offset_) - (bottom_crop_offset_);
-    marker.color.a = 0.5;
-    marker.color.r = 0.9;
-    marker.color.g = 0.0;
-    marker.color.b = 0.1;
-    marker.lifetime = ros::Duration(10);
-    vis_pub.publish( marker );
-    return 0;
+void CropShelf::visualizeShelf(float width, float height, float depth) {
+  // crop_* is the dimensions of the crop box.
+  float crop_depth = depth - depth_far_crop_offset_ - depth_close_crop_offset_;
+  float crop_width = width - left_crop_offset_ - right_crop_offset_;
+  float crop_height = height - top_crop_offset_ - bottom_crop_offset_;
+
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = bin_frame_id_;
+  marker.header.stamp = ros::Time();
+  marker.ns = "crop_shelf_marker";
+  marker.id = bin_frame_id_[bin_frame_id_.length() - 1];
+  marker.type = visualization_msgs::Marker::CUBE;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position.x = crop_depth / 2 + depth_close_crop_offset_;
+  marker.pose.position.y = (right_crop_offset_ - left_crop_offset_) / 2;
+  marker.pose.position.z = crop_height / 2 + bottom_crop_offset_;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = crop_depth;
+  marker.scale.y = crop_width;
+  marker.scale.z = crop_height;
+  marker.color.a = 0.2;
+  marker.color.r = 0.9;
+  marker.color.g = 0.9;
+  marker.color.b = 0.9;
+  marker.lifetime = ros::Duration(0);
+
+  ros::Rate r(1);
+  for (int i = 0; i < 5; ++i) {
+    if (vis_pub_.getNumSubscribers() > 0) {
+      vis_pub_.publish(marker);
+      return;
+    }
+  }
+  ROS_WARN("No subscribers to shelf cropping marker.");
 }
 
 bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
@@ -180,7 +188,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
 
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 0);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("B" == request.cellID) {
       bin_frame_id_ = "bin_B";
@@ -201,7 +209,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width2_, cell_height1_, depth_cell_, 1);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("C" == request.cellID) {
       bin_frame_id_ = "bin_C";
@@ -222,7 +230,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 2);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("D" == request.cellID) {
       bin_frame_id_ = "bin_D";
@@ -243,7 +251,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 3);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("E" == request.cellID) {
       bin_frame_id_ = "bin_E";
@@ -264,7 +272,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width2_, cell_height2_, depth_cell_, 4);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("F" == request.cellID) {
       bin_frame_id_ = "bin_F";
@@ -285,7 +293,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 5);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("G" == request.cellID) {
       bin_frame_id_ = "bin_G";
@@ -306,7 +314,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 6);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("H" == request.cellID) {
       bin_frame_id_ = "bin_H";
@@ -327,7 +335,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width2_, cell_height2_, depth_cell_, 7);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("I" == request.cellID) {
       bin_frame_id_ = "bin_I";
@@ -348,7 +356,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 8);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("J" == request.cellID) {
       bin_frame_id_ = "bin_J";
@@ -369,7 +377,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 9);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("K" == request.cellID) {
       bin_frame_id_ = "bin_K";
@@ -390,7 +398,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_height1_, cell_height1_, depth_cell_, 10);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     if ("L" == request.cellID) {
       bin_frame_id_ = "bin_L";
@@ -411,7 +419,7 @@ bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
       }
       pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
       cell_pc = cropPC(shelf_pc, cell_height1_, cell_height1_, depth_cell_, 11);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_, 0);
+      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
     }
     // compute Euclidean clusters
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
