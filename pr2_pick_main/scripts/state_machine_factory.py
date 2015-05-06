@@ -59,7 +59,7 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_grasp_tool
         elif self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
             build = self.build_sm_for_move_to_bin
-        elif self.state_machine_identifier == StateMachineBuilder.PUSH_ITEM:
+        elif self.state_machine_identifier == StateMachineBuilder.TEST_PUSH_ITEM:
             build = self.build_sm_for_push_item
         elif self.state_machine_identifier == StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR:
             build = self.build_sm_for_item_descriptor_capture
@@ -314,14 +314,14 @@ class StateMachineBuilder(object):
         return self.build_interactive_bin_choosing_sm(
             states.UpdatePlan.name,
             outcomes.CHALLENGE_FAILURE,
-            **services,
+            **services
         )
 
     def build_sm_for_push_item(self, **services):
         sm = self.build_interactive_bin_choosing_sm(
             states.PushItem.name,
             outcomes.CHALLENGE_FAILURE,
-            **services,
+            **services
         )
         with sm:
             smach.StateMachine.add(
