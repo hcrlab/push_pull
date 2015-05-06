@@ -26,6 +26,9 @@
 #include <pr2_pick_perception/Cell.h>
 #include <pr2_pick_perception/ObjectList.h>
 
+// markers
+#include <visualization_msgs/Marker.h>
+
 class CropShelf {
  public:
   CropShelf();
@@ -104,6 +107,9 @@ class CropShelf {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cropPC(
       const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &shelf_pc, float width,
       float height, float depth, int cellID);
+
+  ros::Publisher vis_pub_;
+  void visualizeShelf(float width, float height, float depth);
 };
 
 #endif
