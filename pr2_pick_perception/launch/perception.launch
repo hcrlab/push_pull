@@ -7,7 +7,7 @@
   <arg name="alternate_kinect_frames" default="false" />
 
   <!-- Turn on the Kinect -->
-  <include file="$(find openni_launch)/launch/openni.launch" unless="$(arg debug_openni)">
+  <include file="$(find freenect_launch)/launch/freenect.launch" unless="$(arg debug_openni)">
     <arg name="depth_registration" value="true"/>
     <arg name="camera" value="head_mount_kinect"/>
     <arg unless="$(arg alternate_kinect_frames)" name="rgb_frame_id" value="$(arg kinect_frame_prefix)_rgb_optical_frame"/>
