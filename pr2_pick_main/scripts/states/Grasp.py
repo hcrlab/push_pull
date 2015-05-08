@@ -842,8 +842,8 @@ class Grasp(smach.State):
                 is_diff=True,
                 allowed_collision_matrix=acm)
 
-            self._pubPlanningScene.publish(planning_scene_diff)
-            rospy.sleep(1.0)
+            #self._pubPlanningScene.publish(planning_scene_diff)
+            #rospy.sleep(1.0)
 
         #success_grasp = self._moveit_move_arm(grasp["grasp"],
         #                                          0.01, 0.01, 0, 'right_arm', 
@@ -969,8 +969,8 @@ class Grasp(smach.State):
                         is_diff=True,
                         allowed_collision_matrix=acm)
 
-                    self._pubPlanningScene.publish(planning_scene_diff)
-                    rospy.sleep(1.0)
+                    #self._pubPlanningScene.publish(planning_scene_diff)
+                    #rospy.sleep(1.0)
 
                 #success_grasp = self._moveit_move_arm(grasp["grasp"],
                 #                                          0.01, 0.01, 0, 'right_arm',
@@ -1127,8 +1127,8 @@ class Grasp(smach.State):
                     is_diff=True, 
                     allowed_collision_matrix=acm) 
 
-                self._pubPlanningScene.publish(planning_scene_diff) 
-                rospy.sleep(1.0)
+                #self._pubPlanningScene.publish(planning_scene_diff) 
+                #rospy.sleep(1.0)
 
 
             self._move_arm_ik.wait_for_service()
