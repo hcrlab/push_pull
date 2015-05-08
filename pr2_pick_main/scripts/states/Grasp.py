@@ -1093,6 +1093,11 @@ class Grasp(smach.State):
     def execute_grasp(self, grasps, item_model):
         success_pre_grasp = False
         success_grasp = False
+        rospy.loginfo('Open Hand')
+        self._set_grippers.wait_for_service()
+ 
+        grippers_open = self._set_grippers(False, True, -1)
+
         rospy.loginfo("Executing grasp")
         for grasp in grasps:
             rospy.loginfo("Pre_grasp: {}".format(grasp["pre_grasp"]))
@@ -1106,11 +1111,7 @@ class Grasp(smach.State):
                 continue
             else:
                 rospy.loginfo('Pre-grasp succeeeded')
-                rospy.loginfo('Open Hand')
-                self._set_grippers.wait_for_service()
- 
-                grippers_open = self._set_grippers(False, True, -1)
-
+                
             self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene) 
             rospy.wait_for_service('/get_planning_scene', 10.0) 
             get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene) 
