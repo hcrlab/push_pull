@@ -59,7 +59,7 @@ class UpdatePlan(smach.State):
 
         # take another pass at all the bins that did not succeed
         for bin_id in self._preferred_order:
-            has_target_item, target_item = self.bin_contains_target_item(bin_id)
+            has_target_item, target_item, bin_items = self.bin_contains_target_item(bin_id)
             if not userdata.bin_data[bin_id].succeeded and has_target_item:
                 userdata.next_bin = bin_id
                 userdata.next_item = target_item
