@@ -74,6 +74,8 @@ class Grasp(smach.State):
 
     grasp_num = 0
 
+    ik_timeout = rospy.Duration(3.0)
+
     def __init__(self, **services):
         smach.State.__init__(
             self,
@@ -855,6 +857,7 @@ class Grasp(smach.State):
         #    grasp["grasp_reachable"] = False
         ik_request = GetPositionIKRequest()
         ik_request.ik_request.group_name = "right_arm"
+        ik_request.ik_request.timeout = self.ik_timeout
         ik_request.ik_request.pose_stamped = grasp["grasp"]
         ik_response = self._ik_client(ik_request)
 
@@ -949,6 +952,7 @@ class Grasp(smach.State):
                 #check ik
                 ik_request = GetPositionIKRequest()
                 ik_request.ik_request.group_name = "right_arm"
+                ik_request.ik_request.timeout = self.ik_timeout
                 ik_request.ik_request.pose_stamped = transformed_pose
                 ik_response = self._ik_client(ik_request)
                 
@@ -1012,7 +1016,7 @@ class Grasp(smach.State):
             if grasp["finger_collision_points"] <= self.max_finger_collision_points and \
                 grasp["palm_collision_points"] > self.max_palm_collision_points:
 
-                grasp_attempt_delta = 0.005
+                grasp_attempt_delta = 0.01
                 grasp_attempts = 20
                 grasp_attempt_offsets = [grasp_attempt_delta * i 
                                         for i in range(grasp_attempts)]
@@ -1091,6 +1095,7 @@ class Grasp(smach.State):
         return self.sort_grasps(reachable_good_grasps)
 
     def execute_grasp(self, grasps, item_model):
+               
         success_pre_grasp = False
         success_grasp = False
         rospy.loginfo('Open Hand')
@@ -1100,6 +1105,12 @@ class Grasp(smach.State):
 
         rospy.loginfo("Executing grasp")
         for grasp in grasps:
+            viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
+            viz.publish_gripper(self._im_server, grasp["pre_grasp"], 'pre_grasp_target')
+
+            if self._debug:
+                raw_input('(Debug) Press enter to continue >')
+
             rospy.loginfo("Pre_grasp: {}".format(grasp["pre_grasp"]))
             rospy.loginfo("Grasp: {}".format(grasp["grasp"]))
             self._moveit_move_arm.wait_for_service()
