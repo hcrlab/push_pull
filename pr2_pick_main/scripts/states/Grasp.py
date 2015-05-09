@@ -389,15 +389,24 @@ class Grasp(smach.State):
                                                                 grasp_in_base_footprint)
 
             else:
-                pre_grasp_in_axis_frame = PoseStamped()
-                pre_grasp_in_axis_frame.header.stamp = rospy.Time(0)
-                pre_grasp_in_axis_frame.header.frame_id = "object_axis"
-                pre_grasp_in_axis_frame.pose.position.x = \
-                        grasp_in_axis_frame.pose.position.x - self.pre_grasp_offset
-                
-                pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                    pre_grasp_in_axis_frame)
+                pre_grasp_in_base_footprint = PoseStamped()
+                pre_grasp_in_base_footprint.header.stamp = rospy.Time(0)
+                pre_grasp_in_base_footprint.header.frame_id = "base_footprint"
+                pre_grasp_in_base_footprint.pose.position.x = self.pre_grasp_x_distance
+                pre_grasp_in_base_footprint.pose.position.y = grasp_in_base_footprint.pose.position.y
+                pre_grasp_in_base_footprint.pose.position.z = grasp_in_base_footprint.pose.position.z
 
+                pre_grasp_in_axis_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
+                                                                pre_grasp_in_base_footprint)
+                # Check if within bin_width
+                if pre_grasp_in_axis_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2):
+                    pre_grasp_in_axis_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2
+                elif pre_grasp_in_axis_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2):
+                    pre_grasp_in_axis_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2)
+                pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                pre_grasp_in_axis_frame)
+                pre_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                pre_grasp_in_axis_frame)
 
             grasp_dict = {}
             grasp_dict["grasp"] = grasp_in_base_footprint
@@ -1067,9 +1076,9 @@ class Grasp(smach.State):
                 transformed_pose = self._tf_listener.transformPose(
                                                                 'grasp',
                                                                 grasp["grasp"])
-                transformed_pre_grasp =  self._tf_listener.transformPose(
-                                                                'grasp',
-                                                                grasp["pre_grasp"])
+                #transformed_pre_grasp =  self._tf_listener.transformPose(
+                #                                                'grasp',
+                #                                                grasp["pre_grasp"])
                 # Good grasp but too many points in palm
                 rospy.loginfo("Good grasp but too many points in the palm.")
                 for i in range(grasp_attempts):
