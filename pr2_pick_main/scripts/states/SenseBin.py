@@ -1,3 +1,4 @@
+from pr2_pick_main import handle_service_exceptions
 from pr2_pick_perception.srv import CropShelfRequest
 from pr2_pick_perception.srv import CropShelfResponse
 from geometry_msgs.msg import Point
@@ -35,6 +36,7 @@ class SenseBin(smach.State):
         self._classify_target_item = kwargs['classify_target_item']
         self._lookup_item = kwargs['lookup_item']
 
+    @handle_service_exceptions(outcomes.SENSE_BIN_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))

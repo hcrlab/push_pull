@@ -1,11 +1,12 @@
-from pr2_pick_perception.srv import CropShelfRequest
-from pr2_pick_perception.srv import CropShelfResponse
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import PointStamped
+from pr2_pick_main import handle_service_exceptions
+from pr2_pick_perception.srv import CropShelfRequest
+from pr2_pick_perception.srv import CropShelfResponse
 from sensor_msgs.msg import PointCloud2
-import sensor_msgs.point_cloud2 as pc2
 import outcomes
 import rospy
+import sensor_msgs.point_cloud2 as pc2
 import smach
 import visualization as viz
 
@@ -29,6 +30,7 @@ class CaptureItemDescriptor(smach.State):
         self._tuck_arms = kwargs['tuck_arms']
         self._get_item_descriptor = kwargs['get_item_descriptor']
 
+    @handle_service_exceptions(outcomes.CAPTURE_ITEM_DONE)
     def execute(self, userdata):
         rospy.loginfo(
             'Capturing item descriptor in bin {}'.format(userdata.bin_id))

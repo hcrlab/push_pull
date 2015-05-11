@@ -1,5 +1,6 @@
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 import math
+from pr2_pick_main import handle_service_exceptions
 import rospy
 import smach
 from std_msgs.msg import Header
@@ -81,6 +82,7 @@ class MoveToBin(smach.State):
         self.strafe_by_bin.update(
             {letter: self.right_column_strafe for letter in ('C', 'F', 'I', 'L')})
 
+    @handle_service_exceptions(outcomes.MOVE_TO_BIN_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))

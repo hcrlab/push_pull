@@ -1,4 +1,5 @@
 from bin_data import BinData
+from pr2_pick_main import handle_service_exceptions
 import outcomes
 import rospy
 import smach
@@ -36,6 +37,7 @@ class UpdatePlan(smach.State):
         # the shelf.
         self._calls_since_shelf_localization = 0
 
+    @handle_service_exceptions(outcomes.UPDATE_PLAN_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Updating plan.')
         self._tts.publish('Updating plan.')

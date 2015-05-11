@@ -1,3 +1,4 @@
+from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
 from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
@@ -68,6 +69,7 @@ class StartPose(smach.State):
         self._drive_to_pose.wait_for_service()
         self._drive_to_pose(self._start_pose, 0.1, 0.1)
         
+    @handle_service_exceptions(outcomes.START_POSE_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
         self._tts.publish('Setting start pose.')

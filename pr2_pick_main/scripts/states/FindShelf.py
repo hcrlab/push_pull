@@ -1,15 +1,15 @@
 from geometry_msgs.msg import PoseStamped, Transform, TransformStamped, \
     Quaternion, Vector3
-import math
-import rospy
-import smach
-from std_msgs.msg import Header
-import tf
-import visualization as viz
-
-import outcomes
+from pr2_pick_main import handle_service_exceptions
 from pr2_pick_perception.msg import ObjectDetectionRequest, ROI2d
 from pr2_pick_perception.srv import LocalizeShelfRequest
+from std_msgs.msg import Header
+import math
+import outcomes
+import rospy
+import smach
+import tf
+import visualization as viz
 
 
 class FindShelf(smach.State):
@@ -106,6 +106,7 @@ class FindShelf(smach.State):
             return False, None
         return success, shelf_odom
 
+    @handle_service_exceptions(outcomes.FIND_SHELF_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Finding shelf.')
         self._tts.publish('Finding shelf.')

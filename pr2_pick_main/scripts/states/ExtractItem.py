@@ -5,6 +5,7 @@ import rospy
 import smach
 import moveit_commander
 import geometry_msgs.msg
+from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import GetPose
 from pr2_pick_manipulation.srv import MoveArm, MoveArmIkRequest
 from std_msgs.msg import Header
@@ -63,6 +64,7 @@ class ExtractItem(smach.State):
         self._extract_dist = 0.3
         self._wait_for_transform_duration = rospy.Duration(5.0)
 
+    @handle_service_exceptions(outcomes.EXTRACT_ITEM_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Extracting item in bin {}'.format(userdata.bin_id))
         self._tts.publish('Extracting item in bin {}'.format(userdata.bin_id))

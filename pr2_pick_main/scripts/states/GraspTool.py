@@ -1,6 +1,7 @@
 from actionlib import SimpleActionClient
 from copy import copy
 from pr2_controllers_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
+from pr2_pick_main import handle_service_exceptions
 import rospy
 import smach
 from std_msgs.msg import Header
@@ -63,6 +64,7 @@ class GraspOrReleaseTool(smach.State):
         rospy.loginfo('Waiting for joint trajectory action server')
         self.arm.wait_for_server()
 
+    @handle_service_exceptions(outcomes.GRASP_TOOL_FAILURE)
     def execute(self, userdata):
         self._tuck_arms(False, False)  # untuck arms
         if not self.dropping_off:
