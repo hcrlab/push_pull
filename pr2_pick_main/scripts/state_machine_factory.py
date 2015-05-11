@@ -500,7 +500,7 @@ class StateMachineBuilder(object):
                 states.FindShelf(**services),
                 transitions={
                     outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
-                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.FIND_SHELF_FAILURE: states.StartPose.name
                 },
                 remapping={
                     'debug': 'debug',

@@ -1,11 +1,12 @@
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
+from pr2_pick_main import handle_service_exceptions
+from std_msgs.msg import Header
+from visualization_msgs.msg import Marker
+import moveit_commander
 import outcomes
 import rospy
 import smach
-import moveit_commander
 import tf
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
-from visualization_msgs.msg import Marker
-from std_msgs.msg import Header
 import visualization as viz
 
 
@@ -56,6 +57,7 @@ class DropOffItem(smach.State):
             rospy.sleep(0.10)
             scene.add_box(name, table_pose, size)
 
+    @handle_service_exceptions(outcomes.DROP_OFF_ITEM_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Dropping off item from bin {}'.format(userdata.bin_id))
         self._tts.publish('Dropping off item from bin {}'.format(userdata.bin_id))

@@ -9,6 +9,7 @@ from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, 
 from moveit_simple_grasps.msg import GenerateGraspsAction, GenerateGraspsGoal
 from moveit_simple_grasps.msg import GraspGeneratorOptions
 import os
+from pr2_pick_main import handle_service_exceptions
 import rospkg
 import rospy
 import smach
@@ -1221,6 +1222,7 @@ class Grasp(smach.State):
             return False
 
 
+    @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
 
         bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]

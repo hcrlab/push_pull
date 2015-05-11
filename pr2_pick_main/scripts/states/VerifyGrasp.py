@@ -1,3 +1,4 @@
+from pr2_pick_main import handle_service_exceptions
 import rospy
 import smach
 import outcomes
@@ -22,6 +23,7 @@ class VerifyGrasp(smach.State):
         self._get_items = kwargs['get_items']
         self._set_items = kwargs['set_items']
 
+    @handle_service_exceptions(outcomes.VERIFY_GRASP_FAILURE)
     def execute(self, userdata):
         # update bin_data
         output_bin_data = userdata.bin_data.copy()
