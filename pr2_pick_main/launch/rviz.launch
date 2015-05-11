@@ -1,0 +1,3 @@
+<launch>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pr2_pick_main)/config/pr2_pick.rviz"/>
+</launch>
