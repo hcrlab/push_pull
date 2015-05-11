@@ -49,7 +49,6 @@ class FindShelf(smach.State):
         success = False
         shelf_ps = PoseStamped()  # The shelf pose returned by the service.
         shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
-        rospy.sleep(10)
         for try_num in range(100):
             self._localize_object.wait_for_service()
             obj_request = ObjectDetectionRequest()
