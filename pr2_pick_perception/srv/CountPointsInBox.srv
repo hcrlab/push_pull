@@ -1,4 +1,4 @@
-std_msgs/String frame_id
+string frame_id
 geometry_msgs/Point center
 geometry_msgs/Vector3 dimensions
 ---
