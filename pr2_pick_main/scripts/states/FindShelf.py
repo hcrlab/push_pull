@@ -119,6 +119,10 @@ class FindShelf(smach.State):
         # Project onto the floor.
         shelf_odom.pose.position.z = 0
 
+        # TODO(jstn): Hack! Hack! Hack! ###############################
+        shelf_odom.pose.position.x += 0.06
+        ###############################################################
+
         self._tts.publish('Found shelf.')
 
         # Publish static transform.
