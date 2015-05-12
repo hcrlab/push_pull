@@ -94,10 +94,10 @@ class FindShelf(smach.State):
             #    rospy.logwarn('[FindShelf]: Shelf not on the ground.')
             #    self._tts.publish('Shelf not on the ground for try {}'.format(try_num))
             #    continue
-            if pitch_degs > 4 or pitch_degs < -4:
-                self._tts.publish('Shelf too tilted for try {}'.format(try_num))
-                rospy.logwarn('[FindShelf]: Shelf too tilted.')
-                continue
+            #if pitch_degs > 4 or pitch_degs < -4:
+            #    self._tts.publish('Shelf too tilted for try {}'.format(try_num))
+            #    rospy.logwarn('[FindShelf]: Shelf too tilted.')
+            #    continue
 
             success = True
             break
