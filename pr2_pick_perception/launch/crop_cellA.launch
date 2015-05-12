@@ -31,7 +31,7 @@
    <param name="top_crop_offset" value="0.04" />
    <param name="left_crop_offset" value="0.025" />
    <param name="right_crop_offset" value="0.025" />
-   <param name="depth_far_crop_offset" value="0.03" />
+   <param name="depth_far_crop_offset" value="0.08" />
    <param name="depth_close_crop_offset" value="0.02" />
    <param name="min_cluster_points" value="500" />
    <param name="max_cluster_points" value="100000" />
