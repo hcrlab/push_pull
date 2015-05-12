@@ -2,7 +2,7 @@
 <launch>
 
  <arg name="debug" default="true" /> <!-- Whether to show debug visualizations. -->
- <param name="/use_sim_time" value="$(arg debug)"/> <!-- Use for testing with bag files. -->
+ <param name="/use_sim_time" value="false"/> <!-- Use for testing with bag files. -->
 
   <!-- laser scan assembler -->
  <node pkg="laser_assembler" type="laser_scan_assembler" name="scan_assembler" respawn="true" output="screen">
