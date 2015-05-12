@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
-import rospy
-import sys
+from actionlib import SimpleActionClient
+from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest
+from pr2_controllers_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from pr2_pick_manipulation.srv import *
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+import geometry_msgs.msg
 import moveit_commander
 import moveit_msgs.msg
-import geometry_msgs.msg
+import rospy
+import sys
 import tf
 
 
@@ -23,6 +27,11 @@ class ArmMover:
         self._ik_service = rospy.Service('move_arm_ik', MoveArmIk,
                                          self.move_arm_ik)
         self._tf = tf.TransformListener()
+        self._compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
+        self._r_joint_traj_action = SimpleActionClient(
+            'r_arm_controller/joint_trajectory_action', JointTrajectoryAction)
+        self._l_joint_traj_action = SimpleActionClient(
+            'l_arm_controller/joint_trajectory_action', JointTrajectoryAction)
 
     def move_arm(self, req):
         plan = None
@@ -84,7 +93,62 @@ class ArmMover:
                 rospy.sleep(3.0)
 
     def move_arm_ik(self, request):
+        """Moves the arm using IK and JointTrajectoryAction.
+        """
+        group = None
+        group_name = ''
+        traj_action = None
+        arm_prefix = ''
+        robot_joint_names = []
+        if request.arm == MoveArmIkRequest.LEFT_ARM:
+            group = self._left_group
+            group_name = 'left_arm'
+            traj_action = self._l_joint_traj_action
+            arm_prefix = 'l'
+            robot_joint_names = rospy.get_param('/l_arm_controller/joints')
+        else:
+            group = self._right_group
+            group_name = 'right_arm'
+            traj_action = self._r_joint_traj_action
+            arm_prefix = 'r'
+            robot_joint_names = rospy.get_param('/r_arm_controller/joints')
+
+        service_request = GetPositionIKRequest()
+        service_request.ik_request.group_name = group_name
+        service_request.ik_request.pose_stamped = request.goal
+        service_request.ik_request.pose_stamped.header.stamp = rospy.Time(0)
+        service_request.ik_request.avoid_collisions = False
+        self._compute_ik.wait_for_service()
+        service_response = self._compute_ik(service_request)
+        if service_response.error_code.val != moveit_msgs.msg.MoveItErrorCodes.SUCCESS:
+            return MoveArmIkResponse(False)
+
+        joint_names = service_response.solution.joint_state.name
+        joint_positions = service_response.solution.joint_state.position
+        filtered_joint_names = []
+        filtered_joint_positions = []
+        for name, position in zip(joint_names, joint_positions):
+            if name in robot_joint_names:
+                filtered_joint_names.append(name)
+                filtered_joint_positions.append(position)
+
+        goal = JointTrajectoryGoal()
+        goal.trajectory.header.stamp = rospy.Time.now()
+        goal.trajectory.joint_names = filtered_joint_names
+        goal.trajectory.points = [
+            JointTrajectoryPoint(positions=filtered_joint_positions,
+                                 time_from_start=rospy.Duration(5))
+        ]
+        traj_action.send_goal(goal)
+        traj_action.wait_for_result()
+
+        success = True
+        return MoveArmIkResponse(success)
+
+    def move_arm_cart(self, request):
         """Moves the arm using MoveIt's Cartesian path planner.
+
+        DEPRECATED: No service actually uses this function.
 
         This moves the arm in a straight line to the goal pose. Returns True if
         the execution succeeded, False otherwise (e.g., the arm gets stuck).
