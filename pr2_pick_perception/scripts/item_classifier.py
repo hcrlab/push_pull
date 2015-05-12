@@ -39,6 +39,8 @@ class ItemClassifier(object):
         labels: A list of item names to possibly classify the descriptor as.
         """
         histogram = np.array(descriptor.histogram.histogram)
+        if len(labels) == 0:
+            raise rospy.ServiceException('Can\'t classify item with no labels.')
         second_min_distance = None
         min_distance = None
         best_label = None
@@ -97,6 +99,8 @@ class TargetItemClassifier(object):
             most_confident_index = None
             most_confident_label = None
             highest_confidence = None
+            if len(possible_descriptors) == 0:
+                raise rospy.ServiceException('No possible descriptors.')
             for i, descriptor in possible_descriptors:
                 label, confidence = self._item_classifier.classify(
                     descriptor, possible_labels)
@@ -121,6 +125,8 @@ class TargetItemClassifier(object):
             else:
                 rospy.logerr('Most confident label {} not possible! {}'.format(
                     most_confident_label, possible_labels))
+                raise rospy.ServiceException('Most confident label {} not possible! {}, {}'.format(
+                    most_confident_label, possible_labels, possible_descriptors))
             possible_descriptors = (
                 possible_descriptors[:i] + possible_descriptors[i + 1:]
             )
