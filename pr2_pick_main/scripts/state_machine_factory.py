@@ -14,6 +14,7 @@ from pr2_pick_perception.msg import Object
 from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform, PlanarPrincipalComponents, GetItemDescriptor, ClassifyTargetItem
+from pr2_pick_perception.srv import CountPointsInBox
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
 import states
@@ -103,6 +104,8 @@ class StateMachineBuilder(object):
                                                  GetItemDescriptor),
             'classify_target_item': rospy.ServiceProxy('item_classifier/classify_target_item',
                                                        ClassifyTargetItem),
+            'count_points_in_box': rospy.ServiceProxy('perception/count_points_in_box',
+                                                       CountPointsInBox),
 
             # Contest
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),

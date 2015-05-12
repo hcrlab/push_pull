@@ -98,6 +98,7 @@ add_service_files(
   PlanarPrincipalComponents.srv
   GetItemDescriptor.srv
   ClassifyTargetItem.srv
+  CountPointsInBox.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -183,6 +184,10 @@ add_executable(item_descriptor_service_node
   src/item_descriptor_service.cpp
 )
 
+add_executable(count_points_in_box_service_node
+  src/count_points_in_box_service.cpp
+)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 
@@ -207,6 +212,11 @@ add_dependencies(planar_pca_service_node
 )
 
 add_dependencies(item_descriptor_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+add_dependencies(count_points_in_box_service_node
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
@@ -249,6 +259,9 @@ target_link_libraries(planar_pca_service_node
 target_link_libraries(item_descriptor_service_node
   ${catkin_LIBRARIES}
   pcl_lib
+)
+target_link_libraries(count_points_in_box_service_node
+  ${catkin_LIBRARIES}
 )
 
 #############
