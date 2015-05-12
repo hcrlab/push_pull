@@ -409,7 +409,7 @@ bool ObjDetector::detectCallback(
         pcl::transformPointCloud(*m.cloud, *modelCloudMatched,
                                  detection_transform2);
         pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>
-            match_cloud_handler(modelCloudMatched, 0, 255, 0);
+            match_cloud_handler(modelCloudMatched, 0, 0, 255);
         vis->addPointCloud(modelCloudMatched, match_cloud_handler,
                            visMatchName.str() + "_cloud");
         vis->addText3D(
