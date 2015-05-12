@@ -29,7 +29,7 @@
 
   <!-- Shelf services -->
   <!-- If you want debugging output, run these launch files separately on your local machine. -->
-  <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_KinPR2.launch">
+  <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_LIDAR_PR2.launch">
     <arg name="debug" value="false" />
   </include>
   <include unless="$(arg debug_crop)" file="$(find pr2_pick_perception)/launch/crop_cellA.launch">
@@ -43,6 +43,7 @@
   </node>
 
   <node pkg="pr2_pick_perception" type="item_classifier.py" name="item_classifier" args="$(find pr2_pick_contest)/config/item_models.json" respawn="true" />
+  <node pkg="pr2_pick_perception" type="count_points_in_box_service_node" name="count_points_in_box_service_node" respawn="true" />
 
   <!-- Utilities -->
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />

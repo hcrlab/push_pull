@@ -46,6 +46,7 @@ class FindShelf(smach.State):
         reasonable pose from the service, and pose is a PoseStamped message
         with the shelf's pose in the odom_combined frame.
         '''
+        rospy.sleep(10)
         success = False
         shelf_ps = PoseStamped()  # The shelf pose returned by the service.
         shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
