@@ -60,11 +60,14 @@ class UpdatePlan(smach.State):
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         # take another pass at all the bins that did not succeed
+        # TODO(jstn): this might just infinite loop on the first unsuccessful bin if it
+        # can't grasp from here.
         for bin_id in self._preferred_order:
             has_target_item, target_item, bin_items = self.bin_contains_target_item(bin_id)
             if not userdata.bin_data[bin_id].succeeded and has_target_item:
                 userdata.next_bin = bin_id
-                userdata.next_item = target_item
+                userdata.next_target = target_item
+                userdata.next_bin_items = bin_items
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
         return outcomes.UPDATE_PLAN_NO_MORE_OBJECTS
