@@ -27,7 +27,7 @@
    <param name="min_cluster_points" value="100000" />
    -->
 
-   <param name="bottom_crop_offset" value="0.015" />
+   <param name="bottom_crop_offset" value="0.045" />
    <param name="top_crop_offset" value="0.04" />
    <param name="left_crop_offset" value="0.025" />
    <param name="right_crop_offset" value="0.025" />
