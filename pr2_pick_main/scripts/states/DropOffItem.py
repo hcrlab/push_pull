@@ -188,7 +188,7 @@ class DropOffItem(smach.State):
         rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = 0.45
         self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
+        self._moveit_move_arm(pose_target, 0.03, 0.1, 0, "right_arm", False)
 
         # open gripper
         rospy.loginfo('Open gripper')
