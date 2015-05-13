@@ -70,6 +70,10 @@ def main(
                 drive_to_pose(pose=sm.userdata.start_pose,
                               linearVelocity=0.1,
                               angularVelocity=0.1)
+                set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
+                set_grippers.wait_for_service()
+                set_grippers(True, True, -1)
+
             except:
                 pass
     if auto_reset:
