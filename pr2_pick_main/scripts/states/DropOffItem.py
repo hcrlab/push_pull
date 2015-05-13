@@ -10,7 +10,7 @@ import tf
 import visualization as viz
 
 
-class DropOffItem(smach.State):
+class DropOffItem(smach.State): 
     """Deposits the item into the order bin.
     """
     name = 'DROP_OFF_ITEM'
