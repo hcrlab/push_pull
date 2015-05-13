@@ -74,6 +74,14 @@ class StartPose(smach.State):
         rospy.loginfo('Setting start pose.')
         self._tts.publish('Setting start pose.')
 
+        self._move_head.wait_for_service()
+        move_head_success = self._move_head(1.5, 0, 1.3, 'base_footprint')
+        if not grippers_success:
+            rospy.logerr('StartPose: MoveHead failed')
+            self._tts.publish('Failed to move head.')
+        else:
+            rospy.loginfo('StartPose: MoveHead success')
+
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, True)
         if not tuck_success:
@@ -97,14 +105,6 @@ class StartPose(smach.State):
             self._tts.publish('Failed to close grippers.')
         else:
             rospy.loginfo('StartPose: SetGrippers success')
-
-        self._move_head.wait_for_service()
-        move_head_success = self._move_head(1.5, 0, 1.3, 'base_footprint')
-        if not grippers_success:
-            rospy.logerr('StartPose: MoveHead failed')
-            self._tts.publish('Failed to move head.')
-        else:
-            rospy.loginfo('StartPose: MoveHead success')
 
         if self._start_pose is None:
             try:
