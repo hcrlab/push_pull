@@ -378,10 +378,12 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2):
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2):
             in_bounds = False
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2):
+            rospy.loginfo("Pose >  y bounds")
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.03)/2):
             in_bounds = False
+            rospy.loginfo("Pose <  y bounds")
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -395,6 +397,7 @@ class Grasp(smach.State):
             pose_in_base_footprint.pose.position.z = pose_in_base_footprint.pose.position.z
         else:
             in_bounds = False
+            rospy.loginfo("Pose not within z bounds")
 
         pose_in_frame = self._tf_listener.transformPose(frame,
                                                         pose_in_bin_frame)
@@ -462,6 +465,14 @@ class Grasp(smach.State):
 
                 pre_grasp_in_axis_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
                                                                 pre_grasp_in_base_footprint)
+
+                grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
+                                                                grasp_in_base_footprint)
+                grasp_in_bin_frame.pose.position.y -= 0.015
+
+                grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                grasp_in_bin_frame)
+
                 # # Check if within bin_width
                 # if pre_grasp_in_axis_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2):
                 #     pre_grasp_in_axis_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2
@@ -511,7 +522,17 @@ class Grasp(smach.State):
                 pre_grasp_in_axis_frame, pre_grasp_in_base_footprint = self.move_pose_within_bounds(pre_grasp_in_axis_frame, 
                                                                 self.shelf_bottom_height, self.shelf_height, 
                                                                 self.shelf_width, bin_id, 'object_axis', False)
+                grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
+                                                                grasp_in_base_footprint)
 
+                grasp_in_bin_frame.pose.position.y -= 0.015
+
+                grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                grasp_in_bin_frame)
+                grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                grasp_in_base_footprint)
+
+                
             grasp_in_bounds = self.check_pose_within_bounds(grasp_in_axis_frame, 
                                                                 self.shelf_bottom_height, self.shelf_height, 
                                                                 self.shelf_width, bin_id, 'object_axis', False)
@@ -551,9 +572,15 @@ class Grasp(smach.State):
 
             # Make pitched down
             pitched_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame,
-                                                             0, 3.14/6, 0, 0, 0, 0.05)
+                                                             0, 3.14/6, 0, 0, 0, 0.0)
             pitched_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                 pitched_grasp_in_axis_frame)
+
+            pitched_grasp_in_base_footprint = self.modify_grasp(pitched_grasp_in_base_footprint,
+                                                             0, 0, 0, 0, 0, 0.07)
+
+            pitched_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                pitched_grasp_in_base_footprint)
 
             grasp_in_bounds = self.check_pose_within_bounds(pitched_grasp_in_axis_frame, 
                                                                 self.shelf_bottom_height, self.shelf_height, 
@@ -833,7 +860,7 @@ class Grasp(smach.State):
         # Commented out for testing purposes
         grasping_pairs = grasping_pairs + moveit_simple_grasps + pca_grasps
 
-        rospy.loginfo("Number of grasps: {}".format(grasping_pairs))
+        #rospy.loginfo("Number of grasps: {}".format(grasping_pairs))
 
         return grasping_pairs
 
@@ -842,9 +869,6 @@ class Grasp(smach.State):
         Check for intersections between gripper and point cloud
         """
         # may want to make a class
-        viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
-        viz.publish_gripper(self._im_server, grasp["pre_grasp"], 'pre_grasp_target')
-
         # Check if enough points will be in gripper
         rospy.loginfo("Just checking grasp quality") 
         y_offset = 0.005
@@ -1230,6 +1254,11 @@ class Grasp(smach.State):
         for (idx, grasp) in enumerate(grasps):
             rospy.loginfo("Now evaluating grasp: {}".format(idx))
 
+            viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
+            viz.publish_gripper(self._im_server, grasp["pre_grasp"], 'pre_grasp_target')
+
+
+
             grasp = self.get_grasp_intersections(grasp)
 
             rospy.loginfo("Evaluating Grasp {}".format(grasp['id']))
@@ -1271,6 +1300,11 @@ class Grasp(smach.State):
 
                     #grasp["pre_grasp"] =  pre_grasp_in_base_footprint
 
+                    viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
+                    viz.publish_gripper(self._im_server, grasp["pre_grasp"], 'pre_grasp_target')
+
+
+
                     rotated = False
                     if 'rolled' in grasp:
                         rotated = grasp['rolled']
@@ -1279,6 +1313,7 @@ class Grasp(smach.State):
                                                                 self.shelf_bottom_height, self.shelf_height, 
                                                                 self.shelf_width, self.bin_id, 'base_footprint', rotated)
                     if not grasp_in_bounds:
+                        rospy.loginfo("Grasp not in bounds")
                         break
 
                     grasp = self.get_grasp_intersections(grasp)
