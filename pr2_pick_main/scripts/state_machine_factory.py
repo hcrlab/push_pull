@@ -507,6 +507,7 @@ class StateMachineBuilder(object):
                 },
                 remapping={
                     'debug': 'debug',
+                    'bin_id': 'current_bin'
                 }
             )
             smach.StateMachine.add(

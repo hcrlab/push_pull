@@ -17,8 +17,8 @@ class FindShelf(smach.State):
     '''
     name = 'FIND_SHELF'
 
-    def __init__(self, tts, localize_object, set_static_tf, markers, tf_listener,
-                 **kwargs):
+    def __init__(self, tts, localize_object, set_static_tf, markers,
+                 tf_listener, **kwargs):
         '''Constructor for this state.
 
         Args:
@@ -28,7 +28,7 @@ class FindShelf(smach.State):
         smach.State.__init__(
             self,
             outcomes=[outcomes.FIND_SHELF_SUCCESS, outcomes.FIND_SHELF_FAILURE],
-            input_keys=['debug'])
+            input_keys=['debug', 'bin_id'])
         self._localize_object = localize_object
         self._set_static_tf = set_static_tf
         self._tf_listener = tf_listener
@@ -87,12 +87,13 @@ class FindShelf(smach.State):
             pitch_degs = 180 * pitch / math.pi
             yaw_degs = 180 * yaw / math.pi
             rospy.loginfo('roll: {}, pitch: {}, yaw: {}'.format(
-                180*roll/math.pi, pitch_degs, yaw_degs))
+                180 * roll / math.pi, pitch_degs, yaw_degs))
 
             # Check that the response is reasonable.
             if shelf_odom.pose.position.z < -0.30 or shelf_odom.pose.position.z > 0.30:
                 rospy.logwarn('[FindShelf]: Shelf not on the ground.')
-                self._tts.publish('Shelf not on the ground for try {}'.format(try_num))
+                self._tts.publish(
+                    'Shelf not on the ground for try {}'.format(try_num))
                 continue
             if pitch_degs > 4 or pitch_degs < -4:
                 self._tts.publish('Shelf too tilted for try {}'.format(try_num))
@@ -120,7 +121,10 @@ class FindShelf(smach.State):
         shelf_odom.pose.position.z = 0
 
         # TODO(jstn): Hack! Hack! Hack! ###############################
-        shelf_odom.pose.position.x += 0.04
+        shelf_odom.pose.position.x += 0.03
+        if (userdata.bin_id is None or userdata.bin_id == 'J' or userdata.bin_id
+            == 'G' or userdata.bin_id == 'D' or userdata.bin_id == 'A'):
+            shelf_odom.pose.position.x += 0.03
         ###############################################################
 
         self._tts.publish('Found shelf.')
@@ -137,7 +141,7 @@ class FindShelf(smach.State):
 
         # Publish marker
         viz.publish_shelf(self._markers, shelf_odom)
-        
+
         # Set up static a transform for each bin relative to shelf.
         # Bin origin is the front center of the bin opening, equidistant
         # from top edge and bottom edge of bin.
@@ -153,32 +157,54 @@ class FindShelf(smach.State):
         right_column_y = -.2921
 
         bin_translations = {
-            'A': Vector3(x=-shelf_depth/2., y=left_column_y, z=top_row_z),
-            'B': Vector3(x=-shelf_depth/2., y=center_column_y, z=top_row_z),
-            'C': Vector3(x=-shelf_depth/2., y=right_column_y, z=top_row_z),
-            'D': Vector3(x=-shelf_depth/2., y=left_column_y, z=second_row_z),
-            'E': Vector3(x=-shelf_depth/2., y=center_column_y, z=second_row_z),
-            'F': Vector3(x=-shelf_depth/2., y=right_column_y, z=second_row_z),
-            'G': Vector3(x=-shelf_depth/2., y=left_column_y, z=third_row_z),
-            'H': Vector3(x=-shelf_depth/2., y=center_column_y, z=third_row_z),
-            'I': Vector3(x=-shelf_depth/2., y=right_column_y, z=third_row_z),
-            'J': Vector3(x=-shelf_depth/2., y=left_column_y, z=bottom_row_z),
-            'K': Vector3(x=-shelf_depth/2., y=center_column_y, z=bottom_row_z),
-            'L': Vector3(x=-shelf_depth/2., y=right_column_y, z=bottom_row_z),
+            'A': Vector3(x=-shelf_depth / 2.,
+                         y=left_column_y,
+                         z=top_row_z),
+            'B': Vector3(x=-shelf_depth / 2.,
+                         y=center_column_y,
+                         z=top_row_z),
+            'C': Vector3(x=-shelf_depth / 2.,
+                         y=right_column_y,
+                         z=top_row_z),
+            'D': Vector3(x=-shelf_depth / 2.,
+                         y=left_column_y,
+                         z=second_row_z),
+            'E': Vector3(x=-shelf_depth / 2.,
+                         y=center_column_y,
+                         z=second_row_z),
+            'F': Vector3(x=-shelf_depth / 2.,
+                         y=right_column_y,
+                         z=second_row_z),
+            'G': Vector3(x=-shelf_depth / 2.,
+                         y=left_column_y,
+                         z=third_row_z),
+            'H': Vector3(x=-shelf_depth / 2.,
+                         y=center_column_y,
+                         z=third_row_z),
+            'I': Vector3(x=-shelf_depth / 2.,
+                         y=right_column_y,
+                         z=third_row_z),
+            'J': Vector3(x=-shelf_depth / 2.,
+                         y=left_column_y,
+                         z=bottom_row_z),
+            'K': Vector3(x=-shelf_depth / 2.,
+                         y=center_column_y,
+                         z=bottom_row_z),
+            'L': Vector3(x=-shelf_depth / 2.,
+                         y=right_column_y,
+                         z=bottom_row_z),
         }
 
         for (bin_id, translation) in bin_translations.items():
             transform = TransformStamped(
-                header=Header(
-                    frame_id='shelf',
-                    stamp=rospy.Time.now(),
-                ),
-                transform=Transform(
-                    translation=translation,
-                    rotation=Quaternion(w=1, x=0, y=0, z=0),
-                ),
-                child_frame_id='bin_{}'.format(bin_id),
-            )
+                header=Header(frame_id='shelf',
+                              stamp=rospy.Time.now(), ),
+                transform=Transform(translation=translation,
+                                    rotation=Quaternion(w=1,
+                                                        x=0,
+                                                        y=0,
+                                                        z=0), ),
+                child_frame_id='bin_{}'.format(bin_id), )
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
 
