@@ -3,6 +3,8 @@
 
 from bin_data import BinData
 from pr2_pick_manipulation.srv import DriveToPose
+from pr2_pick_manipulation.srv import SetGrippers
+from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
 import argparse
 import outcomes
 import rospy
@@ -74,6 +76,14 @@ def main(mock=False,
 
     if auto_reset:
         rospy.on_shutdown(on_shutdown)
+
+    # Set torso height low initially.
+    try:
+        move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
+        move_torso.wait_for_service()
+        torso_success = move_torso(MoveTorsoRequest.MIN_HEIGHT)
+    except:
+        pass
 
     try:
         sis = smach_ros.IntrospectionServer(

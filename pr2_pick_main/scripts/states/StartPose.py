@@ -1,6 +1,4 @@
 from pr2_pick_main import handle_service_exceptions
-from pr2_pick_manipulation.srv import MoveTorso, MoveTorsoRequest
-from pr2_pick_manipulation.srv import SetGrippers
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from geometry_msgs.msg import PoseStamped
@@ -16,15 +14,12 @@ class StartPose(smach.State):
     """
     name = 'START_POSE'
 
-    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head,
-                 tf_listener, **kwargs):
+    def __init__(self, tts, tuck_arms, move_head, tf_listener, **kwargs):
         """Constructor for this state.
 
         Args:
           tts: A publisher for the TTS node
           tuck_arms: The tuck arms service proxy.
-          move_torso: The torso service proxy.
-          set_grippers: The grippers service proxy.
           move_head: The head service proxy.
         """
         smach.State.__init__(
@@ -34,8 +29,6 @@ class StartPose(smach.State):
             output_keys=['start_pose'])
         self._tts = tts
         self._tuck_arms = tuck_arms
-        self._move_torso = move_torso
-        self._set_grippers = set_grippers
         self._move_head = move_head
         self._tf_listener = tf_listener
         self._markers = kwargs['markers']
@@ -73,7 +66,7 @@ class StartPose(smach.State):
 
         self._move_head.wait_for_service()
         move_head_success = self._move_head(1.5, 0, 1.3, 'base_footprint')
-        if not grippers_success:
+        if not move_head_success:
             rospy.logerr('StartPose: MoveHead failed')
             self._tts.publish('Failed to move head.')
         else:
@@ -86,14 +79,6 @@ class StartPose(smach.State):
             self._tts.publish('Failed to tuck arms.')
         else:
             rospy.loginfo('StartPose: TuckArms success')
-
-        self._move_torso.wait_for_service()
-        torso_success = self._move_torso(MoveTorsoRequest.MIN_HEIGHT)
-        if not torso_success:
-            rospy.logerr('StartPose: MoveTorso failed')
-            self._tts.publish('Failed to set torso.')
-        else:
-            rospy.loginfo('StartPose: MoveTorso success')
 
         if self._start_pose is None:
             try:
@@ -120,8 +105,7 @@ class StartPose(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
-        if (tuck_success and torso_success and 
-            move_head_success):
+        if tuck_success and move_head_success:
             return outcomes.START_POSE_SUCCESS
         else:
             self._tts.publish('Start pose failed.')
