@@ -136,7 +136,7 @@
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": 15,
+    "grasp_effort": 30,
     "color_histograms": [
       [469, 542, 572, 1773, 2201, 389, 209, 557, 2252, 447, 211, 446],
       [816, 1154, 1336, 2808, 2800, 989, 997, 1328, 3212, 1026, 735, 1141]
