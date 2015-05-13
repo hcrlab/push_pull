@@ -120,7 +120,7 @@ class FindShelf(smach.State):
         shelf_odom.pose.position.z = 0
 
         # TODO(jstn): Hack! Hack! Hack! ###############################
-        shelf_odom.pose.position.x += 0.03
+        shelf_odom.pose.position.x += 0.04
         ###############################################################
 
         self._tts.publish('Found shelf.')
