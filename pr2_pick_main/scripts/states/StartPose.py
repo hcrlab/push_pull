@@ -95,14 +95,6 @@ class StartPose(smach.State):
         else:
             rospy.loginfo('StartPose: MoveTorso success')
 
-        self._set_grippers.wait_for_service()
-        grippers_success = self._set_grippers(False, False, -1)
-        if not grippers_success:
-            rospy.logerr('StartPose: SetGrippers failed')
-            self._tts.publish('Failed to close grippers.')
-        else:
-            rospy.loginfo('StartPose: SetGrippers success')
-
         if self._start_pose is None:
             try:
                 here = PoseStamped()
@@ -128,7 +120,7 @@ class StartPose(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
-        if (tuck_success and torso_success and grippers_success and
+        if (tuck_success and torso_success and 
             move_head_success):
             return outcomes.START_POSE_SUCCESS
         else:
