@@ -492,7 +492,7 @@ class StateMachineBuilder(object):
                 states.StartPose(**services),
                 transitions={
                     outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.START_POSE_FAILURE: states.StartPose.name
                 },
                 remapping={
                     'start_pose': 'start_pose'
