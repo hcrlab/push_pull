@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 '''The main state machine for the picking challenge. '''
 
 from bin_data import BinData
@@ -13,17 +12,15 @@ from state_machine_factory import StateMachineBuilder
 import states
 
 
-def main(
-    mock=False,
-    test_drop_off_item=False,
-    test_grasp_tool=False,
-    test_move_to_bin=False,
-    test_push_item=False,
-    capture_item_descriptor=False,
-    debug=False,
-    auto_reset=True,
-    attempts_per_bin=3
-):
+def main(mock=False,
+         test_drop_off_item=False,
+         test_grasp_tool=False,
+         test_move_to_bin=False,
+         test_push_item=False,
+         capture_item_descriptor=False,
+         debug=False,
+         auto_reset=True,
+         attempts_per_bin=3):
     rospy.init_node('pr2_pick_state_machine')
 
     if test_drop_off_item:
@@ -37,12 +34,8 @@ def main(
     else:
         state_machine_type = StateMachineBuilder.DEFAULT
 
-    sm = (
-        StateMachineBuilder()
-        .set_mock(mock)
-        .set_state_machine(state_machine_type)
-        .build()
-    )
+    sm = (StateMachineBuilder().set_mock(mock)
+          .set_state_machine(state_machine_type).build())
 
     # Whether to step through checkpoints.
     sm.userdata.debug = debug
@@ -53,7 +46,8 @@ def main(
     # Holds data about the state of each bin.
     sm.userdata.bin_data = {}
     for bin_id in 'ABCDEFGHIJKL':
-        sm.userdata.bin_data[bin_id] = BinData(id, False, False, attempts_per_bin)
+        sm.userdata.bin_data[bin_id] = BinData(id, False, False,
+                                               attempts_per_bin)
 
     # The starting pose of the robot, in odom_combined.
     sm.userdata.start_pose = None
@@ -70,12 +64,14 @@ def main(
                 drive_to_pose(pose=sm.userdata.start_pose,
                               linearVelocity=0.1,
                               angularVelocity=0.1)
-                set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
+                set_grippers = rospy.ServiceProxy('set_grippers_service',
+                                                  SetGrippers)
                 set_grippers.wait_for_service()
                 set_grippers(True, True, -1)
 
             except:
                 pass
+
     if auto_reset:
         rospy.on_shutdown(on_shutdown)
 
@@ -98,63 +94,59 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        '--test_drop_off_item', action='store_true',
+        '--test_drop_off_item',
+        action='store_true',
         help=('True to create a minimal state machine for testing the'
-              'DropOffItem state.')
-    )
+              'DropOffItem state.'))
     group.add_argument(
-        '--test_grasp_tool', action='store_true',
+        '--test_grasp_tool',
+        action='store_true',
         help=('True to create a minimal state machine for testing the'
-              'GraspTool state.')
-    )
+              'GraspTool state.'))
     group.add_argument(
-        '--test_move_to_bin', action='store_true',
+        '--test_move_to_bin',
+        action='store_true',
         help=('True to create a minimal state machine for testing the'
-              'MoveToBin state.')
-    )
+              'MoveToBin state.'))
     group.add_argument(
-        '--test_push_item', action='store_true',
+        '--test_push_item',
+        action='store_true',
         help=('True to create a minimal state machine for testing the'
-              'PushItem state.')
-    )
+              'PushItem state.'))
     group.add_argument(
-        '--capture_item_descriptor', action='store_true',
+        '--capture_item_descriptor',
+        action='store_true',
         help=('True to create a minimal state machine for capturing item '
-              'descriptors.')
-    )
+              'descriptors.'))
 
     parser.add_argument(
-        '--mock', action='store_true',
+        '--mock',
+        action='store_true',
         help=('True if you want to create a state machine with mock robot'
-            ' components.')
-    )
+              ' components.'))
     parser.add_argument(
-        '--debug', action='store_true',
-        help=('True if you want to step through debugging checkpoints.')
-    )
+        '--debug',
+        action='store_true',
+        help=('True if you want to step through debugging checkpoints.'))
     parser.add_argument(
-        '--auto_reset', action='store_true', default=True,
+        '--auto_reset',
+        action='store_true',
+        default=True,
         help=('Set to true to make the robot to drive back to its starting'
-              ' point when the state machine exits.')
-    )
-    parser.add_argument('--attempts_per_bin', default='3', type=int,
+              ' point when the state machine exits.'))
+    parser.add_argument(
+        '--attempts_per_bin',
+        default='3',
+        type=int,
         help=('Number of times to attempt to grasp each item before'
-              ' giving up.')
-    )
+              ' giving up.'))
     args = parser.parse_args(args=rospy.myargv()[1:])
     sim_time = rospy.get_param('use_sim_time', False)
     if sim_time != False:
         rospy.logwarn('Warning: use_sim_time was set to true. Setting back to '
-            'false. Verify your launch files.')
+                      'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
-    main(
-        args.mock,
-        args.test_drop_off_item,
-        args.test_grasp_tool,
-        args.test_move_to_bin,
-        args.test_push_item,
-        args.capture_item_descriptor,
-        args.debug,
-        args.auto_reset,
-        args.attempts_per_bin
-    )
+    main(args.mock, args.test_drop_off_item, args.test_grasp_tool,
+         args.test_move_to_bin, args.test_push_item,
+         args.capture_item_descriptor, args.debug, args.auto_reset,
+         args.attempts_per_bin)
