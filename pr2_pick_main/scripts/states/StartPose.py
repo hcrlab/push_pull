@@ -16,7 +16,8 @@ class StartPose(smach.State):
     """
     name = 'START_POSE'
 
-    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head, tf_listener, **kwargs):
+    def __init__(self, tts, tuck_arms, move_torso, set_grippers, move_head,
+                 tf_listener, **kwargs):
         """Constructor for this state.
 
         Args:
@@ -26,14 +27,11 @@ class StartPose(smach.State):
           set_grippers: The grippers service proxy.
           move_head: The head service proxy.
         """
-        smach.State.__init__(self,
-            outcomes=[
-                outcomes.START_POSE_SUCCESS,
-                outcomes.START_POSE_FAILURE
-            ],
+        smach.State.__init__(
+            self,
+            outcomes=[outcomes.START_POSE_SUCCESS, outcomes.START_POSE_FAILURE],
             input_keys=['debug'],
-            output_keys=['start_pose']
-        )
+            output_keys=['start_pose'])
         self._tts = tts
         self._tuck_arms = tuck_arms
         self._move_torso = move_torso
@@ -56,19 +54,18 @@ class StartPose(smach.State):
             shelf_in_shelf.header.stamp = rospy.Time(0)
             shelf_in_shelf.pose.orientation.w = 1
             shelf_in_odom = self._tf_listener.transformPose('odom_combined',
-                shelf_in_shelf)
+                                                            shelf_in_shelf)
             self._start_pose.pose.orientation = shelf_in_odom.pose.orientation
         except Exception as e:
             rospy.logerr(e)
-            rospy.logerr(
-                'No transform between {} and {} in FindShelf'.format(
-                    'shelf', self._start_pose.header.frame_id))
+            rospy.logerr('No transform between {} and {} in FindShelf'.format(
+                'shelf', self._start_pose.header.frame_id))
 
     def _drive_to_start_pose(self):
         viz.publish_base(self._markers, self._start_pose)
         self._drive_to_pose.wait_for_service()
         self._drive_to_pose(self._start_pose, 0.1, 0.1)
-        
+
     @handle_service_exceptions(outcomes.START_POSE_FAILURE)
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
@@ -97,7 +94,7 @@ class StartPose(smach.State):
             self._tts.publish('Failed to set torso.')
         else:
             rospy.loginfo('StartPose: MoveTorso success')
-        
+
         self._set_grippers.wait_for_service()
         grippers_success = self._set_grippers(False, False, -1)
         if not grippers_success:
@@ -118,7 +115,8 @@ class StartPose(smach.State):
                 here.pose.orientation.x = 0
                 here.pose.orientation.y = 0
                 here.pose.orientation.z = 0
-                self._start_pose = self._tf_listener.transformPose('odom_combined', here)
+                self._start_pose = self._tf_listener.transformPose(
+                    'odom_combined', here)
                 userdata.start_pose = self._start_pose
             except:
                 rospy.logerr('No transform for start pose.')
@@ -129,9 +127,9 @@ class StartPose(smach.State):
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
-        
-        if (tuck_success and torso_success and grippers_success
-                and move_head_success):
+
+        if (tuck_success and torso_success and grippers_success and
+            move_head_success):
             return outcomes.START_POSE_SUCCESS
         else:
             self._tts.publish('Start pose failed.')
