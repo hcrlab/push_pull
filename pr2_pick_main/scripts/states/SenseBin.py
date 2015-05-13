@@ -27,7 +27,8 @@ class SenseBin(smach.State):
                       outcomes.SENSE_BIN_FAILURE],
             input_keys=['bin_id', 'debug', 'current_target',
                         'current_bin_items'],
-            output_keys=['clusters', 'target_cluster', 'target_descriptor', 'target_model'])
+            output_keys=['clusters', 'target_cluster', 'target_descriptor',
+                         'target_model'])
         self._tts = tts
         self._crop_shelf = crop_shelf
         self._markers = markers
@@ -69,8 +70,7 @@ class SenseBin(smach.State):
         descriptors = []
         for i, cluster in enumerate(clusters):
             # Publish visualization
-            points = pc2.read_points(cluster.pointcloud,
-                                     skip_nans=True)
+            points = pc2.read_points(cluster.pointcloud, skip_nans=True)
             point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
             if len(point_list) == 0:
                 rospy.logwarn('[SenseBin]: Cluster with 0 points returned!')
@@ -84,6 +84,13 @@ class SenseBin(smach.State):
             response = self._get_item_descriptor(cluster=cluster)
             descriptors.append(response.descriptor)
 
+        if len(userdata.current_bin_items) != len(descriptors):
+            rospy.logwarn((
+                '[SenseBin] Only {} descriptors from {} clusters returned, '
+                'expected {} items in bin'
+            ).format(len(descriptors), len(clusters),
+                     len(userdata.current_bin_items)))
+
         # Classify which cluster is the target item.
         if len(descriptors) == 0:
             rospy.logerr('[SenseBin]: No descriptors found!')
@@ -96,9 +103,9 @@ class SenseBin(smach.State):
         index = response.target_item_index
         userdata.target_cluster = clusters[index]
         userdata.target_descriptor = descriptors[index]
-        rospy.loginfo('Classified cluster #{} as target item ({} confidence)'.format(
-            index, response.confidence
-        ))
+        rospy.loginfo(
+            'Classified cluster #{} as target item ({} confidence)'.format(
+                index, response.confidence))
 
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
