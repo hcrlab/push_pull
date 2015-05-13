@@ -516,7 +516,7 @@ class StateMachineBuilder(object):
                     outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                     outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
                     outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.UPDATE_PLAN_FAILURE: states.StartPose.name
                 },
                 remapping={
                     'bin_data': 'bin_data',
@@ -531,7 +531,7 @@ class StateMachineBuilder(object):
                 states.MoveToBin(**services),
                 transitions={
                     outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
-                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.MOVE_TO_BIN_FAILURE: states.UpdatePlan.name
                 },
                 remapping={
                     'bin_id': 'current_bin'
