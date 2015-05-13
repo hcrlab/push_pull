@@ -53,7 +53,7 @@ class SenseBin(smach.State):
         self._tuck_arms(tuck_left=True, tuck_right=True)
         # If the arms are already tucked (usually true), then give some
         # time for the point cloud to update.
-        rospy.sleep(5)
+        rospy.sleep(2)
 
         # Get clusters
         request = CropShelfRequest(cellID=userdata.bin_id)
