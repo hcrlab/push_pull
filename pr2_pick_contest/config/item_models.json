@@ -149,7 +149,7 @@
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": 20,
     "color_histograms": [
       [178, 111, 63, 295, 121, 181, 159, 186, 82, 117, 164, 284],
       [4, 15, 57, 715, 18, 18, 77, 678, 40, 25, 79, 647]
