@@ -38,7 +38,7 @@ class CaptureItemDescriptor(smach.State):
         rospy.sleep(5)
         self._tuck_arms.wait_for_service()
         self._tuck_arms(tuck_left=True, tuck_right=True)
-        request = CropShelfRequest(cellID=userdata.bin_id)
+        request = CropShelfRequest(cellID=userdata.bin_id, num_clusters=2)
         response = self._crop_shelf(request)
         userdata.clusters = response.locations.clusters
         rospy.loginfo('[CaptureItemDescriptor] Found {} clusters.'.format(
