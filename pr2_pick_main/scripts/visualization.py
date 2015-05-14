@@ -128,8 +128,8 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     marker.color.b = random.random()
     marker.color.a = 1
     marker.points = points
-    marker.scale.x = 0.01
-    marker.scale.y = 0.01
+    marker.scale.x = 0.002
+    marker.scale.y = 0.002
     marker.lifetime = rospy.Duration()
 
     center = [0, 0, 0]
