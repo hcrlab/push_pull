@@ -43,31 +43,34 @@ class CaptureItemDescriptor(smach.State):
         userdata.clusters = response.locations.clusters
         rospy.loginfo('[CaptureItemDescriptor] Found {} clusters.'.format(
             len(response.locations.clusters)))
-        if len(response.locations.clusters) != 1:
-            raw_input('Need exactly 1 item. Press enter to try again: ')
+        #if len(response.locations.clusters) != 1:
+        #    raw_input('Need exactly 1 item. Press enter to try again: ')
 
-        cluster = response.locations.clusters[0]
-        points = pc2.read_points(cluster.pointcloud, skip_nans=True)
-        point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
-        viz.publish_cluster(self._markers, point_list,
-                            'bin_{}'.format(userdata.bin_id),
-                            'bin_{}_items'.format(userdata.bin_id), 0)
+        for i, cluster in enumerate(response.locations.clusters):
+            points = pc2.read_points(cluster.pointcloud, skip_nans=True)
+            point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
+            if len(point_list) == 0:
+                rospy.logwarn('Skipping cluster of size 0')
+                continue
+            viz.publish_cluster(self._markers, point_list,
+                                'bin_{}'.format(userdata.bin_id),
+                                'bin_{}_items'.format(userdata.bin_id), i)
 
-        self._get_item_descriptor.wait_for_service()
-        descriptor = self._get_item_descriptor(cluster).descriptor
+            self._get_item_descriptor.wait_for_service()
+            descriptor = self._get_item_descriptor(cluster).descriptor
 
-        rospy.loginfo('Color histogram ({} bins):\n{}'.format(
-            descriptor.histogram.num_bins, descriptor.histogram.histogram))
+            rospy.loginfo('Color histogram ({} bins):\n{}'.format(
+                descriptor.histogram.num_bins, descriptor.histogram.histogram))
 
-        bounding_box = descriptor.planar_bounding_box
-        bbox_pose = bounding_box.pose
-        bbox_dimensions = bounding_box.dimensions
-        rospy.loginfo('Bounding box centroid: {}'.format(bbox_pose))
-        rospy.loginfo('Bounding box dimensions: {}'.format(bbox_dimensions))
-        viz.publish_bounding_box(
-            self._markers, bbox_pose, bbox_dimensions.x, bbox_dimensions.y,
-            bbox_dimensions.z, 0.33, 0.69, 0.31, 0.25, 1234)
-        viz.publish_pose(self._markers, bbox_pose, 1, 0, 0, 1, 1234)
+            bounding_box = descriptor.planar_bounding_box
+            bbox_pose = bounding_box.pose
+            bbox_dimensions = bounding_box.dimensions
+            rospy.loginfo('Bounding box centroid: {}'.format(bbox_pose))
+            rospy.loginfo('Bounding box dimensions: {}'.format(bbox_dimensions))
+            viz.publish_bounding_box(
+                self._markers, bbox_pose, bbox_dimensions.x, bbox_dimensions.y,
+                bbox_dimensions.z, 0.33, 0.69, 0.31, 0.25, 1234 + i)
+            viz.publish_pose(self._markers, bbox_pose, 1, 0, 0, 1, 1234 + i)
 
         action = None
         while action is None:
