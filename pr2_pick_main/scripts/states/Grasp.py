@@ -1452,6 +1452,8 @@ class Grasp(smach.State):
 
         if userdata.bin_id < 'D':
             self.top_shelf = True
+        else:
+            self.top_shelf = False
 
         self.shelf_width = self._shelf_widths[userdata.bin_id]
         self.shelf_height = self._shelf_heights[userdata.bin_id]
