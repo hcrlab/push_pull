@@ -83,6 +83,7 @@ add_message_files(
   Object.msg
   ObjectDetectionRequest.msg
   ObjectList.msg
+  MultiItemCloud.msg
   ROI2d.msg
 )
 
