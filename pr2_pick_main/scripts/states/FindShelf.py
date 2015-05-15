@@ -120,10 +120,10 @@ class FindShelf(smach.State):
         shelf_odom.pose.position.z = 0
 
         # TODO(jstn): Hack! Hack! Hack! ###############################
-        shelf_odom.pose.position.x += 0.03
-        if (userdata.bin_id is None or userdata.bin_id == 'J' or userdata.bin_id
-            == 'G' or userdata.bin_id == 'D' or userdata.bin_id == 'A'):
-            shelf_odom.pose.position.x += 0.03
+        #shelf_odom.pose.position.x += 0.03
+        #if (userdata.bin_id is None or userdata.bin_id == 'J' or userdata.bin_id
+        #    == 'G' or userdata.bin_id == 'D' or userdata.bin_id == 'A'):
+        #    shelf_odom.pose.position.x += 0.03
         ###############################################################
 
         self._tts.publish('Found shelf.')

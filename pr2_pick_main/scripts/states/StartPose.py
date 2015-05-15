@@ -65,7 +65,7 @@ class StartPose(smach.State):
         self._tts.publish('Setting start pose.')
 
         self._move_head.wait_for_service()
-        move_head_success = self._move_head(1.5, 0, 1.3, 'base_footprint')
+        move_head_success = self._move_head(1.5, 0, 1.05, 'base_footprint')
         if not move_head_success:
             rospy.logerr('StartPose: MoveHead failed')
             self._tts.publish('Failed to move head.')
