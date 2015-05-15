@@ -95,6 +95,19 @@ void ComputeColorHistogramSeparate(
 void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                            const int num_bins, std::vector<int>* histogram);
 
+// Returns the squared Euclidean distance between the two points.
+float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
+
+// Clusters the point cloud with K-means, using both distance and color
+// information.
+//
+// Args:
+//   cloud: The input point cloud.
+//   num_clusters: The number of clusters to extract.
+//   clusters: The returned clusters.
+void ClusterWithKMeans(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB> >* clusters);
 }  // namespace pr2_pick_perception
 
 #endif
