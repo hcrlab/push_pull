@@ -1,6 +1,7 @@
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
 from pr2_pick_main import handle_service_exceptions
 from std_msgs.msg import Header
+from pr2_pick_manipulation.srv import MoveArmIk, MoveArmIkRequest
 from visualization_msgs.msg import Marker
 import moveit_commander
 import outcomes
@@ -19,7 +20,7 @@ class DropOffItem(smach.State):
     # bin frame
     DROPOFF_POS_BASE_X = -0.2540 
     DROPOFF_POS_BASE_Y = 0.6604
-    # tHE POSITION THE ARM will move to before it lets go of the object
+    # The position the arm will move to before it lets go of the object
     DROPOFF_POS_ARM_X = 0.0872
     DROPOFF_POS_ARM_Y = 0.8277
     DROPOFF_POS_ARM_Z = 0.5977
@@ -27,12 +28,11 @@ class DropOffItem(smach.State):
     DROPOFF_QUAT_ARM_Y = 0.7025
     DROPOFF_QUAT_ARM_Z = 0.0197
     DROPOFF_QUAT_ARM_W = 0.7114
-    # tHE HEIGHT THE ARM WIll start at before lowering into the bin to dropoff
-    # OBJECT
+    # The height the arm will start at before lowering into the bin to dropoff
+    # object
     DROPOFF_POS_ARM_START_Z = 0.7477
 
-    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms,
-        tts, set_static_tf, tf_listener, markers, drive_to_pose, **kwargs):
+    def __init__(self, **kwargs):
         smach.State.__init__(self,
             outcomes=[
                 outcomes.DROP_OFF_ITEM_SUCCESS,
@@ -41,15 +41,16 @@ class DropOffItem(smach.State):
             input_keys=['bin_id', 'bin_data'],
             output_keys=['output_bin_data']
         )
-        self._tts = tts
-        self._set_grippers = set_grippers
-        self._drive_linear = drive_linear
-        self._moveit_move_arm = moveit_move_arm
-        self._tuck_arms = tuck_arms
-        self._set_static_tf = set_static_tf
-        self._markers = markers
-        self._drive_to_pose = drive_to_pose
-        self._tf_listener = tf_listener
+        self._tts = kwargs["tts"]
+        self._set_grippers = kwargs["set_grippers"]
+        self._drive_linear = kwargs["drive_linear"]
+        self._moveit_move_arm = kwargs["moveit_move_arm"]
+        self._move_arm_ik = kwargs["move_ark_ik"]
+        self._tuck_arms = kwargs["tuck_arms"]
+        self._set_static_tf = kwargs["set_static_tf"]
+        self._markers = kwargs["markers"]
+        self._drive_to_pose = kwargs["drive_to_pose"]
+        self._tf_listener = kwargs["tf_listener"]
 
         self._order_bin_found = False
 
@@ -84,6 +85,7 @@ class DropOffItem(smach.State):
 
             # Do it the simple way! Assumes the shelf is not too tilted
             # TODO(jstn): move this to FindShelf.
+            # Creates a stransform from the shelf frame to the order bin fame
             order_bin_tf = TransformStamped()
             order_bin_tf.header.frame_id = 'shelf'
             order_bin_tf.header.stamp = rospy.Time.now()
@@ -135,15 +137,17 @@ class DropOffItem(smach.State):
         pose_target.pose.orientation.x = DROPOFF_QUAT_ARM_X
         pose_target.pose.orientation.y = DROPOFF_QUAT_ARM_Y
         pose_target.pose.orientation.z = DROPOFF_QUAT_ARM_Z
-        pose_target.pose.orientation.w = DROPOFF_QUAT_ARM_W
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
+        pose_target.pose.orientation.w = DROPOFF_QUAT_ARM_W 
+        self._move_arm_ik.wait_for_service()
+        self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = DROPOFF_POS_ARM_Z 
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0.03, 0.1, 0, "right_arm", False)
+        self._move_arm_ik.wait_for_service()
+        self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        # self._moveit_move_arm.wait_for_service()
+        # self._moveit_move_arm(pose_target, 0.03, 0.1, 0, "right_arm", False)
 
         # open gripper
         rospy.loginfo('Open gripper')
@@ -152,8 +156,10 @@ class DropOffItem(smach.State):
 
         # raise arm
         pose_target.pose.position.z = DROPOFF_POS_ARM_START_Z
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
+        self._move_arm_ik.wait_for_service()
+        self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        # self._moveit_move_arm.wait_for_service()
+        # self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
 
         # get back to "untucked" position
         rospy.loginfo('Untucking right arm')
