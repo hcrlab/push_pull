@@ -15,7 +15,7 @@
   <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node_lidar" name="shelf_obj_detector" respawn="true" output="screen">
    <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
 
-   <param name="iter" value="150"/>
+   <param name="iter" value="1000"/>
    <param name="minClusterSize" value="2350"/>
    <param name="radius_search" value="0.015"/>
 
