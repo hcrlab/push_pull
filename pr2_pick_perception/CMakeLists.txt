@@ -178,6 +178,10 @@ add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
 )
 
+add_executable(item_segmentation_service_node
+  src/item_segmentation.cpp
+)
+
 add_executable(planar_pca_service_node
   src/planar_pca_service.cpp
 )
@@ -189,6 +193,7 @@ add_executable(item_descriptor_service_node
 add_executable(count_points_in_box_service_node
   src/count_points_in_box_service.cpp
 )
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -204,6 +209,11 @@ add_dependencies(shelf_localization_service_node_lidar
 )
 
 add_dependencies(shelf_cropping_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+add_dependencies(item_segmentation_service_node
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
@@ -245,6 +255,13 @@ target_link_libraries(shelf_localization_service_node
 # )
 
 target_link_libraries(shelf_cropping_service_node
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(item_segmentation_service_node
   ${VTK_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Boost_LIBRARIES}
