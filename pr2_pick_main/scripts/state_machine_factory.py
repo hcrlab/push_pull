@@ -15,6 +15,7 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform, PlanarPrincipalComponents, GetItemDescriptor, ClassifyTargetItem
 from pr2_pick_perception.srv import CountPointsInBox
+from pr2_pick_perception.srv import SegmentItems
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
 import states
@@ -88,6 +89,7 @@ class StateMachineBuilder(object):
 
             # World and Perception
             'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
+            'segment_items': rospy.ServiceProxy('perception/segment_items', SegmentItems),
             'find_centroid': rospy.ServiceProxy('perception/find_centroid', FindCentroid),
             'interactive_marker_server': InteractiveMarkerServer('pr2_pick_interactive_markers'),
             'localize_object': rospy.ServiceProxy('perception/localize_object',

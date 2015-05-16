@@ -1,6 +1,6 @@
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_perception.srv import CropShelfRequest
-from pr2_pick_perception.srv import CropShelfResponse
+from pr2_pick_perception.srv import SegmentItemsRequest
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
@@ -31,6 +31,7 @@ class SenseBin(smach.State):
                          'target_model'])
         self._tts = tts
         self._crop_shelf = crop_shelf
+        self._segment_items = kwargs['segment_items']
         self._markers = markers
         self._tuck_arms = kwargs['tuck_arms']
         self._get_item_descriptor = kwargs['get_item_descriptor']
@@ -55,14 +56,19 @@ class SenseBin(smach.State):
         # time for the point cloud to update.
         rospy.sleep(2)
 
-        # Get clusters
-        request = CropShelfRequest(cellID=userdata.bin_id)
+        # Crop shelf.
+        crop_request = CropShelfRequest(cellID=userdata.bin_id)
         self._crop_shelf.wait_for_service()
-        response = self._crop_shelf(request)
-        clusters = response.locations.clusters
+        crop_response = self._crop_shelf(crop_request)
+
+        # Segment items.
+        segment_request = SegmentItemsRequest(cloud=crop_response.cloud)
+        self._segment_items.wait_for_service()
+        segment_response = self._segment_items(segment_request)
+        clusters = segment_response.clusters.clusters
         userdata.clusters = clusters
         rospy.loginfo('[SenseBin] Found {} clusters.'.format(
-            len(response.locations.clusters)))
+            len(clusters)))
         if len(clusters) == 0:
             rospy.logerr('[SenseBin]: No clusters found!')
             return outcomes.SENSE_BIN_FAILURE

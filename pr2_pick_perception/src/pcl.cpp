@@ -22,6 +22,7 @@ using geometry_msgs::Quaternion;
 using geometry_msgs::Vector3;
 using pcl::PointCloud;
 using pcl::PointXYZRGB;
+using std::vector;
 
 namespace pr2_pick_perception {
 void PlanarPrincipalComponents(const PointCloud<PointXYZRGB>& cloud,
@@ -162,8 +163,9 @@ void GetPlanarBoundingBox(const PointCloud<PointXYZRGB>& cloud,
   dimensions->z = z_length;
 }
 
-void ComputeColorHistogram(const PointCloud<PointXYZRGB>& cloud,
-                           const int num_bins, std::vector<int>* histogram) {
+void ComputeColorHistogramSeparate(const PointCloud<PointXYZRGB>& cloud,
+                                   const int num_bins,
+                                   std::vector<int>* histogram) {
   double bin_size = 255.0 / num_bins;
   histogram->clear();
   histogram->resize(3 * num_bins);
@@ -186,6 +188,161 @@ void ComputeColorHistogram(const PointCloud<PointXYZRGB>& cloud,
     (*histogram)[red_bin] += 1;
     (*histogram)[num_bins + green_bin] += 1;
     (*histogram)[num_bins + num_bins + blue_bin] += 1;
+  }
+}
+
+void ComputeColorHistogram(const PointCloud<PointXYZRGB>& cloud,
+                           const int num_bins, std::vector<int>* histogram) {
+  double bin_size = 255.0 / num_bins;
+  histogram->clear();
+  histogram->resize(num_bins * num_bins * num_bins);
+  for (size_t i = 0; i < histogram->size(); ++i) {
+    (*histogram)[i] = 0;
+  }
+
+  for (size_t i = 0; i < cloud.size(); ++i) {
+    const PointXYZRGB& point = cloud[i];
+    uint8_t red = point.r;
+    uint8_t green = point.g;
+    uint8_t blue = point.b;
+
+    int red_bin =
+        std::min(static_cast<int>(floor(red / bin_size)), num_bins - 1);
+    int green_bin =
+        std::min(static_cast<int>(floor(green / bin_size)), num_bins - 1);
+    int blue_bin =
+        std::min(static_cast<int>(floor(blue / bin_size)), num_bins - 1);
+    int index = red_bin * num_bins * num_bins + green_bin * num_bins + blue_bin;
+    (*histogram)[index] += 1;
+  }
+}
+
+float SquaredDistance(const PointXYZRGB& p1, const PointXYZRGB& p2) {
+  float distance = 0;
+  // Color ranges from 0-255 while distances range about 0.15m, so we increase
+  // the importance of distance.
+  float distance_scale_factor = 1.0 / (0.15 * 0.15);
+  float color_scale_factor = 1.0 / (255 * 255);
+  distance += distance_scale_factor * (p1.x - p2.x) * (p1.x - p2.x);
+  distance += distance_scale_factor * (p1.y - p2.y) * (p1.y - p2.y);
+  distance += distance_scale_factor * (p1.z - p2.z) * (p1.z - p2.z);
+  distance += color_scale_factor * (p1.r - p2.r) * (p1.r - p2.r);
+  distance += color_scale_factor * (p1.g - p2.g) * (p1.g - p2.g);
+  distance += color_scale_factor * (p1.b - p2.b) * (p1.b - p2.b);
+  return distance;
+}
+
+void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
+                       const int num_clusters,
+                       vector<PointCloud<PointXYZRGB> >* clusters) {
+  ROS_INFO("KMeans point cloud size: %ld", cloud.size());
+  vector<PointXYZRGB> centroids;
+  vector<vector<PointXYZRGB> > clusters_vector;
+
+  // Initialize centroids with spatial variance in the y direction, but randomly
+  // otherwise.
+  PointXYZRGB cloud_min;
+  PointXYZRGB cloud_max;
+  pcl::getMinMax3D(cloud, cloud_min, cloud_max);
+  ROS_INFO("Min: %f %f %f %d %d %d", cloud_min.x, cloud_min.y, cloud_min.z,
+           cloud_min.r, cloud_min.g, cloud_min.b);
+  ROS_INFO("Max: %f %f %f %d %d %d", cloud_max.x, cloud_max.y, cloud_max.z,
+           cloud_max.r, cloud_max.g, cloud_max.b);
+  float y_increment = (cloud_max.y - cloud_min.y) / (num_clusters + 1);
+  for (int i = 0; i < num_clusters; ++i) {
+    PointXYZRGB centroid;
+    centroid.x =
+        (cloud_max.x - cloud_min.x) * (double)rand() / RAND_MAX + cloud_min.x;
+    centroid.y = y_increment * (i + 1);
+    centroid.z =
+        (cloud_max.z - cloud_min.z) * (double)rand() / RAND_MAX + cloud_min.z;
+    centroid.r = rand() % 256;
+    centroid.g = rand() % 256;
+    centroid.b = rand() % 256;
+    centroids.push_back(centroid);
+    ROS_INFO("Initial centroid %d: %f %f %f %d %d %d", i, centroid.x,
+             centroid.y, centroid.z, centroid.r, centroid.g, centroid.b);
+  }
+
+  // Iterate
+  for (int i = 0; i < 100; ++i) {
+    // Compute cluster assignments.
+    clusters_vector.clear();
+    for (int c = 0; c < num_clusters; ++c) {
+      vector<PointXYZRGB> cloud;
+      clusters_vector.push_back(cloud);
+    }
+
+    ROS_INFO("cluster_vector.size(): %ld, centroids.size(): %ld",
+             clusters_vector.size(), centroids.size());
+
+    for (size_t p = 0; p < cloud.size(); ++p) {
+      const PointXYZRGB& point = cloud[p];
+      int best_cluster = 0;
+      float best_distance = SquaredDistance(point, centroids[0]);
+      for (size_t c = 1; c < centroids.size(); ++c) {
+        float distance = SquaredDistance(point, centroids[c]);
+        if (distance < best_distance) {
+          best_cluster = c;
+        }
+      }
+      clusters_vector[best_cluster].push_back(point);
+    }
+
+    bool converged = true;
+
+    // Compute centroids.
+    for (size_t c = 0; c < clusters_vector.size(); ++c) {
+      const vector<PointXYZRGB>& cluster = clusters_vector[c];
+      PointXYZRGB centroid;
+      centroid.x = 0;
+      centroid.y = 0;
+      centroid.z = 0;
+      float centroid_r = 0;
+      float centroid_g = 0;
+      float centroid_b = 0;
+      for (size_t p = 0; p < cluster.size(); ++p) {
+        const PointXYZRGB& point = cluster[p];
+        centroid.x += point.x;
+        centroid.y += point.y;
+        centroid.z += point.z;
+        centroid_r += point.r;
+        centroid_g += point.g;
+        centroid_b += point.b;
+      }
+      centroid.x /= cluster.size();
+      centroid.y /= cluster.size();
+      centroid.z /= cluster.size();
+      centroid_r /= cluster.size();
+      centroid_g /= cluster.size();
+      centroid_b /= cluster.size();
+      centroid.r = static_cast<uint8_t>(centroid_r);
+      centroid.g = static_cast<uint8_t>(centroid_g);
+      centroid.b = static_cast<uint8_t>(centroid_b);
+
+      if (SquaredDistance(centroids[c], centroid) > 0.001) {
+        converged = false;
+      }
+      centroids[c] = centroid;
+      ROS_INFO("%d, %ld: (%f, %f, %f, %d, %d, %d)", i, c, centroid.x,
+               centroid.y, centroid.z, centroid.r, centroid.g, centroid.b);
+    }
+
+    if (converged) {
+      break;
+    }
+  }
+
+  clusters->clear();
+  for (size_t i = 0; i < clusters_vector.size(); ++i) {
+    const vector<PointXYZRGB>& cloud_vec = clusters_vector[i];
+    PointCloud<PointXYZRGB> cloud;
+    cloud.width = cloud_vec.size();
+    cloud.height = 1;
+    for (size_t j = 0; j < cloud_vec.size(); ++j) {
+      cloud.push_back(cloud_vec[j]);
+    }
+    clusters->push_back(cloud);
   }
 }
 
