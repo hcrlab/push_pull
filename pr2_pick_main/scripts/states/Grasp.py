@@ -484,6 +484,9 @@ class Grasp(smach.State):
         if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.0)/2) and pose_in_bin_frame.pose.position.x > 0:
             in_bounds = False
             rospy.loginfo("Pose >  y bounds")
+            rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
+            rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + 0.0)/2)))
+
         elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.0)/2) and pose_in_bin_frame.pose.position.x > 0:
             in_bounds = False
             rospy.loginfo("Pose <  y bounds")
@@ -504,6 +507,9 @@ class Grasp(smach.State):
             #if pose_in_bin_frame.pose.position.x > 0:
             in_bounds = False
             rospy.loginfo("Pose not within z bounds")
+            rospy.loginfo("Z pose: {}".format(pose_in_base_footprint.pose.position.z))
+            rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + gripper_offset)))
+            rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + self.shelf_height - gripper_offset)))
 
         pose_in_frame = self._tf_listener.transformPose(frame,
                                                         pose_in_bin_frame)
@@ -639,7 +645,7 @@ class Grasp(smach.State):
                 pre_grasp_in_axis_frame = PoseStamped()
                 pre_grasp_in_axis_frame.header.frame_id = 'object_axis'
                 pre_grasp_in_axis_frame.pose.position.y = grasp_in_axis_frame.pose.position.y
-                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x + 0.10
+                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x + self.pre_grasp_offset
                 pre_grasp_in_axis_frame.pose.position.z = grasp_in_axis_frame.pose.position.z
                 pre_grasp_in_axis_frame.pose.orientation = grasp_in_axis_frame.pose.orientation
                 pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
@@ -699,7 +705,7 @@ class Grasp(smach.State):
                 pre_grasp_in_axis_frame = PoseStamped()
                 pre_grasp_in_axis_frame.header.frame_id = 'object_axis'
                 pre_grasp_in_axis_frame.pose.position.y = grasp_in_axis_frame.pose.position.y
-                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x - 0.10
+                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x - self.pre_grasp_offset
                 pre_grasp_in_axis_frame.pose.position.z = grasp_in_axis_frame.pose.position.z
                 pre_grasp_in_axis_frame.pose.orientation = grasp_in_axis_frame.pose.orientation
                 pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
@@ -758,7 +764,25 @@ class Grasp(smach.State):
             grasp_in_bounds = self.check_pose_within_bounds(rolled_grasp_in_axis_frame, 
                                                                 self.shelf_bottom_height, self.shelf_height, 
                                                                 self.shelf_width, bin_id, 'object_axis', True)
+            if not grasp_in_bounds:
+                rospy.loginfo("Rolled grasp not in bounds")
+                rolled_grasp_in_base_footprint = self.modify_grasp(rolled_grasp_in_base_footprint,
+                                                                        0, 0, 0, 0, 0, 0.07)
+                rolled_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis', 
+                                                                        rolled_grasp_in_base_footprint)
+                rolled_grasp_in_axis_frame = self.modify_grasp(rolled_grasp_in_axis_frame,
+                                                                 0, 3.14/6, 0, 0, 0, 0)
+                rolled_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                               rolled_grasp_in_axis_frame)
+
+                grasp_in_bounds = self.check_pose_within_bounds(rolled_grasp_in_axis_frame,
+                                                                self.shelf_bottom_height, self.shelf_height,
+                                                                self.shelf_width, bin_id, 'object_axis', True)
+
             if grasp_in_bounds and ('rolled' in self.allowed_grasps):
+
+                rospy.loginfo("Adding rolled grasp")
+
                 grasp_dict = {}
                 grasp_dict["grasp"] = rolled_grasp_in_base_footprint
                 grasp_dict["pre_grasp"] = rolled_pre_grasp_in_base_footprint
@@ -783,7 +807,7 @@ class Grasp(smach.State):
             grasp_in_bounds = self.check_pose_within_bounds(pitched_grasp_in_axis_frame, 
                                                                 self.shelf_bottom_height, self.shelf_height, 
                                                                 self.shelf_width, bin_id, 'object_axis', False)
-            if grasp_in_bounds:
+            if grasp_in_bounds and ('rolled' in self.allowed_grasps):
                 grasp_dict = {}
                 grasp_dict["grasp"] = pitched_grasp_in_base_footprint
                 grasp_dict["pre_grasp"] = pre_grasp_in_base_footprint
@@ -1058,7 +1082,7 @@ class Grasp(smach.State):
         # Commented out for testing purposes
         grasping_pairs = grasping_pairs + moveit_simple_grasps + pca_grasps
 
-        #rospy.loginfo("Number of grasps: {}".format(grasping_pairs))
+        rospy.loginfo("Number of grasps: {}".format(len(grasping_pairs)))
 
         return grasping_pairs
 
@@ -1562,11 +1586,6 @@ class Grasp(smach.State):
                
         success_pre_grasp = False
         success_grasp = False
-        rospy.loginfo('Open Hand')
-        self._set_grippers.wait_for_service()
- 
-        grippers_open = self._set_grippers(False, True, -1)
-
         rospy.loginfo("Executing grasp")
         for grasp in grasps:
             viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
@@ -1586,7 +1605,12 @@ class Grasp(smach.State):
                 continue
             else:
                 rospy.loginfo('Pre-grasp succeeeded')
-                
+                rospy.loginfo('Open Hand')
+                self._set_grippers.wait_for_service()
+ 
+                grippers_open = self._set_grippers(False, True, -1)
+
+
             self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene) 
             rospy.wait_for_service('/get_planning_scene', 10.0) 
             get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene) 
