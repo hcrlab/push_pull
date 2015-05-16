@@ -68,7 +68,7 @@ class Grasp(smach.State):
     max_grasp_quality = 10000
 
     # minimum number of points from cluster needed inside gripper for grasp
-    min_points_in_gripper = 150
+    min_points_in_gripper = 100
 
     # max number of points in cluster that can intersect with fingers
     max_finger_collision_points = 10
@@ -521,9 +521,13 @@ class Grasp(smach.State):
         ends = self.get_box_ends(self.target_descriptor)
         
         # get closest end from ends
+        new_ends = []
         for end in ends:
-            end = self._tf_listener.transformPoint('base_footprint',
+            new_end = self._tf_listener.transformPoint('base_footprint',
                                                                 end)
+            new_ends.append(new_end)
+
+        ends = new_ends
 
         rospy.loginfo("Closest ends of bounding box: {}".format(ends))
         closest_end = ends[0]
@@ -536,10 +540,46 @@ class Grasp(smach.State):
             if ends[0].point.y > ends[1].point.y:
                 y_offset = 0.035
 
+        object_pose = bounding_box.pose
+
+        object_pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                object_pose)
+
+        grasps = []
+        # make grasp centred on closest end
+        grasp_end = PoseStamped()
+        grasp_end.header.stamp = rospy.Time(0)
+        grasp_end.header.frame_id = "base_footprint"
+        grasp_end.pose.orientation.w = 1
+        grasp_end.pose.position.x = closest_end.point.x - self.dist_to_palm
+        grasp_end.pose.position.y = closest_end.point.y
+        grasp_end.pose.position.z = object_pose_in_base_footprint.pose.position.z
+
+        pre_grasp_end = PoseStamped()
+        pre_grasp_end.header.stamp = rospy.Time(0)
+        pre_grasp_end.header.frame_id = "base_footprint"
+        pre_grasp_end.pose.orientation.w = 1
+        pre_grasp_end.pose.position.x = self.pre_grasp_x_distance
+        pre_grasp_end.pose.position.y = closest_end.point.y
+        pre_grasp_end.pose.position.z = object_pose_in_base_footprint.pose.position.z
+
+        grasp_in_bounds = self.check_pose_within_bounds(grasp_end,
+                                                                self.shelf_bottom_height, self.shelf_height,
+                                                                self.shelf_width, bin_id, 'base_footprint', False)
+        if grasp_in_bounds:
+            grasp_dict = {}
+            grasp_dict['grasp'] = grasp_end
+            grasp_dict['pre_grasp'] = pre_grasp_end
+            grasp_dict["id"] = self.grasp_num
+            self.grasp_num += 1
+
+            grasps.append(grasp_dict)
+            rospy.loginfo("Current info: {}".format(grasps))
+
+        
         rospy.loginfo("Chosen end: {}".format(closest_end))
         rospy.loginfo("Offset is: {}".format(y_offset))
         # Put wrist_roll_link at center and then move it back along x-axis
-        grasps = []
         for axis_pose in axes_poses:
             transform = TransformStamped()
             transform.header.frame_id = 'bin_' + str(bin_id)
@@ -552,7 +592,6 @@ class Grasp(smach.State):
             rospy.sleep(0.5)
             self._tf_listener.waitForTransform("object_axis", "bin_" + str(bin_id), rospy.Time(0), rospy.Duration(4.0))
 
-            object_pose = bounding_box.pose
             closest_end = self._tf_listener.transformPoint('object_axis',
                                                                 closest_end)
 
