@@ -107,6 +107,16 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
         point.z >= (0 + bottom_crop_offset_)) {
       cell_pc->push_back(point);
     }
+
+    // A second box that includes points slightly in front of the bin.
+    if (point.x < (depth - depth_far_crop_offset_) &&
+        point.x >= (-0.1 + depth_close_crop_offset_) &&
+        point.y < (width / 2 - left_crop_offset_) &&
+        point.y >= (-width / 2 + right_crop_offset_) &&
+        point.z < (height - top_crop_offset_) &&
+        point.z >= (0.03 + bottom_crop_offset_)) {
+      cell_pc->push_back(point);
+    }
   }
   ROS_INFO("Cropping PC");
   return cell_pc;
@@ -143,6 +153,35 @@ void CropShelf::visualizeShelf(float width, float height, float depth) {
   marker.color.g = 0.9;
   marker.color.b = 0.9;
   marker.lifetime = ros::Duration(0);
+
+  // Second box, which extends towards the robot more, and is lifted up more.
+  float near_extension = 0.1;
+  float bottom_lift = 0.03;
+
+  visualization_msgs::Marker marker2;
+  marker2.header.frame_id = bin_frame_id_;
+  marker2.header.stamp = ros::Time();
+  marker2.ns = "crop_shelf_marker";
+  marker2.id = bin_frame_id_[bin_frame_id_.length() - 1];
+  marker2.type = visualization_msgs::Marker::CUBE;
+  marker2.action = visualization_msgs::Marker::ADD;
+  marker2.pose.position.x = (crop_depth + near_extension) / 2 +
+                            (depth_close_crop_offset_ - near_extension);
+  marker2.pose.position.y = (right_crop_offset_ - left_crop_offset_) / 2;
+  marker2.pose.position.z =
+      (crop_height - bottom_lift) / 2 + (bottom_crop_offset_ + bottom_lift);
+  marker2.pose.orientation.x = 0.0;
+  marker2.pose.orientation.y = 0.0;
+  marker2.pose.orientation.z = 0.0;
+  marker2.pose.orientation.w = 1.0;
+  marker2.scale.x = crop_depth + near_extension;
+  marker2.scale.y = crop_width;
+  marker2.scale.z = crop_height - bottom_lift;
+  marker2.color.a = 0.2;
+  marker2.color.r = 0.9;
+  marker2.color.g = 0.9;
+  marker2.color.b = 0.9;
+  marker2.lifetime = ros::Duration(0);
 
   ros::Rate r(1);
   for (int i = 0; i < 5; ++i) {
