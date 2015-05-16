@@ -109,7 +109,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
     }
 
     float near_extension = 0.1;
-    float bottom_lift = 0.015;
+    float bottom_lift = 0.01;
 
     // A second box that includes points slightly in front of the bin.
     if (point.x < (depth - depth_far_crop_offset_) &&
@@ -159,7 +159,7 @@ void CropShelf::visualizeShelf(float width, float height, float depth) {
 
   // Second box, which extends towards the robot more, and is lifted up more.
   float near_extension = 0.1;
-  float bottom_lift = 0.015;
+  float bottom_lift = 0.01;
 
   visualization_msgs::Marker marker2;
   marker2.header.frame_id = bin_frame_id_;
