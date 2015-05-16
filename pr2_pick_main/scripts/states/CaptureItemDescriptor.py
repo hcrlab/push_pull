@@ -26,6 +26,7 @@ class CaptureItemDescriptor(smach.State):
             output_keys=['clusters'])
         self._tts = kwargs['tts']
         self._crop_shelf = kwargs['crop_shelf']
+        self._segment_items = kwargs['segment_items']
         self._markers = markers
         self._tuck_arms = kwargs['tuck_arms']
         self._get_item_descriptor = kwargs['get_item_descriptor']
@@ -38,15 +39,22 @@ class CaptureItemDescriptor(smach.State):
         rospy.sleep(5)
         self._tuck_arms.wait_for_service()
         self._tuck_arms(tuck_left=True, tuck_right=True)
-        request = CropShelfRequest(cellID=userdata.bin_id)
-        response = self._crop_shelf(request)
-        userdata.clusters = response.locations.clusters
-        rospy.loginfo('[CaptureItemDescriptor] Found {} clusters.'.format(
-            len(response.locations.clusters)))
-        #if len(response.locations.clusters) != 1:
-        #    raw_input('Need exactly 1 item. Press enter to try again: ')
 
-        for i, cluster in enumerate(response.locations.clusters):
+        # Crop shelf.
+        crop_request = CropShelfRequest(cellID=userdata.bin_id)
+        self._crop_shelf.wait_for_service()
+        crop_response = self._crop_shelf(crop_request)
+
+        # Segment items.
+        segment_request = SegmentItemsRequest(cloud=crop_response.cloud)
+        self._segment_items.wait_for_service()
+        segment_response = self._segment_items(segment_request)
+        clusters = segment_response.clusters.clusters
+        userdata.clusters = clusters
+        rospy.loginfo('[CaptureItemDescriptor] Found {} clusters.'.format(
+            len(clusters)))
+
+        for i, cluster in enumerate(clusters):
             points = pc2.read_points(cluster.pointcloud, skip_nans=True)
             point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
             if len(point_list) == 0:
