@@ -100,6 +100,7 @@ add_service_files(
   GetItemDescriptor.srv
   ClassifyTargetItem.srv
   CountPointsInBox.srv
+  SegmentItems.srv
 )
 
 ## Generate actions in the 'action' folder

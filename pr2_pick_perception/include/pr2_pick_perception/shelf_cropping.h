@@ -29,10 +29,11 @@
 // markers
 #include <visualization_msgs/Marker.h>
 
-class CropShelf {
+namespace pr2_pick_perception {
+class ShelfCropper {
  public:
-  CropShelf();
-  ~CropShelf() {}
+  ShelfCropper();
+  ~ShelfCropper() {}
 
   ///\brief initialize shelf cropper
   ///\return false if the pose of the shelf is not available
@@ -41,30 +42,14 @@ class CropShelf {
                     pr2_pick_perception::CropShelfResponse &response);
 
  private:
+  ros::NodeHandle nh_;
   // enum class CelID  {A, B, C, D, E,F,G,H,I,J,K,L };
   /// cell ID to retrieve
   std::string cell_id_;
-  // point cloud read successfully
-  bool pc_ready_;
-  // shelf pose available
-  bool shelf_pose_;
-  // kinect mutex
-  boost::mutex kinect_mtx_;
+  std::string pc_topic_;
 
   /// refence transform listener
   tf::TransformListener tf_;
-
-  /// cloud to robot transform
-  tf::StampedTransform cloud_to_robot_;
-  /// robot to world transform
-  tf::StampedTransform robot_to_world_;
-  /// shelf to left top corner origin
-  tf::StampedTransform shelf_to_origin_;
-  /// cloud to bin
-  tf::StampedTransform cloud_to_bin_;
-
-  /// shelf transform
-  tf::Transform shelf_transform_;
 
   /// robot refence system
   std::string robot_frame_id_;
@@ -84,26 +69,6 @@ class CropShelf {
       right_crop_offset_, depth_close_crop_offset_, depth_far_crop_offset_;
   int max_cluster_points_, min_cluster_points_;
 
-  /// subscriber to trigger
-  ros::Subscriber trigger_sub_;
-  /// subscriber to point cloud
-  ros::Subscriber pc_sub_;
-
-  ros::Subscriber shelf_pose_sub_;
-
-  ros::ServiceServer server_;
-
-  ros::NodeHandle nh_;
-  // original point cloud
-  pcl::PointCloud<pcl::PointXYZRGB> kinect_pc_;
-
-  sensor_msgs::PointCloud2Ptr kinect_pc_ros_;
-  ros::Time pc_timestamp_;
-
-  void poseListener(pr2_pick_perception::ObjectList shelfdetection);
-
-  void pcCallBack(const sensor_msgs::PointCloud2ConstPtr &pcloud);
-
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cropPC(
       const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &shelf_pc, float width,
       float height, float depth, int cellID);
@@ -111,5 +76,6 @@ class CropShelf {
   ros::Publisher vis_pub_;
   void visualizeShelf(float width, float height, float depth);
 };
+}
 
 #endif
