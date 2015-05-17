@@ -30,7 +30,7 @@ class MoveToBin(smach.State):
 
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
-    robot_distance_from_shelf_d_l = -1.11
+    robot_distance_from_shelf_d_l = -1.09
     # Careful with this parameter. If too close, it bumps into the shelf and
     # drive service never returns.
     robot_distance_from_shelf_a_c = -1
