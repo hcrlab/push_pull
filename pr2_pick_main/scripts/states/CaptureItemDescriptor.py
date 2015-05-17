@@ -2,7 +2,7 @@ from geometry_msgs.msg import Point
 from geometry_msgs.msg import PointStamped
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_perception.srv import CropShelfRequest
-from pr2_pick_perception.srv import CropShelfResponse
+from pr2_pick_perception.srv import SegmentItemsRequest
 from sensor_msgs.msg import PointCloud2
 import outcomes
 import rospy

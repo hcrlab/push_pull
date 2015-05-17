@@ -419,6 +419,9 @@ class StateMachineBuilder(object):
                 transitions={
                     outcomes.START_POSE_SUCCESS: states.FindShelf.name,
                     outcomes.START_POSE_FAILURE: states.FindShelf.name
+                },
+                remapping={
+                    'start_pose': 'start_pose'
                 }
             )
             smach.StateMachine.add(
@@ -445,7 +448,9 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
-                    'next_bin': 'current_bin'
+                    'next_bin': 'current_bin',
+                    'next_target' : 'current_target',
+                    'next_bin_items': 'current_bin_items'
                 }
             )
             smach.StateMachine.add(

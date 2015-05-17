@@ -234,7 +234,7 @@ float SquaredDistance(const PointXYZRGB& p1, const PointXYZRGB& p2) {
 
 void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
                        const int num_clusters,
-                       vector<PointCloud<PointXYZRGB> >* clusters) {
+                       vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
   ROS_INFO("KMeans point cloud size: %ld", cloud.size());
   vector<PointXYZRGB> centroids;
   vector<vector<PointXYZRGB> > clusters_vector;
@@ -336,11 +336,11 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
   clusters->clear();
   for (size_t i = 0; i < clusters_vector.size(); ++i) {
     const vector<PointXYZRGB>& cloud_vec = clusters_vector[i];
-    PointCloud<PointXYZRGB> cloud;
-    cloud.width = cloud_vec.size();
-    cloud.height = 1;
+    PointCloud<PointXYZRGB>::Ptr cloud(new PointCloud<PointXYZRGB>());
+    cloud->width = cloud_vec.size();
+    cloud->height = 1;
     for (size_t j = 0; j < cloud_vec.size(); ++j) {
-      cloud.push_back(cloud_vec[j]);
+      cloud->push_back(cloud_vec[j]);
     }
     clusters->push_back(cloud);
   }
