@@ -1,0 +1,2 @@
+pr2_pick_perception/ItemDescriptor descriptor
+string label
