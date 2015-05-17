@@ -22,7 +22,7 @@ class CaptureItemDescriptor(smach.State):
         smach.State.__init__(
             self,
             outcomes=[outcomes.CAPTURE_ITEM_NEXT, outcomes.CAPTURE_ITEM_DONE],
-            input_keys=['bin_id'],
+            input_keys=['bin_id', 'debug', 'current_target', 'current_bin_items'],
             output_keys=['clusters'])
         self._tts = kwargs['tts']
         self._crop_shelf = kwargs['crop_shelf']
@@ -46,7 +46,7 @@ class CaptureItemDescriptor(smach.State):
         crop_response = self._crop_shelf(crop_request)
 
         # Segment items.
-        segment_request = SegmentItemsRequest(cloud=crop_response.cloud)
+        segment_request = SegmentItemsRequest(cloud=crop_response.cloud, items=['a', 'b'])
         self._segment_items.wait_for_service()
         segment_response = self._segment_items(segment_request)
         clusters = segment_response.clusters.clusters

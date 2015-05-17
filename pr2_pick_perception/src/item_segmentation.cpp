@@ -6,6 +6,7 @@
 #include "pcl/visualization/cloud_viewer.h"
 #include "pcl/visualization/pcl_visualizer.h"
 #include "pcl_conversions/pcl_conversions.h"
+#include "pcl_conversions/pcl_conversions.h"
 #include "pr2_pick_perception/Cluster.h"
 #include "pr2_pick_perception/ClusterList.h"
 #include "pr2_pick_perception/pcl.h"

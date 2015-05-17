@@ -68,7 +68,7 @@ class SenseBin(smach.State):
         crop_response = self._crop_shelf(crop_request)
 
         # Segment items.
-        segment_request = SegmentItemsRequest(cloud=crop_response.cloud)
+        segment_request = SegmentItemsRequest(cloud=crop_response.cloud, items=userdata.current_bin_items)
         self._segment_items.wait_for_service()
         segment_response = self._segment_items(segment_request)
         clusters = segment_response.clusters.clusters
