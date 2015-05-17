@@ -97,5 +97,6 @@ int main(int argc, char** argv) {
 
     bag.close();
   }
+  output_bag.close();
   return 0;
 }
