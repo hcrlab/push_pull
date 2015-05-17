@@ -64,7 +64,8 @@ int main(int argc, char** argv) {
     rosbag::Bag bag;
     bag.open(filename, rosbag::bagmode::Read);
     vector<string> topics;
-    topics.push_back(string("cropped_cloud"));
+    topics.push_back("cell_pc");
+    topics.push_back("cropped_cloud");
     rosbag::View view(bag, rosbag::TopicQuery(topics));
 
     foreach (rosbag::MessageInstance const m, view) {
