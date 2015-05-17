@@ -10,6 +10,7 @@
 #include "pcl/visualization/pcl_visualizer.h"
 #include "pr2_pick_perception/Cluster.h"
 #include "pr2_pick_perception/ClusterList.h"
+#include "pr2_pick_perception/pcl.h"
 
 #include <string>
 #include <vector>
@@ -71,7 +72,8 @@ bool ItemSegmentationService::Callback(SegmentItems::Request& request,
 
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  ClusterWithEuclidean(*cell_pc, &clusters);
+  ClusterWithKMeans(*cell_pc, request.items.size(), &clusters);
+  // ClusterWithEuclidean(*cell_pc, &clusters);
 
   // Copy the clusters back to the response.
   pr2_pick_perception::ClusterList& clusterlist = response.clusters;
