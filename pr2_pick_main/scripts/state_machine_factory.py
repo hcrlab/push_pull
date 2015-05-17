@@ -30,6 +30,7 @@ class StateMachineBuilder(object):
     TEST_MOVE_TO_BIN = 'test-move-to-bin'
     TEST_PUSH_ITEM = 'test-push-item'
     CAPTURE_ITEM_DESCRIPTOR = 'capture-item-descriptor'
+    GATHER_DATA = 'gather-data'
     DEFAULT = 'default'
 
     def __init__(self):
@@ -65,6 +66,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_push_item
         elif self.state_machine_identifier == StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR:
             build = self.build_sm_for_item_descriptor_capture
+        elif self.state_machine_identifier == StateMachineBuilder.GATHER_DATA:
+            build = self.build_sm_for_gather_data
         else:
             build = self.build_sm
 
@@ -469,7 +472,85 @@ class StateMachineBuilder(object):
                 states.CaptureItemDescriptor(**services),
                 transitions={
                     outcomes.CAPTURE_ITEM_NEXT: states.CaptureItemDescriptor.name,
-                    outcomes.CAPTURE_ITEM_DONE: outcomes.CHALLENGE_FAILURE
+                    outcomes.CAPTURE_ITEM_DONE: states.StartPose.name
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'clusters': 'clusters'
+                }
+            )
+
+        return sm
+
+    def build_sm_for_gather_data(self, **services):
+        '''State machine for calling GatherData.
+        '''
+        sm = smach.StateMachine(outcomes=[
+            outcomes.CHALLENGE_SUCCESS,
+            outcomes.CHALLENGE_FAILURE
+        ])
+
+        mock_update_plan = states.UpdatePlan(**services)
+        mock_update_plan.execute = self.mock_update_plan_execute
+
+        with sm:
+            smach.StateMachine.add(
+                states.StartPose.name,
+                states.StartPose(**services),
+                transitions={
+                    outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                    outcomes.START_POSE_FAILURE: states.FindShelf.name
+                },
+                remapping={
+                    'start_pose': 'start_pose'
+                }
+            )
+            smach.StateMachine.add(
+                states.FindShelf.name,
+                states.FindShelf(**services),
+                transitions={
+                    outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
+                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'debug': 'debug',
+                    'bin_id': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.UpdatePlan.name,
+                mock_update_plan,
+                transitions={
+                    outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
+                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
+                    outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data',
+                    'next_bin': 'current_bin',
+                    'next_target' : 'current_target',
+                    'next_bin_items': 'current_bin_items'
+                }
+            )
+            smach.StateMachine.add(
+                states.MoveToBin.name,
+                states.MoveToBin(**services),
+                transitions={
+                    outcomes.MOVE_TO_BIN_SUCCESS: states.GatherData.name,
+                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_id': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.GatherData.name,
+                states.GatherData(**services),
+                transitions={
+                    outcomes.GATHER_DATA_NEXT: states.GatherData.name,
+                    outcomes.GATHER_DATA_DONE: states.StartPose.name
                 },
                 remapping={
                     'bin_id': 'current_bin',

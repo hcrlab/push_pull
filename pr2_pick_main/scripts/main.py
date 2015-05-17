@@ -20,6 +20,7 @@ def main(mock=False,
          test_move_to_bin=False,
          test_push_item=False,
          capture_item_descriptor=False,
+         gather_data=False,
          debug=False,
          auto_reset=True,
          attempts_per_bin=3):
@@ -33,6 +34,8 @@ def main(mock=False,
         state_machine_type = StateMachineBuilder.TEST_MOVE_TO_BIN
     elif capture_item_descriptor:
         state_machine_type = StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR
+    elif gather_data:
+        state_machine_type = StateMachineBuilder.GATHER_DATA
     else:
         state_machine_type = StateMachineBuilder.DEFAULT
 
@@ -128,6 +131,10 @@ if __name__ == '__main__':
         action='store_true',
         help=('True to create a minimal state machine for capturing item '
               'descriptors.'))
+    group.add_argument(
+        '--gather_data',
+        action='store_true',
+        help=('True to create a minimal state machine for gathering data.'))
 
     parser.add_argument(
         '--mock',
@@ -158,5 +165,5 @@ if __name__ == '__main__':
         rospy.set_param('use_sim_time', False)
     main(args.mock, args.test_drop_off_item, args.test_grasp_tool,
          args.test_move_to_bin, args.test_push_item,
-         args.capture_item_descriptor, args.debug, args.auto_reset,
+         args.capture_item_descriptor, args.gather_data, args.debug, args.auto_reset,
          args.attempts_per_bin)
