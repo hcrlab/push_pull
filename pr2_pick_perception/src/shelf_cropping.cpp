@@ -54,7 +54,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr ShelfCropper::cropPC(
 
   ROS_INFO("Cropping PC, num points: %d", shelf_pc->points.size());
   float near_extension = 0.1;
-  float bottom_lift = 0.01;
+  float bottom_lift = 0.02;
   for (size_t i = 0; i < shelf_pc->points.size(); i++) {
     pcl::PointXYZRGB point = shelf_pc->points[i];
     // The point cloud has been transformed around the frame of the bin.
@@ -113,7 +113,7 @@ void ShelfCropper::visualizeShelf(float width, float height, float depth) {
 
   // Second box, which extends towards the robot more, and is lifted up more.
   float near_extension = 0.1;
-  float bottom_lift = 0.01;
+  float bottom_lift = 0.02;
 
   visualization_msgs::Marker marker2;
   marker2.header.frame_id = bin_frame_id_;
