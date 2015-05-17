@@ -107,7 +107,7 @@ float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
 //   clusters: The returned clusters.
 void ClusterWithKMeans(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB> >* clusters);
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 }  // namespace pr2_pick_perception
 
 #endif
