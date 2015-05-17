@@ -26,9 +26,9 @@ class SenseBin(smach.State):
             outcomes=[outcomes.SENSE_BIN_SUCCESS, outcomes.SENSE_BIN_NO_OBJECTS,
                       outcomes.SENSE_BIN_FAILURE],
             input_keys=['bin_id', 'debug', 'current_target',
-                        'current_bin_items'],
+                        'current_bin_items', 're_sense_attempt'],
             output_keys=['clusters', 'target_cluster', 'target_descriptor',
-                         'target_model'])
+                         'target_model', 're_grasp_attempt'])
         self._tts = tts
         self._crop_shelf = crop_shelf
         self._segment_items = kwargs['segment_items']
@@ -40,6 +40,12 @@ class SenseBin(smach.State):
 
     @handle_service_exceptions(outcomes.SENSE_BIN_FAILURE)
     def execute(self, userdata):
+
+        if 're_sense_attempt' in userdata and userdata.re_sense_attempt:
+            userdata.re_grasp_attempt = True
+        else:
+            userdata.re_grasp_attempt = False
+
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
 

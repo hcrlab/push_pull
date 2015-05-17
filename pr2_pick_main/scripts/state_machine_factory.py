@@ -567,6 +567,7 @@ class StateMachineBuilder(object):
                 states.Grasp(**services),
                 transitions={
                     outcomes.GRASP_SUCCESS: states.ExtractItem.name,
+                    outcomes.GRASP_NONE: states.SenseBin.name,
                     outcomes.GRASP_FAILURE: (
                         states.UpdatePlan.name
                     )
