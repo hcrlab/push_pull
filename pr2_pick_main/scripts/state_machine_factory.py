@@ -554,6 +554,7 @@ class StateMachineBuilder(object):
                 },
                 remapping={
                     'bin_id': 'current_bin',
+                    'current_target': 'current_target',
                     'current_bin_items': 'current_bin_items',
                     'clusters': 'clusters'
                 }
