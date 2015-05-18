@@ -33,6 +33,11 @@ class VerifyGrasp(smach.State):
     def _check_thin_object(self, debug=False):
         """Holds the item up and checks if it's there.
         """
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(request)
+        self._move_head.wait_for_service()
+        self._move_head(0, 0, 0, 'r_wrist_roll_link')
+
         request = MoveArmRequest()
         request.goal.header.frame_id = 'torso_lift_link'
         request.goal.pose.position.x = 0.479
@@ -47,10 +52,6 @@ class VerifyGrasp(smach.State):
         request.planning_time = 8
         request.group = 'right_arm'
         request.plan_only = False
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(request)
-        self._move_head.wait_for_service()
-        self._move_head(0, 0, 0, 'r_wrist_roll_link')
 
         box_request = CountPointsInBoxRequest()
         box_request.frame_id = 'torso_lift_link'
