@@ -72,7 +72,7 @@ class VerifyGrasp(smach.State):
             viz.publish_bounding_box(self._markers, box_pose, 0.12, 0.12, 0.2, 0.5,
                                      0.5, 0.5, 0.25, 2345)
             raw_input('[VerifyGrasp] Press enter to continue: ')
-        return response.num_points > 1350
+        return response.num_points > 1400
 
     @handle_service_exceptions(outcomes.VERIFY_GRASP_FAILURE)
     def execute(self, userdata):
