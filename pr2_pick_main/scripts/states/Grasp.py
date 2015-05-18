@@ -1856,7 +1856,7 @@ class Grasp(smach.State):
 
         self._tts.publish('Grasping item')
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(True, False)
+        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
         self._cluster = userdata.target_cluster
 

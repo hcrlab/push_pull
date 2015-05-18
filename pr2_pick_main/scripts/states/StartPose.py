@@ -73,7 +73,7 @@ class StartPose(smach.State):
             rospy.loginfo('StartPose: MoveHead success')
 
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(True, True)
+        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
         if not tuck_success:
             rospy.logerr('StartPose: TuckArms failed')
             self._tts.publish('Failed to tuck arms.')
