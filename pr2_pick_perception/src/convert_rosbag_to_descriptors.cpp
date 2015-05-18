@@ -44,13 +44,16 @@ void ListFiles(const string& data_dir, vector<string>* files) {
 int main(int argc, char** argv) {
   ros::init(argc, argv, "convert_rosbag_to_descriptors");
   ros::NodeHandle nh;  // Necessary for ros::Time to work.
-  if (argc < 2) {
-    std::cout << "rosrun pr2_pick_perception convert_rosbag_to_descriptors "
-                 "data_dir output_file" << std::endl;
+  if (argc < 3) {
+    ROS_ERROR(
+        "rosrun pr2_pick_perception convert_rosbag_to_descriptors data_dir "
+        "output_file num_bins");
+    return 1;
   }
   std::string data_dir(argv[1]);
   std::string output_file(argv[2]);
-  int num_bins = 2;
+  std::string num_bin_str(argv[3]);
+  int num_bins = atoi(num_bin_str.c_str());
 
   // Open output file.
   rosbag::Bag output_bag;
