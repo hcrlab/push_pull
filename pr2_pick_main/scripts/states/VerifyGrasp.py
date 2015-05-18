@@ -93,7 +93,7 @@ class VerifyGrasp(smach.State):
             rospy.loginfo('[VerifyGrasp] Item in hand.')
             self._tts.publish('Item in hand.')
 
-        if not grasp_succeeded and thin_object:
+        if not grasp_succeeded:
             grasp_succeeded = self._check_thin_object(debug=userdata.debug)
             if grasp_succeeded:
                 rospy.loginfo('[VerifyGrasp] Saw item in hand.')

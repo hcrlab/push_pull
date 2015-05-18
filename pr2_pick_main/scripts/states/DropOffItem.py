@@ -125,7 +125,7 @@ class DropOffItem(smach.State):
 
         rospy.loginfo('Sending drive command')
         self._drive_to_pose.wait_for_service()
-        move_success = self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.3, angularVelocity=0.3)
+        move_success = self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
         rospy.loginfo(move_success)
 
         # move arm above bin
