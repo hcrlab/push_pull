@@ -45,7 +45,7 @@ class DropOffItem(smach.State):
         self._set_grippers = kwargs["set_grippers"]
         self._drive_linear = kwargs["drive_linear"]
         self._moveit_move_arm = kwargs["moveit_move_arm"]
-        self._move_arm_ik = kwargs["move_ark_ik"]
+        self._move_arm_ik = kwargs["move_arm_ik"]
         self._tuck_arms = kwargs["tuck_arms"]
         self._set_static_tf = kwargs["set_static_tf"]
         self._markers = kwargs["markers"]
@@ -100,7 +100,7 @@ class DropOffItem(smach.State):
             self._order_bin_found = True
 
         # TODO(jstn): move this to FindShelf.
-        viz.publish_order_bin(self._markers)0
+        viz.publish_order_bin(self._markers)
 
 
         rospy.loginfo('Untucking right arm')
@@ -113,8 +113,8 @@ class DropOffItem(smach.State):
         target_in_order_bin_frame = PoseStamped(
             header=Header(frame_id='order_bin'),
             pose=Pose(
-                position=Point(x=DROPOFF_POS_BASE_X,
-                               y=DROPOFF_POS_BASE_Y,
+                position=Point(x=self.DROPOFF_POS_BASE_X,
+                               y=self.DROPOFF_POS_BASE_Y,
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
             )
@@ -131,19 +131,19 @@ class DropOffItem(smach.State):
         rospy.loginfo('Move arm above order bin')
         pose_target = PoseStamped()
         pose_target.header.frame_id = "base_footprint";
-        pose_target.pose.position.x = DROPOFF_POS_ARM_X
-        pose_target.pose.position.y = DROPOFF_POS_ARM_Y
-        pose_target.pose.position.z = DROPOFF_POS_ARM_START_Z
-        pose_target.pose.orientation.x = DROPOFF_QUAT_ARM_X
-        pose_target.pose.orientation.y = DROPOFF_QUAT_ARM_Y
-        pose_target.pose.orientation.z = DROPOFF_QUAT_ARM_Z
-        pose_target.pose.orientation.w = DROPOFF_QUAT_ARM_W 
+        pose_target.pose.position.x = self.DROPOFF_POS_ARM_X
+        pose_target.pose.position.y = self.DROPOFF_POS_ARM_Y
+        pose_target.pose.position.z = self.DROPOFF_POS_ARM_START_Z
+        pose_target.pose.orientation.x = self.DROPOFF_QUAT_ARM_X
+        pose_target.pose.orientation.y = self.DROPOFF_QUAT_ARM_Y
+        pose_target.pose.orientation.z = self.DROPOFF_QUAT_ARM_Z
+        pose_target.pose.orientation.w = self.DROPOFF_QUAT_ARM_W 
         self._move_arm_ik.wait_for_service()
         self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
-        pose_target.pose.position.z = DROPOFF_POS_ARM_Z 
+        pose_target.pose.position.z = self.DROPOFF_POS_ARM_Z 
         self._move_arm_ik.wait_for_service()
         self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
         # self._moveit_move_arm.wait_for_service()
@@ -155,7 +155,7 @@ class DropOffItem(smach.State):
         grippers_open = self._set_grippers(False, True, -1)
 
         # raise arm
-        pose_target.pose.position.z = DROPOFF_POS_ARM_START_Z
+        pose_target.pose.position.z = self.DROPOFF_POS_ARM_START_Z
         self._move_arm_ik.wait_for_service()
         self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
         # self._moveit_move_arm.wait_for_service()
