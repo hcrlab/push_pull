@@ -174,6 +174,36 @@ class Grasp(smach.State):
             'L': 0.21 
         }
 
+        self._bin_bounds_left = {
+            'A': 0.02,
+            'B': 0.02,
+            'C': 0.02,
+            'D': 0.02,
+            'E': 0.02,
+            'F': 0.02,
+            'G': 0.02,
+            'H': 0.02,
+            'I': 0.02,
+            'J': 0.02,
+            'K': 0.02,
+            'L': 0.02
+        }
+        self._bin_bounds_right = {
+            'A': 0.05,
+            'B': 0.05,
+            'C': 0.05,
+            'D': 0.05,
+            'E': 0.05,
+            'F': 0.05,
+            'G': 0.05,
+            'H': 0.05,
+            'I': 0.05,
+            'J': 0.05,
+            'K': 0.05,
+            'L': 0.05
+        }
+
+
     def get_box_ends(self, item_descriptor):
         ''' Get the ends of the bounding box from the given descriptor '''
         bounding_box = item_descriptor.planar_bounding_box
@@ -449,9 +479,9 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2):
-            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2):
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2)
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
@@ -487,11 +517,11 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
             rospy.loginfo("Pose >  y bounds")
             rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
-            rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2)))
+            rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2)))
 
         elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
@@ -1849,6 +1879,8 @@ class Grasp(smach.State):
         self._debug = userdata.debug
         self.allowed_grasps = userdata.item_model.allowed_grasps
         self.target_descriptor = userdata.target_descriptor
+        self.bin_bound_left = self._bin_bounds_left[userdata.bin_id] 
+        self.bin_bound_right = self._bin_bounds_right[userdata.bin_id]
 
 
         if userdata.item_model.allow_finger_collisions:
