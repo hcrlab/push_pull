@@ -22,12 +22,12 @@ class DropOffItem(smach.State):
     DROPOFF_POS_BASE_Y = 0.6604
     # The position the arm will move to before it lets go of the object
     DROPOFF_POS_ARM_X = 0.0872
-    DROPOFF_POS_ARM_Y = 0.8277
-    DROPOFF_POS_ARM_Z = 0.5977
+    DROPOFF_POS_ARM_Y = -0.8277
+    DROPOFF_POS_ARM_Z = 0.6577
     DROPOFF_QUAT_ARM_X = 0.0008
-    DROPOFF_QUAT_ARM_Y = 0.7025
+    DROPOFF_QUAT_ARM_Y = -0.7025
     DROPOFF_QUAT_ARM_Z = 0.0197
-    DROPOFF_QUAT_ARM_W = 0.7114
+    DROPOFF_QUAT_ARM_W = -0.7114
     # The height the arm will start at before lowering into the bin to dropoff
     # object
     DROPOFF_POS_ARM_START_Z = 0.7477
