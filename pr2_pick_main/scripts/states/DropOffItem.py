@@ -105,7 +105,7 @@ class DropOffItem(smach.State):
 
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(True, False)
+        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
         # move to the order bin
         rospy.loginfo('Move next to the order bin')
@@ -165,7 +165,7 @@ class DropOffItem(smach.State):
         # get back to "untucked" position
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
-        retucked_success = self._tuck_arms(True, False)
+        retucked_success = self._tuck_arms(tuck_left=False, tuck_right=False)
         rospy.loginfo(retucked_success)
     	# report success
         

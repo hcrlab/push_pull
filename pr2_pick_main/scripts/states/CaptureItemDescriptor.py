@@ -38,7 +38,7 @@ class CaptureItemDescriptor(smach.State):
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
         rospy.sleep(5)
         self._tuck_arms.wait_for_service()
-        self._tuck_arms(tuck_left=True, tuck_right=True)
+        self._tuck_arms(tuck_left=False, tuck_right=False)
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID=userdata.bin_id)

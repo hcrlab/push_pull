@@ -87,7 +87,7 @@ class MoveToBin(smach.State):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(True, True)
+        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
         robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
         if userdata.bin_id > "C":

@@ -1,0 +1,103 @@
+{
+    "bin_contents": {
+        "bin_A": [
+            "kyjen_squeakin_eggs_plush_puppies",
+            "champion_copper_plus_spark_plug"
+        ],
+        "bin_B": [
+            "paper_mate_12_count_mirado_black_warrior",
+            "munchkin_white_hot_duck_bath_toy",
+            "feline_greenies_dental_treats"
+        ],
+        "bin_C": [
+            "kong_air_dog_squeakair_tennis_ball",
+            "elmers_washable_no_run_school_glue",
+            "stanley_66_052"
+        ],
+        "bin_D": [
+            "mommys_helper_outlet_plugs",
+            "genuine_joe_plastic_stir_sticks"
+        ],
+        "bin_E": [
+            "highland_6539_self_stick_notes"
+        ],
+        "bin_F": [
+            "rolodex_jumbo_pencil_cup"
+        ],
+        "bin_G": [
+            "kong_duck_dog_toy",
+            "dr_browns_bottle_brush",
+            "cheezit_big_original"
+        ],
+        "bin_H": [
+            "mark_twain_huckleberry_finn"
+        ],
+        "bin_I": [
+            "oreo_mega_stuf",
+            "expo_dry_erase_board_eraser"
+        ],
+        "bin_J": [
+            "first_years_take_and_toss_straw_cup",
+            "laugh_out_loud_joke_book"
+        ],
+        "bin_K": [
+            "safety_works_safety_glasses",
+            "sharpie_accent_tank_style_highlighters"
+        ],
+        "bin_L": [
+            "mead_index_cards",
+            "kong_sitting_frog_dog_toy",
+            "crayola_64_ct"
+        ]
+    },
+    "work_order": [
+        {
+            "bin": "bin_A",
+            "item": "kyjen_squeakin_eggs_plush_puppies"
+        },
+        {
+            "bin": "bin_B",
+            "item": "paper_mate_12_count_mirado_black_warrior"
+        },
+        {
+            "bin": "bin_C",
+            "item": "kong_air_dog_squeakair_tennis_ball"
+        },
+        {
+            "bin": "bin_D",
+            "item": "mommys_helper_outlet_plugs"
+        },
+        {
+            "bin": "bin_E",
+            "item": "highland_6539_self_stick_notes"
+        },
+        {
+            "bin": "bin_F",
+            "item": "rolodex_jumbo_pencil_cup"
+        },
+        {
+            "bin": "bin_G",
+            "item": "kong_duck_dog_toy"
+        },
+        {
+            "bin": "bin_H",
+            "item": "mark_twain_huckleberry_finn"
+        },
+        {
+            "bin": "bin_I",
+            "item": "oreo_mega_stuf"
+        },
+        {
+            "bin": "bin_J",
+            "item": "first_years_take_and_toss_straw_cup"
+        },
+        {
+            "bin": "bin_K",
+            "item": "safety_works_safety_glasses"
+        },
+        {
+            "bin": "bin_L",
+            "item": "mead_index_cards"
+        }
+    ]
+}
