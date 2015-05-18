@@ -942,8 +942,7 @@ class Grasp(smach.State):
             pre_grasp_pose_target.pose.orientation.w = 0.028
             pre_grasp_pose_target.pose.position.x = 0.243 
             pre_grasp_pose_target.pose.position.y = object_pose.pose.position.y
-            pre_grasp_pose_target.pose.position.z = 1.508
-
+            pre_grasp_pose_target.pose.position.z = 1.508            
             pre_grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
                                                                 pre_grasp_pose_target)
             # Check if within bin_width
@@ -994,8 +993,7 @@ class Grasp(smach.State):
             grasp_pose_target.pose.orientation.w = 0.027
             grasp_pose_target.pose.position.x = 0.431
             grasp_pose_target.pose.position.y = object_pose.pose.position.y
-            grasp_pose_target.pose.position.z = 1.580 # used to be 1.57
-
+            grasp_pose_target.pose.position.z = 1.57 
             grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
                                                                 grasp_pose_target)
             # Check if within bin_width
@@ -1454,8 +1452,10 @@ class Grasp(smach.State):
                 rotated = False
                 if 'rolled' in grasp:
                     rotated = grasp['rolled']
-                    
-                pre_grasp_in_bounds = self.check_pose_within_bounds(transformed_pose, 
+
+                pre_grasp_in_bounds = True
+                if not self.top_shelf:    
+                    pre_grasp_in_bounds = self.check_pose_within_bounds(transformed_pose, 
                                                             self.shelf_bottom_height, self.shelf_height, 
                                                             self.shelf_width, self.bin_id, 'base_footprint', rotated)
                 if not pre_grasp_in_bounds:
@@ -1509,8 +1509,10 @@ class Grasp(smach.State):
                 rotated = False
                 if 'rolled' in grasp:
                     rotated = grasp['rolled']
-                    
-                grasp_in_bounds = self.check_pose_within_bounds(transformed_pose, 
+
+                grasp_in_bounds = True
+                if not self.top_shelf:    
+                    grasp_in_bounds = self.check_pose_within_bounds(transformed_pose, 
                                                             self.shelf_bottom_height, self.shelf_height, 
                                                             self.shelf_width, self.bin_id, 'base_footprint', rotated)
                 if not grasp_in_bounds:
@@ -1663,12 +1665,14 @@ class Grasp(smach.State):
                     if 'rolled' in grasp:
                         rotated = grasp['rolled']
 
-                    grasp_in_bounds = self.check_pose_within_bounds(grasp['grasp'], 
-                                                                self.shelf_bottom_height, self.shelf_height, 
-                                                                self.shelf_width, self.bin_id, 'base_footprint', rotated)
-                    if not grasp_in_bounds:
-                        rospy.loginfo("Grasp not in bounds")
-                        break
+                    grasp_in_bounds = True
+                    if not self.top_shelf:
+                        grasp_in_bounds = self.check_pose_within_bounds(grasp['grasp'], 
+                                                                    self.shelf_bottom_height, self.shelf_height, 
+                                                                    self.shelf_width, self.bin_id, 'base_footprint', rotated)
+                        if not grasp_in_bounds:
+                            rospy.loginfo("Grasp not in bounds")
+                            break
 
                     grasp = self.get_grasp_intersections(grasp)
 
@@ -1730,13 +1734,20 @@ class Grasp(smach.State):
             rospy.loginfo("Grasp: {}".format(grasp["grasp"]))
             self._moveit_move_arm.wait_for_service()
 
-            for i in range(self.pre_grasp_attempts):
-                success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
-                                                    0.03, 0.2, 12, 'right_arm',
-                                                    False).success
-                if success_pre_grasp:
-                    break
- 
+            if not self.top_shelf:
+
+                for i in range(self.pre_grasp_attempts):
+                    success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
+                                                        0.03, 0.2, 12, 'right_arm',
+                                                        False).success
+                    if success_pre_grasp:
+                        break
+            else:
+                self._move_arm_ik.wait_for_service()
+
+                success_pre_grasp = self._move_arm_ik(grasp["pre_grasp"], MoveArmIkRequest().RIGHT_ARM).success
+
+
             if not success_pre_grasp:
                 continue
             else:

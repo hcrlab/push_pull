@@ -32,7 +32,7 @@ class ExtractItem(smach.State):
                 outcomes.EXTRACT_ITEM_SUCCESS,
                 outcomes.EXTRACT_ITEM_FAILURE
             ],
-            input_keys=['bin_id', 'debug']
+            input_keys=['bin_id', 'debug', 'target_descriptor']
         )
 
         self._moveit_move_arm = services['moveit_move_arm']
@@ -89,6 +89,7 @@ class ExtractItem(smach.State):
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
+        object_pose = self._tf_listener.transformPose('base_footprint', userdata.target_descriptor.planar_bounding_box.pose)
         #self._ee_pose.wait_for_service()
         
         self._tf_listener.waitForTransform(
@@ -149,13 +150,14 @@ class ExtractItem(smach.State):
                     self._move_arm_ik.wait_for_service()
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
             else:
+
                 euler_tuple = tf.transformations.euler_from_quaternion(
                                                         [current_pose.pose.orientation.x, 
                                                         current_pose.pose.orientation.y, 
                                                         current_pose.pose.orientation.z, 
                                                         current_pose.pose.orientation.w])
                 euler = list(euler_tuple)
-                euler[1] = euler[1] + 3.14/6.0
+                euler[1] = euler[1] - 3.14/8.0
                 quaternion = tf.transformations.quaternion_from_euler(euler[0], 
                                                                       euler[1], 
                                                                       euler[2])
@@ -163,12 +165,13 @@ class ExtractItem(smach.State):
                 pose_target = geometry_msgs.msg.PoseStamped()
                 pose_target.header.frame_id = 'base_footprint'
                 rospy.loginfo("Lift")
-                pose_target.pose.position.x = current_pose.pose.position.x
-                pose_target.pose.position.y = current_pose.pose.position.y
-                pose_target.pose.orientation.x = quaternion[0]
-                pose_target.pose.orientation.y = quaternion[1]
-                pose_target.pose.orientation.z = quaternion[2]
-                pose_target.pose.orientation.w = quaternion[3]
+                pose_target.pose.position.x = 0.431 #current_pose.pose.position.x
+                pose_target.pose.position.y = object_pose.pose.position.y #current_pose.pose.position.y
+                pose_target.pose.position.z = 1.57
+                pose_target.pose.orientation.x = 0.98
+                pose_target.pose.orientation.y = 0.039
+                pose_target.pose.orientation.z = 0.18
+                pose_target.pose.orientation.w = -0.020
                 pose_target.pose.position.z = current_pose.pose.position.z 
                 #pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
 
@@ -199,7 +202,7 @@ class ExtractItem(smach.State):
                 continue
 
 
-        if not success_lift:
+        if not success_lift and userdata.bin_id > "C":
             self._move_torso(self.torso_height_by_bin[userdata.bin_id])
         attempts = 5
 
