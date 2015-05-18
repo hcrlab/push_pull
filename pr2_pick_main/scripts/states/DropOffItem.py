@@ -1,6 +1,7 @@
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
 from pr2_pick_main import handle_service_exceptions
 from std_msgs.msg import Header
+from pr2_pick_manipulation.srv import MoveArmIk, MoveArmIkRequest
 from visualization_msgs.msg import Marker
 import moveit_commander
 import outcomes
@@ -10,13 +11,28 @@ import tf
 import visualization as viz
 
 
-class DropOffItem(smach.State):
+class DropOffItem(smach.State): 
     """Deposits the item into the order bin.
     """
     name = 'DROP_OFF_ITEM'
 
-    def __init__(self, set_grippers, drive_linear, moveit_move_arm, tuck_arms,
-        tts, set_static_tf, tf_listener, markers, drive_to_pose, **kwargs):
+    # The x,y coordinates the base should drive to for dropoffs in the order
+    # bin frame
+    DROPOFF_POS_BASE_X = -0.2540 
+    DROPOFF_POS_BASE_Y = 0.6604
+    # The position the arm will move to before it lets go of the object
+    DROPOFF_POS_ARM_X = 0.0872
+    DROPOFF_POS_ARM_Y = -0.8277
+    DROPOFF_POS_ARM_Z = 0.6577
+    DROPOFF_QUAT_ARM_X = 0.0008
+    DROPOFF_QUAT_ARM_Y = -0.7025
+    DROPOFF_QUAT_ARM_Z = 0.0197
+    DROPOFF_QUAT_ARM_W = -0.7114
+    # The height the arm will start at before lowering into the bin to dropoff
+    # object
+    DROPOFF_POS_ARM_START_Z = 0.7477
+
+    def __init__(self, **kwargs):
         smach.State.__init__(self,
             outcomes=[
                 outcomes.DROP_OFF_ITEM_SUCCESS,
@@ -25,15 +41,16 @@ class DropOffItem(smach.State):
             input_keys=['bin_id', 'bin_data'],
             output_keys=['output_bin_data']
         )
-        self._tts = tts
-        self._set_grippers = set_grippers
-        self._drive_linear = drive_linear
-        self._moveit_move_arm = moveit_move_arm
-        self._tuck_arms = tuck_arms
-        self._set_static_tf = set_static_tf
-        self._markers = markers
-        self._drive_to_pose = drive_to_pose
-        self._tf_listener = tf_listener
+        self._tts = kwargs["tts"]
+        self._set_grippers = kwargs["set_grippers"]
+        self._drive_linear = kwargs["drive_linear"]
+        self._moveit_move_arm = kwargs["moveit_move_arm"]
+        self._move_arm_ik = kwargs["move_arm_ik"]
+        self._tuck_arms = kwargs["tuck_arms"]
+        self._set_static_tf = kwargs["set_static_tf"]
+        self._markers = kwargs["markers"]
+        self._drive_to_pose = kwargs["drive_to_pose"]
+        self._tf_listener = kwargs["tf_listener"]
 
         self._order_bin_found = False
 
@@ -65,60 +82,10 @@ class DropOffItem(smach.State):
         if not self._order_bin_found:
             rospy.loginfo('Creating a static TF for the order bin relative to the shelf')
 
-            # # Publish static transform order_bin_fixedto_odom.
-            # self._tf_listener.waitForTransform("odom_combined","shelf",rospy.Time(0), rospy.Duration(1.0))
-            # (pos_shelf_in_odom, orient_shelf_in_odom) = \
-            #     self._tf_listener.lookupTransform("odom_combined", "shelf", rospy.Time(0))
-            # # set pitch and roll to 0
-            # euler = tf.transformations.euler_from_quaternion(orient_shelf_in_odom)
-            # roll = euler[0]
-            # pitch = euler[1]
-            # yaw = euler[2]
-            # quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-            # # do the actual message publishing
-            # order_bin_fixedto_odom = TransformStamped()
-            # order_bin_fixedto_odom.header.frame_id = 'odom_combined'
-            # order_bin_fixedto_odom.header.stamp = rospy.Time.now()
-            # order_bin_fixedto_odom.transform.translation.x = -36 * 0.0254 + pos_shelf_in_odom[0]
-            # order_bin_fixedto_odom.transform.translation.y = -32 * 0.0254 + pos_shelf_in_odom[1]  # -27
-            # order_bin_fixedto_odom.transform.translation.z = 12 * 0.0254 + pos_shelf_in_odom[2]
-            # order_bin_fixedto_odom.transform.rotation.x = quaternion[0]
-            # order_bin_fixedto_odom.transform.rotation.y = quaternion[1]
-            # order_bin_fixedto_odom.transform.rotation.z = quaternion[2]
-            # order_bin_fixedto_odom.transform.rotation.w = quaternion[3]
-            # order_bin_fixedto_odom.child_frame_id = 'order_bin_fixedto_odom'
-            # self._set_static_tf.wait_for_service()
-            # self._set_static_tf(order_bin_fixedto_odom)
-
-            # # Publish static transform order_bin_fixedto_shelf.
-            # self._tf_listener.waitForTransform("shelf","order_bin_fixedto_odom",rospy.Time(0), rospy.Duration(1.0))
-            # (pos_orderbin_in_shelf, orient_orderbin_in_shelf) = \
-            #     self._tf_listener.lookupTransform("shelf", "order_bin_fixedto_odom", rospy.Time(0))
-            # order_bin_fixedto_shelf = TransformStamped()
-            # order_bin_fixedto_shelf.header.frame_id = 'shelf'
-            # order_bin_fixedto_shelf.header.stamp = rospy.Time.now()
-            # order_bin_fixedto_shelf.transform.translation.x = pos_orderbin_in_shelf[0]
-            # order_bin_fixedto_shelf.transform.translation.y = pos_orderbin_in_shelf[1]
-            # order_bin_fixedto_shelf.transform.translation.z = pos_orderbin_in_shelf[2]
-            # order_bin_fixedto_shelf.transform.rotation.x = orient_orderbin_in_shelf[0]
-            # order_bin_fixedto_shelf.transform.rotation.y = orient_orderbin_in_shelf[1]
-            # order_bin_fixedto_shelf.transform.rotation.z = orient_orderbin_in_shelf[2]
-            # order_bin_fixedto_shelf.transform.rotation.w = orient_orderbin_in_shelf[3]
-            # order_bin_fixedto_shelf.child_frame_id = 'order_bin_fixedto_shelf'
-            # self._set_static_tf.wait_for_service()
-            # self._set_static_tf(order_bin_fixedto_shelf)
-
-            # # Finally publish order_bin tf
-            # order_bin_tf = TransformStamped()
-            # order_bin_tf.header.frame_id = 'order_bin_fixedto_shelf'
-            # order_bin_tf.header.stamp = rospy.Time.now()
-            # order_bin_tf.transform.rotation.w = 1
-            # order_bin_tf.child_frame_id = 'order_bin'
-            # self._set_static_tf.wait_for_service()
-            # self._set_static_tf(order_bin_tf)
 
             # Do it the simple way! Assumes the shelf is not too tilted
             # TODO(jstn): move this to FindShelf.
+            # Creates a stransform from the shelf frame to the order bin fame
             order_bin_tf = TransformStamped()
             order_bin_tf.header.frame_id = 'shelf'
             order_bin_tf.header.stamp = rospy.Time.now()
@@ -135,19 +102,10 @@ class DropOffItem(smach.State):
         # TODO(jstn): move this to FindShelf.
         viz.publish_order_bin(self._markers)
 
+
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(True, False)
-
-        # # add the order bin to planning scene
-        # rospy.loginfo('Adding order bin to planning scene')
-        # # near wall of bin only
-        # size = (0.9144, 0.01, 0.45)    
-        # position = (1.524, -1.10, size[2] / 2.0)
-        # # full bin
-        # # size = (0.9144, 0.4572, 0.9144)    
-        # name = 'order_bin'
-        # self.planningscene_create_box(position, size, name)
 
         # move to the order bin
         rospy.loginfo('Move next to the order bin')
@@ -155,8 +113,8 @@ class DropOffItem(smach.State):
         target_in_order_bin_frame = PoseStamped(
             header=Header(frame_id='order_bin'),
             pose=Pose(
-                position=Point(x=-10 * 0.0254,
-                               y=28.5 * 0.0254,
+                position=Point(x=self.DROPOFF_POS_BASE_X,
+                               y=self.DROPOFF_POS_BASE_Y,
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
             )
@@ -167,44 +125,48 @@ class DropOffItem(smach.State):
 
         rospy.loginfo('Sending drive command')
         self._drive_to_pose.wait_for_service()
-        self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
+        move_success = self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.3, angularVelocity=0.3)
+        rospy.loginfo(move_success)
 
         # move arm above bin
         rospy.loginfo('Move arm above order bin')
         pose_target = PoseStamped()
         pose_target.header.frame_id = "base_footprint";
-        pose_target.pose.position.x = 0.2855
-        pose_target.pose.position.y = -0.7551
-        # pose_target.pose.position.z = 1.0253  # taller table
-        pose_target.pose.position.z = 0.70
-        pose_target.pose.orientation.x = 0.6878
-        pose_target.pose.orientation.y = -0.6733
-        pose_target.pose.orientation.z = -0.1941
-        pose_target.pose.orientation.w = -0.1897
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
+        pose_target.pose.position.x = self.DROPOFF_POS_ARM_X
+        pose_target.pose.position.y = self.DROPOFF_POS_ARM_Y
+        pose_target.pose.position.z = self.DROPOFF_POS_ARM_START_Z
+        pose_target.pose.orientation.x = self.DROPOFF_QUAT_ARM_X
+        pose_target.pose.orientation.y = self.DROPOFF_QUAT_ARM_Y
+        pose_target.pose.orientation.z = self.DROPOFF_QUAT_ARM_Z
+        pose_target.pose.orientation.w = self.DROPOFF_QUAT_ARM_W 
+        self._move_arm_ik.wait_for_service()
+        arm_above_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        rospy.loginfo(arm_above_bin_success)
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
-        pose_target.pose.position.z = 0.45
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0.03, 0.1, 0, "right_arm", False)
+        pose_target.pose.position.z = self.DROPOFF_POS_ARM_Z 
+        self._move_arm_ik.wait_for_service()
+        arm_into_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        rospy.loginfo(arm_into_bin_success)
 
         # open gripper
         rospy.loginfo('Open gripper')
         self._set_grippers.wait_for_service()
-        grippers_open = self._set_grippers(False, True, -1)
+        open_gripper_success = self._set_grippers(False, True, -1)
+        rospy.loginfo(open_gripper_success)
 
         # raise arm
-        pose_target.pose.position.z = 0.70
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
+        pose_target.pose.position.z = self.DROPOFF_POS_ARM_START_Z
+        self._move_arm_ik.wait_for_service()
+        arm_out_of_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        rospy.loginfo(arm_out_of_bin_success)
 
         # get back to "untucked" position
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(True, False)
-
+        retucked_success = self._tuck_arms(True, False)
+        rospy.loginfo(retucked_success)
     	# report success
         
         bin_id = userdata.bin_id
