@@ -43,6 +43,7 @@ void ListFiles(const string& data_dir, vector<string>* files) {
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "convert_rosbag_to_descriptors");
+  ros::NodeHandle nh;  // Necessary for ros::Time to work.
   if (argc < 2) {
     std::cout << "rosrun pr2_pick_perception convert_rosbag_to_descriptors "
                  "data_dir output_file" << std::endl;
@@ -64,7 +65,8 @@ int main(int argc, char** argv) {
     rosbag::Bag bag;
     bag.open(filename, rosbag::bagmode::Read);
     vector<string> topics;
-    topics.push_back(string("cropped_cloud"));
+    topics.push_back("cell_pc");
+    topics.push_back("cropped_cloud");
     rosbag::View view(bag, rosbag::TopicQuery(topics));
 
     foreach (rosbag::MessageInstance const m, view) {
@@ -92,10 +94,11 @@ int main(int argc, char** argv) {
       desc_example.descriptor = descriptor;
       desc_example.label = example->labels[0];
 
-      output_bag.write("examples", ros::Time(0), desc_example);
+      output_bag.write("examples", ros::Time::now(), desc_example);
     }
 
     bag.close();
   }
+  output_bag.close();
   return 0;
 }
