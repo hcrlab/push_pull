@@ -146,16 +146,16 @@ class Grasp(smach.State):
         }
         self._shelf_widths = {
             'A': 0.25,
-            'B': 0.30,
+            'B': 0.28,
             'C': 0.25,
             'D': 0.25, 
-            'E': 0.30,
+            'E': 0.28,
             'F': 0.25,
             'G': 0.25, 
-            'H': 0.30, 
+            'H': 0.28, 
             'I': 0.25, 
             'J': 0.25, 
-            'K': 0.30, 
+            'K': 0.28, 
             'L': 0.25 
         }
 
@@ -449,10 +449,10 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.01)/2):
-            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.01)/2
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.01)/2):
-            pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.01)/2)
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2):
+            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2):
+            pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2)
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -487,17 +487,17 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.0)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
             rospy.loginfo("Pose >  y bounds")
             rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
-            rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + 0.0)/2)))
+            rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + 0.05)/2)))
 
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.0)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
             rospy.loginfo("Pose <  y bounds")
             rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
-            rospy.loginfo("Bound: {}".format(-1*self.shelf_width/2 + (self.gripper_palm_width + 0.01)/2))
+            rospy.loginfo("Bound: {}".format(-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2))
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -582,6 +582,11 @@ class Grasp(smach.State):
         pre_grasp_end.pose.position.y = closest_end.point.y
         pre_grasp_end.pose.position.z = object_pose_in_base_footprint.pose.position.z
 
+        pre_grasp_end, temp = self.move_pose_within_bounds(pre_grasp_end,
+                                                                self.shelf_bottom_height, self.shelf_height,
+                                                                self.shelf_width, bin_id, 'base_footprint', False)
+
+
         grasp_end, temp = self.move_pose_within_bounds(grasp_end,
                                                                 self.shelf_bottom_height, self.shelf_height,
                                                                 self.shelf_width, bin_id, 'base_footprint', False)
@@ -619,6 +624,7 @@ class Grasp(smach.State):
 
         #pitched_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
         #                                                    pitched_grasp_in_base_footprint)
+
 
         grasp_in_bounds = self.check_pose_within_bounds(pitched_grasp_in_base_footprint,
                                                             self.shelf_bottom_height, self.shelf_height,
@@ -789,8 +795,12 @@ class Grasp(smach.State):
                 grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
                                                                 grasp_in_base_footprint)
 
+            pre_grasp_in_axis_frame, pre_grasp_in_base_footprint = self.move_pose_within_bounds(pre_grasp_in_axis_frame,
+                                                                self.shelf_bottom_height, self.shelf_height,
+                                                                self.shelf_width, bin_id, 'object_axis', False)
 
-            grasp_in_axis_frame, temp = self.move_pose_within_bounds(grasp_in_axis_frame,
+
+            grasp_in_axis_frame, grasp_in_base_footprint = self.move_pose_within_bounds(grasp_in_axis_frame,
                                                                 self.shelf_bottom_height, self.shelf_height,
                                                                 self.shelf_width, bin_id, 'object_axis', False)                
             grasp_in_bounds = self.check_pose_within_bounds(grasp_in_axis_frame, 
