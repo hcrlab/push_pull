@@ -288,8 +288,8 @@ class ExtractItem(smach.State):
             pose.pose.orientation.z = -0.4802;
             pose.pose.orientation.w = -0.2458;
 
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm', False)
+        #self._moveit_move_arm.wait_for_service()
+        #self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm', False)
 
 
         if success:

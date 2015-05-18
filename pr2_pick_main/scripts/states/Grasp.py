@@ -449,10 +449,10 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2):
-            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2):
-            pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2)
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.01)/2):
+            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.01)/2
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.01)/2):
+            pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.01)/2)
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -581,6 +581,10 @@ class Grasp(smach.State):
         pre_grasp_end.pose.position.x = self.pre_grasp_x_distance
         pre_grasp_end.pose.position.y = closest_end.point.y
         pre_grasp_end.pose.position.z = object_pose_in_base_footprint.pose.position.z
+
+        grasp_end, temp = self.move_pose_within_bounds(grasp_end,
+                                                                self.shelf_bottom_height, self.shelf_height,
+                                                                self.shelf_width, bin_id, 'base_footprint', False)
 
         grasp_in_bounds = self.check_pose_within_bounds(grasp_end,
                                                                 self.shelf_bottom_height, self.shelf_height,
@@ -785,7 +789,10 @@ class Grasp(smach.State):
                 grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
                                                                 grasp_in_base_footprint)
 
-                
+
+            grasp_in_axis_frame, temp = self.move_pose_within_bounds(grasp_in_axis_frame,
+                                                                self.shelf_bottom_height, self.shelf_height,
+                                                                self.shelf_width, bin_id, 'object_axis', False)                
             grasp_in_bounds = self.check_pose_within_bounds(grasp_in_axis_frame, 
                                                                 self.shelf_bottom_height, self.shelf_height, 
                                                                 self.shelf_width, bin_id, 'object_axis', False)
