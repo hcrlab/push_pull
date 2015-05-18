@@ -77,7 +77,7 @@
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": 15
+    "grasp_effort": 30
   },
   "cheezit_big_original": {
     "graspable": true,
@@ -101,7 +101,7 @@
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 15
+    "grasp_effort": 30
   },
   "elmers_washable_no_run_school_glue": {
     "graspable": true,
