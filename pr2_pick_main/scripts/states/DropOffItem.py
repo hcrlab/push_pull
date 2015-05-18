@@ -125,7 +125,8 @@ class DropOffItem(smach.State):
 
         rospy.loginfo('Sending drive command')
         self._drive_to_pose.wait_for_service()
-        self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
+        move_success = self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.3, angularVelocity=0.3)
+        rospy.loginfo(move_success)
 
         # move arm above bin
         rospy.loginfo('Move arm above order bin')
@@ -139,33 +140,33 @@ class DropOffItem(smach.State):
         pose_target.pose.orientation.z = self.DROPOFF_QUAT_ARM_Z
         pose_target.pose.orientation.w = self.DROPOFF_QUAT_ARM_W 
         self._move_arm_ik.wait_for_service()
-        self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        arm_above_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        rospy.loginfo(arm_above_bin_success)
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = self.DROPOFF_POS_ARM_Z 
         self._move_arm_ik.wait_for_service()
-        self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
-        # self._moveit_move_arm.wait_for_service()
-        # self._moveit_move_arm(pose_target, 0.03, 0.1, 0, "right_arm", False)
+        arm_into_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        rospy.loginfo(arm_into_bin_success)
 
         # open gripper
         rospy.loginfo('Open gripper')
         self._set_grippers.wait_for_service()
-        grippers_open = self._set_grippers(False, True, -1)
+        open_gripper_success = self._set_grippers(False, True, -1)
+        rospy.loginfo(open_gripper_success)
 
         # raise arm
         pose_target.pose.position.z = self.DROPOFF_POS_ARM_START_Z
         self._move_arm_ik.wait_for_service()
-        self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
-        # self._moveit_move_arm.wait_for_service()
-        # self._moveit_move_arm(pose_target, 0, 0, 0, "right_arm", False)
+        arm_out_of_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        rospy.loginfo(arm_out_of_bin_success)
 
         # get back to "untucked" position
         rospy.loginfo('Untucking right arm')
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(True, False)
-
+        retucked_success = self._tuck_arms(True, False)
+        rospy.loginfo(retucked_success)
     	# report success
         
         bin_id = userdata.bin_id
