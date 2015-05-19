@@ -175,32 +175,32 @@ class Grasp(smach.State):
         }
 
         self._bin_bounds_left = {
-            'A': 0.02,
-            'B': 0.02,
-            'C': 0.02,
-            'D': 0.02,
-            'E': 0.02,
-            'F': 0.02,
-            'G': 0.02,
-            'H': 0.02,
-            'I': 0.02,
-            'J': 0.02,
-            'K': 0.02,
-            'L': 0.02
+            'A': 0.04,
+            'B': 0.04,
+            'C': 0.04,
+            'D': 0.04,
+            'E': 0.04,
+            'F': 0.04,
+            'G': 0.04,
+            'H': 0.04,
+            'I': 0.04,
+            'J': 0.04,
+            'K': 0.04,
+            'L': 0.04
         }
         self._bin_bounds_right = {
-            'A': 0.05,
-            'B': 0.05,
-            'C': 0.05,
-            'D': 0.05,
-            'E': 0.05,
-            'F': 0.05,
-            'G': 0.05,
-            'H': 0.05,
-            'I': 0.05,
-            'J': 0.05,
-            'K': 0.05,
-            'L': 0.05
+            'A': 0.06,
+            'B': 0.06,
+            'C': 0.06,
+            'D': 0.06,
+            'E': 0.06,
+            'F': 0.06,
+            'G': 0.06,
+            'H': 0.06,
+            'I': 0.06,
+            'J': 0.06,
+            'K': 0.06,
+            'L': 0.06
         }
 
 
@@ -226,6 +226,7 @@ class Grasp(smach.State):
         while yaw <= -math.pi:
             yaw += 2 * math.pi
 
+        """
         rospy.loginfo('Sanity check: yaw should be the only nonzero')
         rospy.loginfo('roll {}, pitch {}, yaw {}'.format(roll, pitch, yaw))
         rospy.loginfo('Bounding box dimensions {} {} {}'
@@ -233,7 +234,7 @@ class Grasp(smach.State):
                               bounding_box.dimensions.y,
                               bounding_box.dimensions.z)
                       )
-
+        """
         # get yaw sign
         # make sure it's in the range (-pi, pi]
         y_sign = 1.0
@@ -479,10 +480,10 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2) and pose_in_bin_frame.pose.position.x > 0.01:
-            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2) and pose_in_bin_frame.pose.position.x > 0.01:
-            pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2)
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+            pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+            pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2)
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -517,17 +518,17 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
-            rospy.loginfo("Pose >  y bounds")
-            rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
-            rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + 0.03)/2)))
+            #rospy.loginfo("Pose >  y bounds")
+            #rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
+            #rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2)))
 
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2) and pose_in_bin_frame.pose.position.x > 0.01:
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
-            rospy.loginfo("Pose <  y bounds")
-            rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
-            rospy.loginfo("Bound: {}".format(-1*self.shelf_width/2 + (self.gripper_palm_width + 0.05)/2))
+            #rospy.loginfo("Pose <  y bounds")
+            #rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
+            #rospy.loginfo("Bound: {}".format(-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2))
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -542,10 +543,10 @@ class Grasp(smach.State):
         else:
             #if pose_in_bin_frame.pose.position.x > 0:
             in_bounds = False
-            rospy.loginfo("Pose not within z bounds")
-            rospy.loginfo("Z pose: {}".format(pose_in_base_footprint.pose.position.z))
-            rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + gripper_offset)))
-            rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + self.shelf_height - gripper_offset)))
+            #rospy.loginfo("Pose not within z bounds")
+            #rospy.loginfo("Z pose: {}".format(pose_in_base_footprint.pose.position.z))
+            #rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + gripper_offset)))
+            #rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + self.shelf_height - gripper_offset)))
 
         pose_in_frame = self._tf_listener.transformPose(frame,
                                                         pose_in_bin_frame)
