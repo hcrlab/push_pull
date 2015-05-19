@@ -41,3 +41,6 @@ DROP_OFF_ITEM_FAILURE = 'failure'
 
 CAPTURE_ITEM_NEXT = 'next'
 CAPTURE_ITEM_DONE = 'done'
+
+GATHER_DATA_NEXT = 'next'
+GATHER_DATA_DONE = 'done'
