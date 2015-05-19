@@ -208,98 +208,128 @@ class Grasp(smach.State):
         ''' Get the ends of the bounding box from the given descriptor '''
         bounding_box = item_descriptor.planar_bounding_box
 
-        # First, figure out whether the y-axis points roughly along or opposite
-        # the cluster's y-axis
 
-        # get euler angles and normalize
-        orientation = bounding_box.pose.pose.orientation
-        (yaw, pitch, roll) = tf.transformations.euler_from_quaternion(
-            [orientation.w, orientation.x, orientation.y, orientation.z]
-        )
-        yaw = -yaw
-        # if fabs(roll) + 1e-4 > math.pi and fabs(roll) - 1e-4 < math.pi:
-        #     roll -= math.pi
-        #     pitch = -pitch
-        #     yaw = -yaw
-        while yaw > math.pi:
-            yaw -= 2 * math.pi
-        while yaw <= -math.pi:
-            yaw += 2 * math.pi
+        # Make a frame that has the same yaw as head frame
+        (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
+        rospy.loginfo("Tranform: {}, {}".format(trans, rot))
 
-        """
-        rospy.loginfo('Sanity check: yaw should be the only nonzero')
-        rospy.loginfo('roll {}, pitch {}, yaw {}'.format(roll, pitch, yaw))
-        rospy.loginfo('Bounding box dimensions {} {} {}'
-                      .format(bounding_box.dimensions.x,
-                              bounding_box.dimensions.y,
-                              bounding_box.dimensions.z)
-                      )
-        """
-        # get yaw sign
-        # make sure it's in the range (-pi, pi]
-        y_sign = 1.0
-        if yaw < 0:
-            y_sign = -1.0
+        #type(pose) = geometry_msgs.msg.Pose
+        quaternion = (
+            rot[0],
+            rot[1],
+            rot[2],
+            rot[3])
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        roll = 0
+        pitch = 0
+        yaw = euler[2] 
 
-        # relative to the bounding box's pose
-        ends_in_item_frame = [
-            Point(
-                x=x_sign * bounding_box.dimensions.x / 2.0,
-                y=y_sign * bounding_box.dimensions.y / 2.0,
-                z=bounding_box.dimensions.z / 2.0,
-            )
-            for x_sign in [1.0, -1.0]
-        ]
+        pose = PoseStamped()
 
-        # transform to the cluster's pose
-        position = bounding_box.pose.pose.position
-        sin_yaw = math.sin(yaw)
-        cos_yaw = math.cos(yaw)
-        ends = [
-            Point(
-                x=point.x * cos_yaw - point.y * sin_yaw + position.x,
-                y=point.x * sin_yaw + point.y * cos_yaw + position.y,
-                z=point.z + position.z,
-            )
-            for point in ends_in_item_frame
-        ]
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        #type(pose) = geometry_msgs.msg.Pose
+        pose.pose.orientation.x = quaternion[0]
+        pose.pose.orientation.y = quaternion[1]
+        pose.pose.orientation.z = quaternion[2]
+        pose.pose.orientation.w = quaternion[3]
+        
+        pose.pose.position.x = trans[0]
+        pose.pose.position.y = trans[1]
+        pose.pose.position.z = trans[2]
 
-        # visualize bounding box, pose, and ends
-        viz.publish_bounding_box(
-            self._markers,
-            bounding_box.pose,
-            bounding_box.dimensions.x,
-            bounding_box.dimensions.y,
-            bounding_box.dimensions.z,
-            0.7, 0, 0, 0.25,
-            self.bounding_box_marker_id,
-        )
-        viz.publish_pose(
-            self._markers,
-            bounding_box.pose,
-            0, 0.7, 0, 0.5,
-            self.bounding_box_pose_marker_id,
-        )
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = pose.pose.position
+        transform.transform.rotation = pose.pose.orientation
+        transform.child_frame_id = 'head_yaw'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.5)
 
-        """
-        for idx, end in enumerate(ends):
-            viz.publish_point(
-                self._markers,
-                bounding_box.pose.header.frame_id,
-                end,
-                0.0, 0.0, 0.7, 0.5,
-                self.corner_marker_id + idx,
-            )
-        """
 
-        point_stamped_ends = []
-        for end in ends:
-            new_point = PointStamped()
-            new_point.header.frame_id = bounding_box.pose.header.frame_id
-            new_point.point = end
-            point_stamped_ends.append(new_point)
 
-        return point_stamped_ends
+        transform = TransformStamped()
+        transform.header.frame_id = bounding_box.pose.header.frame_id
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = bounding_box.pose.pose.position
+        transform.transform.rotation = bounding_box.pose.pose.orientation
+        transform.child_frame_id = 'bounding_box'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.5)
+
+        # Transform object pose into new frame
+        bbox_in_head_yaw = self._tf_listener.transformPose('head_yaw', bounding_box.pose)
+
+        corners = []
+
+        corner_1 = PointStamped()
+        corner_1.header.frame_id = 'bounding_box'
+        corner_1.point.x = bounding_box.dimensions.x/2
+        corner_1.point.y = bounding_box.dimensions.y/2
+
+        corner_2 = PointStamped()
+        corner_2.header.frame_id = 'bounding_box'
+        corner_2.point.x = bounding_box.dimensions.x/2
+        corner_2.point.y = -bounding_box.dimensions.y/2
+
+        corner_3 = PointStamped()
+        corner_3.header.frame_id = 'bounding_box'
+        corner_3.point.x = -bounding_box.dimensions.x/2
+        corner_3.point.y = bounding_box.dimensions.y/2
+
+        corner_4 = PointStamped()
+        corner_4.header.frame_id = 'bounding_box'
+        corner_4.point.x = -bounding_box.dimensions.x/2
+        corner_4.point.y = -bounding_box.dimensions.y/2
+
+        corners = [corner_1, corner_2, corner_3, corner_4]
+
+        transformed_corners = []
+        for corner in corners:
+            new_corner = self._tf_listener.transformPoint("head_yaw", corner)
+            transformed_corners.append(new_corner)
+
+        min_dist = 1000
+        closest_corner = None
+        closest_corner_idx = 1000
+        for (idx, corner) in enumerate(transformed_corners):
+            dist = math.sqrt(pow(pose.pose.position.x - corner.point.x, 2) + pow(pose.pose.position.y - corner.point.y, 2))
+            if dist < min_dist:
+                min_dist = dist
+                closest_corner = corner
+                closest_corner_idx = idx
+
+        # Find corner with same y value
+        closest_corner_in_head_yaw = corners[closest_corner_idx]
+        box_ends = [closest_corner_in_head_yaw]
+        for corner in corners:
+            if (not corner.point.x == closest_corner_in_head_yaw.point.x) and \
+                (corner.point.y == closest_corner_in_head_yaw.point.y):
+                box_ends.append(corner)
+
+
+        # Put them back into the frame of the bounding box
+        ends_in_bin_frame = []
+        for corner in box_ends:
+            new_end = self._tf_listener.transformPoint(bounding_box.pose.header.frame_id, corner)
+            new_end.point.z = bounding_box.dimensions.z
+            ends_in_bin_frame.append(new_end)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "head_yaw"
+        self._delete_static_tf(req)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "bounding_box"
+        self._delete_static_tf(req)
+
+        return ends_in_bin_frame
 
 
     def locate_hard_coded_items(self):
@@ -575,7 +605,11 @@ class Grasp(smach.State):
             marker_pose.pose.position.y = new_end.point.y
             marker_pose.pose.position.z = new_end.point.z
             viz.publish_bounding_box(self._markers, marker_pose , 0.01, 0.01, 0.01,
-            0.0, 1.0, 0.0, 0.5, idx + 1)
+            0.0, 1.0, 0.0, 0.5, idx + 20)
+        
+        if self._debug:
+            raw_input('(Debug) Press enter to continue >')
+
 
         ends = new_ends
 
@@ -1933,6 +1967,11 @@ class Grasp(smach.State):
             #scene.add_box("bbox", planar_bounding_box.pose, (3, 3, 3)) 
             rospy.sleep(0.1)
             #rate.sleep()
+
+
+        viz.publish_bounding_box(self._markers,  planar_bounding_box.pose, planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z,
+            1.0, 0.0, 0.0, 0.5, 25)
+        
 
         grasping_pairs = self.generate_grasps(planar_bounding_box, userdata.bin_id)
         filtered_grasps = self.filter_grasps(grasping_pairs)
