@@ -275,6 +275,7 @@ target_link_libraries(item_segmentation_service_node
   ${OpenCV_LIBRARIES}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  pcl_lib
 )
 
 target_link_libraries(pcl_lib
