@@ -57,7 +57,7 @@ class SenseBin(smach.State):
         userdata.target_model = target_model
 
         self._tuck_arms.wait_for_service()
-        self._tuck_arms(tuck_left=False, tuck_right=True)
+        self._tuck_arms(tuck_left=False, tuck_right=False)
         # If the arms are already tucked (usually true), then give some
         # time for the point cloud to update.
         rospy.sleep(2)
