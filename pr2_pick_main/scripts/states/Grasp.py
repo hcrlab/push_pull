@@ -175,32 +175,32 @@ class Grasp(smach.State):
         }
 
         self._bin_bounds_left = {
-            'A': 0.08,
-            'B': 0.06,
-            'C': 0.06,
-            'D': 0.08,
-            'E': 0.06,
-            'F': 0.06,
-            'G': 0.08,
-            'H': 0.06,
-            'I': 0.06,
-            'J': 0.08,
-            'K': 0.06,
-            'L': 0.06
+            'A': 0.10,
+            'B': 0.08,
+            'C': 0.08,
+            'D': 0.10,
+            'E': 0.08,
+            'F': 0.08,
+            'G': 0.10,
+            'H': 0.08,
+            'I': 0.08,
+            'J': 0.10,
+            'K': 0.08,
+            'L': 0.08
         }
         self._bin_bounds_right = {
-            'A': 0.06,
-            'B': 0.06,
-            'C': 0.08,
-            'D': 0.06,
-            'E': 0.06,
-            'F': 0.08,
-            'G': 0.06,
-            'H': 0.06,
-            'I': 0.08,
-            'J': 0.06,
-            'K': 0.06,
-            'L': 0.08
+            'A': 0.08,
+            'B': 0.08,
+            'C': 0.10,
+            'D': 0.08,
+            'E': 0.08,
+            'F': 0.10,
+            'G': 0.08,
+            'H': 0.08,
+            'I': 0.10,
+            'J': 0.08,
+            'K': 0.08,
+            'L': 0.10
         }
 
 
@@ -887,12 +887,13 @@ class Grasp(smach.State):
                 if self._debug:
                     raw_input('(Debug) Initial gripper estimate >') 
 
-                if grasp_in_base_footprint.pose.position.x > grasp_point_in_base_footprint.point.x:
+                if grasp_in_base_footprint.pose.position.x > (grasp_point_in_base_footprint.point.x + 0.07):
                     # Wrong way along axis
 
                     grasp_in_axis_frame.pose.position.y -= y_offsets[idx]
                     grasp_in_axis_frame.pose.position.x = self.dist_to_palm - grasp_point_in_axis_frame.point.x
                       
+                    self._tf_listener.waitForTransform(grasp_in_axis_frame.header.frame_id, 'base_footprint', rospy.Time(0), rospy.Duration(10.0))
                     grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                     grasp_in_axis_frame)
                     
@@ -993,7 +994,7 @@ class Grasp(smach.State):
                                                                      -1.57, 0, 0, 0, 0, 0)
 
                 
-                self._tf_listener.waitForTransform('base_footprint', rolled_pre_grasp_in_axis_frame.header.frame_id, rospy.Time(0), rospy.Duration(10.0))
+                self._tf_listener.waitForTransform('base_footprint', rolled_pre_grasp_in_axis_frame.header.frame_id, rospy.Time(0), rospy.Duration(20.0))
                 rolled_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                     rolled_pre_grasp_in_axis_frame)
 
@@ -1007,14 +1008,21 @@ class Grasp(smach.State):
                                                                     self.shelf_width, bin_id, 'object_axis', True)
                 if not grasp_in_bounds:
                     rospy.loginfo("Rolled grasp not in bounds")
+
+                    rolled_pre_grasp_in_axis_frame = self.modify_grasp(rolled_pre_grasp_in_axis_frame,
+                                                                            0, 0, 0,-0.03, 0, 0.0)
+                    rolled_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    rolled_pre_grasp_in_axis_frame)
+
                     rolled_pre_grasp_in_base_footprint = self.modify_grasp(rolled_pre_grasp_in_base_footprint,
-                                                                            0, 0, 0, 0, 0, 0.05)
-                    rolled_grasp_in_base_footprint = self.modify_grasp(rolled_grasp_in_base_footprint,
                                                                             0, 0, 0, 0, 0, 0.07)
+                    
+                    rolled_grasp_in_base_footprint = self.modify_grasp(rolled_grasp_in_base_footprint,
+                                                                            0, 0, 0, 0, 0, 0.10)
                     rolled_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis', 
                                                                             rolled_grasp_in_base_footprint)
                     rolled_grasp_in_axis_frame = self.modify_grasp(rolled_grasp_in_axis_frame,
-                                                                     0, 3.14/6, 0, 0, 0, 0)
+                                                                     0, 3.14/5, 0, 0, 0, 0)
                     rolled_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                    rolled_grasp_in_axis_frame)
 
@@ -1039,7 +1047,7 @@ class Grasp(smach.State):
 
                 # Make pitched down
                 pitched_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame,
-                                                                 0, 3.14/6, 0, 0, 0, 0.0)
+                                                                 0, 3.14/5, 0, 0, 0, 0.0)
                 pitched_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                     pitched_grasp_in_axis_frame)
                 pitched_pre_grasp_in_base_footprint = self.modify_grasp(pre_grasp_in_base_footprint,
