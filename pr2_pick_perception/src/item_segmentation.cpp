@@ -1,6 +1,7 @@
 #include "pr2_pick_perception/item_segmentation.h"
 
 #include "pcl/filters/passthrough.h"
+#include "pcl/filters/statistical_outlier_removal.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "pcl/visualization/cloud_viewer.h"
@@ -10,6 +11,7 @@
 #include "pr2_pick_perception/Cluster.h"
 #include "pr2_pick_perception/ClusterList.h"
 #include "pr2_pick_perception/pcl.h"
+#include "ros/ros.h"
 
 #include <string>
 #include <vector>
@@ -39,9 +41,32 @@ bool ItemSegmentationService::Callback(SegmentItems::Request& request,
   PointCloud<PointXYZRGB>::Ptr cell_pc(new PointCloud<PointXYZRGB>());
   pcl::fromROSMsg(cell_pc_ros, *cell_pc);
 
+  PointCloud<PointXYZRGB>::Ptr cell_pc_filtered(new PointCloud<PointXYZRGB>());
+
+  // Remove outliers
+  pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> outlier_removal;
+  outlier_removal.setInputCloud(cell_pc);
+  int mean_k;
+  if (!ros::param::get("mean_k", mean_k)) {
+    mean_k = 50;
+  }
+  outlier_removal.setMeanK(mean_k);
+  double stddev;
+  if (!ros::param::get("stddev", stddev)) {
+    stddev = 1;
+  }
+  outlier_removal.setStddevMulThresh(stddev);
+  outlier_removal.filter(*cell_pc_filtered);
+
+  // Remove NaNs
+  std::vector<int> indices;
+  pcl::removeNaNFromPointCloud(*cell_pc_filtered, *cell_pc_filtered, indices);
+
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  ClusterWithKMeans(*cell_pc, request.items.size(), &clusters);
+  // ClusterWithKMeans(*cell_pc_filtered, request.items.size(), &clusters);
+  // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
+  ClusterBinItems(*cell_pc_filtered, request.items.size(), &clusters);
 
   // Copy the clusters back to the response.
   pr2_pick_perception::ClusterList& clusterlist = response.clusters;
@@ -65,7 +90,7 @@ bool ItemSegmentationService::Callback(SegmentItems::Request& request,
     std::stringstream ss;
     ss << "cluster_0";
     cluster.id = ss.str();
-    pcl::toROSMsg(*cell_pc, cluster.pointcloud);
+    pcl::toROSMsg(*cell_pc_filtered, cluster.pointcloud);
 
     clusterlist.clusters.push_back(cluster);
   }

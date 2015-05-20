@@ -10,10 +10,14 @@
 #include "pcl/search/kdtree.h"
 #include "pcl/segmentation/extract_clusters.h"
 #include "pcl_conversions/pcl_conversions.h"
+#include "pcl/common/distances.h"
 #include "ros/ros.h"
+#include "pcl/segmentation/seeded_hue_segmentation.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <Eigen/Dense>
 #include <tf/transform_listener.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/segmentation/region_growing_rgb.h>
 
 #include <algorithm>
 #include <math.h>
@@ -218,6 +222,9 @@ void ComputeColorHistogram(const PointCloud<PointXYZRGB>& cloud,
   }
 }
 
+double y_scale_factor;
+double color_meta_scale_factor;
+
 float SquaredDistance(const PointXYZRGB& p1, const PointXYZRGB& p2) {
   float distance = 0;
   // Color ranges from 0-255 while distances range about 0.15m, so we increase
@@ -225,20 +232,31 @@ float SquaredDistance(const PointXYZRGB& p1, const PointXYZRGB& p2) {
   float distance_scale_factor = 1.0 / (0.15 * 0.15);
   float color_scale_factor = 1.0 / (255 * 255);
   distance += distance_scale_factor * (p1.x - p2.x) * (p1.x - p2.x);
-  distance += distance_scale_factor * (p1.y - p2.y) * (p1.y - p2.y);
+  distance +=
+      y_scale_factor * distance_scale_factor * (p1.y - p2.y) * (p1.y - p2.y);
   distance += distance_scale_factor * (p1.z - p2.z) * (p1.z - p2.z);
-  distance += color_scale_factor * (p1.r - p2.r) * (p1.r - p2.r);
-  distance += color_scale_factor * (p1.g - p2.g) * (p1.g - p2.g);
-  distance += color_scale_factor * (p1.b - p2.b) * (p1.b - p2.b);
+  distance += color_meta_scale_factor * color_scale_factor * (p1.r - p2.r) *
+              (p1.r - p2.r);
+  distance += color_meta_scale_factor * color_scale_factor * (p1.g - p2.g) *
+              (p1.g - p2.g);
+  distance += color_meta_scale_factor * color_scale_factor * (p1.b - p2.b) *
+              (p1.b - p2.b);
   return distance;
 }
 
-void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
+bool ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
                        const int num_clusters,
                        vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
   ROS_INFO("KMeans point cloud size: %ld", cloud.size());
   vector<PointXYZRGB> centroids;
   vector<vector<PointXYZRGB> > clusters_vector;
+
+  if (!ros::param::get("y_scale_factor", y_scale_factor)) {
+    y_scale_factor = 8;
+  }
+  if (!ros::param::get("color_meta_scale_factor", color_meta_scale_factor)) {
+    color_meta_scale_factor = 0.5;
+  }
 
   // Initialize centroids with spatial variance in the y direction, but randomly
   // otherwise.
@@ -252,11 +270,9 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
   float y_increment = (cloud_max.y - cloud_min.y) / (num_clusters + 1);
   for (int i = 0; i < num_clusters; ++i) {
     PointXYZRGB centroid;
-    centroid.x =
-        (cloud_max.x - cloud_min.x) * (double)rand() / RAND_MAX + cloud_min.x;
+    centroid.x = (cloud_max.x - cloud_min.x) / 2.0 + cloud_min.x;
     centroid.y = y_increment * (i + 1);
-    centroid.z =
-        (cloud_max.z - cloud_min.z) * (double)rand() / RAND_MAX + cloud_min.z;
+    centroid.z = (cloud_max.z - cloud_min.z) / 2.0 + cloud_min.z;
     centroid.r = rand() % 256;
     centroid.g = rand() % 256;
     centroid.b = rand() % 256;
@@ -274,9 +290,6 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
       clusters_vector.push_back(cloud);
     }
 
-    ROS_INFO("cluster_vector.size(): %ld, centroids.size(): %ld",
-             clusters_vector.size(), centroids.size());
-
     for (size_t p = 0; p < cloud.size(); ++p) {
       const PointXYZRGB& point = cloud[p];
       int best_cluster = 0;
@@ -288,6 +301,16 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
         }
       }
       clusters_vector[best_cluster].push_back(point);
+    }
+
+    for (size_t c = 0; c < clusters_vector.size(); ++c) {
+      const vector<PointXYZRGB>& cluster = clusters_vector[c];
+      if (cluster.size() == 0) {
+        ROS_ERROR(
+            "[ItemSegmentation] Cluster %ld is of size 0 in K-means algorithm.",
+            c);
+        return false;
+      }
     }
 
     bool converged = true;
@@ -333,6 +356,9 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
       break;
     }
   }
+  for (size_t c = 0; c < clusters_vector.size(); ++c) {
+    ROS_INFO("K-means cluster %ld size=%ld", c, clusters_vector[c].size());
+  }
 
   clusters->clear();
   for (size_t i = 0; i < clusters_vector.size(); ++i) {
@@ -344,6 +370,107 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
       cloud->push_back(cloud_vec[j]);
     }
     clusters->push_back(cloud);
+  }
+  return true;
+}
+
+void ClusterWithRegionGrowing(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters) {
+  pcl::RegionGrowingRGB<PointXYZRGB> reg;
+  reg.setInputCloud(cloud.makeShared());
+
+  pcl::search::KdTree<PointXYZRGB>::Ptr tree(
+      new pcl::search::KdTree<PointXYZRGB>());
+  tree->setInputCloud(cloud.makeShared());
+  reg.setSearchMethod(tree);
+
+  float distance_threshold;
+  ros::param::param<float>("distance_threshold", distance_threshold, 0.01);
+  reg.setDistanceThreshold(10);
+
+  float point_color;
+  ros::param::param<float>("point_color", point_color, 10);
+  float region_color;
+  ros::param::param<float>("region_color", region_color, 10);
+  reg.setPointColorThreshold(point_color);
+  reg.setRegionColorThreshold(region_color);
+
+  int min_cluster_size;
+  ros::param::param<int>("min_cluster_size", min_cluster_size, 100);
+  reg.setMinClusterSize(min_cluster_size);
+
+  std::vector<pcl::PointIndices> clusters_ind;
+  reg.extract(clusters_ind);
+
+  clusters->clear();
+  clusters->resize(clusters_ind.size());
+  for (size_t i = 0; i < clusters_ind.size(); ++i) {
+    const pcl::PointIndices& cluster_ind = clusters_ind[i];
+    PointCloud<PointXYZRGB>::Ptr cluster(new PointCloud<PointXYZRGB>());
+    ROS_INFO("[Region growing] Cluster %ld has size %ld", i,
+             cluster_ind.indices.size());
+    for (size_t j = 0; j < cluster_ind.indices.size(); ++j) {
+      const int index = cluster_ind.indices[j];
+      cluster->push_back(cloud[index]);
+    }
+    (*clusters)[i] = cluster;
+  }
+}
+
+void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
+                     const int num_clusters,
+                     std::vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
+  std::vector<PointCloud<PointXYZRGB>::Ptr> overclustering;
+  ClusterWithRegionGrowing(cloud, &overclustering);
+
+  PointCloud<PointXYZRGB> centroids;
+  for (size_t i = 0; i < overclustering.size(); ++i) {
+    const PointCloud<PointXYZRGB>::Ptr& overcluster = overclustering[i];
+    PointXYZRGB centroid;
+    pcl::computeCentroid(*overcluster, centroid);
+    centroids.push_back(centroid);
+  }
+
+  std::vector<PointCloud<PointXYZRGB>::Ptr> centroid_clusters;
+
+  // Sometimes K-means has no points in a cluster, try again if so.
+  for (int tries = 0; tries < 10; ++tries) {
+    centroid_clusters.clear();
+    bool success =
+        ClusterWithKMeans(centroids, num_clusters, &centroid_clusters);
+    if (success) {
+      break;
+    }
+  }
+
+  // Merge clusters together.
+  clusters->clear();
+  clusters->resize(num_clusters);
+  for (size_t i = 0; i < centroid_clusters.size(); ++i) {
+    PointCloud<PointXYZRGB>::Ptr centroids_in_cluster = centroid_clusters[i];
+
+    PointCloud<PointXYZRGB>::Ptr cluster(new PointCloud<PointXYZRGB>());
+    cluster->height = 1;
+
+    for (size_t j = 0; j < centroids_in_cluster->size(); ++j) {
+      const PointXYZRGB& centroid = (*centroids_in_cluster)[j];
+      int centroid_index = 0;
+      for (size_t k = 0; k < centroids.size(); ++k) {
+        if (pcl::squaredEuclideanDistance(centroid, centroids.points[k]) == 0) {
+          centroid_index = k;
+          break;
+        }
+      }
+      const PointCloud<PointXYZRGB>::Ptr& prev_cluster =
+          overclustering[centroid_index];
+      (*cluster) += (*prev_cluster);
+      // for (size_t k = 0; k < prev_cluster->size(); ++k) {
+      //  cluster->push_back((*prev_cluster)[k]);
+      //}
+      // cluster->width += prev_cluster->size();
+    }
+    (*clusters)[i] = cluster;
   }
 }
 

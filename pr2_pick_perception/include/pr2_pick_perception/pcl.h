@@ -109,7 +109,15 @@ float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
 //   cloud: The input point cloud.
 //   num_clusters: The number of clusters to extract.
 //   clusters: The returned clusters.
-void ClusterWithKMeans(
+bool ClusterWithKMeans(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
+void ClusterWithRegionGrowing(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
+void ClusterBinItems(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 
@@ -125,6 +133,7 @@ void ClusterWithEuclidean(
     const double cluster_tolerance, const int min_cluster_size,
     const int max_cluster_size,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
 }  // namespace pr2_pick_perception
 
 #endif
