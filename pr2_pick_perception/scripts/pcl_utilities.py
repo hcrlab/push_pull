@@ -21,11 +21,11 @@ class PCLUtilities(object):
             self.find_centroid
         )
 
-        self._points_in_box_service = rospy.Service(
-            'perception/get_points_in_box',
-            BoxPoints,
-            self.find_points_in_box
-        )
+        #self._points_in_box_service = rospy.Service(
+        #    'perception/get_points_in_box',
+        #    BoxPoints,
+        #    self.find_points_in_box
+        #)
         self._tf_listener = tf.TransformListener()
 
     def find_centroid(self, request):
