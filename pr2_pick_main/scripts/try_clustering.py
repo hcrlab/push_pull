@@ -12,13 +12,14 @@ import visualization as viz
 def read_bag(bag):
     messages = []
     for topic, msg, t in bag.read_messages(topics=['cell_pc', 'cropped_cloud']):
+        msg.cloud.header.frame_id = 'map'
         messages.append((msg.cloud, msg.labels))
     return messages
 
-def segment_cloud(segment_items, cloud):
+def segment_cloud(segment_items, cloud, labels):
     request = SegmentItemsRequest()
     request.cloud = cloud
-    request.items = ['a', 'b']
+    request.items = labels
     response = segment_items(request)
     return response.clusters.clusters
 
@@ -26,7 +27,6 @@ if __name__ == '__main__':
     rospy.init_node('try_clustering')
     bag = rosbag.Bag(sys.argv[1])
     messages = read_bag(bag)
-    print len(messages)
 
     cloud, labels = messages[1]
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     segment_items = rospy.ServiceProxy('segment_items', SegmentItems)
     segment_items.wait_for_service()
-    clusters = segment_cloud(segment_items, cloud)
+    clusters = segment_cloud(segment_items, cloud, labels)
 
     # Publish visualization
     markers = rospy.Publisher('pr2_pick_visualization', Marker)
