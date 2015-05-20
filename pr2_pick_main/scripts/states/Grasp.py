@@ -2101,10 +2101,37 @@ class Grasp(smach.State):
         planar_bounding_box = userdata.target_descriptor.planar_bounding_box
         scene = moveit_commander.PlanningSceneInterface()
         scene.remove_world_object('bbox')
+        scene.remove_world_object("shelf")
+
+    
+
+        shelf_pose = geometry_msgs.msg.PoseStamped()
+        shelf_pose.header.frame_id = "/shelf"
+        shelf_pose.pose.position.x = 0.0
+        shelf_pose.pose.position.y = 0.0
+        shelf_pose.pose.position.z = 0.0
+        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
+        shelf_pose.pose.orientation.x = q[0]
+        shelf_pose.pose.orientation.y = q[1]
+        shelf_pose.pose.orientation.z = q[2]
+        shelf_pose.pose.orientation.w = q[3]
+        # get an instance of RosPack with the default search paths
+        rospack = rospkg.RosPack()
+
+        # list all packages, equivalent to rospack list
+        #rospack.list_pkgs() 
+
+        # get the file path for rospy_tutorials
+        path = rospack.get_path('pr2_pick_contest')
+
+
+        #self.scene = moveit_commander.PlanningSceneInterface()
+        shelf_mesh = path + "/config/kiva_pod/meshes/pod_lowres.stl" # or better, use find_package()
         #rate = rospy.Rate(1)
         for i in range(10):
             scene.add_box("bbox", planar_bounding_box.pose, (planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z))
             #scene.add_box("bbox", planar_bounding_box.pose, (3, 3, 3)) 
+            scene.add_mesh("shelf", shelf_pose, shelf_mesh)
             rospy.sleep(0.1)
             #rate.sleep()
 
