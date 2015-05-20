@@ -7,6 +7,8 @@
 #include "pcl/common/pca.h"
 #include "pcl/filters/filter.h"
 #include "pcl/point_types.h"
+#include "pcl/search/kdtree.h"
+#include "pcl/segmentation/extract_clusters.h"
 #include "pcl_conversions/pcl_conversions.h"
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
@@ -26,8 +28,7 @@ using std::vector;
 
 namespace pr2_pick_perception {
 void PlanarPrincipalComponents(const PointCloud<PointXYZRGB>& cloud,
-                               geometry_msgs::Quaternion* component1,
-                               geometry_msgs::Quaternion* component2,
+                               Quaternion* component1, Quaternion* component2,
                                double* value1, double* value2) {
   PointCloud<PointXYZRGB>::Ptr projected(new PointCloud<PointXYZRGB>(cloud));
 
@@ -343,6 +344,38 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
       cloud->push_back(cloud_vec[j]);
     }
     clusters->push_back(cloud);
+  }
+}
+
+void ClusterWithEuclidean(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    const double cluster_tolerance, const int min_cluster_size,
+    const int max_cluster_size,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters) {
+  pcl::search::KdTree<PointXYZRGB>::Ptr tree(
+      new pcl::search::KdTree<PointXYZRGB>);
+  tree->setInputCloud(cloud.makeShared());
+  std::vector<pcl::PointIndices> clustersInd;
+  pcl::EuclideanClusterExtraction<PointXYZRGB> ec;
+  ec.setClusterTolerance(cluster_tolerance);
+  ec.setMinClusterSize(min_cluster_size);
+  ec.setMaxClusterSize(max_cluster_size);
+  ec.setSearchMethod(tree);
+  ec.setInputCloud(cloud.makeShared());
+  ec.extract(clustersInd);
+
+  for (size_t i = 0; i < clustersInd.size(); ++i) {
+    PointCloud<PointXYZRGB>::Ptr cluster(new PointCloud<PointXYZRGB>);
+    PointXYZRGB point;
+    for (size_t j = 0; j < clustersInd[i].indices.size(); j++) {
+      int index = clustersInd[i].indices[j];
+      const PointXYZRGB& point = cloud[index];
+      cluster->push_back(point);
+    }
+    cluster->width = cluster->size();
+    cluster->height = 1;
+    cluster->is_dense = true;
+    clusters->push_back(cluster);
   }
 }
 

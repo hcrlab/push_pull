@@ -13,9 +13,6 @@ namespace pr2_pick_perception {
 class ItemSegmentationService {
  public:
   ItemSegmentationService(const std::string& name);
-  void ClusterWithEuclidean(
-      const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-      std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 
  private:
   std::string name_;

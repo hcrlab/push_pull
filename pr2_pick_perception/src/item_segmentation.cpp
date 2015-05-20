@@ -3,13 +3,13 @@
 #include "pcl/filters/passthrough.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
-#include "pcl/search/kdtree.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl/segmentation/extract_clusters.h"
 #include "pcl/visualization/cloud_viewer.h"
 #include "pcl/visualization/pcl_visualizer.h"
+#include "pcl_conversions/pcl_conversions.h"
+#include "pcl_conversions/pcl_conversions.h"
 #include "pr2_pick_perception/Cluster.h"
 #include "pr2_pick_perception/ClusterList.h"
+#include "pr2_pick_perception/pcl.h"
 
 #include <string>
 #include <vector>
@@ -30,36 +30,6 @@ ItemSegmentationService::ItemSegmentationService(const std::string& name)
   nh_local_.param("max_cluster_points", max_cluster_points_, 100000);
 }
 
-void ItemSegmentationService::ClusterWithEuclidean(
-    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters) {
-  pcl::search::KdTree<PointXYZRGB>::Ptr tree(
-      new pcl::search::KdTree<PointXYZRGB>);
-  tree->setInputCloud(cloud.makeShared());
-  std::vector<pcl::PointIndices> clustersInd;
-  pcl::EuclideanClusterExtraction<PointXYZRGB> ec;
-  ec.setClusterTolerance(0.01);
-  ec.setMinClusterSize(min_cluster_points_);
-  ec.setMaxClusterSize(max_cluster_points_);
-  ec.setSearchMethod(tree);
-  ec.setInputCloud(cloud.makeShared());
-  ec.extract(clustersInd);
-
-  for (size_t i = 0; i < clustersInd.size(); ++i) {
-    PointCloud<PointXYZRGB>::Ptr cluster(new PointCloud<PointXYZRGB>);
-    PointXYZRGB point;
-    for (size_t j = 0; j < clustersInd[i].indices.size(); j++) {
-      int index = clustersInd[i].indices[j];
-      const PointXYZRGB& point = cloud[index];
-      cluster->push_back(point);
-    }
-    cluster->width = cluster->size();
-    cluster->height = 1;
-    cluster->is_dense = true;
-    clusters->push_back(cluster);
-  }
-}
-
 bool ItemSegmentationService::Callback(SegmentItems::Request& request,
                                        SegmentItems::Response& response) {
   // Get input cloud.
@@ -71,7 +41,8 @@ bool ItemSegmentationService::Callback(SegmentItems::Request& request,
 
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  ClusterWithEuclidean(*cell_pc, &clusters);
+  ClusterWithEuclidean(*cell_pc, 0.01, min_cluster_points_, max_cluster_points_,
+                       &clusters);
 
   // Copy the clusters back to the response.
   pr2_pick_perception::ClusterList& clusterlist = response.clusters;

@@ -96,6 +96,10 @@ void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                            const int num_bins, std::vector<int>* histogram);
 
 // Returns the squared Euclidean distance between the two points.
+//
+// TODO(jstn): Uses hard coded scale factors for distance and color. The scale
+// factors were chosen to approximately normalize the distance and color
+// measurements to a scale of 0 to 1.
 float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
 
 // Clusters the point cloud with K-means, using both distance and color
@@ -107,6 +111,19 @@ float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
 //   clusters: The returned clusters.
 void ClusterWithKMeans(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
+// Clusters the point cloud with the Euclidean clustering method.
+//
+// Args:
+//   cloud: The input point cloud.
+//   min_cluster_size: The minimum size of a returned cluster.
+//   max_cluster_size: The maximum size of a returned cluster.
+//   clusters: The returned clusters.
+void ClusterWithEuclidean(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    const double cluster_tolerance, const int min_cluster_size,
+    const int max_cluster_size,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 }  // namespace pr2_pick_perception
 
