@@ -102,6 +102,7 @@ class Grasp(smach.State):
 
         self._find_centroid = services['find_centroid']
         self._set_grippers = services['set_grippers']
+        self._get_grippers = services['get_grippers']
         self._tuck_arms = services['tuck_arms']
         self._moveit_move_arm = services['moveit_move_arm']
         self._tts = services['tts']
@@ -2002,6 +2003,11 @@ class Grasp(smach.State):
                 self._set_grippers.wait_for_service()
                 grippers_open = self._set_grippers(open_left=False, open_right=False,
                                                    effort=item_model.grasp_effort)
+                gripper_states = self._get_grippers()
+                if not gripper_states.right_open:
+                    self._set_grippers(open_left=False, open_right=False,
+                                                   effort=-1)
+
                 break
         if success_grasp:
             return True
