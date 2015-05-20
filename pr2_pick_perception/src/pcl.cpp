@@ -267,11 +267,11 @@ bool ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
            cloud_min.r, cloud_min.g, cloud_min.b);
   ROS_INFO("Max: %f %f %f %d %d %d", cloud_max.x, cloud_max.y, cloud_max.z,
            cloud_max.r, cloud_max.g, cloud_max.b);
-  float y_increment = (cloud_max.y - cloud_min.y) / (num_clusters + 1);
+  float y_increment = (cloud_max.y - cloud_min.y) / (num_clusters - 1);
   for (int i = 0; i < num_clusters; ++i) {
     PointXYZRGB centroid;
     centroid.x = (cloud_max.x - cloud_min.x) / 2.0 + cloud_min.x;
-    centroid.y = y_increment * (i + 1);
+    centroid.y = cloud_min.y + y_increment * i;
     centroid.z = (cloud_max.z - cloud_min.z) / 2.0 + cloud_min.z;
     centroid.r = rand() % 256;
     centroid.g = rand() % 256;
@@ -438,15 +438,19 @@ void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
   for (int tries = 0; tries < 10; ++tries) {
     centroid_clusters.clear();
     bool success =
-        ClusterWithKMeans(centroids, num_clusters, &centroid_clusters);
+        ClusterWithKMeans(centroids, num_clusters, &centroid_clusters) &&
+        centroid_clusters.size() > 0;
     if (success) {
       break;
+    } else {
+      ROS_WARN("Try %d of 10. K-means had a cluster with 0 points.", tries);
     }
   }
 
+  ROS_INFO("Number of clusters after K-means: %ld", centroid_clusters.size());
+
   // Merge clusters together.
   clusters->clear();
-  clusters->resize(num_clusters);
   for (size_t i = 0; i < centroid_clusters.size(); ++i) {
     PointCloud<PointXYZRGB>::Ptr centroids_in_cluster = centroid_clusters[i];
 
@@ -470,7 +474,7 @@ void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
       //}
       // cluster->width += prev_cluster->size();
     }
-    (*clusters)[i] = cluster;
+    clusters->push_back(cluster);
   }
 }
 
