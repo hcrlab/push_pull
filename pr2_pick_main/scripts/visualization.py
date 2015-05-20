@@ -126,7 +126,7 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     marker.color.r = random.random()
     marker.color.g = random.random()
     marker.color.b = random.random()
-    marker.color.a = 1
+    marker.color.a = 0.5
     marker.points = points
     marker.scale.x = 0.002
     marker.scale.y = 0.002
