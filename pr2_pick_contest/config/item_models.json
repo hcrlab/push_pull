@@ -1,295 +1,202 @@
 {
   "oreo_mega_stuf": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [2528, 919, 707, 267, 1886, 1543, 734, 258, 1704, 600, 1050, 1067]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "champion_copper_plus_spark_plug": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [133, 122, 163, 47, 360, 60, 18, 27, 372, 50, 23, 20],
-      [27, 11, 10, 17, 40, 4, 8, 13, 42, 10, 7, 6]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "expo_dry_erase_board_eraser": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [660, 740, 406, 254, 653, 659, 536, 212, 781, 568, 366, 345],
-      [20, 56, 338, 1550, 47, 46, 242, 1629, 444, 494, 198, 828],
-      [572, 353, 336, 788, 589, 318, 285, 857, 722, 937, 265, 125],
-      [408, 326, 264, 733, 420, 260, 225, 826, 689, 744, 212, 86]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "genuine_joe_plastic_stir_sticks": {
     "graspable": false,
+    "allowed_grasps": [],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [291, 646, 524, 2267, 1941, 693, 300, 794, 1801, 800, 358, 769],
-      [82, 964, 367, 2596, 695, 1342, 742, 1230, 758, 1340, 756, 1155]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "munchkin_white_hot_duck_bath_toy": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [183, 131, 110, 102, 239, 104, 115, 68, 352, 69, 47, 58],
-      [0, 32, 23, 533, 1, 45, 100, 442, 98, 229, 103, 158],
-      [7, 71, 467, 1065, 7, 96, 466, 1041, 28, 125, 419, 1038],
-      [616, 1100, 1098, 1684, 963, 971, 1243, 1321, 1182, 916, 1341, 1059]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "crayola_64_ct": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "mommys_helper_outlet_plugs": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 15,
-    "color_histograms": [
-      [84, 867, 565, 1120, 132, 889, 556, 1059, 504, 552, 533, 1047],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": 15
   },
   "sharpie_accent_tank_style_highlighters": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [54, 180, 707, 994, 182, 360, 527, 866, 234, 389, 483, 829],
-      [179, 268, 456, 585, 466, 519, 243, 260, 754, 338, 213, 183]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "stanley_66_052": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 3,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [16, 68, 177, 601, 59, 116, 353, 334, 704, 91, 46, 21],
-      [0, 22, 141, 1305, 0, 27, 185, 1256, 4, 28, 198, 1238]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "safety_works_safety_glasses": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": 15,
-    "color_histograms": [
-      [9, 177, 451, 322, 29, 164, 389, 377, 201, 315, 270, 173],
-      [8, 453, 857, 151, 13, 259, 1013, 184, 405, 348, 604, 112]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": 30
   },
   "cheezit_big_original": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": 15,
-    "color_histograms": [
-      [469, 542, 572, 1773, 2201, 389, 209, 557, 2252, 447, 211, 446],
-      [816, 1154, 1336, 2808, 2800, 989, 997, 1328, 3212, 1026, 735, 1141]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": 30
   },
   "paper_mate_12_count_mirado_black_warrior": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [178, 111, 63, 295, 121, 181, 159, 186, 82, 117, 164, 284],
-      [4, 15, 57, 715, 18, 18, 77, 678, 40, 25, 79, 647]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": 20
   },
   "feline_greenies_dental_treats": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 15,
-    "color_histograms": [
-      [370, 1905, 1361, 3837, 879, 2720, 1939, 1935, 2446, 2339, 1751, 937],
-      [544, 699, 408, 1201, 1314, 559, 455, 524, 1717, 408, 629, 98],
-      [274, 843, 870, 605, 439, 1041, 745, 367, 926, 912, 483, 271]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": 30
   },
   "elmers_washable_no_run_school_glue": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [107, 117, 242, 1155, 254, 240, 243, 884, 227, 150, 242, 1002],
-      [205, 86, 39, 743, 318, 55, 34, 666, 325, 62, 50, 636],
-      [66, 32, 61, 1453, 116, 42, 69, 1385, 114, 38, 83, 1377]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "mead_index_cards": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [71, 104, 202, 1256, 641, 197, 100, 695, 530, 313, 124, 666],
-      [3, 2, 19, 1593, 4, 6, 15, 1592, 12, 19, 24, 1562],
-      [182, 81, 108, 278, 211, 73, 102, 263, 231, 75, 97, 246]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "rolodex_jumbo_pencil_cup": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 2,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [896, 36, 3, 0, 899, 33, 3, 0, 905, 30, 0, 0],
-      [2159, 106, 90, 397, 2192, 89, 88, 383, 2238, 77, 65, 372]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "first_years_take_and_toss_straw_cup": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [154, 1171, 919, 808, 304, 1501, 1140, 107, 578, 1116, 1141, 217],
-      [64, 294, 328, 2129, 146, 460, 1340, 869, 291, 944, 1161, 419],
-      [977, 1367, 444, 123, 1402, 1044, 342, 123, 1403, 856, 527, 125],
-      [301, 1185, 1328, 717, 739, 1449, 988, 355, 1189, 1067, 912, 363],
-      [512, 812, 523, 0, 1072, 707, 68, 0, 1134, 531, 182, 0],
-      [10, 650, 497, 932, 809, 367, 476, 437, 1048, 341, 397, 303],
-      [201, 635, 601, 748, 1260, 528, 256, 141, 1667, 309, 81, 128],
-      [473, 598, 552, 1062, 1607, 670, 243, 165, 2016, 413, 109, 147],
-      [483, 600, 545, 1161, 1031, 769, 788, 201, 1973, 487, 190, 139],
-      [78, 754, 892, 383, 249, 1458, 391, 9, 911, 1011, 184, 1]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "highland_6539_self_stick_notes": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [43, 82, 406, 1534, 89, 123, 445, 1408, 198, 287, 643, 937],
-      [146, 192, 194, 1220, 207, 176, 219, 1150, 289, 246, 350, 867]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "mark_twain_huckleberry_finn": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [317, 776, 829, 555, 398, 687, 766, 626, 1647, 457, 113, 260],
-      [0, 0, 84, 1488, 0, 1, 69, 1502, 310, 429, 166, 667],
-      [482, 614, 437, 1138, 576, 645, 455, 995, 713, 670, 417, 871]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "kyjen_squeakin_eggs_plush_puppies": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [34, 604, 497, 1437, 230, 735, 471, 1136, 473, 303, 498, 1298],
-      [23, 770, 770, 1392, 49, 653, 1730, 523, 379, 638, 935, 1003],
-      [344, 357, 159, 2103, 393, 488, 739, 1343, 514, 697, 995, 757],
-      [614, 108, 206, 2812, 591, 547, 642, 1960, 717, 943, 576, 1504]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "kong_sitting_frog_dog_toy": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [600, 1626, 112, 1, 474, 804, 1039, 22, 1782, 544, 9, 4],
-      [729, 247, 246, 1834, 644, 503, 230, 1679, 974, 231, 222, 1629],
-      [497, 383, 315, 830, 688, 492, 192, 653, 871, 357, 168, 629]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "kong_air_dog_squeakair_tennis_ball": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [152, 548, 647, 653, 863, 385, 217, 535, 1253, 428, 139, 180],
-      [201, 325, 626, 468, 488, 333, 365, 434, 941, 413, 251, 15],
-      [37, 340, 717, 642, 311, 424, 432, 569, 831, 683, 158, 64]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "dr_browns_bottle_brush": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [519, 1152, 600, 1323, 721, 952, 548, 1373, 953, 768, 507, 1366],
-      [618, 2244, 991, 734, 842, 1318, 1485, 942, 1352, 727, 825, 1683]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "kong_duck_dog_toy": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "level"],
+    "allow_finger_collisions": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [10, 54, 204, 2978, 62, 161, 409, 2614, 237, 512, 431, 2066],
-      [23, 69, 181, 1844, 78, 163, 481, 1395, 373, 502, 657, 585]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   },
   "laugh_out_loud_joke_book": {
     "graspable": true,
+    "allowed_grasps": ["pitched", "rolled", "level"],
+    "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1,
-    "color_histograms": [
-      [2, 13, 14, 364, 259, 56, 35, 43, 227, 84, 49, 33],
-      [0, 1, 51, 712, 500, 65, 42, 157, 389, 158, 63, 154],
-      [448, 194, 93, 849, 554, 138, 67, 825, 578, 148, 119, 739]
-    ],
-    "color_histogram_num_bins": 4
+    "grasp_effort": -1
   }
 }

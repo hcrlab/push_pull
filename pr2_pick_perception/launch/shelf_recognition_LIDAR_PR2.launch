@@ -15,11 +15,11 @@
   <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node_lidar" name="shelf_obj_detector" respawn="true" output="screen">
    <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
 
-   <param name="iter" value="70"/>
+   <param name="iter" value="1000"/>
    <param name="minClusterSize" value="2350"/>
    <param name="radius_search" value="0.015"/>
 
-   <param name="DistanceThreshold" value="0.05"/>
+   <param name="DistanceThreshold" value="0.07"/>
    <param name="PlanesegThres" value="0.03"/>   <!-- was 0.05 for non-hose, to remove wall behind valve -->
    <param name="PlaneSize" value="10000"/> <!-- WAS 4500,50000 -->
    <param name="depthplane" value="1.5" /> <!-- removes points further than this limit -->

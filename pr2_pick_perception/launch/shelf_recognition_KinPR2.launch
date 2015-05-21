@@ -5,7 +5,7 @@
   <node ns="perception" pkg="pr2_pick_perception" type="shelf_localization_service_node" name="shelf_obj_detector" respawn="true" output="screen">
    <param name="db" value="$(find pr2_pick_perception)/config/db_shelf.txt"/>
 
-   <param name="iter" value="70"/>
+   <param name="iter" value="250"/>
    <param name="minClusterSize" value="2350"/>
    <param name="radius_search" value="0.015"/>
 

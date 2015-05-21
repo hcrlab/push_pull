@@ -59,6 +59,30 @@ void GetPlanarBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
 
 // Computes the color histogram of the given point cloud with RGB information.
 //
+// This version produces separate histograms for the R, G, and B values.
+//
+// Operates on point clouds with NaNs filtered out
+// (pcl::removeNanFromPointCloud).
+//
+// Args:
+//   cloud: The input point cloud.
+//   num_bins: The number of bins for each color channel in the histogram.
+//   histogram: The output histogram. The vector is laid out with num_bins
+//     values for the red channel, num_bins values for the blue channel, and
+//     num_bins values for the green channel.
+void ComputeColorHistogramSeparate(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_bins,
+    std::vector<int>* histogram);
+
+// Computes the color histogram of the given point cloud with RGB information.
+//
+// This version produces a joint histogram with R, G, and B values. For example,
+// if there are 2 bins, then there are 2^3 values in the histogram. The
+// histogram is
+// in order of [count(r0, g0, b0), count(r0, g0, b1), count(r0, g1, b0), ...,
+// count(r1, g1, b1)], where r0 signifies a value between 0-127 and r1 signifies
+// a value of 128 - 255.
+//
 // Operates on point clouds with NaNs filtered out
 // (pcl::removeNanFromPointCloud).
 //
@@ -71,6 +95,36 @@ void GetPlanarBoundingBox(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
 void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
                            const int num_bins, std::vector<int>* histogram);
 
+// Returns the squared Euclidean distance between the two points.
+//
+// TODO(jstn): Uses hard coded scale factors for distance and color. The scale
+// factors were chosen to approximately normalize the distance and color
+// measurements to a scale of 0 to 1.
+float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
+
+// Clusters the point cloud with K-means, using both distance and color
+// information.
+//
+// Args:
+//   cloud: The input point cloud.
+//   num_clusters: The number of clusters to extract.
+//   clusters: The returned clusters.
+void ClusterWithKMeans(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
+// Clusters the point cloud with the Euclidean clustering method.
+//
+// Args:
+//   cloud: The input point cloud.
+//   min_cluster_size: The minimum size of a returned cluster.
+//   max_cluster_size: The maximum size of a returned cluster.
+//   clusters: The returned clusters.
+void ClusterWithEuclidean(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    const double cluster_tolerance, const int min_cluster_size,
+    const int max_cluster_size,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 }  // namespace pr2_pick_perception
 
 #endif

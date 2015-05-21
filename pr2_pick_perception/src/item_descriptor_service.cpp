@@ -22,8 +22,8 @@ ItemDescriptorService::ItemDescriptorService(const std::string& name)
       nh_(),
       server_(
           nh_.advertiseService(name, &ItemDescriptorService::Callback, this)),
-      num_bins_(4) {
-  ros::param::param<double>("color_histogram/num_bins", num_bins_, 4);
+      num_bins_(5) {
+  ros::param::param<double>("color_histogram/num_bins", num_bins_, 5);
 }
 
 bool ItemDescriptorService::Callback(GetItemDescriptor::Request& request,

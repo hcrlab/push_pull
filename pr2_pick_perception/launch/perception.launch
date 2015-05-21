@@ -3,6 +3,7 @@
   <arg name="kinect_camera_name" default="head_mount_kinect" />
   <arg name="debug_shelf" default="false" /> <!-- Set to true to not run the shelf localization node in this launch file. -->
   <arg name="debug_crop" default="false" /> <!-- Set to true to not run the shelf cropping node in this launch file. -->
+  <arg name="debug_segmentation" default="false" /> <!-- Set to true to not run the item segmentation node in this launch file. -->
   <arg name="debug_openni" default="false" /> <!-- Set to true to not run openni in this launch file. -->
   <arg name="alternate_kinect_frames" default="false" />
 
@@ -25,25 +26,29 @@
     args="laser_tilt_controller linear 10 1.02 .31" />
 
   <!-- Pretouch optical sensor -->
-  <include file="$(find pr2_pretouch_optical_dist)/launch/optic_pressure.launch" />
+  <include file="$(find pr2_pretouch_optical_dist)/launch/optic_pressure.launch" /> 
 
   <!-- Shelf services -->
   <!-- If you want debugging output, run these launch files separately on your local machine. -->
   <include unless="$(arg debug_shelf)" file="$(find pr2_pick_perception)/launch/shelf_recognition_LIDAR_PR2.launch">
     <arg name="debug" value="false" />
   </include>
-  <include unless="$(arg debug_crop)" file="$(find pr2_pick_perception)/launch/crop_cellA.launch">
+  <include unless="$(arg debug_crop)" file="$(find pr2_pick_perception)/launch/crop_shelf.launch">
+    <arg name="debug" value="false" />
+  </include>
+  <include unless="$(arg debug_segmentation)" file="$(find pr2_pick_perception)/launch/item_segmentation.launch">
     <arg name="debug" value="false" />
   </include>
 
   <!-- Point cloud processors. -->
   <node pkg="pr2_pick_perception" type="planar_pca_service_node" name="planar_pca_service_node" respawn="true" />
   <node pkg="pr2_pick_perception" type="item_descriptor_service_node" name="item_descriptor_service_node" respawn="true">
-    <param name="color_histogram/num_bins" value="4" />
+    <param name="color_histogram/num_bins" value="5" />
   </node>
 
-  <node pkg="pr2_pick_perception" type="item_classifier.py" name="item_classifier" args="$(find pr2_pick_contest)/config/item_models.json" respawn="true" />
+  <node pkg="pr2_pick_perception" type="item_classifier_service.py" name="item_classifier" args="$(find pr2_pick_contest)/config/descriptors_5.bag" respawn="true" output="screen" />
   <node pkg="pr2_pick_perception" type="count_points_in_box_service_node" name="count_points_in_box_service_node" respawn="true" />
+  <node pkg="pr2_pick_perception" type="cluster_points_in_box_service_node" name="cluster_points_in_box_service_node" respawn="true" /> 
 
   <!-- Utilities -->
   <node pkg="pr2_pick_perception" type="static_tf.py" name="static_tf_service_node" respawn="true" />

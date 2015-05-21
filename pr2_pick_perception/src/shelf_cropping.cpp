@@ -4,42 +4,26 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include <pcl/filters/passthrough.h>
-#include <pcl/search/kdtree.h>
-
-#include <pcl/segmentation/extract_clusters.h>
-
 #include <pr2_pick_perception/shelf_cropping.h>
-#include <pr2_pick_perception/Cluster.h>
-#include <pr2_pick_perception/ClusterList.h>
 
 // markers
 #include <visualization_msgs/Marker.h>
+#include <ros/topic.h>
+#include <ros/ros.h>
 
-CropShelf::CropShelf() {}
+using pcl::PointCloud;
+using pcl::PointXYZRGB;
 
-bool CropShelf::initialize() {
+namespace pr2_pick_perception {
+ShelfCropper::ShelfCropper() {}
+
+bool ShelfCropper::initialize() {
   ros::NodeHandle nh_local("~");
   ros::NodeHandle nh;
 
   // subscribe to point cloud topic
-  std::string shelf_pose_topic = nh.resolveName("/shelf_pose_topic");
-  // subscribe to shelf localization topic
-  std::string pc_topic = nh.resolveName("/pc_topic");
+  pc_topic_ = nh.resolveName("/pc_topic");
 
-  // shelf_pose_sub_ =
-  // nh.subscribe<pr2_pick_perception::ObjectList>(shelf_pose_topic,10,&CropShelf::poseListener,this);
-  pc_sub_ = nh.subscribe<sensor_msgs::PointCloud2>(
-      pc_topic, 10, &CropShelf::pcCallBack, this);
-
-  nh_local.param("RobotReference", robot_frame_id_,
-                 std::string("/base_footprint"));
-  nh_local.param("WorldReference", world_frame_id_, std::string("/map"));
-  // nh_local.param("ModelReference",
-  // model_frame_id_,std::string("/model_frame"));
-
-  nh_local.param("ShelfReference", shelf_frame_id_,
-                 std::string("/shelf_leftcorner_frame"));
   nh_local.param("Debug", debug_, false);
 
   nh_local.param("Width1", cell_width1_, 0.2671);
@@ -55,8 +39,6 @@ bool CropShelf::initialize() {
   nh_local.param("right_crop_offset", right_crop_offset_, 0.02);
   nh_local.param("depth_close_crop_offset", depth_close_crop_offset_, 0.02);
   nh_local.param("depth_far_crop_offset", depth_far_crop_offset_, 0.02);
-  nh_local.param("max_cluster_points", max_cluster_points_, 100000);
-  nh_local.param("min_cluster_points", min_cluster_points_, 150);
 
   vis_pub_ =
       nh.advertise<visualization_msgs::Marker>("/pr2_pick_visualization", 0);
@@ -64,41 +46,20 @@ bool CropShelf::initialize() {
   return true;
 }
 
-void CropShelf::pcCallBack(const sensor_msgs::PointCloud2::ConstPtr &pc_msg) {
-  boost::mutex::scoped_lock lock(kinect_mtx_);
-  cloud_frame_id_ = pc_msg->header.frame_id;
-  pcl::fromROSMsg(*pc_msg, kinect_pc_);
-  pc_timestamp_ = pc_msg->header.stamp;
-  if (!pc_ready_) {
-    ROS_INFO("Point cloud ready for crop.");
-  }
-  pc_ready_ = true;
-}
-
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr ShelfCropper::cropPC(
     const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &shelf_pc, float width,
     float height, float depth, int cellID) {
-  // total of cells in row 3
-  int cellsrow = 3;
-
-  //     int timesx = cellID % cellsrow;
-  //     int timesy = cellID / cellsrow;
-  //
-  int timesx = 0;
-  int timesy = 0;
-
-  // float p1y = width * timesx;    float p1z = height * timesy;
-  // float p2y = p1y + width;    float p2z = p1z + height;
-
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cell_pc(
       new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  printf("The number of points %d\n", (int)shelf_pc->points.size());
-  // printf("point limits = [%f, %f, %f, %f, %f]\n", p1y,p2y,p1z,p2z,depth);
-  for (int i = 0; i < shelf_pc->points.size(); i++) {
+  ROS_INFO("Cropping PC, num points: %d", shelf_pc->points.size());
+  float near_extension = 0.1;
+  float bottom_lift = 0.02;
+  for (size_t i = 0; i < shelf_pc->points.size(); i++) {
     pcl::PointXYZRGB point = shelf_pc->points[i];
     // The point cloud has been transformed around the frame of the bin.
     // The origin of the bin's frame is in the front bottom center of the bin.
+    // A second box that includes points slightly in front of the bin.
     if (point.x < (depth - depth_far_crop_offset_) &&
         point.x >= (0 + depth_close_crop_offset_) &&
         point.y < (width / 2 - left_crop_offset_) &&
@@ -106,16 +67,22 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CropShelf::cropPC(
         point.z < (height - top_crop_offset_) &&
         point.z >= (0 + bottom_crop_offset_)) {
       cell_pc->push_back(point);
+    } else if (point.x < (depth - depth_far_crop_offset_) &&
+               point.x >= (depth_close_crop_offset_ - near_extension) &&
+               point.y < (width / 2 - left_crop_offset_) &&
+               point.y >= (-width / 2 + right_crop_offset_) &&
+               point.z < (height - top_crop_offset_) &&
+               point.z >= (bottom_lift + bottom_crop_offset_)) {
+      cell_pc->push_back(point);
     }
   }
-  ROS_INFO("Cropping PC");
   return cell_pc;
 }
 
 // Given width, height, and depth of a shelf and the id for the shelf, publishes
 // a marker demonstrating the area considered to be part of the shelf. This area
-// exactly matches the point cloud cropping of CropShelf::cropPC.
-void CropShelf::visualizeShelf(float width, float height, float depth) {
+// exactly matches the point cloud cropping of ShelfCropper::cropPC.
+void ShelfCropper::visualizeShelf(float width, float height, float depth) {
   // crop_* is the dimensions of the crop box.
   float crop_depth = depth - depth_far_crop_offset_ - depth_close_crop_offset_;
   float crop_width = width - left_crop_offset_ - right_crop_offset_;
@@ -125,7 +92,7 @@ void CropShelf::visualizeShelf(float width, float height, float depth) {
   marker.header.frame_id = bin_frame_id_;
   marker.header.stamp = ros::Time();
   marker.ns = "crop_shelf_marker";
-  marker.id = bin_frame_id_[bin_frame_id_.length() - 1];
+  marker.id = 2 * bin_frame_id_[bin_frame_id_.length() - 1];
   marker.type = visualization_msgs::Marker::CUBE;
   marker.action = visualization_msgs::Marker::ADD;
   marker.pose.position.x = crop_depth / 2 + depth_close_crop_offset_;
@@ -144,660 +111,126 @@ void CropShelf::visualizeShelf(float width, float height, float depth) {
   marker.color.b = 0.9;
   marker.lifetime = ros::Duration(0);
 
+  // Second box, which extends towards the robot more, and is lifted up more.
+  float near_extension = 0.1;
+  float bottom_lift = 0.02;
+
+  visualization_msgs::Marker marker2;
+  marker2.header.frame_id = bin_frame_id_;
+  marker2.header.stamp = ros::Time();
+  marker2.ns = "crop_shelf_marker";
+  marker2.id = 2 * bin_frame_id_[bin_frame_id_.length() - 1] + 1;
+  marker2.type = visualization_msgs::Marker::CUBE;
+  marker2.action = visualization_msgs::Marker::ADD;
+  marker2.pose.position.x = (crop_depth + near_extension) / 2 +
+                            (depth_close_crop_offset_ - near_extension);
+  marker2.pose.position.y = (right_crop_offset_ - left_crop_offset_) / 2;
+  marker2.pose.position.z =
+      (crop_height - bottom_lift) / 2 + (bottom_crop_offset_ + bottom_lift);
+  marker2.pose.orientation.x = 0.0;
+  marker2.pose.orientation.y = 0.0;
+  marker2.pose.orientation.z = 0.0;
+  marker2.pose.orientation.w = 1.0;
+  marker2.scale.x = crop_depth + near_extension;
+  marker2.scale.y = crop_width;
+  marker2.scale.z = crop_height - bottom_lift;
+  marker2.color.a = 0.1;
+  marker2.color.r = 0.9;
+  marker2.color.g = 0.9;
+  marker2.color.b = 0.9;
+  marker2.lifetime = ros::Duration(0);
+
   ros::Rate r(1);
   for (int i = 0; i < 5; ++i) {
     if (vis_pub_.getNumSubscribers() > 0) {
       vis_pub_.publish(marker);
+      vis_pub_.publish(marker2);
       return;
     }
   }
   ROS_WARN("No subscribers to shelf cropping marker.");
 }
 
-bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
-                             pr2_pick_perception::CropShelfResponse &response) {
-  pr2_pick_perception::Cell cell;
-  std::string error_msg;
+bool ShelfCropper::cropCallBack(
+    pr2_pick_perception::CropShelfRequest &request,
+    pr2_pick_perception::CropShelfResponse &response) {
+  // Read input cloud.
+  sensor_msgs::PointCloud2::ConstPtr kinect_pc_ros =
+      ros::topic::waitForMessage<sensor_msgs::PointCloud2>(pc_topic_);
+  ros::Time pc_timestamp = kinect_pc_ros->header.stamp;
+  std::string cloud_frame_id = kinect_pc_ros->header.frame_id;
+  PointCloud<PointXYZRGB>::Ptr kinect_pc(new PointCloud<PointXYZRGB>());
+  pcl::fromROSMsg(*kinect_pc_ros, *kinect_pc);
 
-  if (!pc_ready_) {
-    ROS_ERROR("No point cloud or no shelf detected\n");
-    return false;
+  // Get the right width and height for the requested bin.
+  double cell_width;
+  if (request.cellID == "A" || request.cellID == "C" || request.cellID == "D" ||
+      request.cellID == "F" || request.cellID == "G" || request.cellID == "I" ||
+      request.cellID == "J" || request.cellID == "L") {
+    cell_width = cell_width1_;
   } else {
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cell_pc(
-        new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr shelf_pc(
-        new pcl::PointCloud<pcl::PointXYZRGB>);
-
-    if ("A" == request.cellID) {
-      bin_frame_id_ = "bin_A";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-
-      cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 0);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("B" == request.cellID) {
-      bin_frame_id_ = "bin_B";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width2_, cell_height1_, depth_cell_, 1);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("C" == request.cellID) {
-      bin_frame_id_ = "bin_C";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 2);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("D" == request.cellID) {
-      bin_frame_id_ = "bin_D";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 3);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("E" == request.cellID) {
-      bin_frame_id_ = "bin_E";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width2_, cell_height2_, depth_cell_, 4);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("F" == request.cellID) {
-      bin_frame_id_ = "bin_F";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 5);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("G" == request.cellID) {
-      bin_frame_id_ = "bin_G";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 6);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("H" == request.cellID) {
-      bin_frame_id_ = "bin_H";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width2_, cell_height2_, depth_cell_, 7);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("I" == request.cellID) {
-      bin_frame_id_ = "bin_I";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width1_, cell_height2_, depth_cell_, 8);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("J" == request.cellID) {
-      bin_frame_id_ = "bin_J";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_width1_, cell_height1_, depth_cell_, 9);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("K" == request.cellID) {
-      bin_frame_id_ = "bin_K";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_height1_, cell_height1_, depth_cell_, 10);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    if ("L" == request.cellID) {
-      bin_frame_id_ = "bin_L";
-      // depending on the cell we read that transform with respect to the pc
-      // reference system
-      if (tf_.canTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                           &error_msg)) {
-        tf_.lookupTransform(bin_frame_id_, cloud_frame_id_, ros::Time(0),
-                            cloud_to_bin_);
-      } else {
-        ROS_WARN_THROTTLE(
-            10.0,
-            "The tf from  '%s' to bin '%s' does not seem to be available, "
-            "will assume it as identity!",
-            cloud_frame_id_.c_str(), request.cellID.c_str());
-        ROS_WARN("Transform error: %s", error_msg.c_str());
-        cloud_to_bin_.setIdentity();
-      }
-      pcl_ros::transformPointCloud(kinect_pc_, *shelf_pc, cloud_to_bin_);
-      cell_pc = cropPC(shelf_pc, cell_height1_, cell_height1_, depth_cell_, 11);
-      visualizeShelf(cell_width1_, cell_height1_, depth_cell_);
-    }
-    // compute Euclidean clusters
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
-
-    std::cout << "Final point cloud without planes size = "
-              << cell_pc->points.size() << std::endl;
-    // extract clusters EUclidean
-    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(
-        new pcl::search::KdTree<pcl::PointXYZRGB>);
-    tree->setInputCloud(cell_pc);
-    std::vector<pcl::PointIndices> clustersInd;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
-    ec.setClusterTolerance(0.01);               // 25cm
-    ec.setMinClusterSize(min_cluster_points_);  // need to go low for standpipe
-    ec.setMaxClusterSize(max_cluster_points_);
-    ec.setSearchMethod(tree);
-    ec.setInputCloud(cell_pc);
-    ec.extract(clustersInd);
-
-    for (int i = 0; i < clustersInd.size(); ++i) {
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(
-          new pcl::PointCloud<pcl::PointXYZRGB>);
-      pcl::PointXYZRGB point;
-      for (int j = 0; j < clustersInd[i].indices.size(); j++) {
-        int index = clustersInd[i].indices[j];
-        point.x = cell_pc->points[index].x;
-        point.y = cell_pc->points[index].y;
-        point.z = cell_pc->points[index].z;
-        point.r = cell_pc->points[index].r;
-        point.g = cell_pc->points[index].g;
-        point.b = cell_pc->points[index].b;
-        cluster->points.push_back(point);
-      }
-      cluster->width = cluster->points.size();
-      cluster->height = 1;
-      cluster->is_dense = true;
-      clusters.push_back(cluster);
-    }
-
-    // pcl::visualization::PCLVisualizer::Ptr vis;
-    // transform point cloud to robot_frame (where the point cloud is published)
-
-    // if(debug_)
-    //{
-    //    vis.reset(new pcl::visualization::PCLVisualizer("Shelf Crooper --
-    //    Debug"));
-    //    pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZRGB>
-    //    scene_handler(shelf_pc, "x");//100, 100, 200);
-
-    //    vis->addPointCloud(shelf_pc, scene_handler, "scene");
-    //    vis->addCoordinateSystem();
-    //    vis->setCameraPosition(-10,2,4,10,2,0,0,0,1);
-    //    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
-    //    cell_handler(cell_pc, 255, 255, 255.0);
-    //    vis->addPointCloud(cell_pc, cell_handler, "Crooped cell");
-
-    //    for(int i = 0; i < clusters.size(); ++i)
-    //    {
-    //        std::stringstream ss;
-    //        ss << "cluster_raw_" << i;
-    //        pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZRGB>
-    //        cluster_handler(clusters[i]);
-    //        vis->addPointCloud(clusters[i], cluster_handler, ss.str());
-    //        vis->spinOnce();
-    //    }
-    //    vis->spin();
-    //
-    //}
-
-    // copy the clusters to the object ObjectList
-    pr2_pick_perception::ClusterList clusterlist;
-    for (int i = 0; i < clusters.size(); i++) {
-      pr2_pick_perception::Cluster cluster;
-      cluster.header.frame_id = bin_frame_id_;
-      cluster.header.stamp = pc_timestamp_;
-      std::stringstream ss;
-      ss << "cluster_" << i;
-      cluster.id = ss.str();
-      pcl::toROSMsg(*clusters[i], cluster.pointcloud);
-
-      clusterlist.clusters.push_back(cluster);
-    }
-    if (clusters.size() == 0) {
-      ROS_INFO("No clusters found. Returning whole cropped PC");
-      pr2_pick_perception::Cluster cluster;
-      cluster.header.frame_id = bin_frame_id_;
-      cluster.header.stamp = pc_timestamp_;
-      std::stringstream ss;
-      ss << "cluster_0";
-      cluster.id = ss.str();
-      pcl::toROSMsg(*cell_pc, cluster.pointcloud);
-
-      clusterlist.clusters.push_back(cluster);
-    }
-    response.locations = clusterlist;
-
-    return true;
+    cell_width = cell_width2_;
   }
+
+  double cell_height;
+  if (request.cellID == "A" || request.cellID == "B" || request.cellID == "C" ||
+      request.cellID == "J" || request.cellID == "K" || request.cellID == "L") {
+    cell_height = cell_height1_;
+  } else {
+    cell_height = cell_height2_;
+  }
+
+  // Transform input data into the frame of the bin.
+  bin_frame_id_ = "bin_" + request.cellID;
+  tf::StampedTransform cloud_to_bin;
+  std::string error_msg;
+  if (tf_.canTransform(bin_frame_id_, cloud_frame_id, ros::Time(0),
+                       &error_msg)) {
+    tf_.lookupTransform(bin_frame_id_, cloud_frame_id, ros::Time(0),
+                        cloud_to_bin);
+  } else {
+    ROS_WARN_THROTTLE(10.0,
+                      "The tf from  cloud frame '%s' to bin frame '%s' does "
+                      "not seem to be available, will assume it as identity!",
+                      cloud_frame_id.c_str(), request.cellID.c_str());
+    ROS_WARN("Transform error: %s", error_msg.c_str());
+    cloud_to_bin.setIdentity();
+  }
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr shelf_pc(
+      new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl_ros::transformPointCloud(*kinect_pc, *shelf_pc, cloud_to_bin);
+
+  // Crop shelf.
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cell_pc(
+      new pcl::PointCloud<pcl::PointXYZRGB>);
+  cell_pc = cropPC(shelf_pc, cell_width, cell_height, depth_cell_, 0);
+  visualizeShelf(cell_width, cell_height, depth_cell_);
+
+  sensor_msgs::PointCloud2 cropped_cloud;
+  pcl::toROSMsg(*cell_pc, cropped_cloud);
+  cropped_cloud.header.frame_id = bin_frame_id_;
+  cropped_cloud.header.stamp = pc_timestamp;
+  response.cloud = cropped_cloud;
+
+  return true;
 }
-
-/*
-bool CropShelf::cropCallBack(pr2_pick_perception::CropShelfRequest &request,
-                pr2_pick_perception::CropShelfResponse &response)
-{
-
-    pr2_pick_perception::Cell cell;
-    std::string error_msg;
-
-    if ( !pc_ready_)
-    {
-        ROS_ERROR("No point cloud or no shelf detected\n");
-    }
-    else
-    {
-
-        if (tf_.canTransform(robot_frame_id_, cloud_frame_id_, pc_timestamp_,
-&error_msg)){
-            tf_.lookupTransform(robot_frame_id_, cloud_frame_id_, pc_timestamp_,
-cloud_to_robot_);
-        }
-        else
-        {
-            ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to
-be available, " "will assume it as identity!",
-                    cloud_frame_id_.c_str(),robot_frame_id_.c_str());
-            ROS_WARN("Transform error: %s", error_msg.c_str());
-            cloud_to_robot_.setIdentity();
-            robot_frame_id_ = cloud_frame_id_;
-        }
-
-
-        if (tf_.canTransform(world_frame_id_, robot_frame_id_,pc_timestamp_,
-&error_msg))
-        {
-            tf_.lookupTransform(world_frame_id_, robot_frame_id_, pc_timestamp_,
-robot_to_world_);
-        }
-        else
-        {
-            ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to
-be available, " "will assume it as identity!",
-                    world_frame_id_.c_str(),robot_frame_id_.c_str());
-            ROS_WARN("Transform error: %s", error_msg.c_str());
-            robot_to_world_.setIdentity();
-            world_frame_id_ = robot_frame_id_;
-        }
-
-
-
-        if (tf_.canTransform(shelf_frame_id_, model_frame_id_, ros::Time::now(),
-&error_msg)){
-            tf_.lookupTransform(shelf_frame_id_, model_frame_id_,
-ros::Time::now(), shelf_to_origin_);
-        }
-        else
-        {
-            ROS_WARN_THROTTLE(10.0, "The tf from  '%s' to '%s' does not seem to
-be available, " "will assume it as identity!",
-                    model_frame_id_.c_str(),shelf_frame_id_.c_str());
-            ROS_WARN("Transform error: %s", error_msg.c_str());
-            shelf_to_origin_.setIdentity();
-        }
-
-
-        pcl::visualization::PCLVisualizer::Ptr vis;
-        //transform point cloud to robot_frame (where the point cloud is
-published)
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr shelf_pc(new
-pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl_ros::transformPointCloud(kinect_pc_,*shelf_pc,cloud_to_robot_);
-
-        pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZRGB>
-scene_handler(shelf_pc, "x");//100, 100, 200);
-        if (debug_) {
-            vis.reset(new pcl::visualization::PCLVisualizer("Shelf Crooper --
-Debug"));
-            vis->addPointCloud(shelf_pc, scene_handler, "scene");
-            vis->addCoordinateSystem();
-            vis->setCameraPosition(-10,2,4,10,2,0,0,0,1);
-            vis->spin();
-        }
-
-        //move point cloud to shelf reference system
-        pcl_ros::transformPointCloud(*shelf_pc,*shelf_pc,shelf_transform_.inverse());
-
-//         if (debug_) {
-//            // vis->removePointCloud("scene");
-// pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
-cell_handler(shelf_pc, 255, 255, 255.0);
-//             vis->addPointCloud(shelf_pc, cell_handler, request.cellID);
-//
-//             vis->spin();
-//         }
-
-     // move the origin of the shelf to the left top corner
-       // pcl::PointCloud<pcl::PointXYZRGB>::Ptr shelf_origin(new
-pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl_ros::transformPointCloud(*shelf_pc,*shelf_pc,shelf_to_origin_.inverse());
-
-//         if (debug_) {
-//             vis->removePointCloud(request.cellID);
-// pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
-cell_handler(shelf_pc, 255, 0, 255.0);
-//             vis->addPointCloud(shelf_pc, cell_handler, request.cellID);
-//
-//             vis->spin();
-//         }
-
-
-
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cell_pc(new
-pcl::PointCloud<pcl::PointXYZRGB>);
-
-        if ( "A" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width1_,cell_height1_,
-depth_cell_,0);
-        if ( "B" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width2_,cell_height1_,
-depth_cell_,1);
-        if ( "C" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width1_,cell_height1_,
-depth_cell_,2);
-        if ( "D" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width1_,cell_height2_,
-depth_cell_,3);
-        if ( "E" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width2_,cell_height2_,
-depth_cell_,4);
-        if ( "F" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width1_,cell_height2_,
-depth_cell_,5);
-        if ( "G" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width1_,cell_height2_,
-depth_cell_,6);
-        if ( "H" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width2_,cell_height2_,
-depth_cell_,7);
-        if ( "I" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width1_,cell_height2_,
-depth_cell_,8);
-        if ( "J" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_width1_,cell_height1_,
-depth_cell_,9);
-        if ( "K" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_height1_,cell_height1_,
-depth_cell_,10);
-        if ( "L" == request.cellID)
-            cell_pc = cropPC(shelf_pc,cell_height1_,cell_height1_,
-depth_cell_,11);
-
-        //transform point cloud to robot_frame (where the point cloud is
-published)
-        pcl_ros::transformPointCloud(*cell_pc,*cell_pc,shelf_to_origin_);
-        //move point cloud to shelf reference system
-        pcl_ros::transformPointCloud(*cell_pc,*cell_pc,shelf_transform_);
-
-        //compute Euclidean clusters
-        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
-
-
-        std::cout << "Final point cloud without planes size = " <<
-cell_pc->points.size() << std::endl;
-        //extract clusters EUclidean
-        pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new
-pcl::search::KdTree<pcl::PointXYZRGB>);
-        tree->setInputCloud(cell_pc);
-        std::vector<pcl::PointIndices> clustersInd;
-        pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
-        ec.setClusterTolerance(0.01); //25cm
-        ec.setMinClusterSize(150); //need to go low for standpipe
-        ec.setMaxClusterSize(100000);
-        ec.setSearchMethod(tree);
-        ec.setInputCloud(cell_pc);
-        ec.extract(clustersInd);
-
-
-        for(int i = 0; i < clustersInd.size(); ++i) {
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster (new
-pcl::PointCloud<pcl::PointXYZRGB>);
-            pcl::PointXYZRGB point;
-            for(int j=0; j < clustersInd[i].indices.size();j++){
-                int index = clustersInd[i].indices[j];
-                point.x = cell_pc->points[index].x;
-                point.y = cell_pc->points[index].y;
-                point.z = cell_pc->points[index].z;
-                cluster->points.push_back(point);
-            }
-            cluster->width = cluster->points.size();
-            cluster->height = 1;
-            cluster->is_dense = true;
-            clusters.push_back(cluster);
-        }
-
-        if(debug_)
-        {
-
-            pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB>
-cell_handler(cell_pc, 255, 255, 255.0);
-            vis->addPointCloud(cell_pc, cell_handler, "Crooped cell");
-
-            vis->removePointCloud("scene");
-            vis->removePointCloud(request.cellID);
-
-            for(int i = 0; i < clusters.size(); ++i)
-            {
-                std::stringstream ss;
-                ss << "cluster_raw_" << i;
-                pcl::visualization::PointCloudColorHandlerRandom<pcl::PointXYZRGB>
-cluster_handler(clusters[i]);
-                vis->addPointCloud(clusters[i], cluster_handler, ss.str());
-                vis->spinOnce();
-            }
-            vis->spin();
-
-        }
-
-        // copy the clusters to the object ObjectList
-        pr2_pick_perception::ClusterList clusterlist;
-        for (int i=0; i < clusters.size(); i++)
-        {
-
-            pr2_pick_perception::Cluster cluster;
-            cluster.header.frame_id = model_frame_id_;
-            cluster.header.stamp = pc_timestamp_;
-            std::stringstream ss;
-            ss << "cluster_" << i;
-            cluster.id = ss.str();
-            pcl::toROSMsg(*clusters[i],cluster.pointcloud);
-
-            clusterlist.clusters.push_back(cluster);
-        }
-
-       response.locations = clusterlist;
-
-    }
-
-
-}*/
-
-// void
-// CropShelf::poseListener(pr2_pick_perception::ObjectList shelfdetection)
-// {
-//     if(shelfdetection.objects.size() > 0 )
-//     {
-//         shelf_pose_ = true;
-//         shelf_transform_.setOrigin(tf::Vector3(shelfdetection.objects[0].pose.position.x,
-//         shelfdetection.objects[0].pose.position.y,
-//                                                shelfdetection.objects[0].pose.position.z));
-//         shelf_transform_.setRotation(tf::Quaternion(
-//         shelfdetection.objects[0].pose.orientation.x,
-//         shelfdetection.objects[0].pose.orientation.y,
-//                                                      shelfdetection.objects[0].pose.orientation.z,
-//                                                      shelfdetection.objects[0].pose.orientation.w));
-//
-//         model_frame_id_ = shelfdetection.objects[0].header.frame_id;
-//     }
-//     else
-//     {
-//         ROS_ERROR("Shelf pose not available");
-//     }
-//
-//
-// }
+}  // namespace pr2_pick_perception
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "shelf_cropper");
 
   ros::NodeHandle nh;
 
-  CropShelf cropper;
+  pr2_pick_perception::ShelfCropper cropper;
 
   if (!cropper.initialize()) {
     ROS_FATAL("Shelf cropper initialization failed. Shutting down node.");
     return 1;
   }
 
-  ros::ServiceServer server(
-      nh.advertiseService("shelf_cropper", &CropShelf::cropCallBack, &cropper));
+  ros::ServiceServer server(nh.advertiseService(
+      "shelf_cropper", &pr2_pick_perception::ShelfCropper::cropCallBack,
+      &cropper));
 
   ros::spin();
 

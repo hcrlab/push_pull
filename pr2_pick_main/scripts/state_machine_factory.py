@@ -15,6 +15,7 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
     DeleteStaticTransform, FindCentroid, LocalizeShelf, LocalizeShelfResponse, \
     SetStaticTransform, PlanarPrincipalComponents, GetItemDescriptor, ClassifyTargetItem
 from pr2_pick_perception.srv import CountPointsInBox
+from pr2_pick_perception.srv import SegmentItems
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
 import states
@@ -29,6 +30,7 @@ class StateMachineBuilder(object):
     TEST_MOVE_TO_BIN = 'test-move-to-bin'
     TEST_PUSH_ITEM = 'test-push-item'
     CAPTURE_ITEM_DESCRIPTOR = 'capture-item-descriptor'
+    GATHER_DATA = 'gather-data'
     DEFAULT = 'default'
 
     def __init__(self):
@@ -64,6 +66,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_push_item
         elif self.state_machine_identifier == StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR:
             build = self.build_sm_for_item_descriptor_capture
+        elif self.state_machine_identifier == StateMachineBuilder.GATHER_DATA:
+            build = self.build_sm_for_gather_data
         else:
             build = self.build_sm
 
@@ -88,6 +92,7 @@ class StateMachineBuilder(object):
 
             # World and Perception
             'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
+            'segment_items': rospy.ServiceProxy('perception/segment_items', SegmentItems),
             'find_centroid': rospy.ServiceProxy('perception/find_centroid', FindCentroid),
             'interactive_marker_server': InteractiveMarkerServer('pr2_pick_interactive_markers'),
             'localize_object': rospy.ServiceProxy('perception/localize_object',
@@ -416,7 +421,10 @@ class StateMachineBuilder(object):
                 states.StartPose(**services),
                 transitions={
                     outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.START_POSE_FAILURE: states.FindShelf.name
+                },
+                remapping={
+                    'start_pose': 'start_pose'
                 }
             )
             smach.StateMachine.add(
@@ -425,6 +433,10 @@ class StateMachineBuilder(object):
                 transitions={
                     outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                     outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'debug': 'debug',
+                    'bin_id': 'current_bin'
                 }
             )
             smach.StateMachine.add(
@@ -439,7 +451,9 @@ class StateMachineBuilder(object):
                 remapping={
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data',
-                    'next_bin': 'current_bin'
+                    'next_bin': 'current_bin',
+                    'next_target' : 'current_target',
+                    'next_bin_items': 'current_bin_items'
                 }
             )
             smach.StateMachine.add(
@@ -458,10 +472,90 @@ class StateMachineBuilder(object):
                 states.CaptureItemDescriptor(**services),
                 transitions={
                     outcomes.CAPTURE_ITEM_NEXT: states.CaptureItemDescriptor.name,
-                    outcomes.CAPTURE_ITEM_DONE: outcomes.CHALLENGE_FAILURE
+                    outcomes.CAPTURE_ITEM_DONE: states.StartPose.name
                 },
                 remapping={
                     'bin_id': 'current_bin',
+                    'clusters': 'clusters'
+                }
+            )
+
+        return sm
+
+    def build_sm_for_gather_data(self, **services):
+        '''State machine for calling GatherData.
+        '''
+        sm = smach.StateMachine(outcomes=[
+            outcomes.CHALLENGE_SUCCESS,
+            outcomes.CHALLENGE_FAILURE
+        ])
+
+        mock_update_plan = states.UpdatePlan(**services)
+        mock_update_plan.execute = self.mock_update_plan_execute
+
+        with sm:
+            smach.StateMachine.add(
+                states.StartPose.name,
+                states.StartPose(**services),
+                transitions={
+                    outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                    outcomes.START_POSE_FAILURE: states.FindShelf.name
+                },
+                remapping={
+                    'start_pose': 'start_pose'
+                }
+            )
+            smach.StateMachine.add(
+                states.FindShelf.name,
+                states.FindShelf(**services),
+                transitions={
+                    outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
+                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'debug': 'debug',
+                    'bin_id': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.UpdatePlan.name,
+                mock_update_plan,
+                transitions={
+                    outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
+                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
+                    outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data',
+                    'next_bin': 'current_bin',
+                    'next_target' : 'current_target',
+                    'next_bin_items': 'current_bin_items'
+                }
+            )
+            smach.StateMachine.add(
+                states.MoveToBin.name,
+                states.MoveToBin(**services),
+                transitions={
+                    outcomes.MOVE_TO_BIN_SUCCESS: states.GatherData.name,
+                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_id': 'current_bin'
+                }
+            )
+            smach.StateMachine.add(
+                states.GatherData.name,
+                states.GatherData(**services),
+                transitions={
+                    outcomes.GATHER_DATA_NEXT: states.GatherData.name,
+                    outcomes.GATHER_DATA_DONE: states.StartPose.name
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'current_target': 'current_target',
+                    'current_bin_items': 'current_bin_items',
                     'clusters': 'clusters'
                 }
             )
@@ -492,7 +586,7 @@ class StateMachineBuilder(object):
                 states.StartPose(**services),
                 transitions={
                     outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.START_POSE_FAILURE: states.StartPose.name
                 },
                 remapping={
                     'start_pose': 'start_pose'
@@ -507,6 +601,7 @@ class StateMachineBuilder(object):
                 },
                 remapping={
                     'debug': 'debug',
+                    'bin_id': 'current_bin'
                 }
             )
             smach.StateMachine.add(
@@ -516,7 +611,7 @@ class StateMachineBuilder(object):
                     outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
                     outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
                     outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.UPDATE_PLAN_FAILURE: states.StartPose.name
                 },
                 remapping={
                     'bin_data': 'bin_data',
@@ -531,7 +626,7 @@ class StateMachineBuilder(object):
                 states.MoveToBin(**services),
                 transitions={
                     outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
-                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.MOVE_TO_BIN_FAILURE: states.UpdatePlan.name
                 },
                 remapping={
                     'bin_id': 'current_bin'
@@ -560,6 +655,7 @@ class StateMachineBuilder(object):
                 states.Grasp(**services),
                 transitions={
                     outcomes.GRASP_SUCCESS: states.ExtractItem.name,
+                    outcomes.GRASP_NONE: states.SenseBin.name,
                     outcomes.GRASP_FAILURE: (
                         states.UpdatePlan.name
                     )

@@ -44,7 +44,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -83,7 +83,9 @@ add_message_files(
   Object.msg
   ObjectDetectionRequest.msg
   ObjectList.msg
+  MultiItemCloud.msg
   ROI2d.msg
+  DescriptorExample.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -99,6 +101,7 @@ add_service_files(
   GetItemDescriptor.srv
   ClassifyTargetItem.srv
   CountPointsInBox.srv
+  SegmentItems.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -176,6 +179,10 @@ add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
 )
 
+add_executable(item_segmentation_service_node
+  src/item_segmentation.cpp
+)
+
 add_executable(planar_pca_service_node
   src/planar_pca_service.cpp
 )
@@ -187,6 +194,15 @@ add_executable(item_descriptor_service_node
 add_executable(count_points_in_box_service_node
   src/count_points_in_box_service.cpp
 )
+
+add_executable(cluster_points_in_box_service_node
+  src/cluster_points_in_box_service.cpp
+)
+
+add_executable(convert_rosbag_to_descriptors
+  src/convert_rosbag_to_descriptors.cpp
+)
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -206,6 +222,11 @@ add_dependencies(shelf_cropping_service_node
   pr2_pick_perception_generate_messages_cpp
 )
 
+add_dependencies(item_segmentation_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
 add_dependencies(planar_pca_service_node
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
@@ -218,6 +239,15 @@ add_dependencies(item_descriptor_service_node
 
 add_dependencies(count_points_in_box_service_node
   pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+add_dependencies(cluster_points_in_box_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+add_dependencies(convert_rosbag_to_descriptors
   pr2_pick_perception_generate_messages_cpp
 )
 
@@ -249,6 +279,14 @@ target_link_libraries(shelf_cropping_service_node
   ${catkin_LIBRARIES}
 )
 
+target_link_libraries(item_segmentation_service_node
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  pcl_lib
+)
+
 target_link_libraries(pcl_lib
   ${catkin_LIBRARIES}
 )
@@ -262,6 +300,13 @@ target_link_libraries(item_descriptor_service_node
 )
 target_link_libraries(count_points_in_box_service_node
   ${catkin_LIBRARIES}
+)
+target_link_libraries(cluster_points_in_box_service_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(convert_rosbag_to_descriptors
+  ${catkin_LIBRARIES}
+  pcl_lib
 )
 
 #############

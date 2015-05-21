@@ -27,6 +27,7 @@ RELEASE_TOOL_FAILURE = 'failure'
 
 GRASP_SUCCESS = 'success'
 GRASP_FAILURE = 'failure'
+GRASP_NONE = 'no_grasps'
 
 EXTRACT_ITEM_SUCCESS = 'success'
 EXTRACT_ITEM_FAILURE = 'failure'
@@ -40,3 +41,6 @@ DROP_OFF_ITEM_FAILURE = 'failure'
 
 CAPTURE_ITEM_NEXT = 'next'
 CAPTURE_ITEM_DONE = 'done'
+
+GATHER_DATA_NEXT = 'next'
+GATHER_DATA_DONE = 'done'

@@ -30,7 +30,7 @@ class MoveToBin(smach.State):
 
     # x-direction displacement of robot base center from shelf base center
     # in shelf coordinates
-    robot_distance_from_shelf_d_l = -1.11
+    robot_distance_from_shelf_d_l = -1.09
     # Careful with this parameter. If too close, it bumps into the shelf and
     # drive service never returns.
     robot_distance_from_shelf_a_c = -1
@@ -87,7 +87,7 @@ class MoveToBin(smach.State):
         rospy.loginfo('Moving to bin {}'.format(userdata.bin_id))
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
         self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(True, True)
+        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
         robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
         if userdata.bin_id > "C":

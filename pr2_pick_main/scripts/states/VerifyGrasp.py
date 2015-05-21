@@ -28,10 +28,14 @@ class VerifyGrasp(smach.State):
         self._moveit_move_arm = kwargs['moveit_move_arm']
         self._count_points_in_box = kwargs['count_points_in_box']
         self._markers = kwargs['markers']
+        self._tts = kwargs['tts']
 
     def _check_thin_object(self, debug=False):
         """Holds the item up and checks if it's there.
         """
+        self._move_head.wait_for_service()
+        self._move_head(0, 0, 0, 'r_wrist_roll_link')
+
         request = MoveArmRequest()
         request.goal.header.frame_id = 'torso_lift_link'
         request.goal.pose.position.x = 0.479
@@ -48,8 +52,6 @@ class VerifyGrasp(smach.State):
         request.plan_only = False
         self._moveit_move_arm.wait_for_service()
         self._moveit_move_arm(request)
-        self._move_head.wait_for_service()
-        self._move_head(0, 0, 0, 'r_wrist_roll_link')
 
         box_request = CountPointsInBoxRequest()
         box_request.frame_id = 'torso_lift_link'
@@ -70,8 +72,8 @@ class VerifyGrasp(smach.State):
         if debug:
             viz.publish_bounding_box(self._markers, box_pose, 0.12, 0.12, 0.2, 0.5,
                                      0.5, 0.5, 0.25, 2345)
-            raw_input('[VerifyGrasp]: Verifying thin grasp. ')
-        return response.num_points > 1350
+            raw_input('[VerifyGrasp] Press enter to continue: ')
+        return response.num_points > 1400
 
     @handle_service_exceptions(outcomes.VERIFY_GRASP_FAILURE)
     def execute(self, userdata):
@@ -88,11 +90,23 @@ class VerifyGrasp(smach.State):
         gripper_states = self._get_grippers()
         grasp_succeeded = gripper_states.right_open
 
-        if thin_object:
+        if grasp_succeeded:
+            rospy.loginfo('[VerifyGrasp] Item in hand.')
+            self._tts.publish('Item in hand.')
+
+        if not grasp_succeeded:
             grasp_succeeded = self._check_thin_object(debug=userdata.debug)
+            if grasp_succeeded:
+                rospy.loginfo('[VerifyGrasp] Saw item in hand.')
+                self._tts.publish('Saw item in hand. Grasp succeeded.')
+            else:
+                rospy.loginfo('[VerifyGrasp] Item not in hand.')
+                self._tts.publish('Item not in hand.')
 
         # decide what state to go to next
         if grasp_succeeded:
+            rospy.loginfo('[VerifyGrasp] Grasp succeeded.')
+            self._tts.publish('Grasp succeeded.')
             # go to DropOffItem
             self._get_items.wait_for_service()
             self._set_items.wait_for_service()
@@ -101,6 +115,8 @@ class VerifyGrasp(smach.State):
             self._set_items(items, bin_id)
             return outcomes.VERIFY_GRASP_SUCCESS
         else:
+            rospy.loginfo('[VerifyGrasp] Grasp failed.')
+            self._tts.publish('Grasp failed.')
             # check if there are attempts remaining
             if output_bin_data[bin_id].attempts_remaining == 0:
                 return outcomes.VERIFY_GRASP_FAILURE

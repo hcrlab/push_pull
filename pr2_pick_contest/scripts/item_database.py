@@ -19,18 +19,12 @@ class ItemDatabase(object):
         for item, data_dict in item_data.items():
             model = ItemModel()
             model.is_graspable = data_dict['graspable']
+            model.allowed_grasps = data_dict['allowed_grasps']
+            model.allow_finger_collisions = data_dict['allow_finger_collisions']
             model.zero_width_grasp = data_dict['zero_width_grasp']
             model.bonus_points = data_dict['bonus_points']
             model.grasp_effort = data_dict['grasp_effort']
-            num_bins = data_dict['color_histogram_num_bins']
-            color_histograms = []
-            for hist_data in data_dict['color_histograms']:
-                histogram = ColorHistogram()
-                histogram.num_bins = num_bins
-                histogram.histogram = hist_data
-                color_histograms.append(histogram)
-            model.color_histograms = color_histograms
-
+            
             self._item_data[item] = model
 
     def lookup_item(self, request):
