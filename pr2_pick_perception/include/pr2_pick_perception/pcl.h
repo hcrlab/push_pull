@@ -113,10 +113,29 @@ bool ClusterWithKMeans(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 
+// Clusters the point cloud using region growing with RGB information.
+//
+// Args:
+//   cloud: The input point cloud.
+//   clusters: The segmented clusters.
 void ClusterWithRegionGrowing(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 
+// Clustering algorithm specifically designed for the Amazon Picking Challenge.
+//
+// The algorithm uses color-based region growing to obtain an initial
+// oversegmentation of the point cloud. Then, based on the assumption that items
+// usually lie next to each other in the left/right direction, the
+// oversegmentations are grouped together based on how much they overlap in the
+// y direction. A threshold is adjusted until the right number of clusters is
+// found. However, this is not guaranteed to find the exact right number of
+// clusters.
+//
+// Args:
+//   cloud: The input point cloud.
+//   num_clusters: A hint as to how many clusters to expect.
+//   clusters: The returned clustering of the items.
 void ClusterBinItems(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
@@ -133,18 +152,6 @@ void ClusterWithEuclidean(
     const double cluster_tolerance, const int min_cluster_size,
     const int max_cluster_size,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
-
-void ClusterWithEuclideanByY(
-    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-    const double cluster_tolerance, const int min_cluster_size,
-    const int max_cluster_size,
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
-
-bool ConditionByY(const pcl::PointXYZRGB& point_a,
-                  const pcl::PointXYZRGB& point_b, float squared_distance);
-
-bool ComparePointsByY(const pcl::PointXYZRGB& a, const pcl::PointXYZRGB& b);
-
 }  // namespace pr2_pick_perception
 
 #endif
