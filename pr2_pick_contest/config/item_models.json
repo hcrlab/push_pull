@@ -8,7 +8,7 @@
     "zero_width_grasp": true,
     "bonus_points": 0,
     "grasp_effort": -1,
-    "success_prior": 0.5
+    "success_prior": 0.4
   },
   "champion_copper_plus_spark_plug": {
     "graspable": true,
@@ -162,7 +162,7 @@
     "zero_width_grasp": false,
     "bonus_points": 0,
     "grasp_effort": -1,
-    "success_prior": 0.8
+    "success_prior": 0.7
   },
   "rolodex_jumbo_pencil_cup": {
     "graspable": true,
@@ -184,7 +184,7 @@
     "zero_width_grasp": true,
     "bonus_points": 2,
     "grasp_effort": -1,
-    "success_prior": 0.6
+    "success_prior": 0.5
   },
   "highland_6539_self_stick_notes": {
     "graspable": true,
@@ -195,7 +195,7 @@
     "zero_width_grasp": false,
     "bonus_points": 0,
     "grasp_effort": -1,
-    "success_prior": 0.9
+    "success_prior": 0.8
   },
   "mark_twain_huckleberry_finn": {
     "graspable": true,
