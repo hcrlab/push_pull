@@ -1,5 +1,5 @@
 <launch>
-  <arg name="debug" default="false">
+  <arg name="debug" default="false" />
   <node if="$(arg debug)" pkg="pr2_pick_perception" type="item_segmentation_service_node" name="item_segmentation_service_node" output="screen" launch-prefix="gdb -ex run --args" />
   <node unless="$(arg debug)" pkg="pr2_pick_perception" type="item_segmentation_service_node" name="item_segmentation_service_node" output="screen" />
 </launch>
