@@ -817,7 +817,7 @@ class Grasp(smach.State):
         bbox_in_bin_frame = self._tf_listener.transformPose('bin_' + str(self.bin_id), bounding_box.pose)
 
         # Grasp lowest point if not already at lowest point
-        if bbox_in_bin_frame.pose.position.z > (self.half_gripper_height + 0.03):
+        if self.grasp_multiple_heights and bbox_in_bin_frame.pose.position.z > (self.half_gripper_height + 0.03):
             bbox_in_bin_frame.pose.position.z = self.half_gripper_height + 0.03
             bbox_in_bounding_box_frame = self._tf_listener.transformPose(bounding_box.pose.header.frame_id, bbox_in_bin_frame)
             #planar_bounding_box.pose = bbox_in_bounding_box_frame
@@ -848,9 +848,30 @@ class Grasp(smach.State):
             rospy.sleep(0.5)
             self._tf_listener.waitForTransform("object_axis", "bin_" + str(bin_id), rospy.Time(0), rospy.Duration(10.0))
 
-            # Check if right axis
+            # Check if allowed to grasp this end of object
+            y_values = []
+            for (idx, corner) in enumerate(ends):
+                # Transform into this frame
+                point_1 = self._tf_listener.transformPoint('object_axis', corner)
+                point_2 =  self._tf_listener.transformPoint('object_axis', rejected[idx])
+               
+                if not y_values:
+                    y_values.append(point_1)
+                else:
+                    for value in y_values:
+                        if math.fabs(point_1.point.y - value) > 0.001:
+                            y_values.append(point_1) 
+                for value in y_values:
+                        if math.fabs(point_2.point.y - value) > 0.001:
+                            y_values.append(point_2)
+ 
+                #if point_1.point.y not in y_values:
+                #    y_values.append(point_1)
+                #if point_2.point.y not in y_values:
+                #    y_values.append(point_2)
 
-            
+            if (not self.grasp_wide_end) and (math.fabs(y_value[0] - y_value[1] > 0.10)):
+                continue 
             
             for (idx, grasp_point) in enumerate(grasp_points):
                 closest_end = self._tf_listener.transformPoint('object_axis',
@@ -2062,7 +2083,8 @@ class Grasp(smach.State):
         self.target_descriptor = userdata.target_descriptor
         self.bin_bound_left = self._bin_bounds_left[userdata.bin_id] 
         self.bin_bound_right = self._bin_bounds_right[userdata.bin_id]
-
+        self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
+        self.grasp_wide_end = userdata.item_model.grasp_wide_end
 
         if userdata.item_model.allow_finger_collisions:
             self.max_finger_collision_points = 1000
