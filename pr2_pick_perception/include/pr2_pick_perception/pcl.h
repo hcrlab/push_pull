@@ -134,6 +134,17 @@ void ClusterWithEuclidean(
     const int max_cluster_size,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 
+void ClusterWithEuclideanByY(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    const double cluster_tolerance, const int min_cluster_size,
+    const int max_cluster_size,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
+bool ConditionByY(const pcl::PointXYZRGB& point_a,
+                  const pcl::PointXYZRGB& point_b, float squared_distance);
+
+bool ComparePointsByY(const pcl::PointXYZRGB& a, const pcl::PointXYZRGB& b);
+
 }  // namespace pr2_pick_perception
 
 #endif

@@ -64,15 +64,15 @@ bool ItemSegmentationService::Callback(SegmentItems::Request& request,
 
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  // ClusterWithEuclidean(*cell_pc_filtered, 0.01, min_cluster_points_,
-  //                     max_cluster_points_, &clusters);
-  ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
-  // if (clusters.size() != request.items.size()) {
-  //  ROS_INFO("Euclidean clustering yielded %ld items, expected %ld",
-  //           clusters.size(), request.items.size());
-  //  //ClusterBinItems(*cell_pc_filtered, request.items.size(), &clusters);
-  //  ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
-  //}
+  ClusterWithEuclidean(*cell_pc_filtered, 0.01, min_cluster_points_,
+                       max_cluster_points_, &clusters);
+  // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
+  if (clusters.size() != request.items.size()) {
+    ROS_INFO("Euclidean clustering yielded %ld items, expected %ld",
+             clusters.size(), request.items.size());
+    ClusterBinItems(*cell_pc_filtered, request.items.size(), &clusters);
+    // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
+  }
   // ClusterWithKMeans(*cell_pc_filtered, request.items.size(), &clusters);
 
   // Copy the clusters back to the response.

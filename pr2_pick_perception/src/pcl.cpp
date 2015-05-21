@@ -4,20 +4,20 @@
 #include "geometry_msgs/TransformStamped.h"
 #include "pcl/common/centroid.h"
 #include "pcl/common/common.h"
+#include "pcl/common/distances.h"
 #include "pcl/common/pca.h"
 #include "pcl/filters/filter.h"
+#include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/point_types.h"
 #include "pcl/search/kdtree.h"
+#include "pcl/segmentation/conditional_euclidean_clustering.h"
 #include "pcl/segmentation/extract_clusters.h"
+#include "pcl/segmentation/region_growing_rgb.h"
 #include "pcl_conversions/pcl_conversions.h"
-#include "pcl/common/distances.h"
 #include "ros/ros.h"
-#include "pcl/segmentation/seeded_hue_segmentation.h"
 #include "sensor_msgs/PointCloud2.h"
+#include "tf/transform_listener.h"
 #include <Eigen/Dense>
-#include <tf/transform_listener.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/segmentation/region_growing_rgb.h>
 
 #include <algorithm>
 #include <math.h>
@@ -229,18 +229,19 @@ float SquaredDistance(const PointXYZRGB& p1, const PointXYZRGB& p2) {
   float distance = 0;
   // Color ranges from 0-255 while distances range about 0.15m, so we increase
   // the importance of distance.
-  float distance_scale_factor = 1.0 / (0.15 * 0.15);
-  float color_scale_factor = 1.0 / (255 * 255);
-  distance += distance_scale_factor * (p1.x - p2.x) * (p1.x - p2.x);
-  distance +=
-      y_scale_factor * distance_scale_factor * (p1.y - p2.y) * (p1.y - p2.y);
-  distance += distance_scale_factor * (p1.z - p2.z) * (p1.z - p2.z);
-  distance += color_meta_scale_factor * color_scale_factor * (p1.r - p2.r) *
-              (p1.r - p2.r);
-  distance += color_meta_scale_factor * color_scale_factor * (p1.g - p2.g) *
-              (p1.g - p2.g);
-  distance += color_meta_scale_factor * color_scale_factor * (p1.b - p2.b) *
-              (p1.b - p2.b);
+  // float distance_scale_factor = 1.0 / (0.15 * 0.15);
+  // float color_scale_factor = 1.0 / (255 * 255);
+  // distance += distance_scale_factor * (p1.x - p2.x) * (p1.x - p2.x);
+  // distance +=
+  //    y_scale_factor * distance_scale_factor * (p1.y - p2.y) * (p1.y - p2.y);
+  // distance += distance_scale_factor * (p1.z - p2.z) * (p1.z - p2.z);
+  // distance += color_meta_scale_factor * color_scale_factor * (p1.r - p2.r) *
+  //            (p1.r - p2.r);
+  // distance += color_meta_scale_factor * color_scale_factor * (p1.g - p2.g) *
+  //            (p1.g - p2.g);
+  // distance += color_meta_scale_factor * color_scale_factor * (p1.b - p2.b) *
+  //            (p1.b - p2.b);
+  distance = fabs(p1.y - p2.y);
   return distance;
 }
 
@@ -433,21 +434,30 @@ void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
   }
 
   std::vector<PointCloud<PointXYZRGB>::Ptr> centroid_clusters;
+  double cluster_tolerance;
+  ros::param::param("over_cluster_tolerance", cluster_tolerance, 0.05);
+  int min_cluster_size;
+  ros::param::param("over_min_cluster_size", min_cluster_size, 1);
+  int max_cluster_size;
+  ros::param::param("over_max_cluster_size", max_cluster_size,
+                    static_cast<int>(centroid_clusters.size()));
+  // ClusterWithEuclideanByY(centroids, cluster_tolerance, min_cluster_size,
+  //                        max_cluster_size, &centroid_clusters);
 
   // Sometimes K-means has no points in a cluster, try again if so.
-  for (int tries = 0; tries < 10; ++tries) {
-    centroid_clusters.clear();
-    bool success =
-        ClusterWithKMeans(centroids, num_clusters, &centroid_clusters) &&
-        centroid_clusters.size() > 0;
-    if (success) {
-      break;
-    } else {
-      ROS_WARN("Try %d of 10. K-means had a cluster with 0 points.", tries);
-    }
-  }
+  // for (int tries = 0; tries < 10; ++tries) {
+  //  centroid_clusters.clear();
+  //  bool success =
+  //      ClusterWithKMeans(centroids, num_clusters, &centroid_clusters) &&
+  //      centroid_clusters.size() > 0;
+  //  if (success) {
+  //    break;
+  //  } else {
+  //    ROS_WARN("Try %d of 10. K-means had a cluster with 0 points.", tries);
+  //  }
+  //}
 
-  ROS_INFO("Number of clusters after K-means: %ld", centroid_clusters.size());
+  ROS_INFO("Number of clusters after Euclidean: %ld", centroid_clusters.size());
 
   // Merge clusters together.
   clusters->clear();
@@ -508,6 +518,66 @@ void ClusterWithEuclidean(
     cluster->is_dense = true;
     clusters->push_back(cluster);
   }
+}
+
+bool ComparePointsByY(const PointXYZRGB& a, const PointXYZRGB& b) {
+  return a.y < b.y;
+}
+
+void ClusterWithEuclideanByY(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    const double cluster_tolerance, const int min_cluster_size,
+    const int max_cluster_size,
+    std::vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
+  pcl::IndicesClustersPtr indices_clusters(new pcl::IndicesClusters);
+  pcl::ConditionalEuclideanClustering<PointXYZRGB> cec;
+  PointCloud<PointXYZRGB> sorted_cloud = cloud;
+  std::sort(sorted_cloud.points.begin(), sorted_cloud.points.end(),
+            ComparePointsByY);
+  // Sort cloud by y.
+  // std::vector<PointXYZRGB> points;
+  // for (size_t i = 0; i < cloud.points.size(); ++i) {
+  //  points.push_back(cloud[i]);
+  //}
+  // std::sort(points.begin(), points.end(), ComparePointsByY);
+  // for (size_t i = 0; i < points.size(); ++i) {
+  //  cloud.points.push_back(points[i]);
+  //}
+  // cloud.points = points;
+  cec.setInputCloud(sorted_cloud.makeShared());
+  cec.setConditionFunction(&ConditionByY);
+  cec.setClusterTolerance(cluster_tolerance);
+  cec.setMinClusterSize(min_cluster_size);
+  cec.setMaxClusterSize(max_cluster_size);
+  cec.segment(*indices_clusters);
+
+  clusters->clear();
+  for (size_t i = 0; i < indices_clusters->size(); ++i) {
+    const pcl::PointIndices& cluster_ind = (*indices_clusters)[i];
+    PointCloud<PointXYZRGB>::Ptr cluster(new PointCloud<PointXYZRGB>());
+    ROS_INFO("[Custom Euclidean] Cluster %ld has size %ld", i,
+             cluster_ind.indices.size());
+    for (size_t j = 0; j < cluster_ind.indices.size(); ++j) {
+      const int index = cluster_ind.indices[j];
+      cluster->push_back(sorted_cloud[index]);
+    }
+    clusters->push_back(cluster);
+  }
+}
+
+bool ConditionByY(const PointXYZRGB& point_a, const PointXYZRGB& point_b,
+                  float squared_distance) {
+  float max_distance;
+  ros::param::param<float>("custom_max_distance", max_distance, 0.04);
+  if (squared_distance > max_distance) {
+    ROS_INFO("squared_distance: %f", squared_distance);
+    return false;
+  }
+  float max_y_distance;
+  ros::param::param<float>("custom_y_distance", max_y_distance, 0.01);
+  float y_dist = fabs(point_a.y - point_b.y);
+  ROS_INFO("y_dist: %f, y1=%f, y2=%f", y_dist, point_a.y, point_b.y);
+  return y_dist <= max_y_distance;
 }
 
 }  // namespace pr2_pick_perception

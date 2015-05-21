@@ -32,14 +32,14 @@ def try_segmentation(cloud, labels):
 def debug_visualization(messages):
     for cloud, labels in messages[:]:
         # Publish cloud
-        cloud_pub = rospy.Publisher('cloud', PointCloud2)
-        for i in range(2):
-            if cloud_pub.get_num_connections() == 0:
-                rospy.logwarn('Waiting for subscriber to cloud')
-                rospy.sleep(1)
-            else:
-                cloud_pub.publish(cloud)
-                break
+        #cloud_pub = rospy.Publisher('cloud', PointCloud2)
+        #for i in range(2):
+        #    if cloud_pub.get_num_connections() == 0:
+        #        rospy.logwarn('Waiting for subscriber to cloud')
+        #        rospy.sleep(1)
+        #    else:
+        #        cloud_pub.publish(cloud)
+        #        break
 
         clusters = try_segmentation(cloud, labels)    
 
@@ -54,6 +54,7 @@ def debug_visualization(messages):
             viz.publish_cluster(markers, point_list, 'map', 'clusters', i)
 
         raw_input('Press enter to continue: ')
+
 
 def yield_grid_search_params():
     for y_scale_factor in [0.01, 0.1, 0.5, 1, 2, 4, 6, 10, 20, 40]:
