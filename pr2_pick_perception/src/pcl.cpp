@@ -445,17 +445,17 @@ void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
   //                        max_cluster_size, &centroid_clusters);
 
   // Sometimes K-means has no points in a cluster, try again if so.
-  // for (int tries = 0; tries < 10; ++tries) {
-  //  centroid_clusters.clear();
-  //  bool success =
-  //      ClusterWithKMeans(centroids, num_clusters, &centroid_clusters) &&
-  //      centroid_clusters.size() > 0;
-  //  if (success) {
-  //    break;
-  //  } else {
-  //    ROS_WARN("Try %d of 10. K-means had a cluster with 0 points.", tries);
-  //  }
-  //}
+  for (int tries = 0; tries < 10; ++tries) {
+    centroid_clusters.clear();
+    bool success =
+        ClusterWithKMeans(centroids, num_clusters, &centroid_clusters) &&
+        centroid_clusters.size() > 0;
+    if (success) {
+      break;
+    } else {
+      ROS_WARN("Try %d of 10. K-means had a cluster with 0 points.", tries);
+    }
+  }
 
   ROS_INFO("Number of clusters after Euclidean: %ld", centroid_clusters.size());
 
