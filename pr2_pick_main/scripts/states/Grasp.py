@@ -526,7 +526,7 @@ class Grasp(smach.State):
         shelf_pose = PoseStamped(
             header=Header(frame_id='/shelf'),
             pose=Pose(
-                position=Position(x=0.0, y=0.0, z=0.0),
+                position=Point(x=0.0, y=0.0, z=0.0),
                 orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
             ),
         )
@@ -856,14 +856,14 @@ class Grasp(smach.State):
                 point_2 =  self._tf_listener.transformPoint('object_axis', rejected[idx])
                
                 if not y_values:
-                    y_values.append(point_1)
+                    y_values.append(point_1.point.y)
                 else:
                     for value in y_values:
                         if math.fabs(point_1.point.y - value) > 0.001:
-                            y_values.append(point_1) 
+                            y_values.append(point_1.point.y) 
                 for value in y_values:
                         if math.fabs(point_2.point.y - value) > 0.001:
-                            y_values.append(point_2)
+                            y_values.append(point_2.point.y)
  
                 #if point_1.point.y not in y_values:
                 #    y_values.append(point_1)
@@ -2129,37 +2129,38 @@ class Grasp(smach.State):
         planar_bounding_box = userdata.target_descriptor.planar_bounding_box
         scene = moveit_commander.PlanningSceneInterface()
         scene.remove_world_object('bbox')
-        scene.remove_world_object("shelf")
+        #scene.remove_world_object("shelf")
 
     
 
-        shelf_pose = geometry_msgs.msg.PoseStamped()
-        shelf_pose.header.frame_id = "/shelf"
-        shelf_pose.pose.position.x = 0.0
-        shelf_pose.pose.position.y = 0.0
-        shelf_pose.pose.position.z = 0.0
-        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
-        shelf_pose.pose.orientation.x = q[0]
-        shelf_pose.pose.orientation.y = q[1]
-        shelf_pose.pose.orientation.z = q[2]
-        shelf_pose.pose.orientation.w = q[3]
+        #shelf_pose = geometry_msgs.msg.PoseStamped()
+        #shelf_pose.header.frame_id = "/shelf"
+        #shelf_pose.pose.position.x = 0.0
+        #shelf_pose.pose.position.y = 0.0
+        #shelf_pose.pose.position.z = 0.0
+        #q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
+        #shelf_pose.pose.orientation.x = q[0]
+        #shelf_pose.pose.orientation.y = q[1]
+        #shelf_pose.pose.orientation.z = q[2]
+        #shelf_pose.pose.orientation.w = q[3]
         # get an instance of RosPack with the default search paths
-        rospack = rospkg.RosPack()
+        #rospack = rospkg.RosPack()
 
         # list all packages, equivalent to rospack list
         #rospack.list_pkgs() 
 
         # get the file path for rospy_tutorials
-        path = rospack.get_path('pr2_pick_contest')
+        #path = rospack.get_path('pr2_pick_contest')
 
 
         #self.scene = moveit_commander.PlanningSceneInterface()
-        shelf_mesh = path + "/config/kiva_pod/meshes/pod_lowres.stl" # or better, use find_package()
+        #shelf_mesh = path + "/config/kiva_pod/meshes/pod_lowres.stl" # or better, use find_package()
         #rate = rospy.Rate(1)
         for i in range(10):
             scene.add_box("bbox", planar_bounding_box.pose, (planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z))
             #scene.add_box("bbox", planar_bounding_box.pose, (3, 3, 3)) 
-            scene.add_mesh("shelf", shelf_pose, shelf_mesh)
+            #scene.add_mesh("shelf", shelf_pose, shelf_mesh)
+            self.add_shelf_mesh_to_scene(scene)
             rospy.sleep(0.1)
             #rate.sleep()
 
