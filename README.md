@@ -75,6 +75,9 @@ Unused, put messages in the related package instead.
 Unused.
 A service that moves the arm using trajopt.
 
+## Backpack computer network configuration
+See [Backpack configuration](https://github.com/hcrlab/wiki/blob/master/pr2/backpack_configuration.md)
+
 ## Style guides
 These are just suggested:
 - [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.html)
