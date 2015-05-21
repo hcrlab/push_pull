@@ -25,13 +25,20 @@ git submodule update
 ```bash
 # On a desktop computer
 setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
-roslaunch pr2_moveit_config move_group.launch
-rviz # Use the config file in pr2_pick/config
+roslaunch pr2_pick_main rviz.launch
+
+# On hal9k
+# hal9k is the laptop in the robot's backpack.
+# We run MoveIt on hal9k because it runs too slowly on c1.
+# You must launch MoveIt first, or else the prerequisites below won't work.
+ssh c1
+ssh jstn@hal9k # SSH into hal9k via c1
+amazon # Sets the ROS_MASTER_URI to http://c1:11311
+roslaunch pr2_pick_manipulation move_group.launch
 
 # On the robot
-# Launch move_group.launch first, otherwise the MoveIt service will crash.
 roslaunch pr2_pick_main main_prereqs.launch
-python main.py --debug
+rosrun pr2_pick_main main.py
 ```
 
 To see a visualization of the execution, open rviz and use the config file in `pr2_pick/config`
