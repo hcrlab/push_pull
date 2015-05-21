@@ -29,6 +29,19 @@ def try_segmentation(cloud, labels):
     clusters = segment_cloud(segment_items, cloud, labels)
     return clusters
 
+def delete_marker(markers, ns, i):
+    marker = Marker()
+    marker.ns = ns;
+    marker.id = i;
+    marker.action = Marker.DELETE
+    for j in range(5):
+        if markers.get_num_connections() == 0:
+            rospy.logwarn('Waiting for subscriber to delete marker.')
+            rospy.sleep(1)
+        else:
+            markers.publish(marker)
+            break
+
 def debug_visualization(messages):
     for cloud, labels in messages[:]:
         # Publish cloud
@@ -45,6 +58,8 @@ def debug_visualization(messages):
 
         # Publish visualization
         markers = rospy.Publisher('pr2_pick_visualization', Marker)
+        for i in range(100):
+            delete_marker(markers, 'clusters', i)
         for i, cluster in enumerate(clusters):
             points = pc2.read_points(cluster.pointcloud, skip_nans=True)
             point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
