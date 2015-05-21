@@ -208,7 +208,8 @@ class Grasp(smach.State):
 
 
     def loginfo(self, string):
-        self.debug_grasp_pub.publish(string)
+        #self.debug_grasp_pub.publish(string)
+        rospy.logdebug(string)
        
 
     def get_box_ends(self, item_descriptor):
@@ -548,6 +549,7 @@ class Grasp(smach.State):
         )
 
     def grasp_msg_to_poses(self, grasp_msgs, object_pose, rotate=False):
+
         """
         Take list of Grasp msgs from moveit_simple_grasps service and make 
         dict of grasp and pre-grasp poses
@@ -581,7 +583,7 @@ class Grasp(smach.State):
             self._set_static_tf(transform)
             rospy.sleep(0.5)
 
-
+            
             pre_grasp_pose = PoseStamped()
             pre_grasp_pose.header.stamp = rospy.Time(0)
             pre_grasp_pose.header.frame_id = "grasp"
@@ -597,10 +599,10 @@ class Grasp(smach.State):
             grasp_dict = {}
             grasp_dict["pre_grasp"] = base_footprint_pre_grasp_pose
             grasp_dict["grasp"] = grasp_pose
-            if not rotate:
-                grasping_pairs.append(grasp_dict)
-
-
+            #grasp_dict["id"] = self.grasp_num
+            #self.grasp_num += 1
+            #grasping_pairs.append(grasp_dict)
+            
             pre_grasp_pose.header.stamp = rospy.Time(0)
             grasp_pose.header.stamp = rospy.Time(0)
 
@@ -608,7 +610,7 @@ class Grasp(smach.State):
 
             base_footprint_pre_grasp_pose = self._tf_listener.transformPose('base_footprint',
                                                                 pre_grasp_pose)
-    
+            
             pose = PoseStamped()
             pose.header.frame_id = "grasp"
             pose.pose.orientation.w = 1
@@ -621,9 +623,12 @@ class Grasp(smach.State):
             grasp_dict["pre_grasp"] = base_footprint_pre_grasp_pose
 
             grasp_dict["grasp"] = grasp_pose
+            grasp_dict["id"] = self.grasp_num
+            self.grasp_num += 1
+
             if rotate:
                 grasping_pairs.append(grasp_dict)
-
+            
         return grasping_pairs
 
 
@@ -675,10 +680,11 @@ class Grasp(smach.State):
         #                                                         pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2) and pose_in_bin_frame.pose.position.x > -0.05:
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2):
             pose_in_bin_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2) and pose_in_bin_frame.pose.position.x > -0.05:
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2):
             pose_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2)
+       
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -710,13 +716,13 @@ class Grasp(smach.State):
                                                                 pose)
 
         # Check if within bin_width
-        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2) and pose_in_bin_frame.pose.position.x > -0.05:
+        if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2):
             in_bounds = False
             self.loginfo("Pose >  y bounds")
             self.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
             self.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2)))
 
-        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2) and pose_in_bin_frame.pose.position.x > -0.05:
+        elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2):
             in_bounds = False
             self.loginfo("Pose <  y bounds")
             self.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
@@ -903,6 +909,14 @@ class Grasp(smach.State):
                     grasp_in_axis_frame.pose.position.y = closest_end.point.y
                 grasp_in_axis_frame.pose.position.z = grasp_point_in_axis_frame.point.z
 
+
+                finger_tips_in_axis_frame = PoseStamped()
+                finger_tips_in_axis_frame.header.frame_id = 'object_axis'
+                finger_tips_in_axis_frame.pose.orientation.w = 1
+                finger_tips_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x + 0.15
+                finger_tips_in_base_footprint =  self._tf_listener.transformPose('base_footprint',
+                                                                            finger_tips_in_axis_frame) 
+
                 # Transform into base_footprint
                 grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                     grasp_in_axis_frame)
@@ -915,7 +929,7 @@ class Grasp(smach.State):
                 if self._debug:
                     raw_input('(Debug) Initial gripper estimate >') 
 
-                if grasp_in_base_footprint.pose.position.x > (grasp_point_in_base_footprint.point.x + 0.07):
+                if grasp_in_base_footprint.pose.position.x > (finger_tips_in_base_footprint.pose.position.x) or math.fabs(grasp_in_axis_frame.pose.position.x -  grasp_point_in_axis_frame.point.x) < math.fabs(finger_tips_in_axis_frame.pose.position.x -  grasp_point_in_axis_frame.point.x):
                     # Wrong way along axis
 
                     grasp_in_axis_frame.pose.position.y -= y_offsets[idx]
@@ -1103,11 +1117,11 @@ class Grasp(smach.State):
                 else:
                     self.loginfo("No pitched grasp")
 
-                self._delete_static_tf.wait_for_service()
-                req = DeleteStaticTransformRequest()
-                req.parent_frame = "bin_" + str(bin_id)
-                req.child_frame = "object_axis"
-                self._delete_static_tf(req)
+                #self._delete_static_tf.wait_for_service()
+                #req = DeleteStaticTransformRequest()
+                #req.parent_frame = "bin_" + str(bin_id)
+                #req.child_frame = "object_axis"
+                #self._delete_static_tf(req)
 
         return grasps
 
@@ -1270,7 +1284,9 @@ class Grasp(smach.State):
         pose.orientation.w = quaternion[3]
 
         moveit_simple_grasps = []
-        goal.pose.position = object_pose.pose.position
+        goal.pose.position.x = object_pose.pose.position.x
+        goal.pose.position.y = object_pose.pose.position.y
+        goal.pose.position.z = self.shelf_bottom_height + 0.04 + 0.02
         goal.pose.orientation = pose.orientation
 
         goal.width = 0.0
@@ -1307,14 +1323,14 @@ class Grasp(smach.State):
         goal.options = []
         goal.options.append(options_1)
         goal.options.append(options_2)
-        #grasp_action_client.send_goal(goal)
-        #grasp_action_client.wait_for_result()
+        grasp_action_client.send_goal(goal)
+        grasp_action_client.wait_for_result()
 
-        #grasps_result = grasp_action_client.get_result()
+        grasps_result = grasp_action_client.get_result()
 
-        #moveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(
-        #                                                                        grasps_result.grasps,
-        #                                                                        object_pose, True)
+        moveit_simple_grasps  =  moveit_simple_grasps + self.grasp_msg_to_poses(
+                                                                                grasps_result.grasps,
+                                                                                object_pose, True)
 
         options_1 = GraspGeneratorOptions()
         options_1.grasp_axis = options_1.GRASP_AXIS_Y
@@ -1338,7 +1354,7 @@ class Grasp(smach.State):
         #                                                                        object_pose, False)
 
         # Removing moveit generated grasps for now
-        moveit_simple_grasps = []
+        #moveit_simple_grasps = []
 
         # Get pca aligned grasps
         self.loginfo("Getting pca grasps")
@@ -2156,11 +2172,12 @@ class Grasp(smach.State):
         #self.scene = moveit_commander.PlanningSceneInterface()
         #shelf_mesh = path + "/config/kiva_pod/meshes/pod_lowres.stl" # or better, use find_package()
         #rate = rospy.Rate(1)
+        self.add_shelf_mesh_to_scene(scene)
         for i in range(10):
             scene.add_box("bbox", planar_bounding_box.pose, (planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z))
             #scene.add_box("bbox", planar_bounding_box.pose, (3, 3, 3)) 
             #scene.add_mesh("shelf", shelf_pose, shelf_mesh)
-            self.add_shelf_mesh_to_scene(scene)
+            #self.add_shelf_mesh_to_scene(scene)
             rospy.sleep(0.1)
             #rate.sleep()
 
@@ -2171,6 +2188,13 @@ class Grasp(smach.State):
         grasping_pairs = self.generate_grasps(planar_bounding_box, userdata.bin_id)
         
         filtered_grasps = self.filter_grasps(grasping_pairs)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "bin_" + str(self.bin_id)
+        req.child_frame = "object_axis"
+        self._delete_static_tf(req)
+
         if len(filtered_grasps) > 0:
             success_grasp = self.execute_grasp(filtered_grasps, userdata.item_model)
         else:
