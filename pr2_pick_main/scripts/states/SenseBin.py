@@ -33,7 +33,6 @@ class SenseBin(smach.State):
         self._crop_shelf = crop_shelf
         self._segment_items = kwargs['segment_items']
         self._markers = markers
-        self._tuck_arms = kwargs['tuck_arms']
         self._get_item_descriptor = kwargs['get_item_descriptor']
         self._classify_target_item = kwargs['classify_target_item']
         self._lookup_item = kwargs['lookup_item']
@@ -56,10 +55,6 @@ class SenseBin(smach.State):
         target_model = lookup_response.model
         userdata.target_model = target_model
 
-        self._tuck_arms.wait_for_service()
-        self._tuck_arms(tuck_left=False, tuck_right=False)
-        # If the arms are already tucked (usually true), then give some
-        # time for the point cloud to update.
         rospy.sleep(2)
 
         # Crop shelf.

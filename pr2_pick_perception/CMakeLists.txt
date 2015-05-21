@@ -195,6 +195,10 @@ add_executable(count_points_in_box_service_node
   src/count_points_in_box_service.cpp
 )
 
+add_executable(cluster_points_in_box_service_node
+  src/cluster_points_in_box_service.cpp
+)
+
 add_executable(convert_rosbag_to_descriptors
   src/convert_rosbag_to_descriptors.cpp
 )
@@ -234,6 +238,11 @@ add_dependencies(item_descriptor_service_node
 )
 
 add_dependencies(count_points_in_box_service_node
+  pr2_pick_msgs_generate_messages_cpp
+  pr2_pick_perception_generate_messages_cpp
+)
+
+add_dependencies(cluster_points_in_box_service_node
   pr2_pick_msgs_generate_messages_cpp
   pr2_pick_perception_generate_messages_cpp
 )
@@ -290,6 +299,9 @@ target_link_libraries(item_descriptor_service_node
   pcl_lib
 )
 target_link_libraries(count_points_in_box_service_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(cluster_points_in_box_service_node
   ${catkin_LIBRARIES}
 )
 target_link_libraries(convert_rosbag_to_descriptors

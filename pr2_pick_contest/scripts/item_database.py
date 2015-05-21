@@ -20,10 +20,13 @@ class ItemDatabase(object):
             model = ItemModel()
             model.is_graspable = data_dict['graspable']
             model.allowed_grasps = data_dict['allowed_grasps']
+            model.grasp_wide_end = data_dict['grasp_wide_end']
+            model.grasp_multiple_heights = data_dict['grasp_multiple_heights']
             model.allow_finger_collisions = data_dict['allow_finger_collisions']
             model.zero_width_grasp = data_dict['zero_width_grasp']
             model.bonus_points = data_dict['bonus_points']
             model.grasp_effort = data_dict['grasp_effort']
+            model.success_prior = data_dict['success_prior']
             
             self._item_data[item] = model
 
