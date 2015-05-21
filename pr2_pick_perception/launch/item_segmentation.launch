@@ -1,9 +1,6 @@
-<!-- Launches item segmentation. -->
 <launch>
-  <arg name="debug" default="false" />
   <param name="/use_sim_time" value="false"/>
-  <node ns="perception" pkg="pr2_pick_perception" type="item_segmentation_service_node" name="item_segmentation" respawn="true" output="screen"> 
-   <param name="min_cluster_points" value="500" />
-   <param name="max_cluster_points" value="100000" />
-  </node>
+  <arg name="debug" default="false" />
+  <node ns="perception" if="$(arg debug)" pkg="pr2_pick_perception" type="item_segmentation_service_node" name="item_segmentation_service_node" output="screen" launch-prefix="gdb -ex run --args" />
+  <node ns="perception" unless="$(arg debug)" pkg="pr2_pick_perception" type="item_segmentation_service_node" name="item_segmentation_service_node" output="screen" />
 </launch>

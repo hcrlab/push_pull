@@ -35,6 +35,7 @@ class CaptureItemDescriptor(smach.State):
     def execute(self, userdata):
         rospy.loginfo(
             'Capturing item descriptor in bin {}'.format(userdata.bin_id))
+        rospy.loginfo(userdata.keys)
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
         rospy.sleep(5)
         self._tuck_arms.wait_for_service()

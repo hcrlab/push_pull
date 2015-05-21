@@ -109,7 +109,34 @@ float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
 //   cloud: The input point cloud.
 //   num_clusters: The number of clusters to extract.
 //   clusters: The returned clusters.
-void ClusterWithKMeans(
+bool ClusterWithKMeans(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
+// Clusters the point cloud using region growing with RGB information.
+//
+// Args:
+//   cloud: The input point cloud.
+//   clusters: The segmented clusters.
+void ClusterWithRegionGrowing(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
+// Clustering algorithm specifically designed for the Amazon Picking Challenge.
+//
+// The algorithm uses color-based region growing to obtain an initial
+// oversegmentation of the point cloud. Then, based on the assumption that items
+// usually lie next to each other in the left/right direction, the
+// oversegmentations are grouped together based on how much they overlap in the
+// y direction. A threshold is adjusted until the right number of clusters is
+// found. However, this is not guaranteed to find the exact right number of
+// clusters.
+//
+// Args:
+//   cloud: The input point cloud.
+//   num_clusters: A hint as to how many clusters to expect.
+//   clusters: The returned clustering of the items.
+void ClusterBinItems(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 

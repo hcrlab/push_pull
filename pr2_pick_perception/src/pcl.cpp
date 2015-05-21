@@ -4,16 +4,20 @@
 #include "geometry_msgs/TransformStamped.h"
 #include "pcl/common/centroid.h"
 #include "pcl/common/common.h"
+#include "pcl/common/distances.h"
 #include "pcl/common/pca.h"
 #include "pcl/filters/filter.h"
+#include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/point_types.h"
 #include "pcl/search/kdtree.h"
+#include "pcl/segmentation/conditional_euclidean_clustering.h"
 #include "pcl/segmentation/extract_clusters.h"
+#include "pcl/segmentation/region_growing_rgb.h"
 #include "pcl_conversions/pcl_conversions.h"
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
+#include "tf/transform_listener.h"
 #include <Eigen/Dense>
-#include <tf/transform_listener.h>
 
 #include <algorithm>
 #include <math.h>
@@ -233,7 +237,7 @@ float SquaredDistance(const PointXYZRGB& p1, const PointXYZRGB& p2) {
   return distance;
 }
 
-void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
+bool ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
                        const int num_clusters,
                        vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
   ROS_INFO("KMeans point cloud size: %ld", cloud.size());
@@ -249,14 +253,12 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
            cloud_min.r, cloud_min.g, cloud_min.b);
   ROS_INFO("Max: %f %f %f %d %d %d", cloud_max.x, cloud_max.y, cloud_max.z,
            cloud_max.r, cloud_max.g, cloud_max.b);
-  float y_increment = (cloud_max.y - cloud_min.y) / (num_clusters + 1);
+  float y_increment = (cloud_max.y - cloud_min.y) / (num_clusters - 1);
   for (int i = 0; i < num_clusters; ++i) {
     PointXYZRGB centroid;
-    centroid.x =
-        (cloud_max.x - cloud_min.x) * (double)rand() / RAND_MAX + cloud_min.x;
-    centroid.y = y_increment * (i + 1);
-    centroid.z =
-        (cloud_max.z - cloud_min.z) * (double)rand() / RAND_MAX + cloud_min.z;
+    centroid.x = (cloud_max.x - cloud_min.x) / 2.0 + cloud_min.x;
+    centroid.y = cloud_min.y + y_increment * i;
+    centroid.z = (cloud_max.z - cloud_min.z) / 2.0 + cloud_min.z;
     centroid.r = rand() % 256;
     centroid.g = rand() % 256;
     centroid.b = rand() % 256;
@@ -274,9 +276,6 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
       clusters_vector.push_back(cloud);
     }
 
-    ROS_INFO("cluster_vector.size(): %ld, centroids.size(): %ld",
-             clusters_vector.size(), centroids.size());
-
     for (size_t p = 0; p < cloud.size(); ++p) {
       const PointXYZRGB& point = cloud[p];
       int best_cluster = 0;
@@ -288,6 +287,16 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
         }
       }
       clusters_vector[best_cluster].push_back(point);
+    }
+
+    for (size_t c = 0; c < clusters_vector.size(); ++c) {
+      const vector<PointXYZRGB>& cluster = clusters_vector[c];
+      if (cluster.size() == 0) {
+        ROS_ERROR(
+            "[ItemSegmentation] Cluster %ld is of size 0 in K-means algorithm.",
+            c);
+        return false;
+      }
     }
 
     bool converged = true;
@@ -333,6 +342,9 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
       break;
     }
   }
+  for (size_t c = 0; c < clusters_vector.size(); ++c) {
+    ROS_INFO("K-means cluster %ld size=%ld", c, clusters_vector[c].size());
+  }
 
   clusters->clear();
   for (size_t i = 0; i < clusters_vector.size(); ++i) {
@@ -344,6 +356,181 @@ void ClusterWithKMeans(const PointCloud<PointXYZRGB>& cloud,
       cloud->push_back(cloud_vec[j]);
     }
     clusters->push_back(cloud);
+  }
+  return true;
+}
+
+void ClusterWithRegionGrowing(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters) {
+  pcl::RegionGrowingRGB<PointXYZRGB> reg;
+  reg.setInputCloud(cloud.makeShared());
+
+  pcl::search::KdTree<PointXYZRGB>::Ptr tree(
+      new pcl::search::KdTree<PointXYZRGB>());
+  tree->setInputCloud(cloud.makeShared());
+  reg.setSearchMethod(tree);
+
+  float distance_threshold;
+  ros::param::param<float>("distance_threshold", distance_threshold, 0.05);
+  reg.setDistanceThreshold(distance_threshold);
+
+  float point_color;
+  ros::param::param<float>("point_color", point_color, 10);
+  float region_color;
+  ros::param::param<float>("region_color", region_color, 20);
+  reg.setPointColorThreshold(point_color);
+  reg.setRegionColorThreshold(region_color);
+
+  int min_cluster_size;
+  ros::param::param<int>("min_cluster_size", min_cluster_size, 150);
+  reg.setMinClusterSize(min_cluster_size);
+
+  std::vector<pcl::PointIndices> clusters_ind;
+  reg.extract(clusters_ind);
+
+  clusters->clear();
+  clusters->resize(clusters_ind.size());
+  for (size_t i = 0; i < clusters_ind.size(); ++i) {
+    const pcl::PointIndices& cluster_ind = clusters_ind[i];
+    PointCloud<PointXYZRGB>::Ptr cluster(new PointCloud<PointXYZRGB>());
+    // ROS_INFO("[Region growing] Cluster %ld has size %ld", i,
+    //         cluster_ind.indices.size());
+    for (size_t j = 0; j < cluster_ind.indices.size(); ++j) {
+      const int index = cluster_ind.indices[j];
+      cluster->push_back(cloud[index]);
+    }
+    (*clusters)[i] = cluster;
+  }
+}
+
+namespace {
+// A PointCloud coupled with its min and max y points.
+struct PointCloudExtent {
+  PointCloudExtent(PointCloud<PointXYZRGB>::Ptr pc, float min_y, float max_y)
+      : pc_(pc), min_y_(min_y), max_y_(max_y) {}
+  PointCloud<PointXYZRGB>::Ptr pc_;
+  float min_y_;
+  float max_y_;
+};
+
+// Compares two PointCloudExtents by Y value.
+bool ComparePointCloudExtentsByY(const PointCloudExtent& a,
+                                 const PointCloudExtent& b) {
+  return a.min_y_ < b.min_y_;
+}
+
+float OverlapPercentage(const PointCloudExtent& a, const PointCloudExtent& b) {
+  float a_width = a.max_y_ - a.min_y_;
+  float b_width = b.max_y_ - b.min_y_;
+  float min_width = b_width;
+  if (a_width < b_width) {
+    min_width = a_width;
+  }
+
+  // Returns the overlap as a percentage of the min_width.
+  float overlap = 0;
+  if (a.min_y_ < b.min_y_) {
+    if (b.min_y_ < a.max_y_ && b.max_y_ < a.max_y_) {
+      overlap = b.max_y_ - b.min_y_;
+    } else if (b.min_y_ < a.max_y_ && b.max_y_ >= a.max_y_) {
+      overlap = a.max_y_ - b.min_y_;
+    } else {
+      overlap = 0;
+    }
+  } else {
+    if (a.min_y_ < b.max_y_ && a.max_y_ < b.max_y_) {
+      overlap = a.max_y_ - a.min_y_;
+    } else if (a.min_y_ < b.max_y_ && a.max_y_ >= b.max_y_) {
+      overlap = b.max_y_ - a.min_y_;
+    } else {
+      overlap = 0;
+    }
+  }
+
+  return overlap / min_width;
+}
+}
+
+void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
+                     const int num_clusters,
+                     std::vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
+  std::vector<PointCloud<PointXYZRGB>::Ptr> overclustering;
+  ClusterWithRegionGrowing(cloud, &overclustering);
+
+  vector<PointCloudExtent> sorted_overclustering;
+  for (size_t i = 0; i < overclustering.size(); ++i) {
+    const PointCloud<PointXYZRGB>::Ptr& overcluster = overclustering[i];
+    pcl::PointXYZRGB min;
+    pcl::PointXYZRGB max;
+    pcl::getMinMax3D(*overcluster, min, max);
+    sorted_overclustering.push_back(
+        PointCloudExtent(overcluster, min.y, max.y));
+  }
+  std::sort(sorted_overclustering.begin(), sorted_overclustering.end(),
+            ComparePointCloudExtentsByY);
+
+  vector<PointCloudExtent> output_clusters;
+  for (double overlap_threshold = 0.5; overlap_threshold >= 0.01;
+       overlap_threshold -= 0.1) {
+    output_clusters.clear();
+    for (size_t i = 0; i < sorted_overclustering.size(); ++i) {
+      PointCloudExtent& subcluster = sorted_overclustering[i];
+      if (output_clusters.size() == 0) {
+        PointCloud<PointXYZRGB>::Ptr extent_pc(new PointCloud<PointXYZRGB>());
+        (*extent_pc) = (*subcluster.pc_);
+        PointCloudExtent extent(extent_pc, subcluster.min_y_,
+                                subcluster.max_y_);
+        output_clusters.push_back(extent);
+        continue;
+      }
+
+      // Compare to all subclusters, see if they overlap.
+      bool merged_subcluster = false;
+      for (size_t j = 0; j < output_clusters.size(); ++j) {
+        PointCloudExtent& output_cluster = output_clusters[j];
+        float overlap_percentage =
+            OverlapPercentage(output_cluster, subcluster);
+        // ROS_INFO(
+        //    "Subcluster (%f, %f) overlaps with output cluster %ld (%f, %f) "
+        //    "with score %f",
+        //    subcluster.min_y_, subcluster.max_y_, j, output_cluster.min_y_,
+        //    output_cluster.max_y_, overlap_percentage);
+        if (overlap_percentage >= overlap_threshold) {
+          // Merge subcluster into output cluster.
+          (*output_cluster.pc_) += (*subcluster.pc_);
+          merged_subcluster = true;
+          break;
+        }
+      }
+      if (!merged_subcluster) {
+        PointCloud<PointXYZRGB>::Ptr extent_pc(new PointCloud<PointXYZRGB>());
+        (*extent_pc) = (*subcluster.pc_);
+        PointCloudExtent extent(extent_pc, subcluster.min_y_,
+                                subcluster.max_y_);
+
+        output_clusters.push_back(extent);
+      }
+    }
+    if (static_cast<int>(output_clusters.size()) < num_clusters) {
+      ROS_WARN("Got %ld clusters, less than expected (%d).",
+               output_clusters.size(), num_clusters);
+      break;
+    } else if (static_cast<int>(output_clusters.size()) == num_clusters) {
+      ROS_INFO("Got %d clusters with overlap threshold of %f", num_clusters,
+               overlap_threshold);
+      break;
+    } else {
+    }
+  }
+
+  clusters->clear();
+  for (size_t i = 0; i < output_clusters.size(); ++i) {
+    PointCloudExtent& output_cluster = output_clusters[i];
+    PointCloud<PointXYZRGB>::Ptr cluster = output_cluster.pc_;
+    cluster->height = 1;
+    cluster->width = cluster->size();
+    clusters->push_back(cluster);
   }
 }
 
