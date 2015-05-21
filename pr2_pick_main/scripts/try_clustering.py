@@ -31,6 +31,7 @@ def try_segmentation(cloud, labels):
 
 def delete_marker(markers, ns, i):
     marker = Marker()
+    marker.header.frame_id = 'map'
     marker.ns = ns;
     marker.id = i;
     marker.action = Marker.DELETE
