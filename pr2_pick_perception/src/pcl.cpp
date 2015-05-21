@@ -523,7 +523,6 @@ void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
     } else {
     }
   }
-  ROS_INFO("Done, # clusters is: %ld", output_clusters.size());
 
   clusters->clear();
   for (size_t i = 0; i < output_clusters.size(); ++i) {
