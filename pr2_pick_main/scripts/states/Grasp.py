@@ -102,6 +102,7 @@ class Grasp(smach.State):
 
         self._find_centroid = services['find_centroid']
         self._set_grippers = services['set_grippers']
+        self._get_grippers = services['get_grippers']
         self._tuck_arms = services['tuck_arms']
         self._moveit_move_arm = services['moveit_move_arm']
         self._tts = services['tts']
@@ -175,37 +176,37 @@ class Grasp(smach.State):
         }
 
         self._bin_bounds_left = {
-            'A': 0.04,
-            'B': 0.04,
-            'C': 0.04,
-            'D': 0.04,
-            'E': 0.04,
-            'F': 0.04,
-            'G': 0.04,
-            'H': 0.04,
-            'I': 0.04,
-            'J': 0.04,
-            'K': 0.04,
-            'L': 0.04
+            'A': 0.10,
+            'B': 0.08,
+            'C': 0.08,
+            'D': 0.10,
+            'E': 0.08,
+            'F': 0.08,
+            'G': 0.10,
+            'H': 0.08,
+            'I': 0.08,
+            'J': 0.10,
+            'K': 0.08,
+            'L': 0.08
         }
         self._bin_bounds_right = {
-            'A': 0.06,
-            'B': 0.06,
-            'C': 0.06,
-            'D': 0.06,
-            'E': 0.06,
-            'F': 0.06,
-            'G': 0.06,
-            'H': 0.06,
-            'I': 0.06,
-            'J': 0.06,
-            'K': 0.06,
-            'L': 0.06
+            'A': 0.08,
+            'B': 0.08,
+            'C': 0.10,
+            'D': 0.08,
+            'E': 0.08,
+            'F': 0.10,
+            'G': 0.08,
+            'H': 0.08,
+            'I': 0.10,
+            'J': 0.08,
+            'K': 0.08,
+            'L': 0.10
         }
 
 
     def get_box_ends(self, item_descriptor):
-        ''' Get the ends of the bounding box from the given descriptor '''
+        ''' Get the closest end of the bounding box from the given descriptor '''
         bounding_box = item_descriptor.planar_bounding_box
 
 
@@ -304,18 +305,45 @@ class Grasp(smach.State):
         # Find corner with same y value
         closest_corner_in_head_yaw = corners[closest_corner_idx]
         box_ends = [closest_corner_in_head_yaw]
+        rejected_ends = []
         for corner in corners:
             if (not corner.point.x == closest_corner_in_head_yaw.point.x) and \
                 (corner.point.y == closest_corner_in_head_yaw.point.y):
                 box_ends.append(corner)
+            else:
+                rejected_ends.append(corner)
 
 
         # Put them back into the frame of the bounding box
         ends_in_bin_frame = []
-        for corner in box_ends:
+        rejected_ends_in_bin_frame = []
+        for (idx, corner) in enumerate(box_ends):
             new_end = self._tf_listener.transformPoint(bounding_box.pose.header.frame_id, corner)
             new_end.point.z = bounding_box.dimensions.z
             ends_in_bin_frame.append(new_end)
+
+            new_rej = self._tf_listener.transformPoint(bounding_box.pose.header.frame_id, rejected_ends[idx])
+            new_rej.point.z = bounding_box.dimensions.z
+            rejected_ends_in_bin_frame.append(new_rej)
+
+        # Find corner with same x value
+        closest_corner_in_head_yaw = corners[closest_corner_idx]
+        box_ends = [closest_corner_in_head_yaw]
+        for corner in corners:
+            if (not corner.point.y == closest_corner_in_head_yaw.point.y) and \
+                (corner.point.x == closest_corner_in_head_yaw.point.x):
+                box_ends.append(corner)
+
+        # Get Avg y value between them 
+        avg_y = (box_ends[0].point.y + box_ends[1].point.y)/2
+
+
+        end = box_ends[0]
+        end.point.y = avg_y
+
+        # Put them back into the frame of the bounding box
+        new_end = self._tf_listener.transformPoint(bounding_box.pose.header.frame_id, end)
+        new_end.point.z = bounding_box.dimensions.z
 
         self._delete_static_tf.wait_for_service()
         req = DeleteStaticTransformRequest()
@@ -325,11 +353,142 @@ class Grasp(smach.State):
 
         self._delete_static_tf.wait_for_service()
         req = DeleteStaticTransformRequest()
-        req.parent_frame = "base_footprint"
+        req.parent_frame = bounding_box.pose.header.frame_id
         req.child_frame = "bounding_box"
         self._delete_static_tf(req)
 
-        return ends_in_bin_frame
+        return ends_in_bin_frame, rejected_ends_in_bin_frame, new_end
+
+
+    def get_box_end(self, item_descriptor):
+        ''' Get the end of the bounding box from the given descriptor '''
+        bounding_box = item_descriptor.planar_bounding_box
+
+
+        # Make a frame that has the same yaw as head frame
+        (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
+        rospy.loginfo("Tranform: {}, {}".format(trans, rot))
+
+        #type(pose) = geometry_msgs.msg.Pose
+        quaternion = (
+            rot[0],
+            rot[1],
+            rot[2],
+            rot[3])
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        roll = 0
+        pitch = 0
+        yaw = euler[2] 
+
+        pose = PoseStamped()
+
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        #type(pose) = geometry_msgs.msg.Pose
+        pose.pose.orientation.x = quaternion[0]
+        pose.pose.orientation.y = quaternion[1]
+        pose.pose.orientation.z = quaternion[2]
+        pose.pose.orientation.w = quaternion[3]
+        
+        pose.pose.position.x = trans[0]
+        pose.pose.position.y = trans[1]
+        pose.pose.position.z = trans[2]
+
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = pose.pose.position
+        transform.transform.rotation = pose.pose.orientation
+        transform.child_frame_id = 'head_yaw'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.5)
+
+
+
+        transform = TransformStamped()
+        transform.header.frame_id = bounding_box.pose.header.frame_id
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = bounding_box.pose.pose.position
+        transform.transform.rotation = bounding_box.pose.pose.orientation
+        transform.child_frame_id = 'bounding_box'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.5)
+
+        # Transform object pose into new frame
+        bbox_in_head_yaw = self._tf_listener.transformPose('head_yaw', bounding_box.pose)
+
+        corners = []
+
+        corner_1 = PointStamped()
+        corner_1.header.frame_id = 'bounding_box'
+        corner_1.point.x = bounding_box.dimensions.x/2
+        corner_1.point.y = bounding_box.dimensions.y/2
+
+        corner_2 = PointStamped()
+        corner_2.header.frame_id = 'bounding_box'
+        corner_2.point.x = bounding_box.dimensions.x/2
+        corner_2.point.y = -bounding_box.dimensions.y/2
+
+        corner_3 = PointStamped()
+        corner_3.header.frame_id = 'bounding_box'
+        corner_3.point.x = -bounding_box.dimensions.x/2
+        corner_3.point.y = bounding_box.dimensions.y/2
+
+        corner_4 = PointStamped()
+        corner_4.header.frame_id = 'bounding_box'
+        corner_4.point.x = -bounding_box.dimensions.x/2
+        corner_4.point.y = -bounding_box.dimensions.y/2
+
+        corners = [corner_1, corner_2, corner_3, corner_4]
+
+        transformed_corners = []
+        for corner in corners:
+            new_corner = self._tf_listener.transformPoint("head_yaw", corner)
+            transformed_corners.append(new_corner)
+
+        min_dist = 1000
+        closest_corner = None
+        closest_corner_idx = 1000
+        for (idx, corner) in enumerate(transformed_corners):
+            dist = math.sqrt(pow(pose.pose.position.x - corner.point.x, 2) + pow(pose.pose.position.y - corner.point.y, 2))
+            if dist < min_dist:
+                min_dist = dist
+                closest_corner = corner
+                closest_corner_idx = idx
+
+        # Find corner with same x value
+        closest_corner_in_head_yaw = corners[closest_corner_idx]
+        box_ends = [closest_corner_in_head_yaw]
+        for corner in corners:
+            if (not corner.point.y == closest_corner_in_head_yaw.point.y) and \
+                (corner.point.x == closest_corner_in_head_yaw.point.x):
+                box_ends.append(corner)
+
+        # Get Avg y value between them 
+        avg_y = (box_ends[0].point.y + box_ends[1].point.y)/2
+
+        
+        end = box_ends[0]
+        end.point.y = avg_y
+
+        # Put them back into the frame of the bounding box
+        new_end = self._tf_listener.transformPoint(bounding_box.pose.header.frame_id, end)
+        new_end.point.z = bounding_box.dimensions.z
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "head_yaw"
+        self._delete_static_tf(req)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = bounding_box.pose.header.frame_id
+        req.child_frame = "bounding_box"
+        self._delete_static_tf(req)
+
+        return new_end
 
 
     def locate_hard_coded_items(self):
@@ -544,21 +703,18 @@ class Grasp(smach.State):
         pose_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
                                                                 pose)
 
-        # pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-        #                                                         pose)
-
         # Check if within bin_width
         if pose_in_bin_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
-            #rospy.loginfo("Pose >  y bounds")
-            #rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
-            #rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2)))
+            rospy.loginfo("Pose >  y bounds")
+            rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
+            rospy.loginfo("Bound: {}".format(((self.shelf_width/2) - (self.gripper_palm_width + self.bin_bound_left)/2)))
 
         elif pose_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2) and pose_in_bin_frame.pose.position.x > 0.01:
             in_bounds = False
-            #rospy.loginfo("Pose <  y bounds")
-            #rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
-            #rospy.loginfo("Bound: {}".format(-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2))
+            rospy.loginfo("Pose <  y bounds")
+            rospy.loginfo("Y pose: {}".format(pose_in_bin_frame.pose.position.y))
+            rospy.loginfo("Bound: {}".format(-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2))
         pose_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                         pose_in_bin_frame)
 
@@ -573,10 +729,10 @@ class Grasp(smach.State):
         else:
             #if pose_in_bin_frame.pose.position.x > 0:
             in_bounds = False
-            #rospy.loginfo("Pose not within z bounds")
-            #rospy.loginfo("Z pose: {}".format(pose_in_base_footprint.pose.position.z))
-            #rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + gripper_offset)))
-            #rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + self.shelf_height - gripper_offset)))
+            rospy.loginfo("Pose not within z bounds")
+            rospy.loginfo("Z pose: {}".format(pose_in_base_footprint.pose.position.z))
+            rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + gripper_offset)))
+            rospy.loginfo("Bound: {}".format((self.shelf_bottom_height + self.shelf_height - gripper_offset)))
 
         pose_in_frame = self._tf_listener.transformPose(frame,
                                                         pose_in_bin_frame)
@@ -591,14 +747,20 @@ class Grasp(smach.State):
         """
 
         # get target edge of bounding box 
-        ends = self.get_box_ends(self.target_descriptor)
+        ends, rejected, bbox_end = self.get_box_ends(self.target_descriptor)
         
         # get closest end from ends
         new_ends = []
+        rejected_in_base_footprint = []
         for (idx, end) in enumerate(ends):
             new_end = self._tf_listener.transformPoint('base_footprint',
                                                                 end)
             new_ends.append(new_end)
+
+            new_rej = self._tf_listener.transformPoint('base_footprint',
+                                                                rejected[idx])
+            rejected_in_base_footprint.append(new_rej)
+
             marker_pose = PoseStamped()
             marker_pose.header.frame_id = 'base_footprint'
             marker_pose.pose.position.x = new_end.point.x
@@ -616,13 +778,18 @@ class Grasp(smach.State):
         rospy.loginfo("Closest ends of bounding box: {}".format(ends))
         closest_end = ends[0]
         y_offset = -0.04
+        avg_y_good = (ends[0].point.y + ends[1].point.y) /2
+        avg_y_rej = (rejected_in_base_footprint[0].point.y + rejected_in_base_footprint[1].point.y)/2
         if ends[0].point.x > ends[1].point.x:
             closest_end = ends[1]
-            if ends[0].point.y < ends[1].point.y:
-                y_offset = 0.035
-        else:
-            if ends[0].point.y > ends[1].point.y:
-                y_offset = 0.035
+            #if ends[0].point.y < ends[1].point.y:
+            #    y_offset = 0.035
+            #else:
+            #if ends[0].point.y > ends[1].point.y:
+            #    y_offset = 0.035
+        if avg_y_good < avg_y_rej:
+             y_offset = 0.035
+
 
         object_pose = bounding_box.pose
 
@@ -630,82 +797,35 @@ class Grasp(smach.State):
                                                                 object_pose)
 
         grasps = []
-        # make grasp centred on closest end
-        grasp_end = PoseStamped()
-        grasp_end.header.stamp = rospy.Time(0)
-        grasp_end.header.frame_id = "base_footprint"
-        grasp_end.pose.orientation.w = 1
-        grasp_end.pose.position.x = closest_end.point.x - self.dist_to_palm
-        grasp_end.pose.position.y = closest_end.point.y
-        grasp_end.pose.position.z = object_pose_in_base_footprint.pose.position.z
 
-        pre_grasp_end = PoseStamped()
-        pre_grasp_end.header.stamp = rospy.Time(0)
-        pre_grasp_end.header.frame_id = "base_footprint"
-        pre_grasp_end.pose.orientation.w = 1
-        pre_grasp_end.pose.position.x = self.pre_grasp_x_distance
-        pre_grasp_end.pose.position.y = closest_end.point.y
-        pre_grasp_end.pose.position.z = object_pose_in_base_footprint.pose.position.z
+        #bbox_end = self.get_box_end(self.target_descriptor)
 
-        pre_grasp_end, temp = self.move_pose_within_bounds(pre_grasp_end,
-                                                                self.shelf_bottom_height, self.shelf_height,
-                                                                self.shelf_width, bin_id, 'base_footprint', False)
+        y_offsets = [0, y_offset, 0, y_offset]
+        centroid = PointStamped()
+        centroid.header.frame_id = bounding_box.pose.header.frame_id
+        centroid.point.x = bounding_box.pose.pose.position.x
+        centroid.point.y = bounding_box.pose.pose.position.y
+        centroid.point.z = bounding_box.pose.pose.position.z
+        grasp_points = [centroid, centroid, bbox_end, bbox_end]
 
+        bbox_in_bin_frame = self._tf_listener.transformPose('bin_' + str(self.bin_id), bounding_box.pose)
 
-        grasp_end, temp = self.move_pose_within_bounds(grasp_end,
-                                                                self.shelf_bottom_height, self.shelf_height,
-                                                                self.shelf_width, bin_id, 'base_footprint', False)
-
-        grasp_in_bounds = self.check_pose_within_bounds(grasp_end,
-                                                                self.shelf_bottom_height, self.shelf_height,
-                                                                self.shelf_width, bin_id, 'base_footprint', False)
-
-
-        if grasp_in_bounds:
-            grasp_dict = {}
-            grasp_dict['grasp'] = grasp_end
-            grasp_dict['pre_grasp'] = pre_grasp_end
-            grasp_dict["id"] = self.grasp_num
-            self.grasp_num += 1
-
-            grasps.append(grasp_dict)
-            rospy.loginfo("Current info: {}".format(grasps))
-        else:
-            rospy.loginfo("Grasp aligned with end not within bounds")
-
-      
-
-        # Make pitched down
-        pitched_grasp_in_axis_frame = self.modify_grasp(grasp_end,
-                                                         0, 3.14/6, 0, 0, 0, 0.0)
-        pitched_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                            pitched_grasp_in_axis_frame)
-        pitched_pre_grasp_in_base_footprint = self.modify_grasp(pre_grasp_end,
-                                                         0, 0, 0, 0, 0, 0.05)
-
-
-        pitched_grasp_in_base_footprint = self.modify_grasp(pitched_grasp_in_base_footprint,
-                                                         0, 0, 0, 0, 0, 0.07)
-
-        #pitched_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
-        #                                                    pitched_grasp_in_base_footprint)
-
-
-        grasp_in_bounds = self.check_pose_within_bounds(pitched_grasp_in_base_footprint,
-                                                            self.shelf_bottom_height, self.shelf_height,
-                                                            self.shelf_width, bin_id, 'base_footprint', False)
-        if grasp_in_bounds and ('pitched' in self.allowed_grasps):
-            grasp_dict = {}
-            grasp_dict["grasp"] = pitched_grasp_in_base_footprint
-            grasp_dict["pre_grasp"] = pitched_pre_grasp_in_base_footprint
-            grasp_dict["pitched_down"] = True
-            grasp_dict["id"] = self.grasp_num
-            self.grasp_num += 1
-
-            grasps.append(grasp_dict)
-        else:
-            rospy.loginfo("No pitched grasp centered")
-
+        # Grasp lowest point if not already at lowest point
+        if bbox_in_bin_frame.pose.position.z > (self.half_gripper_height + 0.03):
+            bbox_in_bin_frame.pose.position.z = self.half_gripper_height + 0.03
+            bbox_in_bounding_box_frame = self._tf_listener.transformPose(bounding_box.pose.header.frame_id, bbox_in_bin_frame)
+            #planar_bounding_box.pose = bbox_in_bounding_box_frame
+            y_offsets = y_offsets + y_offsets
+            new_centroid = PointStamped()
+            new_centroid.header.frame_id = bounding_box.pose.header.frame_id
+            new_centroid.point.x = bounding_box.pose.pose.position.x
+            new_centroid.point.y = bounding_box.pose.pose.position.y
+            new_centroid.point.z = bbox_in_bounding_box_frame.pose.position.z
+            new_bbox_end = self.get_box_end(self.target_descriptor)
+            new_bbox_end = self._tf_listener.transformPoint(bounding_box.pose.header.frame_id, new_bbox_end)
+            new_bbox_end.point.z = bbox_in_bounding_box_frame.pose.position.z
+            new_grasp_points = [new_centroid, new_centroid, new_bbox_end, new_bbox_end]
+            grasp_points = grasp_points + new_grasp_points
   
         rospy.loginfo("Chosen end: {}".format(closest_end))
         rospy.loginfo("Offset is: {}".format(y_offset))
@@ -720,250 +840,247 @@ class Grasp(smach.State):
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
             rospy.sleep(0.5)
-            self._tf_listener.waitForTransform("object_axis", "bin_" + str(bin_id), rospy.Time(0), rospy.Duration(4.0))
+            self._tf_listener.waitForTransform("object_axis", "bin_" + str(bin_id), rospy.Time(0), rospy.Duration(10.0))
 
-            closest_end = self._tf_listener.transformPoint('object_axis',
+            # Check if right axis
+
+            
+            
+            for (idx, grasp_point) in enumerate(grasp_points):
+                closest_end = self._tf_listener.transformPoint('object_axis',
                                                                 closest_end)
 
+                # Transform grasp point into axis frame 
+                grasp_point_in_axis_frame = self._tf_listener.transformPoint('object_axis', grasp_point)
 
-            # Transform bounding box info into frame of PCA axes
-            bbox_pose_axis_frame = self._tf_listener.transformPose('object_axis',
-                                                                object_pose)
-            object_pose = self._tf_listener.transformPose('base_footprint',
-                                                                object_pose)
-            grasp_in_axis_frame = PoseStamped()
-            grasp_in_axis_frame.header.stamp = rospy.Time(0)
-            grasp_in_axis_frame.header.frame_id = 'object_axis'
-            grasp_in_axis_frame.pose.orientation.w = 1
-            grasp_in_axis_frame.pose.position.x = -1 * self.dist_to_palm
-            grasp_in_axis_frame.pose.position.y = closest_end.point.y
-            grasp_in_axis_frame.pose.position.z = bbox_pose_axis_frame.pose.position.z
+                marker_pose = PoseStamped()
+                marker_pose.header.frame_id = grasp_point.header.frame_id
+                marker_pose.pose.position.x = grasp_point.point.x
+                marker_pose.pose.position.y = grasp_point.point.y
+                marker_pose.pose.position.z = grasp_point.point.z
+                viz.publish_bounding_box(self._markers, marker_pose , 0.01, 0.01, 0.01,
+                0.0, 0.6, 0.8, 0.5, 1500)
+     
 
-            # Transform into base_footprint
-            grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                grasp_in_axis_frame)
+                # Transform bounding box info into frame of PCA axes
+                bbox_pose_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                    object_pose)
+                object_pose = self._tf_listener.transformPose('base_footprint',
+                                                                    object_pose)
+                grasp_in_axis_frame = PoseStamped()
+                grasp_in_axis_frame.header.stamp = rospy.Time(0)
+                grasp_in_axis_frame.header.frame_id = 'object_axis'
+                grasp_in_axis_frame.pose.orientation.w = 1
+                grasp_in_axis_frame.pose.position.x = -1 * self.dist_to_palm
+                if not (y_offsets[idx] == 0):
+                    grasp_in_axis_frame.pose.position.y = closest_end.point.y
+                grasp_in_axis_frame.pose.position.z = grasp_point_in_axis_frame.point.z
 
-            if grasp_in_base_footprint.pose.position.x > object_pose.pose.position.x:
-                # Wrong way along axis
-                grasp_in_axis_frame.pose.position.y -= y_offset
-                grasp_in_axis_frame.pose.position.x = self.dist_to_palm
+                # Transform into base_footprint
                 grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                grasp_in_axis_frame)
+                                                                    grasp_in_axis_frame)
+
+                # Transform grasp_point into base_footprint
+                grasp_point_in_base_footprint = self._tf_listener.transformPoint('base_footprint',
+                                                                    grasp_point)
+
+                viz.publish_gripper(self._im_server, grasp_in_base_footprint, 'grasp_target')
+                if self._debug:
+                    raw_input('(Debug) Initial gripper estimate >') 
+
+                if grasp_in_base_footprint.pose.position.x > (grasp_point_in_base_footprint.point.x + 0.07):
+                    # Wrong way along axis
+
+                    grasp_in_axis_frame.pose.position.y -= y_offsets[idx]
+                    grasp_in_axis_frame.pose.position.x = self.dist_to_palm - grasp_point_in_axis_frame.point.x
+                      
+                    self._tf_listener.waitForTransform(grasp_in_axis_frame.header.frame_id, 'base_footprint', rospy.Time(0), rospy.Duration(10.0))
+                    grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    grasp_in_axis_frame)
+                    
+                    # Rotate grasp and pre_grasp 180 degrees
+                    grasp_in_base_footprint = self.modify_grasp(grasp_in_base_footprint, 
+                                                                    0, 0, -3.14, 0, 0, 0)
+                    grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                    grasp_in_base_footprint)
+
+
+                    rospy.loginfo("Grasp point x: {}".format(grasp_point_in_base_footprint.point.x))
+                    rospy.loginfo("Gripper: {}".format(grasp_in_base_footprint.pose.position.x))
+                    viz.publish_gripper(self._im_server, grasp_in_base_footprint, 'grasp_target')
+                    if self._debug:
+                        raw_input('(Debug) Moved 180 because backwards >') 
+
+
+                    pre_grasp_in_axis_frame = PoseStamped()
+                    pre_grasp_in_axis_frame.header.frame_id = 'object_axis'
+                    pre_grasp_in_axis_frame.pose.position.y = grasp_in_axis_frame.pose.position.y
+                    pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x + self.pre_grasp_offset
+                    pre_grasp_in_axis_frame.pose.position.z = grasp_in_axis_frame.pose.position.z
+                    pre_grasp_in_axis_frame.pose.orientation = grasp_in_axis_frame.pose.orientation
+                    pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    pre_grasp_in_axis_frame)
+
+                    grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
+                                                                    grasp_in_base_footprint)
+                    #grasp_in_bin_frame.pose.position.y -= 0.015
+
+                    #grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                    #                                                grasp_in_bin_frame)
+
+
+                    #grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                    #                                                grasp_in_base_footprint)
+
+
+
+                else:
+                    grasp_in_axis_frame.pose.position.x = -1 * self.dist_to_palm + grasp_point_in_axis_frame.point.x
+                    grasp_in_axis_frame.pose.position.y += y_offsets[idx]
+                    self._tf_listener.waitForTransform('base_footprint', grasp_in_axis_frame.header.frame_id, rospy.Time(0), rospy.Duration(20.0))
+                    grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    grasp_in_axis_frame)                
+
+
+                    pre_grasp_in_axis_frame = PoseStamped()
+                    pre_grasp_in_axis_frame.header.frame_id = 'object_axis'
+                    pre_grasp_in_axis_frame.pose.position.y = grasp_in_axis_frame.pose.position.y
+                    pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x - self.pre_grasp_offset
+                    pre_grasp_in_axis_frame.pose.position.z = grasp_in_axis_frame.pose.position.z
+                    pre_grasp_in_axis_frame.pose.orientation = grasp_in_axis_frame.pose.orientation
+                    pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    pre_grasp_in_axis_frame)
+
+                    viz.publish_gripper(self._im_server, grasp_in_base_footprint, 'grasp_target')
+                    rospy.loginfo("Grasp point x: {}".format(grasp_point_in_base_footprint.point.x))
+                    rospy.loginfo("Gripper: {}".format(grasp_in_base_footprint.pose.position.x))
+
+                    if self._debug:
+                        raw_input('(Debug) Aligned properly >') 
+ 
+                    grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
+                                                                    grasp_in_base_footprint)
+                    
+                    #grasp_in_bin_frame.pose.position.y -= 0.015
+
+                    #grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                    #                                                grasp_in_bin_frame)
+                    #grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                    #                                                grasp_in_base_footprint)
+
+                pre_grasp_in_axis_frame, pre_grasp_in_base_footprint = self.move_pose_within_bounds(pre_grasp_in_axis_frame,
+                                                                    self.shelf_bottom_height, self.shelf_height,
+                                                                    self.shelf_width, bin_id, 'object_axis', False)
+
+
+                grasp_in_axis_frame, grasp_in_base_footprint = self.move_pose_within_bounds(grasp_in_axis_frame,
+                                                                    self.shelf_bottom_height, self.shelf_height,
+                                                                    self.shelf_width, bin_id, 'object_axis', False)                
+                grasp_in_bounds = self.check_pose_within_bounds(grasp_in_axis_frame, 
+                                                                    self.shelf_bottom_height, self.shelf_height, 
+                                                                    self.shelf_width, bin_id, 'object_axis', False)
+                if grasp_in_bounds:
+                    grasp_dict = {}
+                    grasp_dict["grasp"] = grasp_in_base_footprint
+                    grasp_dict["pre_grasp"] = pre_grasp_in_base_footprint
+                    grasp_dict["id"] = self.grasp_num
+                    self.grasp_num += 1
+
+                    grasps.append(grasp_dict)
+                else:
+                    rospy.loginfo("Central grasp not in bounds")
+
+                # Make rotated version
+                rolled_pre_grasp_in_axis_frame = self.modify_grasp(pre_grasp_in_axis_frame,
+                                                                     -1.57, 0, 0, 0, 0, 0)
+
                 
-                # Rotate grasp and pre_grasp 180 degrees
-                grasp_in_base_footprint = self.modify_grasp(grasp_in_base_footprint, 
-                                                                0, 0, -3.14, 0, 0, 0)
-                grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
-                                                                grasp_in_base_footprint)
-                """
-                pre_grasp_in_base_footprint = PoseStamped()
-                pre_grasp_in_base_footprint.header.stamp = rospy.Time(0)
-                pre_grasp_in_base_footprint.header.frame_id = "base_footprint"
-                pre_grasp_in_base_footprint.pose.position.x = self.pre_grasp_x_distance
-                pre_grasp_in_base_footprint.pose.position.y = grasp_in_base_footprint.pose.position.y
-                pre_grasp_in_base_footprint.pose.position.z = grasp_in_base_footprint.pose.position.z
-                """
-                # grasp_in_base_footprint.pose.orientation = \
-                #        pre_grasp_in_base_footprint.pose.orientation
+                self._tf_listener.waitForTransform('base_footprint', rolled_pre_grasp_in_axis_frame.header.frame_id, rospy.Time(0), rospy.Duration(20.0))
+                rolled_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    rolled_pre_grasp_in_axis_frame)
 
-                pre_grasp_in_axis_frame = PoseStamped()
-                pre_grasp_in_axis_frame.header.frame_id = 'object_axis'
-                pre_grasp_in_axis_frame.pose.position.y = grasp_in_axis_frame.pose.position.y
-                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x + self.pre_grasp_offset
-                pre_grasp_in_axis_frame.pose.position.z = grasp_in_axis_frame.pose.position.z
-                pre_grasp_in_axis_frame.pose.orientation = grasp_in_axis_frame.pose.orientation
-                pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                pre_grasp_in_axis_frame)
-
-                grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
-                                                                grasp_in_base_footprint)
-                #grasp_in_bin_frame.pose.position.y -= 0.015
-
-                grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                grasp_in_bin_frame)
-
-                # # Check if within bin_width
-                # if pre_grasp_in_axis_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2):
-                #     pre_grasp_in_axis_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2
-                # elif pre_grasp_in_axis_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2):
-                #     pre_grasp_in_axis_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2)
-                # pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                #                                                 pre_grasp_in_axis_frame)
-
-                # if ((object_pose.pose.position.z > (self.shelf_bottom_height + self.half_gripper_height))
-                #     and (object_pose.pose.position.z < (self.shelf_bottom_height + self.shelf_height - self.half_gripper_height))):
-                #     grasp_pose_target.pose.position.z = object_pose.pose.position.z
-                # else:
-                #     grasp_pose_target.pose.position.z = self.shelf_bottom_height + self.half_gripper_height
-
-                # pre_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
-                #                                                 pre_grasp_in_axis_frame)
-
-                """
-                pre_grasp_in_axis_frame, pre_grasp_in_base_footprint = self.move_pose_within_bounds(pre_grasp_in_axis_frame, 
-                                                                self.shelf_bottom_height, self.shelf_height, 
-                                                                self.shelf_width, bin_id, 'object_axis', False)
-                """
-
-                grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
-                                                                grasp_in_base_footprint)
-
-
-
-            else:
-                grasp_in_axis_frame.pose.position.y += y_offset
-                grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                grasp_in_axis_frame)                
-                """
-                pre_grasp_in_base_footprint = PoseStamped()
-                pre_grasp_in_base_footprint.header.stamp = rospy.Time(0)
-                pre_grasp_in_base_footprint.header.frame_id = "base_footprint"
-                pre_grasp_in_base_footprint.pose.position.x = self.pre_grasp_x_distance
-                pre_grasp_in_base_footprint.pose.position.y = grasp_in_base_footprint.pose.position.y
-                pre_grasp_in_base_footprint.pose.position.z = grasp_in_base_footprint.pose.position.z
-                
-                pre_grasp_in_axis_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
-                                                                pre_grasp_in_base_footprint)
-                """
-
-                pre_grasp_in_axis_frame = PoseStamped()
-                pre_grasp_in_axis_frame.header.frame_id = 'object_axis'
-                pre_grasp_in_axis_frame.pose.position.y = grasp_in_axis_frame.pose.position.y
-                pre_grasp_in_axis_frame.pose.position.x = grasp_in_axis_frame.pose.position.x - self.pre_grasp_offset
-                pre_grasp_in_axis_frame.pose.position.z = grasp_in_axis_frame.pose.position.z
-                pre_grasp_in_axis_frame.pose.orientation = grasp_in_axis_frame.pose.orientation
-                pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                pre_grasp_in_axis_frame)
-
-                # # Check if within bin_width
-                # if pre_grasp_in_axis_frame.pose.position.y > ((self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2):
-                #     pre_grasp_in_axis_frame.pose.position.y = (self.shelf_width/2) - (self.gripper_palm_width + 0.04)/2
-                # elif pre_grasp_in_axis_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2):
-                #     pre_grasp_in_axis_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2)
-                # pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                #                                                 pre_grasp_in_axis_frame)
-                # pre_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
-                #                                                 pre_grasp_in_axis_frame)
-
-                """
-                pre_grasp_in_axis_frame, pre_grasp_in_base_footprint = self.move_pose_within_bounds(pre_grasp_in_axis_frame, 
-                                                                self.shelf_bottom_height, self.shelf_height, 
-                                                                self.shelf_width, bin_id, 'object_axis', False)
-                """
-                grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
-                                                                grasp_in_base_footprint)
-                
-                #grasp_in_bin_frame.pose.position.y -= 0.015
-
-                grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                grasp_in_bin_frame)
-                grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
-                                                                grasp_in_base_footprint)
-
-            pre_grasp_in_axis_frame, pre_grasp_in_base_footprint = self.move_pose_within_bounds(pre_grasp_in_axis_frame,
-                                                                self.shelf_bottom_height, self.shelf_height,
-                                                                self.shelf_width, bin_id, 'object_axis', False)
-
-
-            grasp_in_axis_frame, grasp_in_base_footprint = self.move_pose_within_bounds(grasp_in_axis_frame,
-                                                                self.shelf_bottom_height, self.shelf_height,
-                                                                self.shelf_width, bin_id, 'object_axis', False)                
-            grasp_in_bounds = self.check_pose_within_bounds(grasp_in_axis_frame, 
-                                                                self.shelf_bottom_height, self.shelf_height, 
-                                                                self.shelf_width, bin_id, 'object_axis', False)
-            if grasp_in_bounds:
-                grasp_dict = {}
-                grasp_dict["grasp"] = grasp_in_base_footprint
-                grasp_dict["pre_grasp"] = pre_grasp_in_base_footprint
-                grasp_dict["id"] = self.grasp_num
-                self.grasp_num += 1
-
-                grasps.append(grasp_dict)
-            else:
-                rospy.loginfo("Central grasp not in bounds")
-
-            # Make rotated version
-            rolled_pre_grasp_in_axis_frame = self.modify_grasp(pre_grasp_in_axis_frame,
-                                                                 -1.57, 0, 0, 0, 0, 0)
-
-            rolled_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                rolled_pre_grasp_in_axis_frame)
-
-            rolled_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame, 
-                                                                 -1.57, 0, 0, 0, 0, 0)
-            rolled_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                               rolled_grasp_in_axis_frame)
-
-            grasp_in_bounds = self.check_pose_within_bounds(rolled_grasp_in_axis_frame, 
-                                                                self.shelf_bottom_height, self.shelf_height, 
-                                                                self.shelf_width, bin_id, 'object_axis', True)
-            if not grasp_in_bounds:
-                rospy.loginfo("Rolled grasp not in bounds")
-                rolled_pre_grasp_in_base_footprint = self.modify_grasp(rolled_pre_grasp_in_base_footprint,
-                                                                        0, 0, 0, 0, 0, 0.05)
-                rolled_grasp_in_base_footprint = self.modify_grasp(rolled_grasp_in_base_footprint,
-                                                                        0, 0, 0, 0, 0, 0.07)
-                rolled_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis', 
-                                                                        rolled_grasp_in_base_footprint)
-                rolled_grasp_in_axis_frame = self.modify_grasp(rolled_grasp_in_axis_frame,
-                                                                 0, 3.14/6, 0, 0, 0, 0)
+                rolled_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame, 
+                                                                     -1.57, 0, 0, 0, 0, 0)
                 rolled_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                               rolled_grasp_in_axis_frame)
+                                                                   rolled_grasp_in_axis_frame)
 
-                grasp_in_bounds = self.check_pose_within_bounds(rolled_grasp_in_axis_frame,
-                                                                self.shelf_bottom_height, self.shelf_height,
-                                                                self.shelf_width, bin_id, 'object_axis', True)
+                grasp_in_bounds = self.check_pose_within_bounds(rolled_grasp_in_axis_frame, 
+                                                                    self.shelf_bottom_height, self.shelf_height, 
+                                                                    self.shelf_width, bin_id, 'object_axis', True)
+                if not grasp_in_bounds:
+                    rospy.loginfo("Rolled grasp not in bounds")
 
-            if grasp_in_bounds and ('rolled' in self.allowed_grasps):
+                    rolled_pre_grasp_in_axis_frame = self.modify_grasp(rolled_pre_grasp_in_axis_frame,
+                                                                            0, 0, 0,-0.03, 0, 0.0)
+                    rolled_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    rolled_pre_grasp_in_axis_frame)
 
-                rospy.loginfo("Adding rolled grasp")
+                    rolled_pre_grasp_in_base_footprint = self.modify_grasp(rolled_pre_grasp_in_base_footprint,
+                                                                            0, 0, 0, 0, 0, 0.07)
+                    
+                    rolled_grasp_in_base_footprint = self.modify_grasp(rolled_grasp_in_base_footprint,
+                                                                            0, 0, 0, 0, 0, 0.10)
+                    rolled_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis', 
+                                                                            rolled_grasp_in_base_footprint)
+                    rolled_grasp_in_axis_frame = self.modify_grasp(rolled_grasp_in_axis_frame,
+                                                                     0, 3.14/5, 0, 0, 0, 0)
+                    rolled_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                   rolled_grasp_in_axis_frame)
 
-                grasp_dict = {}
-                grasp_dict["grasp"] = rolled_grasp_in_base_footprint
-                grasp_dict["pre_grasp"] = rolled_pre_grasp_in_base_footprint
-                grasp_dict["rolled"] = True
-                grasp_dict["id"] = self.grasp_num
-                self.grasp_num += 1
+                    grasp_in_bounds = self.check_pose_within_bounds(rolled_grasp_in_axis_frame,
+                                                                    self.shelf_bottom_height, self.shelf_height,
+                                                                    self.shelf_width, bin_id, 'object_axis', True)
 
-                grasps.append(grasp_dict)
-            else:
-                rospy.loginfo("No rolled grasp.")
+                if grasp_in_bounds and ('rolled' in self.allowed_grasps):
 
-            # Make pitched down
-            pitched_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame,
-                                                             0, 3.14/6, 0, 0, 0, 0.0)
-            pitched_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
-                                                                pitched_grasp_in_axis_frame)
-            pitched_pre_grasp_in_base_footprint = self.modify_grasp(pre_grasp_in_base_footprint,
-                                                             0, 0, 0, 0, 0, 0.05)
+                    rospy.loginfo("Adding rolled grasp")
+
+                    grasp_dict = {}
+                    grasp_dict["grasp"] = rolled_grasp_in_base_footprint
+                    grasp_dict["pre_grasp"] = rolled_pre_grasp_in_base_footprint
+                    grasp_dict["rolled"] = True
+                    grasp_dict["id"] = self.grasp_num
+                    self.grasp_num += 1
+
+                    grasps.append(grasp_dict)
+                else:
+                    rospy.loginfo("No rolled grasp.")
+
+                # Make pitched down
+                pitched_grasp_in_axis_frame = self.modify_grasp(grasp_in_axis_frame,
+                                                                 0, 3.14/5, 0, 0, 0, 0.0)
+                pitched_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
+                                                                    pitched_grasp_in_axis_frame)
+                pitched_pre_grasp_in_base_footprint = self.modify_grasp(pre_grasp_in_base_footprint,
+                                                                 0, 0, 0, 0, 0, 0.05)
 
 
-            pitched_grasp_in_base_footprint = self.modify_grasp(pitched_grasp_in_base_footprint,
-                                                             0, 0, 0, 0, 0, 0.07)
+                pitched_grasp_in_base_footprint = self.modify_grasp(pitched_grasp_in_base_footprint,
+                                                                 0, 0, 0, 0, 0, 0.07)
 
-            pitched_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
-                                                                pitched_grasp_in_base_footprint)
+                pitched_grasp_in_axis_frame = self._tf_listener.transformPose('object_axis',
+                                                                    pitched_grasp_in_base_footprint)
 
-            grasp_in_bounds = self.check_pose_within_bounds(pitched_grasp_in_axis_frame, 
-                                                                self.shelf_bottom_height, self.shelf_height, 
-                                                                self.shelf_width, bin_id, 'object_axis', False)
-            if grasp_in_bounds and ('pitched' in self.allowed_grasps):
-                grasp_dict = {}
-                grasp_dict["grasp"] = pitched_grasp_in_base_footprint
-                grasp_dict["pre_grasp"] = pitched_pre_grasp_in_base_footprint
-                grasp_dict["pitched_down"] = True
-                grasp_dict["id"] = self.grasp_num
-                self.grasp_num += 1
-             
-                grasps.append(grasp_dict)
-            else:
-                rospy.loginfo("No pitched grasp")
+                grasp_in_bounds = self.check_pose_within_bounds(pitched_grasp_in_axis_frame, 
+                                                                    self.shelf_bottom_height, self.shelf_height, 
+                                                                    self.shelf_width, bin_id, 'object_axis', False)
+                if grasp_in_bounds and ('pitched' in self.allowed_grasps):
+                    grasp_dict = {}
+                    grasp_dict["grasp"] = pitched_grasp_in_base_footprint
+                    grasp_dict["pre_grasp"] = pitched_pre_grasp_in_base_footprint
+                    grasp_dict["pitched_down"] = True
+                    grasp_dict["id"] = self.grasp_num
+                    self.grasp_num += 1
+                 
+                    grasps.append(grasp_dict)
+                else:
+                    rospy.loginfo("No pitched grasp")
 
-            self._delete_static_tf.wait_for_service()
-            req = DeleteStaticTransformRequest()
-            req.parent_frame = "bin_" + str(bin_id)
-            req.child_frame = "object_axis"
-            self._delete_static_tf(req)
+                self._delete_static_tf.wait_for_service()
+                req = DeleteStaticTransformRequest()
+                req.parent_frame = "bin_" + str(bin_id)
+                req.child_frame = "object_axis"
+                self._delete_static_tf(req)
 
         return grasps
 
@@ -1028,10 +1145,10 @@ class Grasp(smach.State):
             pre_grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
                                                                 pre_grasp_pose_target)
             # Check if within bin_width
-            if pre_grasp_in_bin_frame.pose.position.y > (self.shelf_width/2  - (self.gripper_palm_width + 0.04)/2):
-                pre_grasp_in_bin_frame.pose.position.y = (self.shelf_width/2 - (self.gripper_palm_width + 0.04)/2)
-            elif pre_grasp_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2):
-                pre_grasp_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2)
+            if pre_grasp_in_bin_frame.pose.position.y > (self.shelf_width/2  - (self.gripper_palm_width + self.bin_bound_left)/2):
+                pre_grasp_in_bin_frame.pose.position.y = (self.shelf_width/2 - (self.gripper_palm_width + self.bin_bound_left)/2)
+            elif pre_grasp_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2):
+                pre_grasp_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2)
             pre_grasp_pose_target = self._tf_listener.transformPose('base_footprint',
                                                             pre_grasp_in_bin_frame)
 
@@ -1079,10 +1196,10 @@ class Grasp(smach.State):
             grasp_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
                                                                 grasp_pose_target)
             # Check if within bin_width
-            if grasp_in_bin_frame.pose.position.y > (self.shelf_width/2  - (self.gripper_palm_width + 0.04)/2):
-                grasp_in_bin_frame.pose.position.y = (self.shelf_width/2 - (self.gripper_palm_width + 0.04)/2)
-            elif grasp_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2):
-                grasp_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + 0.04)/2)
+            if grasp_in_bin_frame.pose.position.y > (self.shelf_width/2  - (self.gripper_palm_width + self.bin_bound_left)/2):
+                grasp_in_bin_frame.pose.position.y = (self.shelf_width/2 - (self.gripper_palm_width + self.bin_bound_left)/2)
+            elif grasp_in_bin_frame.pose.position.y < (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2):
+                grasp_in_bin_frame.pose.position.y = (-1*self.shelf_width/2 + (self.gripper_palm_width + self.bin_bound_right)/2)
             grasp_pose_target = self._tf_listener.transformPose('base_footprint',
                                                             grasp_in_bin_frame)
 
@@ -1218,7 +1335,7 @@ class Grasp(smach.State):
         axes_poses = [first_pose, second_pose]
         pca_grasps = self.get_pca_aligned_grasps(bounding_box, axes_poses, bin_id)
 
-
+        
         # Commented out for testing purposes
         grasping_pairs = grasping_pairs + moveit_simple_grasps + pca_grasps
 
@@ -1741,7 +1858,12 @@ class Grasp(smach.State):
                     viz.publish_gripper(self._im_server, grasp["grasp"], 'grasp_target')
                     viz.publish_gripper(self._im_server, grasp["pre_grasp"], 'pre_grasp_target')
 
-
+                    rospy.loginfo("Pre-grasp: ")
+                    bin_frame_pre_grasp = self._tf_listener.transformPose('bin_' + str(self.bin_id), grasp["pre_grasp"])
+                    self.log_pose_info(bin_frame_pre_grasp.pose)
+                    rospy.loginfo("Grasp: ")
+                    bin_frame_grasp = self._tf_listener.transformPose('bin_' + str(self.bin_id), grasp["grasp"])
+                    self.log_pose_info(bin_frame_grasp.pose)
 
                     rotated = False
                     if 'rolled' in grasp:
@@ -1881,6 +2003,11 @@ class Grasp(smach.State):
                 self._set_grippers.wait_for_service()
                 grippers_open = self._set_grippers(open_left=False, open_right=False,
                                                    effort=item_model.grasp_effort)
+                gripper_states = self._get_grippers()
+                if not gripper_states.right_open:
+                    self._set_grippers(open_left=False, open_right=False,
+                                                   effort=-1)
+
                 break
         if success_grasp:
             return True
@@ -1902,6 +2029,19 @@ class Grasp(smach.State):
             req.child_frame = "bin_" + str(bin_id)
             req.parent_frame = "object_axis"
             self._delete_static_tf(req)
+            req = DeleteStaticTransformRequest()
+            req.child_frame = "bin_" + str(bin_id)
+            req.parent_frame = "bounding_box"
+            self._delete_static_tf(req)
+
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "head_yaw"
+        self._delete_static_tf(req)
+        
+
 
         if userdata.bin_id < 'D':
             self.top_shelf = True
@@ -1972,8 +2112,8 @@ class Grasp(smach.State):
         viz.publish_bounding_box(self._markers,  planar_bounding_box.pose, planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z,
             1.0, 0.0, 0.0, 0.5, 25)
         
-
         grasping_pairs = self.generate_grasps(planar_bounding_box, userdata.bin_id)
+        
         filtered_grasps = self.filter_grasps(grasping_pairs)
         if len(filtered_grasps) > 0:
             success_grasp = self.execute_grasp(filtered_grasps, userdata.item_model)
