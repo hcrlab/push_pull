@@ -26,6 +26,7 @@ class ItemDatabase(object):
             model.zero_width_grasp = data_dict['zero_width_grasp']
             model.bonus_points = data_dict['bonus_points']
             model.grasp_effort = data_dict['grasp_effort']
+            model.success_prior = data_dict['success_prior']
             
             self._item_data[item] = model
 
