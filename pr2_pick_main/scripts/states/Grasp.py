@@ -917,8 +917,9 @@ class Grasp(smach.State):
             new_bbox_end.point.z = bbox_in_bounding_box_frame.pose.position.z
             new_grasp_points = [new_centroid, new_centroid, None, None]
             grasp_points = grasp_points + new_grasp_points
-            z_values = [new_centroid.point.z, new_centroid.point.z, new_centroid.point.z, new_centroid.point.z]
-  
+            z_values = z_values +  [new_centroid.point.z, new_centroid.point.z, new_centroid.point.z, new_centroid.point.z]
+            
+             
         self.loginfo("Chosen end: {}".format(closest_end))
         self.loginfo("Offset is: {}".format(y_offset))
         # Put wrist_roll_link at center and then move it back along x-axis
@@ -1005,7 +1006,7 @@ class Grasp(smach.State):
                 else:
                     grasp_in_axis_frame.pose.position.y += y_offsets[idx]
 
-                grasp_in_axis_frame.pose.position.z = z_values[idx]
+                grasp_in_axis_frame.pose.position.z = z_values[idx] - bounding_box.pose.pose.position.z
 
 
                 finger_tips_in_axis_frame = PoseStamped()
@@ -1027,7 +1028,7 @@ class Grasp(smach.State):
                 if self._debug:
                     raw_input('(Debug) Initial gripper estimate >') 
 
-                if grasp_in_base_footprint.pose.position.x > (finger_tips_in_base_footprint.pose.position.x) or math.fabs(grasp_in_axis_frame.pose.position.x -  grasp_point_in_axis_frame.point.x) < math.fabs(finger_tips_in_axis_frame.pose.position.x -  grasp_point_in_axis_frame.point.x):
+                if grasp_in_base_footprint.pose.position.x > (finger_tips_in_base_footprint.pose.position.x): # or math.fabs(grasp_in_axis_frame.pose.position.x -  grasp_point_in_axis_frame.point.x) < math.fabs(finger_tips_in_axis_frame.pose.position.x -  grasp_point_in_axis_frame.point.x):
                     # Wrong way along axis
                     grasp_in_axis_frame.pose.position.x = self.dist_to_palm +  grasp_point_in_axis_frame.point.x
                       
