@@ -52,7 +52,7 @@ def main():
     m = StaticTransformManager()
     def broadcast_all(event):
         m.broadcast_all()
-    rospy.Timer(rospy.Duration(0.001), broadcast_all)
+    rospy.Timer(rospy.Duration(0.01), broadcast_all)
     rospy.spin()
 
 if __name__ == '__main__':
