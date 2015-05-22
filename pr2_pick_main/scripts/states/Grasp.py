@@ -216,7 +216,7 @@ class Grasp(smach.State):
 
     def loginfo(self, string):
         #self.debug_grasp_pub.publish(string)
-        rospy.loginfo(string)
+        rospy.logdebug(string)
 
     def find_points_in_box(self, request):
         ''' Returns number of points within bounding box specified by 
