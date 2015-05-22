@@ -4,6 +4,7 @@ This is the main code repository for the UW Amazon Picking Challenge team.
 ## Getting started
 ```
 sudo pip install mock
+sudo pip install scikit-learn
 sudo apt-get install ros-hydro-cmake-modules
 
 cd ~/catkin_ws_hydro/src
