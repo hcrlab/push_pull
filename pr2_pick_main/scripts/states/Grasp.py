@@ -112,7 +112,7 @@ class Grasp(smach.State):
         self._tuck_arms = services['tuck_arms']
         self._moveit_move_arm = services['moveit_move_arm']
         self._tts = services['tts']
-        self._tf_listener = services['tf_listener']
+        self._tf_listener = tf.TransformListener() #services['tf_listener']
         self._im_server = services['interactive_marker_server']
         self._set_static_tf = services['set_static_tf']
         self._delete_static_tf = services['delete_static_tf']
@@ -270,7 +270,7 @@ class Grasp(smach.State):
         """
         bounding_box = item_descriptor.planar_bounding_box
 
-        # Make a frame that has the same yaw as head frame
+
         (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
         self.loginfo("Tranform: {}, {}".format(trans, rot))
 
@@ -296,26 +296,8 @@ class Grasp(smach.State):
         pose.pose.position.y = trans[1]
         pose.pose.position.z = trans[2]
 
-        transform = TransformStamped()
-        transform.header.frame_id = 'base_footprint'
-        transform.header.stamp = rospy.Time.now()
-        transform.transform.translation = pose.pose.position
-        transform.transform.rotation = pose.pose.orientation
-        transform.child_frame_id = 'head_yaw'
-        self._set_static_tf.wait_for_service()
-        self._set_static_tf(transform)
-        rospy.sleep(0.25)
-
-        transform = TransformStamped()
-        transform.header.frame_id = bounding_box.pose.header.frame_id
-        transform.header.stamp = rospy.Time.now()
-        transform.transform.translation = bounding_box.pose.pose.position
-        transform.transform.rotation = bounding_box.pose.pose.orientation
-        transform.child_frame_id = 'bounding_box'
-        self._set_static_tf.wait_for_service()
-        self._set_static_tf(transform)
-        rospy.sleep(0.25)
-
+        
+        
         # Transform object pose into new frame
         bbox_in_head_yaw = self._tf_listener.transformPose('head_yaw', bounding_box.pose)
 
@@ -410,20 +392,11 @@ class Grasp(smach.State):
                         bounding_box.pose.header.frame_id, face_2_grasp_point)
         face_2_grasp_point_in_bbox_frame.point.z = bounding_box.dimensions.z
 
-
-        self._delete_static_tf.wait_for_service()
-        req = DeleteStaticTransformRequest()
-        req.parent_frame = "base_footprint"
-        req.child_frame = "head_yaw"
-        self._delete_static_tf(req)
-
-        self._delete_static_tf.wait_for_service()
-        req = DeleteStaticTransformRequest()
-        req.parent_frame = bounding_box.pose.header.frame_id
-        req.child_frame = "bounding_box"
-        self._delete_static_tf(req)
-
-        return corners, closest_corner_in_head_yaw, face_1_grasp_point_in_bbox_frame,\
+        closest_corner = self._tf_listener.transformPoint(
+                        bounding_box.pose.header.frame_id, closest_corner_in_head_yaw)
+        
+        
+        return corners, closest_corner, face_1_grasp_point_in_bbox_frame,\
                 face_2_grasp_point_in_bbox_frame
 
 
@@ -1231,6 +1204,7 @@ class Grasp(smach.State):
 
         # Get pca aligned grasps
         self.loginfo("Getting PCA grasps")
+        self._tf_listener.waitForTransform(object_pose.header.frame_id, "bin_" + str(bin_id), rospy.Time(0), rospy.Duration(10.0))
         object_pose_in_bin_frame = self._tf_listener.transformPose('bin_' + str(bin_id),
                                                                 object_pose)
 
@@ -2032,6 +2006,12 @@ class Grasp(smach.State):
                 orientation=Quaternion(w=1, x=0, y=0, z=0),
             )
         )
+
+        
+        self._tf_listener.waitForTransform("base_footprint", 
+                userdata.target_descriptor.planar_bounding_box.pose.header.frame_id, 
+                rospy.Time(0), rospy.Duration(10.0))
+
         base_frame_item_pose = self._tf_listener.transformPose('base_footprint',
                                     userdata.target_descriptor.planar_bounding_box.pose)
 
@@ -2058,6 +2038,53 @@ class Grasp(smach.State):
                         planar_bounding_box.dimensions.z))
             rospy.sleep(0.1)
 
+        # Make a frame that has the same yaw as head frame
+        (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
+        self.loginfo("Tranform: {}, {}".format(trans, rot))
+
+        quaternion = (
+            rot[0],
+            rot[1],
+            rot[2],
+            rot[3])
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        roll = 0
+        pitch = 0
+        yaw = euler[2] 
+
+        pose = PoseStamped()
+
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        pose.pose.orientation.x = quaternion[0]
+        pose.pose.orientation.y = quaternion[1]
+        pose.pose.orientation.z = quaternion[2]
+        pose.pose.orientation.w = quaternion[3]
+        
+        pose.pose.position.x = trans[0]
+        pose.pose.position.y = trans[1]
+        pose.pose.position.z = trans[2]
+
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = pose.pose.position
+        transform.transform.rotation = pose.pose.orientation
+        transform.child_frame_id = 'head_yaw'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.25)
+
+        transform = TransformStamped()
+        transform.header.frame_id = planar_bounding_box.pose.header.frame_id
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = planar_bounding_box.pose.pose.position
+        transform.transform.rotation = planar_bounding_box.pose.pose.orientation
+        transform.child_frame_id = 'bounding_box'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.25)
+
+
         viz.publish_bounding_box(self._markers,  planar_bounding_box.pose, planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z,
             1.0, 0.0, 0.0, 0.5, 25)
         
@@ -2070,6 +2097,19 @@ class Grasp(smach.State):
         req.parent_frame = "bin_" + str(self.bin_id)
         req.child_frame = "object_axis"
         self._delete_static_tf(req)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "head_yaw"
+        self._delete_static_tf(req)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = planar_bounding_box.pose.header.frame_id
+        req.child_frame = "bounding_box"
+        self._delete_static_tf(req)
+
 
         if len(filtered_grasps) > 0:
             success_grasp = self.execute_grasp(filtered_grasps, userdata.item_model)
