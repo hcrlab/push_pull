@@ -1,7 +1,9 @@
 import actionlib
 from control_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from copy import deepcopy
+import datetime
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion, TransformStamped, Point, PointStamped
+from joblib import Parallel, delayed 
 import json
 import math
 import moveit_commander
@@ -10,6 +12,7 @@ from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, 
     GetPositionIKRequest, GetPlanningScene
 from moveit_simple_grasps.msg import GenerateGraspsAction, GenerateGraspsGoal
 from moveit_simple_grasps.msg import GraspGeneratorOptions
+import multiprocessing
 import os
 from pr2_pick_main import handle_service_exceptions
 import rospkg
@@ -27,7 +30,7 @@ import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers, MoveArmIkRequest
 from pr2_pick_perception.msg import Box
 from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest, PlanarPrincipalComponentsRequest, \
-    DeleteStaticTransformRequest, BoxPointsResponse
+    DeleteStaticTransformRequest, BoxPointsResponse #, Cluster
 
 
 
@@ -92,7 +95,9 @@ class Grasp(smach.State):
     grasp_num = 0
 
     ik_timeout = rospy.Duration(3.0)
-
+    timer = 0.0
+    timer1 = 0.0
+    timer2 = 0.0
     def __init__(self, **services):
         smach.State.__init__(
             self,
@@ -219,6 +224,35 @@ class Grasp(smach.State):
         #self.debug_grasp_pub.publish(string)
         rospy.logdebug(string)
 
+    # def downsample_cluster(self, request):
+
+    #     points = pc2.read_points(
+    #         request.cluster.pointcloud,
+    #         field_names=['x', 'y', 'z'],
+    #         skip_nans=True,
+    #     )
+
+    #     point_list = []
+
+    #     count = 0
+    #     for x, y, z in points:
+    #         if count % 2 == 0:
+    #             continue
+    #         else:
+    #             point = Point(x, y, z)
+    #             point_list.append(point)
+
+    #     return point_list
+    def dummy(self, idx, box, num_points):
+            if (transformed_point.point.x >= box.min_x and
+                    transformed_point.point.x < box.max_x and
+                    transformed_point.point.y >= box.min_y and
+                    transformed_point.point.y < box.max_y and
+                    transformed_point.point.z >= box.min_z and
+                    transformed_point.point.z < box.max_z):
+                    num_points[idx] += 1
+
+
     def find_points_in_box(self, request):
         ''' Returns number of points within bounding box specified by 
             request. '''        
@@ -229,6 +263,9 @@ class Grasp(smach.State):
         )
 
         num_points = [0] * len(request.boxes)
+
+        start = datetime.datetime.now()
+
         for x, y, z in points:
 
             # Transform point into frame of bounding box
@@ -246,17 +283,64 @@ class Grasp(smach.State):
 
             transformed_point = self._tf_listener.transformPoint(request.frame_id,
                                                                 point)
-
+            """
             for (idx, box) in enumerate(request.boxes):
                 if (transformed_point.point.x >= box.min_x and
-                    transformed_point.point.x <= box.max_x and
+                    transformed_point.point.x < box.max_x and
                     transformed_point.point.y >= box.min_y and
-                    transformed_point.point.y <= box.max_y and
+                    transformed_point.point.y < box.max_y and
                     transformed_point.point.z >= box.min_z and
-                    transformed_point.point.z <= box.max_z):
+                    transformed_point.point.z < box.max_z):
                     num_points[idx] += 1
+            """
+ 
+            mylambaxfn = lambda idx,box:self.dummy(idx, box, num_points)
+            Parallel(n_jobs = 2)(delayed(mylambaxfn)(idx, box) for (idx, box) in enumerate(request.boxes))
+        end = datetime.datetime.now()
+
+        self.timer += ((end - start).total_seconds()) 
 
         return BoxPointsResponse(num_points=num_points)
+
+        
+    # def find_points_in_box_downsampled(self, point_list):
+    #     ''' Returns number of points within bounding box specified by 
+    #         request. '''        
+    #     points = pc2.read_points(
+    #         request.cluster.pointcloud,
+    #         field_names=['x', 'y', 'z'],
+    #         skip_nans=True,
+    #     )
+
+    #     num_points = [0] * len(request.boxes)
+    #     for x, y, z in points:
+
+    #         # Transform point into frame of bounding box
+    #         point = PointStamped(
+    #             point=Point(x=x, y=y, z=z),
+    #             header=Header(
+    #                 frame_id=request.cluster.header.frame_id,
+    #                 stamp=rospy.Time(0),
+    #             )
+    #         )
+
+    #         #self._tf_listener.waitForTransform(request.cluster.header.frame_id, 
+    #         #                                request.frame_id, rospy.Time(0),
+    #         #                                rospy.Duration(10.0))
+
+    #         transformed_point = self._tf_listener.transformPoint(request.frame_id,
+    #                                                             point)
+
+    #         for (idx, box) in enumerate(request.boxes):
+    #             if (transformed_point.point.x >= box.min_x and
+    #                 transformed_point.point.x <= box.max_x and
+    #                 transformed_point.point.y >= box.min_y and
+    #                 transformed_point.point.y <= box.max_y and
+    #                 transformed_point.point.z >= box.min_z and
+    #                 transformed_point.point.z <= box.max_z):
+    #                 num_points[idx] += 1
+
+    #     return BoxPointsResponse(num_points=num_points)
 
        
 
@@ -797,6 +881,8 @@ class Grasp(smach.State):
             bbox_in_axis_frame = self._tf_listener.transformPose('object_axis',
                                                                 bounding_box.pose)
 
+            bbox_in_bin_frame = self._tf_listener.transformPose("bin_" + str(bin_id),
+                                                                bounding_box.pose)
             grasp_point_centroid = PointStamped()
             grasp_point_centroid.header.stamp = rospy.Time(0)
             grasp_point_centroid.header.frame_id = 'object_axis'
@@ -1411,7 +1497,7 @@ class Grasp(smach.State):
         Uses Moveit planning to check pre-grasp
         Uses IK (no collision checking) for grasp
         """
-
+        start = datetime.datetime.now()
         transform = TransformStamped()
         transform.header.frame_id = 'base_footprint'
         transform.header.stamp = rospy.Time.now()
@@ -1478,6 +1564,8 @@ class Grasp(smach.State):
             grasp["grasp_reachable"] = False
 
         self.loginfo("Grasp reachable: {}".format(grasp["grasp_reachable"]))
+        end = datetime.datetime.now()
+        self.timer2 += (end - start).total_seconds() 
         return grasp
 
     def sort_grasps(self, grasps):
@@ -1494,7 +1582,7 @@ class Grasp(smach.State):
         Tries to change pre-grasp/grasp pairs that are not currently 
         reachable until they're reachable
         """
-
+        start = datetime.datetime.now()
         transform = TransformStamped()
         transform.header.frame_id = 'base_footprint'
         transform.header.stamp = rospy.Time.now()
@@ -1646,7 +1734,8 @@ class Grasp(smach.State):
                     self.loginfo("Grasp: {}".format(grasp["grasp_reachable"]))
                     break
 
-
+        end = datetime.datetime.now()
+        self.timer2 += (end - start).total_seconds()      
         return grasp
 
     def filter_grasps(self, grasps):
@@ -1833,7 +1922,7 @@ class Grasp(smach.State):
                 if grasp["grasp_quality"] > self.min_grasp_quality and \
                     grasp["pre_grasp_reachable"] and grasp["grasp_reachable"]:
                     self.loginfo("Added grasp {} to reachable, good grasps"
-                                .format(grasp['id']))
+                              .format(grasp['id']))
                     reachable_good_grasps.append(grasp)
 
 
@@ -1943,6 +2032,8 @@ class Grasp(smach.State):
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
 
+        start = datetime.datetime.now()
+
         # Delete any leftover transforms from previous runs
         bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
         for bin_id in bin_ids:
@@ -1993,19 +2084,19 @@ class Grasp(smach.State):
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
-        # Get the pose of the target item in the base frame
-        response = self._find_centroid(userdata.target_cluster)
-        item_point = response.centroid
-        item_pose = PoseStamped(
-            header=Header(
-                frame_id=item_point.header.frame_id,
-                stamp=rospy.Time(0),
-            ),
-            pose=Pose(
-                position=item_point.point,
-                orientation=Quaternion(w=1, x=0, y=0, z=0),
-            )
-        )
+        # # Get the pose of the target item in the base frame
+        # response = self._find_centroid(userdata.target_cluster)
+        # item_point = response.centroid
+        # item_pose = PoseStamped(
+        #     header=Header(
+        #         frame_id=item_point.header.frame_id,
+        #         stamp=rospy.Time(0),
+        #     ),
+        #     pose=Pose(
+        #         position=item_point.point,
+        #         orientation=Quaternion(w=1, x=0, y=0, z=0),
+        #     )
+        # )
 
         
         self._tf_listener.waitForTransform("base_footprint", 
@@ -2087,10 +2178,14 @@ class Grasp(smach.State):
 
         viz.publish_bounding_box(self._markers,  planar_bounding_box.pose, planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z,
             1.0, 0.0, 0.0, 0.5, 25)
-        
+        grasp_gen_start = datetime.datetime.now()
         grasping_pairs = self.generate_grasps(planar_bounding_box, userdata.bin_id)
-        
+        grasp_gen_end = datetime.datetime.now()
+        rospy.loginfo("Grasp gen: " + str((grasp_gen_end - grasp_gen_start).total_seconds()))
+        filter_start = datetime.datetime.now()
         filtered_grasps = self.filter_grasps(grasping_pairs)
+        filter_end = datetime.datetime.now()
+        rospy.loginfo("Filter: " + str((filter_end - filter_start).total_seconds()))
 
         self._delete_static_tf.wait_for_service()
         req = DeleteStaticTransformRequest()
@@ -2109,11 +2204,21 @@ class Grasp(smach.State):
         req.parent_frame = planar_bounding_box.pose.header.frame_id
         req.child_frame = "bounding_box"
         self._delete_static_tf(req)
+        end = datetime.datetime.now()
+        self.timer1 += (end - start).total_seconds()
+        rospy.loginfo("Total: " + str(self.timer1))
+        rospy.loginfo("Intersection Function: " + str(self.timer))
+        rospy.loginfo("IK/Moveit Functiona: " + str(self.timer2))
 
 
         if len(filtered_grasps) > 0:
             success_grasp = self.execute_grasp(filtered_grasps, userdata.item_model)
+            
         else:
+            #end = datetime.datetime.now()
+            #self.timer1 += int((end - start).total_seconds())
+            #rospy.loginfo("Total: " + str(self.timer1/1e6))
+            #rospy.loginfo("Function: " + str(self.timer/1e6))
             self.loginfo('No good grasps found')
             self._tts.publish('No grasps found.')
             if not userdata.re_grasp_attempt:
