@@ -86,6 +86,7 @@ add_message_files(
   MultiItemCloud.msg
   ROI2d.msg
   DescriptorExample.msg
+  ObjectMatchRequest.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -102,6 +103,7 @@ add_service_files(
   ClassifyTargetItem.srv
   CountPointsInBox.srv
   SegmentItems.srv
+  MatchCluster.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -178,9 +180,9 @@ add_executable(shelf_localization_service_node_lidar
 add_executable(object_recognition_service
   src/obj_recognition_cluster.cpp
 )
-add_executable(test_match_descriptor
-  src/test_matcher.cpp
-)
+#add_executable(test_match_descriptor
+#  src/test_matcher.cpp
+#)
 
 add_executable(realsense_camerainfo
   src/camera_info.cpp
@@ -267,6 +269,10 @@ add_dependencies(convert_rosbag_to_descriptors
   pr2_pick_perception_generate_messages_cpp
 )
 
+add_dependencies(object_recognition_service
+  pr2_pick_perception_generate_messages_cpp
+)
+
 # Hopefully not needed.
 #add_dependencies(pcl_lib
 #  pr2_pick_msgs_generate_messages_cpp
@@ -309,12 +315,12 @@ target_link_libraries(shelf_cropping_service_node
   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(test_match_descriptor
-  ${VTK_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
+#target_link_libraries(test_match_descriptor
+#  ${VTK_LIBRARIES}
+#  ${OpenCV_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  ${catkin_LIBRARIES}
+#)
 
 target_link_libraries(object_recognition_service
   ${VTK_LIBRARIES}
