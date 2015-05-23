@@ -23,7 +23,7 @@ find_package(catkin REQUIRED
 ## System dependencies are found with CMake's conventions
 find_package(Boost 1.46.1 REQUIRED COMPONENTS signals regex system thread filesystem)
 find_package(OpenCV)
-find_package(PCL 1.7.0 REQUIRED)
+find_package(PCL REQUIRED)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
 
@@ -175,6 +175,22 @@ add_executable(shelf_localization_service_node_lidar
   src/shelf_localization_LIDAR.cpp
 )
 
+add_executable(object_recognition_service
+  src/obj_recognition_cluster.cpp
+)
+add_executable(test_match_descriptor
+  src/test_matcher.cpp
+)
+
+add_executable(realsense_camerainfo
+  src/camera_info.cpp
+)
+
+add_executable(pointcloud_realsense
+  src/pointcloud_realsense.cpp
+)
+
+
 add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
 )
@@ -265,6 +281,20 @@ target_link_libraries(shelf_localization_service_node
   ${catkin_LIBRARIES}
 )
 
+target_link_libraries(pointcloud_realsense
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+
+
+target_link_libraries(realsense_camerainfo
+  ${catkin_LIBRARIES}
+)
+
+
 # target_link_libraries(shelf_localization_service_node_lidar
 #   ${VTK_LIBRARIES}
 #   ${OpenCV_LIBRARIES}
@@ -278,6 +308,21 @@ target_link_libraries(shelf_cropping_service_node
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+target_link_libraries(test_match_descriptor
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(object_recognition_service
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
 
 target_link_libraries(item_segmentation_service_node
   ${VTK_LIBRARIES}
