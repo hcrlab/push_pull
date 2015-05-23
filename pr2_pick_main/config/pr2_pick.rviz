@@ -9,6 +9,7 @@ Panels:
         - /DepthCloud1/Auto Size1
         - /Marker1
         - /Marker1/Namespaces1
+        - /TF1
         - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 668
@@ -519,10 +520,10 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Image Topic: /head_mount_kinect/rgb/image_color
       Color Transformer: RGB8
-      Color Transport Hint: raw
+      Color Transport Hint: compressed
       Decay Time: 1
       Depth Map Topic: /head_mount_kinect/depth_registered/image_raw
-      Depth Map Transport Hint: raw
+      Depth Map Transport Hint: compressedDepth
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -551,7 +552,7 @@ Visualization Manager:
       Name: Image
       Normalize Range: true
       Queue Size: 2
-      Transport Hint: raw
+      Transport Hint: compressed
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -602,30 +603,6 @@ Visualization Manager:
         base_laser_link:
           Value: false
         base_link:
-          Value: false
-        bin_A:
-          Value: false
-        bin_B:
-          Value: false
-        bin_C:
-          Value: false
-        bin_D:
-          Value: false
-        bin_E:
-          Value: false
-        bin_F:
-          Value: false
-        bin_G:
-          Value: false
-        bin_H:
-          Value: false
-        bin_I:
-          Value: false
-        bin_J:
-          Value: false
-        bin_K:
-          Value: false
-        bin_L:
           Value: false
         bl_caster_l_wheel_link:
           Value: false
@@ -819,8 +796,6 @@ Visualization Manager:
           Value: false
         sensor_mount_link:
           Value: false
-        shelf:
-          Value: false
         torso_lift_link:
           Value: false
         torso_lift_motor_screw_link:
@@ -997,31 +972,6 @@ Visualization Manager:
                   {}
               torso_lift_motor_screw_link:
                 {}
-          shelf:
-            bin_A:
-              {}
-            bin_B:
-              {}
-            bin_C:
-              {}
-            bin_D:
-              {}
-            bin_E:
-              {}
-            bin_F:
-              {}
-            bin_G:
-              {}
-            bin_H:
-              {}
-            bin_I:
-              {}
-            bin_J:
-              {}
-            bin_K:
-              {}
-            bin_L:
-              {}
       Update Interval: 0
       Value: true
     - Class: rviz/InteractiveMarkers
@@ -1057,22 +1007,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.41428
+      Distance: 6.94595
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.761821
-        Y: 0.0130088
-        Z: 1.05324
+        X: 0.910843
+        Y: 0.267867
+        Z: 1.4517
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.214797
+      Pitch: 0.364797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.75046
+      Yaw: 3.16046
     Saved: ~
 Window Geometry:
   Displays:
