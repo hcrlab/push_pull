@@ -32,6 +32,15 @@ from pr2_pick_perception.msg import Box
 from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest, PlanarPrincipalComponentsRequest, \
     DeleteStaticTransformRequest, BoxPointsResponse #, Cluster
 
+def dummy(idx, box, num_points, transformed_point):
+        if (transformed_point.point.x >= box.min_x and
+                transformed_point.point.x < box.max_x and
+                transformed_point.point.y >= box.min_y and
+                transformed_point.point.y < box.max_y and
+                transformed_point.point.z >= box.min_z and
+                transformed_point.point.z < box.max_z):
+                num_points[idx] += 1
+
 
 
 
@@ -77,12 +86,12 @@ class Grasp(smach.State):
     max_grasp_quality = 10000
 
     # minimum number of points from cluster needed inside gripper for grasp
-    min_points_in_gripper = 100
+    min_points_in_gripper = 50
 
     # max number of points in cluster that can intersect with fingers
-    max_finger_collision_points = 15
+    max_finger_collision_points = 7
 
-    max_palm_collision_points = 10
+    max_palm_collision_points = 6
 
     shelf_bottom_height = None
     shelf_height = None
@@ -98,6 +107,9 @@ class Grasp(smach.State):
     timer = 0.0
     timer1 = 0.0
     timer2 = 0.0
+
+    min_reachable = 2
+
     def __init__(self, **services):
         smach.State.__init__(
             self,
@@ -224,38 +236,55 @@ class Grasp(smach.State):
         #self.debug_grasp_pub.publish(string)
         rospy.logdebug(string)
 
-    # def downsample_cluster(self, request):
+    def downsample_cluster(self, cluster):
 
-    #     points = pc2.read_points(
-    #         request.cluster.pointcloud,
-    #         field_names=['x', 'y', 'z'],
-    #         skip_nans=True,
-    #     )
+        points = pc2.read_points(
+            cluster.pointcloud,
+            field_names=['x', 'y', 'z'],
+            skip_nans=True,
+        )
 
-    #     point_list = []
+        downsampled_point_list = []
+        point_list = []
 
-    #     count = 0
-    #     for x, y, z in points:
-    #         if count % 2 == 0:
-    #             continue
-    #         else:
-    #             point = Point(x, y, z)
-    #             point_list.append(point)
+        count = 0
 
-    #     return point_list
-    def dummy(self, idx, box, num_points):
-            if (transformed_point.point.x >= box.min_x and
-                    transformed_point.point.x < box.max_x and
-                    transformed_point.point.y >= box.min_y and
-                    transformed_point.point.y < box.max_y and
-                    transformed_point.point.z >= box.min_z and
-                    transformed_point.point.z < box.max_z):
-                    num_points[idx] += 1
+        #point_temp = deepcopy(points)
+        #length = len(list(point_temp))
 
+        #rospy.loginfo("Points in cluster: " + str(length))
+
+        #if length > 500:
+        #    a = 2
+        #else:
+        #    a = 1
+
+        a = 2
+
+        rospy.loginfo("Frame for cluster: " + str(cluster.header.frame_id))
+
+        for x, y, z in points:
+            #rospy.loginfo("Not adding point")
+            point = PointStamped()
+            point.point.x = x
+            point.point.y = y
+            point.point.z = z
+            point.header.frame_id = cluster.header.frame_id
+            if (count % a) == 0:
+                downsampled_point_list.append(point)
+            count += 1
+            point_list.append(point)
+
+        if len(downsampled_point_list) < 250:
+            return point_list
+        else:
+            return downsampled_point_list
 
     def find_points_in_box(self, request):
         ''' Returns number of points within bounding box specified by 
-            request. '''        
+            request. ''' 
+
+        #rospy.loginfo("In finding points!")       
         points = pc2.read_points(
             request.cluster.pointcloud,
             field_names=['x', 'y', 'z'],
@@ -283,7 +312,7 @@ class Grasp(smach.State):
 
             transformed_point = self._tf_listener.transformPoint(request.frame_id,
                                                                 point)
-            """
+            
             for (idx, box) in enumerate(request.boxes):
                 if (transformed_point.point.x >= box.min_x and
                     transformed_point.point.x < box.max_x and
@@ -292,55 +321,63 @@ class Grasp(smach.State):
                     transformed_point.point.z >= box.min_z and
                     transformed_point.point.z < box.max_z):
                     num_points[idx] += 1
-            """
+            
  
-            mylambaxfn = lambda idx,box:self.dummy(idx, box, num_points)
-            Parallel(n_jobs = 2)(delayed(mylambaxfn)(idx, box) for (idx, box) in enumerate(request.boxes))
+            #mylambaxfn = lambda idx,box:dummy(idx, box, num_points)
+            #Parallel(n_jobs = 2)(delayed(dummy)(idx, box, num_points, transformed_point) for (idx, box) in enumerate(request.boxes))
         end = datetime.datetime.now()
 
         self.timer += ((end - start).total_seconds()) 
 
+        #rospy.loginfo("Leaving finding points!")       
         return BoxPointsResponse(num_points=num_points)
 
         
-    # def find_points_in_box_downsampled(self, point_list):
-    #     ''' Returns number of points within bounding box specified by 
-    #         request. '''        
-    #     points = pc2.read_points(
-    #         request.cluster.pointcloud,
-    #         field_names=['x', 'y', 'z'],
-    #         skip_nans=True,
-    #     )
+    def find_points_in_box_downsampled(self, point_list, boxes, frame_id):
+        ''' Returns number of points within bounding box specified by 
+            request. '''        
+        #points = pc2.read_points(
+        #    request.cluster.pointcloud,
+        #    field_names=['x', 'y', 'z'],
+        #    skip_nans=True,
+        #)
 
-    #     num_points = [0] * len(request.boxes)
-    #     for x, y, z in points:
+        start = datetime.datetime.now()
 
-    #         # Transform point into frame of bounding box
-    #         point = PointStamped(
-    #             point=Point(x=x, y=y, z=z),
-    #             header=Header(
-    #                 frame_id=request.cluster.header.frame_id,
-    #                 stamp=rospy.Time(0),
-    #             )
-    #         )
+        num_points = [0] * len(boxes)
+        for point in point_list:
 
-    #         #self._tf_listener.waitForTransform(request.cluster.header.frame_id, 
-    #         #                                request.frame_id, rospy.Time(0),
-    #         #                                rospy.Duration(10.0))
+            # Transform point into frame of bounding box
+            #point = PointStamped(
+            #    point=Point(x=x, y=y, z=z),
+            #    header=Header(
+            #        frame_id=request.cluster.header.frame_id,
+            #        stamp=rospy.Time(0),
+            #    )
+            #)
 
-    #         transformed_point = self._tf_listener.transformPoint(request.frame_id,
-    #                                                             point)
+            #self._tf_listener.waitForTransform(request.cluster.header.frame_id, 
+            #                                request.frame_id, rospy.Time(0),
+            #                                rospy.Duration(10.0))
 
-    #         for (idx, box) in enumerate(request.boxes):
-    #             if (transformed_point.point.x >= box.min_x and
-    #                 transformed_point.point.x <= box.max_x and
-    #                 transformed_point.point.y >= box.min_y and
-    #                 transformed_point.point.y <= box.max_y and
-    #                 transformed_point.point.z >= box.min_z and
-    #                 transformed_point.point.z <= box.max_z):
-    #                 num_points[idx] += 1
 
-    #     return BoxPointsResponse(num_points=num_points)
+            transformed_point = self._tf_listener.transformPoint(frame_id,
+                                                                point)
+
+            for (idx, box) in enumerate(boxes):
+                if (transformed_point.point.x >= box.min_x and
+                    transformed_point.point.x <= box.max_x and
+                    transformed_point.point.y >= box.min_y and
+                    transformed_point.point.y <= box.max_y and
+                    transformed_point.point.z >= box.min_z and
+                    transformed_point.point.z <= box.max_z):
+                    num_points[idx] += 1
+        end = datetime.datetime.now()
+
+        self.timer += ((end - start).total_seconds()) 
+
+
+        return num_points
 
        
 
@@ -561,7 +598,12 @@ class Grasp(smach.State):
             grasp_dict = {}
             grasp_dict["pre_grasp"] = base_footprint_pre_grasp_pose
             grasp_dict["grasp"] = grasp_pose
-            if not rotate:
+            grasp_in_bounds = self.check_pose_within_bounds(grasp_pose, 
+                                                                    self.shelf_bottom_height, self.shelf_height, 
+                                                                    self.shelf_width, self.bin_id, 'base_footprint', False)
+
+            
+            if (not rotate) and (grasp_in_bounds):
                 grasp_dict["id"] = self.grasp_num
                 self.grasp_num += 1
                 grasping_pairs.append(grasp_dict)
@@ -588,8 +630,12 @@ class Grasp(smach.State):
             grasp_dict["grasp"] = grasp_pose
             grasp_dict["id"] = self.grasp_num
             self.grasp_num += 1
+            grasp_in_bounds = self.check_pose_within_bounds(grasp_pose, 
+                                                                    self.shelf_bottom_height, self.shelf_height, 
+                                                                    self.shelf_width, self.bin_id, 'base_footprint', False)
 
-            if rotate:
+
+            if rotate and grasp_in_bounds:
                 grasping_pairs.append(grasp_dict)
             
         return grasping_pairs
@@ -754,6 +800,8 @@ class Grasp(smach.State):
         new_ends = []
         rejected_in_base_footprint = []
         for (idx, corner) in enumerate(corners):
+            
+            self._tf_listener.waitForTransform("base_footprint", corner.header.frame_id, rospy.Time(0), rospy.Duration(10.0))
             new_end = self._tf_listener.transformPoint('base_footprint',
                                                                 corner)
             new_ends.append(new_end)
@@ -832,6 +880,7 @@ class Grasp(smach.State):
             grasp_in_axis_frame = PoseStamped()
             grasp_in_axis_frame.header.frame_id = 'object_axis'
             grasp_in_axis_frame.pose.orientation.w = 1
+            self._tf_listener.waitForTransform("base_footprint", grasp_in_axis_frame.header.frame_id, rospy.Time(0), rospy.Duration(10.0))
             grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                         grasp_in_axis_frame)
             finger_tips_in_axis_frame = PoseStamped()
@@ -1340,9 +1389,11 @@ class Grasp(smach.State):
         self._set_static_tf(transform)
         rospy.sleep(0.25)
 
-        points_in_box_request = BoxPointsRequest()
-        points_in_box_request.frame_id = "grasp"
-        points_in_box_request.cluster = self._cluster
+        #points_in_box_request = BoxPointsRequest()
+        #points_in_box_request.frame_id = "grasp"
+        #points_in_box_request.cluster = self._cluster
+
+        boxes = []
 
         box_request = Box()
         box_request.min_x = self.dist_to_palm
@@ -1351,7 +1402,7 @@ class Grasp(smach.State):
         box_request.max_y = self.gripper_palm_width/2 + y_offset
         box_request.min_z = -1 * self.gripper_finger_height/2
         box_request.max_z = 1 * self.gripper_finger_height/2
-        points_in_box_request.boxes.append(box_request)
+        boxes.append(box_request)
 
         box_pose = PoseStamped()
         box_pose.header.frame_id = 'grasp'
@@ -1378,7 +1429,7 @@ class Grasp(smach.State):
         l_finger_request.max_y = -1 * self.gripper_palm_width/2 - 0.005 + y_offset
         l_finger_request.min_z = -1 * self.gripper_finger_height/2
         l_finger_request.max_z = self.gripper_finger_height/2
-        points_in_box_request.boxes.append(l_finger_request)
+        boxes.append(l_finger_request)
         
         l_finger_pose = PoseStamped()
         l_finger_pose.header.frame_id = 'grasp'
@@ -1403,7 +1454,7 @@ class Grasp(smach.State):
         r_finger_request.max_y = self.gripper_palm_width/2 + 0.025 + y_offset
         r_finger_request.min_z = -1 * self.gripper_finger_height/2
         r_finger_request.max_z = self.gripper_finger_height/2
-        points_in_box_request.boxes.append(r_finger_request)
+        boxes.append(r_finger_request)
         
         r_finger_pose = PoseStamped()
         r_finger_pose.header.frame_id = 'grasp'
@@ -1428,7 +1479,7 @@ class Grasp(smach.State):
         palm_request.max_y = self.gripper_palm_width/2 + y_offset
         palm_request.min_z = -1 * self.gripper_finger_height/2
         palm_request.max_z = self.gripper_finger_height/2
-        points_in_box_request.boxes.append(palm_request)
+        boxes.append(palm_request)
         
         palm_pose = PoseStamped()
         palm_pose.header.frame_id = 'grasp'
@@ -1455,18 +1506,18 @@ class Grasp(smach.State):
         #self.loginfo("Received service response: {}, {}".format(now.secs(), now.nsecs()))
 
         # Moved point cloud checking out of service call
-        box_response =  self.find_points_in_box(points_in_box_request)
-        self.loginfo("Number of points inside gripper: {}".format(box_response.num_points[0]))
+        num_points =  self.find_points_in_box_downsampled(self.downsampled_cluster, boxes, 'grasp')
+        self.loginfo("Number of points inside gripper: {}".format(num_points[0]))
         self.loginfo("Number of points inside left finger: {}"
-                        .format(box_response.num_points[1]))
+                        .format(num_points[1]))
         self.loginfo("Number of points inside right finger: {}"
-                        .format(box_response.num_points[2]))
+                        .format(num_points[2]))
         self.loginfo("Number of points inside palm: {}"
-                        .format(box_response.num_points[3]))
+                        .format(num_points[3]))
 
-        grasp["finger_collision_points"] = box_response.num_points[1] + box_response.num_points[2]
-        grasp["palm_collision_points"] = box_response.num_points[3]
-        grasp["points_in_gripper"] = box_response.num_points[0]
+        grasp["finger_collision_points"] = num_points[1] + num_points[2]
+        grasp["palm_collision_points"] = num_points[3]
+        grasp["points_in_gripper"] = num_points[0]
 
         if grasp["points_in_gripper"] >= self.min_points_in_gripper and \
             grasp["finger_collision_points"] <= self.max_finger_collision_points and \
@@ -1900,8 +1951,8 @@ class Grasp(smach.State):
 
                 self.loginfo("Good grasp.")
                 good_grasps.append(grasp)
-
-
+        good_grasps = self.sort_grasps(good_grasps)
+        num_reachable = 0
         # After finding high quality grasps, check if grasps are reachable
         for grasp in good_grasps:
             self.loginfo("Checking grasp: {}".format(grasp["id"]))
@@ -1909,8 +1960,12 @@ class Grasp(smach.State):
             if grasp["pre_grasp_reachable"] and grasp["grasp_reachable"]:
                 self.loginfo("Grasp {} reachable".format(grasp['id']))
                 reachable_good_grasps.append(grasp)
+                num_reachable += 1
             else:
                 self.loginfo("Grasp {} not reachable".format(grasp['id']))
+
+            if num_reachable >= self.min_reachable:
+                break
 
         # If no grasps are reachable then try to move them to be reachable
         if not reachable_good_grasps:
@@ -1924,6 +1979,9 @@ class Grasp(smach.State):
                     self.loginfo("Added grasp {} to reachable, good grasps"
                               .format(grasp['id']))
                     reachable_good_grasps.append(grasp)
+                    num_reachable +=1
+                if num_reachable >= self.min_reachable:
+                    break
 
 
         return self.sort_grasps(reachable_good_grasps)
@@ -2076,6 +2134,10 @@ class Grasp(smach.State):
         self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
         self.grasp_wide_end = userdata.item_model.grasp_wide_end
         self._cluster = userdata.target_cluster
+
+        self.downsampled_cluster = self.downsample_cluster(self._cluster)
+
+        rospy.loginfo("Downsampled cluster size: " + str(len(self.downsampled_cluster)))
 
         if userdata.item_model.allow_finger_collisions:
             self.max_finger_collision_points = 1000
