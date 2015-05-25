@@ -1,6 +1,6 @@
 from geometry_msgs.msg import PoseStamped
 from pr2_pick_main import handle_service_exceptions
-from pr2_pick_manipulation.srv import MoveArmRequest
+from pr2_pick_manipulation.srv import MoveArmRequest, MoveArmIkRequest
 from pr2_pick_perception.srv import CountPointsInBox, CountPointsInBoxRequest
 import rospy
 import smach
@@ -26,6 +26,7 @@ class VerifyGrasp(smach.State):
         self._set_items = kwargs['set_items']
         self._move_head = kwargs['move_head']
         self._moveit_move_arm = kwargs['moveit_move_arm']
+        self._move_arm_ik = kwargs['move_arm_ik']
         self._count_points_in_box = kwargs['count_points_in_box']
         self._markers = kwargs['markers']
         self._tts = kwargs['tts']
@@ -47,8 +48,12 @@ class VerifyGrasp(smach.State):
         request.planning_time = 8
         request.group = 'right_arm'
         request.plan_only = False
-        self._moveit_move_arm.wait_for_service()
-        self._moveit_move_arm(request)
+        #self._moveit_move_arm.wait_for_service()
+        #self._moveit_move_arm(request)
+
+        self._move_arm_ik.wait_for_service()
+        self._move_arm_ik(request.goal,
+                          MoveArmIkRequest().RIGHT_ARM)
 
         self._move_head.wait_for_service()
         self._move_head(0, 0, 0, 'r_wrist_roll_link')
