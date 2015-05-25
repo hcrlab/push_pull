@@ -39,6 +39,7 @@ class ArmMover:
 
         rospy.loginfo("Requested to move: " + req.group)
 
+        self._compute_ik.wait_for_service()
         while plan is None:
             try:
                 group = None
