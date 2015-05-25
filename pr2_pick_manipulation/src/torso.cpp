@@ -21,7 +21,11 @@ Torso::~Torso() {
   delete torso_client_;
 }
 
-bool Torso::SetHeight(double height) {
+bool Torso::IsDone() {
+	return torso_client_->getState() == SimpleClientGoalState::SUCCEEDED;
+}
+
+bool Torso::SetHeight(double height, bool blocking) {
   if (height > Torso::kMaxHeight || height < Torso::kMinHeight) {
     ROS_ERROR("Torso height %0.3f not in allowed range [%0.3f, %0.3f]",
            height, Torso::kMinHeight, Torso::kMaxHeight);
@@ -34,7 +38,10 @@ bool Torso::SetHeight(double height) {
   torso_client_->sendGoal(goal);
   ROS_INFO("Sent torso goal %0.3f", height);
 
-  torso_client_->waitForResult();
+	if(blocking) {
+		torso_client_->waitForResult();
+	}
+  
 
   if (torso_client_->getState() == SimpleClientGoalState::SUCCEEDED) {
     return true;
