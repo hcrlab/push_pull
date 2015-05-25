@@ -16,7 +16,7 @@
   <arg name="fake_execution" default="false"/>
   <arg name="max_safe_path_cost" default="1"/>
   <arg name="publish_monitored_planning_scene" default="true"/>
-  <arg name="moveit_octomap_sensor_params_file" default="$(find pr2_moveit_config)/config/sensors_kinect.yaml" />
+  <arg name="moveit_octomap_sensor_params_file" default="$(find pr2_pick_manipulation)/config/sensors_kinect.yaml" />
 
   <include ns="move_group" file="$(find pr2_moveit_config)/launch/planning_pipeline.launch.xml">
     <arg name="pipeline" value="ompl" />
