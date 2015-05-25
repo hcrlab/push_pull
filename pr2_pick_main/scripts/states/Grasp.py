@@ -2190,6 +2190,7 @@ class Grasp(smach.State):
 
         # Weird loop that you have to do because Moveit it weird
         for i in range(10):
+            self.loginfo("MoveIt looping hack, iteration %d" % i)
             scene.add_box("bbox", planar_bounding_box.pose, 
                         (planar_bounding_box.dimensions.x, 
                         planar_bounding_box.dimensions.y, 
@@ -2197,6 +2198,7 @@ class Grasp(smach.State):
             rospy.sleep(0.1)
 
         # Make a frame that has the same yaw as head frame
+        self.loginfo("About to wait for transform")
         (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
         self.loginfo("Tranform: {}, {}".format(trans, rot))
 
