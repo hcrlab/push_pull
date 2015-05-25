@@ -216,7 +216,7 @@ class ExtractItem(smach.State):
         target_in_shelf_frame = geometry_msgs.msg.PoseStamped(
             header=Header(frame_id='shelf'),
             pose=Pose(
-                position=Point(x=-1.35,
+                position=Point(x=-1.55,
                                y=position[1],
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)

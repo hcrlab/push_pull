@@ -18,7 +18,7 @@ class DropOffItem(smach.State):
 
     # The x,y coordinates the base should drive to for dropoffs in the order
     # bin frame
-    DROPOFF_POS_BASE_X = -0.2540 
+    DROPOFF_POS_BASE_X = -0.5040 
     DROPOFF_POS_BASE_Y = 0.6604
     # The position the arm will move to before it lets go of the object
     DROPOFF_POS_ARM_X = 0.0872
@@ -103,9 +103,12 @@ class DropOffItem(smach.State):
         viz.publish_order_bin(self._markers)
 
 
-        rospy.loginfo('Untucking right arm')
-        self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+        #rospy.loginfo('Untucking right arm')
+        #self._tuck_arms.wait_for_service()
+        #tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+
+        self._tf_listener.waitForTransform('order_bin',"shelf",rospy.Time(0),
+                                           rospy.Duration(5.0))
 
         # move to the order bin
         rospy.loginfo('Move next to the order bin')
