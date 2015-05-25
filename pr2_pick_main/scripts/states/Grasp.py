@@ -58,7 +58,7 @@ class Grasp(smach.State):
     # Separation in meters between attempted pre-grasp positions
     pre_grasp_attempt_separation = 0.01
     # how many grasp gripper positions to attempt
-    grasp_attempts = 20
+    grasp_attempts = 8
 
     # desired distance from palm frame to object centroid
     pre_grasp_x_distance = 0.37
@@ -138,9 +138,9 @@ class Grasp(smach.State):
 
         self._fk_client = rospy.ServiceProxy('compute_fk', GetPositionFK)
         self._ik_client = rospy.ServiceProxy('compute_ik', GetPositionIK)
-        self._get_points_in_box = rospy.ServiceProxy(name='perception/get_points_in_box', 
-                                                        service_class = BoxPoints,
-                                                        persistent = True)
+        #self._get_points_in_box = rospy.ServiceProxy(name='perception/get_points_in_box', 
+        #                                                service_class = BoxPoints,
+        #                                                persistent = True)
         self._lookup_item = services['lookup_item']
         self._get_planar_pca = services['get_planar_pca']
 
@@ -234,7 +234,7 @@ class Grasp(smach.State):
 
     def loginfo(self, string):
         #self.debug_grasp_pub.publish(string)
-        rospy.logdebug(string)
+        rospy.loginfo(string)
 
     def downsample_cluster(self, cluster):
 
@@ -449,6 +449,8 @@ class Grasp(smach.State):
         self.loginfo("Corners: {}".format(corners))
 
         transformed_corners = []
+        
+        self._tf_listener.waitForTransform("head_yaw", 'bounding_box', rospy.Time(0), rospy.Duration(10.0))
         for corner in corners:
             new_corner = self._tf_listener.transformPoint("head_yaw", corner)
             transformed_corners.append(new_corner)
@@ -1095,12 +1097,12 @@ class Grasp(smach.State):
                     self.loginfo("Rolled grasp not in bounds")
 
                     rolled_pre_grasp_in_axis_frame = self.modify_grasp(rolled_pre_grasp_in_axis_frame,
-                                                                            0, 0, 0,-0.03, 0, 0.0)
+                                                                            0, 0, 0,-0.05, 0, 0.0)
                     rolled_pre_grasp_in_base_footprint = self._tf_listener.transformPose('base_footprint',
                                                                     rolled_pre_grasp_in_axis_frame)
 
                     rolled_pre_grasp_in_base_footprint = self.modify_grasp(rolled_pre_grasp_in_base_footprint,
-                                                                            0, 0, 0, 0, 0, 0.07)
+                                                                            0, 0, 0, 0, 0, 0.09)
                     
                     rolled_grasp_in_base_footprint = self.modify_grasp(rolled_grasp_in_base_footprint,
                                                                             0, 0, 0, 0, 0, 0.10)
@@ -1573,23 +1575,23 @@ class Grasp(smach.State):
         self.loginfo("Checking grasp ik")
 
         # Could allow collisions with target item, but we don't right now
-        self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene)
-        rospy.wait_for_service('/get_planning_scene', 10.0)
-        get_planning_scene = rospy.ServiceProxy('/get_planning_scene', 
-                                                GetPlanningScene)
-        request = PlanningSceneComponents(
-                    components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
-        response = get_planning_scene(request)
+        #self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene)
+        #rospy.wait_for_service('/get_planning_scene', 10.0)
+        #get_planning_scene = rospy.ServiceProxy('/get_planning_scene', 
+        #                                        GetPlanningScene)
+        #request = PlanningSceneComponents(
+        #            components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
+        #response = get_planning_scene(request)
 
-        acm = response.scene.allowed_collision_matrix
-        if not 'bbox' in acm.default_entry_names:
-            # add button to allowed collision matrix 
-            acm.default_entry_names += ['bbox']
-            acm.default_entry_values += [True]
+        #acm = response.scene.allowed_collision_matrix
+        #if not 'bbox' in acm.default_entry_names:
+        #    # add button to allowed collision matrix 
+        #    acm.default_entry_names += ['bbox']
+        #    acm.default_entry_values += [True]
 
-            planning_scene_diff = PlanningScene(
-                is_diff=True,
-                allowed_collision_matrix=acm)
+        #    planning_scene_diff = PlanningScene(
+        #        is_diff=True,
+        #        allowed_collision_matrix=acm)
 
             #self._pubPlanningScene.publish(planning_scene_diff)
             #rospy.sleep(1.0)
@@ -1749,21 +1751,21 @@ class Grasp(smach.State):
 
                 # Could have checked with Moveit and allowed collisions with target item
                 # But doesn't seem to work very well 
-                self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene)
-                rospy.wait_for_service('/get_planning_scene', 10.0)
-                get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene)
-                request = PlanningSceneComponents(components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
-                response = get_planning_scene(request)
+                #self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene)
+                #rospy.wait_for_service('/get_planning_scene', 10.0)
+                #get_planning_scene = rospy.ServiceProxy('/get_planning_scene', GetPlanningScene)
+                #request = PlanningSceneComponents(components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX)
+                #response = get_planning_scene(request)
 
-                acm = response.scene.allowed_collision_matrix
-                if not 'bbox' in acm.default_entry_names:
-                    # add button to allowed collision matrix 
-                    acm.default_entry_names += ['bbox']
-                    acm.default_entry_values += [True]
+                #acm = response.scene.allowed_collision_matrix
+                #if not 'bbox' in acm.default_entry_names:
+                #    # add button to allowed collision matrix 
+                #    acm.default_entry_names += ['bbox']
+                #    acm.default_entry_values += [True]
 
-                    planning_scene_diff = PlanningScene(
-                        is_diff=True,
-                        allowed_collision_matrix=acm)
+                #    planning_scene_diff = PlanningScene(
+                #        is_diff=True,
+                #        allowed_collision_matrix=acm)
 
                     #self._pubPlanningScene.publish(planning_scene_diff)
                     #rospy.sleep(1.0)
@@ -2008,6 +2010,8 @@ class Grasp(smach.State):
             self.loginfo("Grasp: {}".format(grasp["grasp"]))
             self._moveit_move_arm.wait_for_service()
 
+            self.loginfo("Service available")
+
             if not self.top_shelf:
 
                 for i in range(self.pre_grasp_attempts):
@@ -2017,8 +2021,9 @@ class Grasp(smach.State):
                     if success_pre_grasp:
                         break
             else:
+                self.loginfo("Waiting for ik service")
                 self._move_arm_ik.wait_for_service()
-
+                self.loginfo("Service available")
                 success_pre_grasp = self._move_arm_ik(grasp["pre_grasp"], 
                                         MoveArmIkRequest().RIGHT_ARM).success
 
@@ -2035,26 +2040,26 @@ class Grasp(smach.State):
             if self._debug:
                 raw_input('(Debug) Press enter to continue >')
 
-            self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene) 
-            rospy.wait_for_service('/get_planning_scene', 10.0) 
-            get_planning_scene = rospy.ServiceProxy('/get_planning_scene', 
-                                                    GetPlanningScene) 
-            request = PlanningSceneComponents(
-                        components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX) 
-            response = get_planning_scene(request) 
+            #self._pubPlanningScene = rospy.Publisher('planning_scene', PlanningScene) 
+            #rospy.wait_for_service('/get_planning_scene', 10.0) 
+            #get_planning_scene = rospy.ServiceProxy('/get_planning_scene', 
+            #                                        GetPlanningScene) 
+            #request = PlanningSceneComponents(
+            #            components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX) 
+            #response = get_planning_scene(request) 
 
-            acm = response.scene.allowed_collision_matrix 
-            if not 'bbox' in acm.default_entry_names: 
-                # add button to allowed collision matrix 
-                acm.default_entry_names += ['bbox'] 
-                acm.default_entry_values += [True] 
+            #acm = response.scene.allowed_collision_matrix 
+            #if not 'bbox' in acm.default_entry_names: 
+            #    # add button to allowed collision matrix 
+            #    acm.default_entry_names += ['bbox'] 
+            #    acm.default_entry_values += [True] 
 
-                planning_scene_diff = PlanningScene( 
-                    is_diff=True, 
-                    allowed_collision_matrix=acm) 
+            #    planning_scene_diff = PlanningScene( 
+            #        is_diff=True, 
+            #        allowed_collision_matrix=acm) 
 
-                #self._pubPlanningScene.publish(planning_scene_diff) 
-                #rospy.sleep(1.0)
+            #    #self._pubPlanningScene.publish(planning_scene_diff) 
+            #    #rospy.sleep(1.0)
 
 
             self._move_arm_ik.wait_for_service()
