@@ -117,6 +117,7 @@ add_executable(TrackTimeServiceNode src/pr2_pick_contest/TrackTimeServiceNode.cp
 target_link_libraries(TrackTimeServiceNode TrackTimeService ${catkin_LIBRARIES})
 
 add_executable(TrackTimeServiceClient src/pr2_pick_contest/TrackTimeServiceClient.cpp)
+add_dependencies(TrackTimeServiceClient pr2_pick_contest_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 target_link_libraries(TrackTimeServiceClient ${catkin_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
