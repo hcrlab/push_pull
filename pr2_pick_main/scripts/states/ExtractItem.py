@@ -117,9 +117,11 @@ class ExtractItem(smach.State):
 
 
         success_lift = False
-        attempts = 5
+       
+        attempts = 3
         for i in range(attempts):
             if userdata.bin_id > "C":
+                """
                 # Lift item to clear bin lip
                 pose_target = geometry_msgs.msg.PoseStamped()
                 pose_target.header.frame_id = 'base_footprint'
@@ -146,9 +148,10 @@ class ExtractItem(smach.State):
                 try:
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                    rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                """
             else:
 
                 euler_tuple = tf.transformations.euler_from_quaternion(
@@ -188,7 +191,7 @@ class ExtractItem(smach.State):
                 try:
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                    rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
 
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
