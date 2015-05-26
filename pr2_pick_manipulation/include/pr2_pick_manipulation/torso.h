@@ -34,7 +34,8 @@ class Torso {
 
   // Return true if torso height set successfully, false if not
   // height should be in the range [kMinHeight, kMaxHeight]
-  bool SetHeight(double height);
+  bool SetHeight(double height, bool blocking=true);
+	bool IsDone();
 };
 };  // namespace pr2_pick_manipulation
 
