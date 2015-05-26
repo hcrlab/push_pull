@@ -139,6 +139,7 @@ class VerifyGrasp(smach.State):
                 rospy.loginfo('[VerifyGrasp] Not enough missing depth pixels for transparent object.')
 
         # OR we verify visually that something is in the hand.
+        thin_object = userdata.item_model.zero_width_grasp
         if not grasp_succeeded and thin_object:
             grasp_succeeded = self._check_thin_object(debug=userdata.debug)
             if grasp_succeeded:
