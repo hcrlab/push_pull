@@ -150,7 +150,7 @@ class DropOffItem(smach.State):
         rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = self.DROPOFF_POS_ARM_Z 
         self._move_arm_ik.wait_for_service()
-        arm_into_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        arm_into_bin_success = self._move_arm_ik(goal=pose_target, arm=MoveArmIkRequest.RIGHT_ARM, duration=rospy.Duration(5))
         rospy.loginfo(arm_into_bin_success)
 
         # open gripper
@@ -162,7 +162,7 @@ class DropOffItem(smach.State):
         # raise arm
         pose_target.pose.position.z = self.DROPOFF_POS_ARM_START_Z
         self._move_arm_ik.wait_for_service()
-        arm_out_of_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        arm_out_of_bin_success = self._move_arm_ik(goal=pose_target, arm=MoveArmIkRequest.RIGHT_ARM, duration=rospy.Duration(1))
         rospy.loginfo(arm_out_of_bin_success)
 
         # get back to "untucked" position
