@@ -121,9 +121,7 @@ class ArmMover:
         service_request.ik_request.pose_stamped = request.goal
         service_request.ik_request.pose_stamped.header.stamp = rospy.Time(0)
         service_request.ik_request.avoid_collisions = False
-        rospy.loginfo("Waiting for compute ik service")
         self._compute_ik.wait_for_service()
-        rospy.loginfo("Compute ik service available")
         service_response = self._compute_ik(service_request)
         if service_response.error_code.val != moveit_msgs.msg.MoveItErrorCodes.SUCCESS:
             return MoveArmIkResponse(False)
@@ -137,12 +135,16 @@ class ArmMover:
                 filtered_joint_names.append(name)
                 filtered_joint_positions.append(position)
 
+        duration = request.duration
+        if duration.to_sec() <= 0:
+            duration = rospy.Duration(5)
+
         goal = JointTrajectoryGoal()
         goal.trajectory.header.stamp = rospy.Time.now()
         goal.trajectory.joint_names = filtered_joint_names
         goal.trajectory.points = [
             JointTrajectoryPoint(positions=filtered_joint_positions,
-                                 time_from_start=rospy.Duration(5))
+                                 time_from_start=duration)
         ]
         traj_action.send_goal(goal)
         traj_action.wait_for_result()

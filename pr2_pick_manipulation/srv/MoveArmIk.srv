@@ -5,5 +5,7 @@ geometry_msgs/PoseStamped goal
 int32 arm
 int32 LEFT_ARM = 1
 int32 RIGHT_ARM = 2
+
+duration duration
 ---
 bool success
