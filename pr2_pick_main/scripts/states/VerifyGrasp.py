@@ -118,6 +118,10 @@ class VerifyGrasp(smach.State):
         if not grasp_succeeded:
             self._optical_detect_item.wait_for_service(timeout=10)
             response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
+            if response.detect:
+                rospy.loginfo('Optical sensor detected an item in hand.')
+            else:
+                rospy.loginfo('Optical sensor: no detection.')
             grasp_succeeded = grasp_succeeded or response.detect
 
         # OR the depth pixels 
