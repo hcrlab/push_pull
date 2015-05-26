@@ -8,7 +8,8 @@ import smach
 import outcomes
 import visualization as viz
 import numpy as np
-
+import cv_bridge
+cvb = cv_bridge.CvBridge()
 
 class VerifyGrasp(smach.State):
     ''' Grasps an item in the bin. '''
@@ -80,7 +81,7 @@ class VerifyGrasp(smach.State):
         box_request.dimensions.z = 0.2
         response = self._count_points_in_box(box_request)
 
-        img = np.array(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image))
+        img = np.array(cvb.imgmsg_to_cv(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image)))
         num_missing_depth_pixels = np.sum(img[320:450,220:320]==0)
 
         box_pose = PoseStamped()
