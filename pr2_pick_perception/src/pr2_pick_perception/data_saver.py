@@ -11,7 +11,7 @@ class DataSaver(object):
         if len(os.listdir(data_dir)) > 12:
             rospy.logwarn('Bag directory {} has more than 10 files in it, not saving data.')
             return
-        self._bag = rosbag.Bag(data_path, 'w')
+        self._bag = rosbag.Bag(self._data_path, 'w')
         self._is_bag_open = True
 
     def save_message(self, topic, message):
@@ -21,5 +21,6 @@ class DataSaver(object):
         self._bag.write(topic, message)
 
     def close():
-        self._bag.close()
-        self._is_bag_open = False
+        if self._is_bag_open:
+            self._bag.close()
+            self._is_bag_open = False
