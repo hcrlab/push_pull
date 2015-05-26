@@ -2,6 +2,7 @@ from geometry_msgs.msg import PoseStamped
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import MoveArmRequest, MoveArmIkRequest
 from pr2_pick_perception.srv import CountPointsInBox, CountPointsInBoxRequest
+from pr2_pretouch_optical_dist.srv import OpticalRefineRequest
 import rospy
 import smach
 import outcomes
@@ -30,6 +31,7 @@ class VerifyGrasp(smach.State):
         self._count_points_in_box = kwargs['count_points_in_box']
         self._markers = kwargs['markers']
         self._tts = kwargs['tts']
+        self._optical_detect_item = kwargs['optical_detect_item']
 
     def _check_thin_object(self, debug=False):
         """Holds the item up and checks if it's there.
@@ -94,12 +96,22 @@ class VerifyGrasp(smach.State):
         grasp_succeeded = False
         thin_object = userdata.item_model.zero_width_grasp
         gripper_states = self._get_grippers()
+
+        # Grasp succeeded if gripper is not closed all the way
         grasp_succeeded = gripper_states.right_open
+
+        # OR the optical sensor detects something within 10cm of one of its
+        # sensors.
+        if not grasp_succeeded:
+            self._optical_detect_item.wait_for_service()
+            response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
+            grasp_succeeded = grasp_succeeded or response.detect
 
         if grasp_succeeded:
             rospy.loginfo('[VerifyGrasp] Item in hand.')
             self._tts.publish('Item in hand.')
 
+        # OR we verify visually that something is in the hand.
         if not grasp_succeeded:
             grasp_succeeded = self._check_thin_object(debug=userdata.debug)
             if grasp_succeeded:
