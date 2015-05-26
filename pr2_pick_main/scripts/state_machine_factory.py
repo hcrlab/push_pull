@@ -6,6 +6,7 @@ import smach
 import tf
 from visualization_msgs.msg import Marker
 
+from joint_states_listener.srv import ReturnJointStates
 import outcomes
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
@@ -89,6 +90,7 @@ class StateMachineBuilder(object):
             'set_grippers': rospy.ServiceProxy('set_grippers_service', SetGrippers),
             'get_grippers': rospy.ServiceProxy('get_grippers_service', GetGrippers),
             'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
+            'joint_states_listener': rospy.ServiceProxy('return_joint_states', ReturnJointStates),
 
             # World and Perception
             'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),

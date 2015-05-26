@@ -65,6 +65,7 @@ class MoveToBin(smach.State):
         self.move_torso = move_torso
         self.markers = markers
         self._tuck_arms = kwargs['tuck_arms']
+        self.joint_states_listener = kwargs['joint_states_listener']
 
         self.torso_height_by_bin = \
             {letter: self.top_row_torso_height for letter in ('A', 'B', 'C')}
@@ -110,12 +111,20 @@ class MoveToBin(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
+        # set torso height for the given shelf
+        self.move_torso.wait_for_service()
+        result = self.move_torso(self.torso_height_by_bin[userdata.bin_id], False)
+
         self.drive_to_pose.wait_for_service()
         self.drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
 
-        # set torso height for the given shelf
-        self.move_torso.wait_for_service()
-        result = self.move_torso(self.torso_height_by_bin[userdata.bin_id])
+        # Wait until torso is done
+        done = False
+        while not done:
+            torso_state = self.joint_states_listener("torso_lift_joint")
+            if torso_state.positions[0] == self.torso_height_by_bin[userdata.bin_id]:
+                done = True
+            rospy.sleep(0.1)
 
         # face the head towards the bin
         self.move_head.wait_for_service()

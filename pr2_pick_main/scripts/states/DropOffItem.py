@@ -1,4 +1,5 @@
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
+from pr2_controllers_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from pr2_pick_main import handle_service_exceptions
 from std_msgs.msg import Header
 from pr2_pick_manipulation.srv import MoveArmIk, MoveArmIkRequest
@@ -9,6 +10,36 @@ import rospy
 import smach
 import tf
 import visualization as viz
+
+class Arm:
+    def __init__(self, arm_name):
+        #arm_name should be l_arm or r_arm
+        self.name = arm_name
+        self.jta = actionlib.SimpleActionClient('/'+arm_name+'_controller/joint_trajectory_action',
+                        JointTrajectoryAction)
+        rospy.loginfo('Waiting for joint trajectory action')
+        self.jta.wait_for_server()
+        rospy.loginfo('Found joint trajectory action!')
+
+    def move(self, waypoints):
+        goal = JointTrajectoryGoal()
+        char = self.name[0] #either 'r' or 'l'
+        goal.trajectory.joint_names = [char+'_shoulder_pan_joint',
+                   char+'_shoulder_lift_joint',
+                   char+'_upper_arm_roll_joint',
+                   char+'_elbow_flex_joint',
+                   char+'_forearm_roll_joint',
+                   char+'_wrist_flex_joint',
+                   char+'_wrist_roll_joint']
+        time_offset = 0
+        for waypoint in waypoints:
+            point = JointTrajectoryPoint()
+            point.positions = waypoint
+            point.time_from_start = rospy.Duration(1 + time_offset)
+            goal.trajectory.points.append(point)
+            time_offset = time_offset + 1
+            
+        self.jta.send_goal_and_wait(goal)
 
 
 class DropOffItem(smach.State): 
@@ -32,6 +63,18 @@ class DropOffItem(smach.State):
     # object
     DROPOFF_POS_ARM_START_Z = 0.7477
 
+
+    above_joint_positions_a_c = [-0.35011491317222343, -1.4795590541938846, 0.9204268572072701, 122.73570699916009, -0.7914346859720043, -1.3839844110051667, 115.03540064173117]
+    lower_joint_positions_a_c = [-0.2752292092574864, -1.3794907670440026, 0.7549591876149567, 122.77197712267808, -0.15386447303894846, -0.9296642673251947, 114.93219748325492]
+    above_joint_positions_d_f = [-0.35011491317222343, -1.5068353313043328, 0.9183965790527632, 122.73397158655156, -1.0595500434542977, -1.6479965381695019, 115.0646386360381]
+    lower_joint_positions_d_f = [-0.35011491317222343, -1.477071855673175, 0.917973604437241, 122.7370953292469, -0.7711667863783103, -1.3662327716045377, 115.0333992314066]
+    above_joint_positions_g_i = [-0.35011491317222343, -1.5216756158112332, 0.8228889108678339, 122.7795550910686, -1.2851028117898338, -1.9574754868379154, 115.11210686786677]
+    lower_joint_positions_g_i = [-0.35011491317222343, -1.5123071680498938, 0.9034232776632748, 122.74062400155087, -1.1294742970525415, -1.7306634863587442, 115.07490674118162]
+    above_joint_positions_j_l = [-0.012728358489982883, -1.3654795487106721, 0.8493671217995282, 122.53752287926746, -1.2919070352248598, -1.9821450445343922, 114.91627321849847]
+    lower_joint_positions_j_l = [-0.35011491317222343, -1.5227534018368742, 0.8009788257837802, 122.790777425937, -1.3078318134770477, -1.997634220089851, 115.12120023216758]
+
+
+
     def __init__(self, **kwargs):
         smach.State.__init__(self,
             outcomes=[
@@ -53,6 +96,8 @@ class DropOffItem(smach.State):
         self._tf_listener = kwargs["tf_listener"]
 
         self._order_bin_found = False
+
+        self._arm = Arm("r_arm")
 
     def get_position(self, base_frame="odom_combined"):
         self._tf_listener.waitForTransform(base_frame,"base_footprint",rospy.Time(0), 
@@ -78,6 +123,20 @@ class DropOffItem(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Dropping off item from bin {}'.format(userdata.bin_id))
         self._tts.publish('Dropping off item from bin {}'.format(userdata.bin_id))
+
+        if userdata.bin_id < D:
+            self._above_bin_joint_positions = above_joint_positions_a_c
+            self._lower_arm_joint_positions = lower_joint_positions_a_c
+        elif userdata.bin_id < G:
+            self._above_bin_joint_positions = above_joint_positions_d_f
+            self._lower_arm_joint_positions = lower_joint_positions_d_f
+        elif userdata.bin_id < J:
+            self._above_bin_joint_positions = above_joint_positions_g_i
+            self._lower_arm_joint_positions = lower_joint_positions_g_i
+        else:
+            self._above_bin_joint_positions = above_joint_positions_j_l
+            self._lower_arm_joint_positions = lower_joint_positions_j_l
+        
 
         if not self._order_bin_found:
             rospy.loginfo('Creating a static TF for the order bin relative to the shelf')
@@ -133,6 +192,7 @@ class DropOffItem(smach.State):
 
         # move arm above bin
         rospy.loginfo('Move arm above order bin')
+        """
         pose_target = PoseStamped()
         pose_target.header.frame_id = "base_footprint";
         pose_target.pose.position.x = self.DROPOFF_POS_ARM_X
@@ -145,13 +205,23 @@ class DropOffItem(smach.State):
         self._move_arm_ik.wait_for_service()
         arm_above_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
         rospy.loginfo(arm_above_bin_success)
+        """
+        
+        waypoints = [self._above_bin_joint_positions]
+        self._arm.move(waypoints)
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
+        """
         pose_target.pose.position.z = self.DROPOFF_POS_ARM_Z 
         self._move_arm_ik.wait_for_service()
         arm_into_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
         rospy.loginfo(arm_into_bin_success)
+        """
+
+        waypoints = [self._lower_arm_joint_positions]
+        self._arm.move(waypoints)
+
 
         # open gripper
         rospy.loginfo('Open gripper')
