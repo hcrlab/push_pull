@@ -1,4 +1,5 @@
 from pr2_pick_main import handle_service_exceptions
+from pr2_pick_perception import DataSaver
 from pr2_pick_perception.srv import CropShelfRequest
 from pr2_pick_perception.srv import SegmentItemsRequest
 from geometry_msgs.msg import Point
@@ -61,6 +62,14 @@ class SenseBin(smach.State):
         crop_request = CropShelfRequest(cellID=userdata.bin_id)
         self._crop_shelf.wait_for_service()
         crop_response = self._crop_shelf(crop_request)
+        filename = '_'.join([x[:5] for x in [userdata.current_target] + [userdata.current_bin_items])
+        filename += '.bag'
+
+        # Save point cloud for later analysis
+        data_saver = DataSaver('/tmp/cell_pc', filename)
+        data_saver.save_message('cell_pc', crop_response.cloud)
+        data_saver.close()
+        rospy.loginfo('Saved cropped point cloud to /tmp/cell_pc/{}'.format(filename))
 
         # Segment items.
         segment_request = SegmentItemsRequest(cloud=crop_response.cloud, items=userdata.current_bin_items)
