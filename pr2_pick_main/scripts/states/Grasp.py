@@ -1565,6 +1565,7 @@ class Grasp(smach.State):
         self.loginfo("Checking pre-grasp feasible")
 
         self._moveit_move_arm.wait_for_service()
+        self.loginfo("_moveit_move_arm.wait_for_service() completed")
         success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"],
                                                   0.01, 0.01, 0, 'right_arm', 
                                                   True).success
