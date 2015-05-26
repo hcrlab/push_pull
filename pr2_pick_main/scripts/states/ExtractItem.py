@@ -117,9 +117,11 @@ class ExtractItem(smach.State):
 
 
         success_lift = False
-        attempts = 5
+       
+        attempts = 3
         for i in range(attempts):
             if userdata.bin_id > "C":
+                
                 # Lift item to clear bin lip
                 pose_target = geometry_msgs.msg.PoseStamped()
                 pose_target.header.frame_id = 'base_footprint'
@@ -143,12 +145,14 @@ class ExtractItem(smach.State):
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
                 self._move_arm_ik.wait_for_service()
+                """
                 try:
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                    rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                """
             else:
 
                 euler_tuple = tf.transformations.euler_from_quaternion(
@@ -188,7 +192,7 @@ class ExtractItem(smach.State):
                 try:
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                    rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
 
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
@@ -203,7 +207,7 @@ class ExtractItem(smach.State):
 
 
         if not success_lift and userdata.bin_id > "C":
-            self._move_torso(self.torso_height_by_bin[userdata.bin_id])
+            self._move_torso(self.torso_height_by_bin[userdata.bin_id], True)
         attempts = 5
 
         # Pull item out of bin
@@ -254,7 +258,7 @@ class ExtractItem(smach.State):
         self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
 
         if not success_lift:
-            self._move_torso(self.torso_height_by_bin[userdata.bin_id] - 0.04)  
+            self._move_torso(self.torso_height_by_bin[userdata.bin_id] - 0.04, True)  
 
 
         # Center Arm

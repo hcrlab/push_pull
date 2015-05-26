@@ -40,6 +40,8 @@ class ArmMover:
         rospy.loginfo("Requested to move: " + req.group)
 
         self._compute_ik.wait_for_service()
+
+        rospy.loginfo("Moveit compute ik service available")
         while plan is None:
             try:
                 group = None
@@ -119,7 +121,9 @@ class ArmMover:
         service_request.ik_request.pose_stamped = request.goal
         service_request.ik_request.pose_stamped.header.stamp = rospy.Time(0)
         service_request.ik_request.avoid_collisions = False
+        rospy.loginfo("Waiting for compute ik service")
         self._compute_ik.wait_for_service()
+        rospy.loginfo("Compute ik service available")
         service_response = self._compute_ik(service_request)
         if service_response.error_code.val != moveit_msgs.msg.MoveItErrorCodes.SUCCESS:
             return MoveArmIkResponse(False)

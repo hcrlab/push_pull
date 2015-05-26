@@ -1,0 +1,2 @@
+---
+float32 timeElapsed # The number of seconds that have passed since the run started

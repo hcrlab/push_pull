@@ -15,6 +15,8 @@ TorsoService::TorsoService()
 
 bool TorsoService::Callback(MoveTorso::Request& request,
                             MoveTorso::Response& response) {
+  ROS_INFO("Received torso move request");
+
   if (request.height < Torso::kMinHeight) {
     ROS_WARN("Torso service: requested height %f was lower than the minimum of"
              " %f", request.height, Torso::kMinHeight);
@@ -25,9 +27,15 @@ bool TorsoService::Callback(MoveTorso::Request& request,
              " %f", request.height, Torso::kMaxHeight);
     request.height = Torso::kMaxHeight;
   }
-  bool success = torso_.SetHeight(request.height);
+  bool success = torso_.SetHeight(request.height, request.blocking);
+  ROS_INFO("Returning torso move response");
   response.success = success;
-  return success;
+  
+  if (!request.blocking) {
+    response.success = true;
+  }
+
+  return response.success;
 }
 
 };  // namespace pr2_pick_manipulation
