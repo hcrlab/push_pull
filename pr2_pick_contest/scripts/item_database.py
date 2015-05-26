@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""Provides information about contest items.
-"""
-
+'''Provides information about contest items. '''
 import argparse
 import copy
 import json
@@ -27,7 +25,8 @@ class ItemDatabase(object):
             model.bonus_points = data_dict['bonus_points']
             model.grasp_effort = data_dict['grasp_effort']
             model.success_prior = data_dict['success_prior']
-            
+            model.speech_name = data_dict['speech_name']
+
             self._item_data[item] = model
 
     def lookup_item(self, request):
@@ -36,7 +35,7 @@ class ItemDatabase(object):
         return response
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     rospy.init_node('item_database')
 
     # get the filename from the command line
