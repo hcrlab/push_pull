@@ -2,6 +2,7 @@ from geometry_msgs.msg import PoseStamped
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import MoveArmRequest, MoveArmIkRequest
 from pr2_pick_perception.srv import CountPointsInBox, CountPointsInBoxRequest
+from sensor_msgs.msg import Image
 import rospy
 import smach
 import outcomes
@@ -36,13 +37,22 @@ class VerifyGrasp(smach.State):
         """
         request = MoveArmRequest()
         request.goal.header.frame_id = 'torso_lift_link'
-        request.goal.pose.position.x = 0.479
+        # new lower position
+        request.goal.pose.position.x = 0.55
         request.goal.pose.position.y = -0.284
-        request.goal.pose.position.z = 0.327
+        request.goal.pose.position.z = 0.257
         request.goal.pose.orientation.x = 0.015
         request.goal.pose.orientation.y = -0.039
         request.goal.pose.orientation.z = 0.661
         request.goal.pose.orientation.w = 0.749
+        # old higher position
+        # request.goal.pose.position.x = 0.479
+        # request.goal.pose.position.y = -0.284
+        # request.goal.pose.position.z = 0.327
+        # request.goal.pose.orientation.x = 0.015
+        # request.goal.pose.orientation.y = -0.039
+        # request.goal.pose.orientation.z = 0.661
+        # request.goal.pose.orientation.w = 0.749
         request.position_tolerance = 0.01
         request.orientation_tolerance = 0.01
         request.planning_time = 8
@@ -69,6 +79,9 @@ class VerifyGrasp(smach.State):
         box_request.dimensions.z = 0.2
         response = self._count_points_in_box(box_request)
 
+        # img = np.array(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image))
+        # num_missing_depth_pixels = np.sum(img[300:350, 400:500]==0)
+
         box_pose = PoseStamped()
         box_pose.header.frame_id = 'torso_lift_link'
         box_pose.pose.position = box_request.center
@@ -79,7 +92,7 @@ class VerifyGrasp(smach.State):
             viz.publish_bounding_box(self._markers, box_pose, 0.12, 0.12, 0.2, 0.5,
                                      0.5, 0.5, 0.25, 2345)
             raw_input('[VerifyGrasp] Press enter to continue: ')
-        return response.num_points > 1400
+        return response.num_points > 1400  # or num_missing_depth_pixels > 1000
 
     @handle_service_exceptions(outcomes.VERIFY_GRASP_FAILURE)
     def execute(self, userdata):
