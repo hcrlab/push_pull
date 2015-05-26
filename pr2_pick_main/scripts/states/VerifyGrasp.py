@@ -66,7 +66,7 @@ class VerifyGrasp(smach.State):
                           MoveArmIkRequest().RIGHT_ARM)
 
         self._move_head.wait_for_service()
-        self._move_head(0, 0, 0, 'r_wrist_roll_link')
+        self._move_head(0, 0, -0.2, 'r_wrist_roll_link')
         rospy.sleep(1)
 
         box_request = CountPointsInBoxRequest()
