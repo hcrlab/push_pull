@@ -79,8 +79,8 @@ class VerifyGrasp(smach.State):
         box_request.dimensions.z = 0.2
         response = self._count_points_in_box(box_request)
 
-        # img = np.array(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image))
-        # num_missing_depth_pixels = np.sum(img[300:350, 400:500]==0)
+        img = np.array(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image))
+        num_missing_depth_pixels = np.sum(imgs[320:450,220:320]==0)
 
         box_pose = PoseStamped()
         box_pose.header.frame_id = 'torso_lift_link'
@@ -92,7 +92,7 @@ class VerifyGrasp(smach.State):
             viz.publish_bounding_box(self._markers, box_pose, 0.12, 0.12, 0.2, 0.5,
                                      0.5, 0.5, 0.25, 2345)
             raw_input('[VerifyGrasp] Press enter to continue: ')
-        return response.num_points > 1400  # or num_missing_depth_pixels > 1000
+        return response.num_points > 1400 or num_missing_depth_pixels > 1000
 
     @handle_service_exceptions(outcomes.VERIFY_GRASP_FAILURE)
     def execute(self, userdata):
