@@ -107,11 +107,14 @@ class VerifyGrasp(smach.State):
 
         # check if grasp succeeded
         grasp_succeeded = False
-        thin_object = userdata.item_model.zero_width_grasp
         gripper_states = self._get_grippers()
 
         # Grasp succeeded if gripper is not closed all the way
         grasp_succeeded = gripper_states.right_open
+        if grasp_succeeded:
+            rospy.loginfo('[VerifyGrasp] Grasp succeeded because the gripper is not fully closed.')
+        else:
+            rospy.loginfo('[VerifyGrasp] Gripper fully closed.')
 
         # OR the optical sensor detects something within 10cm of one of its
         # sensors.
@@ -119,31 +122,29 @@ class VerifyGrasp(smach.State):
             self._optical_detect_item.wait_for_service(timeout=10)
             response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
             if response.detect:
-                rospy.loginfo('Optical sensor detected an item in hand.')
+                rospy.loginfo('[VerifyGrasp] Optical sensor detected an item in hand.')
             else:
-                rospy.loginfo('Optical sensor: no detection.')
+                rospy.loginfo('[VerifyGrasp] Optical sensor: no detection.')
             grasp_succeeded = grasp_succeeded or response.detect
 
         # OR the depth pixels 
         if not grasp_succeeded:
             img = np.array(cvb.imgmsg_to_cv(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image)))
             num_missing_depth_pixels = np.sum(img[320:450,220:320]==0)
-            rospy.loginfo('Number of missing depth pixels near hand: {}'.format(num_missing_depth_pixels))
+            rospy.loginfo('[VerifyGrasp]: Number of missing depth pixels near hand: {}'.format(num_missing_depth_pixels))
             grasp_succeeded = grasp_succeeded or num_missing_depth_pixels > 1000
-
-        if grasp_succeeded:
-            rospy.loginfo('[VerifyGrasp] Item in hand.')
-            self._tts.publish('Item in hand.')
+            if grasp_succeeded:
+                rospy.loginfo('[VerifyGrasp] Based on missing depth pixels, transparent item is in hand.')
+            else:
+                rospy.loginfo('[VerifyGrasp] Not enough missing depth pixels for transparent object.')
 
         # OR we verify visually that something is in the hand.
-        if not grasp_succeeded:
+        if not grasp_succeeded and thin_object:
             grasp_succeeded = self._check_thin_object(debug=userdata.debug)
             if grasp_succeeded:
-                rospy.loginfo('[VerifyGrasp] Saw item in hand.')
-                self._tts.publish('Saw item in hand. Grasp succeeded.')
+                rospy.loginfo('[VerifyGrasp] Saw item in hand visually.')
             else:
                 rospy.loginfo('[VerifyGrasp] Item not in hand.')
-                self._tts.publish('Item not in hand.')
 
         # decide what state to go to next
         if grasp_succeeded:
