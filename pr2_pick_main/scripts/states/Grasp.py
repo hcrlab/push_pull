@@ -2024,7 +2024,7 @@ class Grasp(smach.State):
                 self._move_arm_ik.wait_for_service()
                 self.loginfo("Service available")
                 success_pre_grasp = self._move_arm_ik(grasp["pre_grasp"], 
-                                        MoveArmIkRequest().RIGHT_ARM).success
+                                        MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
 
 
             if not success_pre_grasp:
@@ -2064,7 +2064,7 @@ class Grasp(smach.State):
             self._move_arm_ik.wait_for_service()
 
             success_grasp = self._move_arm_ik(grasp["grasp"], 
-                                MoveArmIkRequest().RIGHT_ARM).success
+                                MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
 
             #self._moveit_move_arm.wait_for_service()
             #success_grasp = self._moveit_move_arm(grasp["grasp"], 

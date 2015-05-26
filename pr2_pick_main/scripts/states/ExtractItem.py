@@ -147,11 +147,11 @@ class ExtractItem(smach.State):
                 self._move_arm_ik.wait_for_service()
                 """
                 try:
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 except rospy.ServiceException:
                     rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 """
             else:
 
@@ -190,18 +190,18 @@ class ExtractItem(smach.State):
             
                 self._move_arm_ik.wait_for_service()
                 try:
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 except rospy.ServiceException:
                     rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
 
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
             if success_lift:
                 rospy.loginfo("Lift success")
                 break
             else:
                 pose_target.pose.orientation = Quaternion() 
-                success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 rospy.loginfo("Lift attempt " + str(i) + " failed")
                 continue
 

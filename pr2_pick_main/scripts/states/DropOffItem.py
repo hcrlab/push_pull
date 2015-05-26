@@ -143,7 +143,7 @@ class DropOffItem(smach.State):
         pose_target.pose.orientation.z = self.DROPOFF_QUAT_ARM_Z
         pose_target.pose.orientation.w = self.DROPOFF_QUAT_ARM_W 
         self._move_arm_ik.wait_for_service()
-        arm_above_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM)
+        arm_above_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5))
         rospy.loginfo(arm_above_bin_success)
 
         # lower arm into bin

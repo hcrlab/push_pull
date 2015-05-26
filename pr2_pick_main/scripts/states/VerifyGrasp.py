@@ -67,7 +67,8 @@ class VerifyGrasp(smach.State):
 
         self._move_arm_ik.wait_for_service()
         self._move_arm_ik(request.goal,
-                          MoveArmIkRequest().RIGHT_ARM)
+                          MoveArmIkRequest().RIGHT_ARM,
+                          duration=rospy.Duration(5))
 
         self._move_head.wait_for_service()
         self._move_head(0, 0, -0.2, 'r_wrist_roll_link')
@@ -115,8 +116,12 @@ class VerifyGrasp(smach.State):
         # OR the optical sensor detects something within 10cm of one of its
         # sensors.
         if not grasp_succeeded:
-            self._optical_detect_item.wait_for_service()
+            self._optical_detect_item.wait_for_service(timeout=10)
             response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
+            if response.detect:
+                rospy.loginfo('Optical sensor detected an item in hand.')
+            else:
+                rospy.loginfo('Optical sensor: no detection.')
             grasp_succeeded = grasp_succeeded or response.detect
 
         # OR the depth pixels 
