@@ -203,7 +203,7 @@ class ExtractItem(smach.State):
 
 
         if not success_lift and userdata.bin_id > "C":
-            self._move_torso(self.torso_height_by_bin[userdata.bin_id])
+            self._move_torso(self.torso_height_by_bin[userdata.bin_id], True)
         attempts = 5
 
         # Pull item out of bin
@@ -254,7 +254,7 @@ class ExtractItem(smach.State):
         self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
 
         if not success_lift:
-            self._move_torso(self.torso_height_by_bin[userdata.bin_id] - 0.04)  
+            self._move_torso(self.torso_height_by_bin[userdata.bin_id] - 0.04, True)  
 
 
         # Center Arm

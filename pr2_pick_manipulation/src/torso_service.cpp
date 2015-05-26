@@ -25,7 +25,7 @@ bool TorsoService::Callback(MoveTorso::Request& request,
              " %f", request.height, Torso::kMaxHeight);
     request.height = Torso::kMaxHeight;
   }
-  bool success = torso_.SetHeight(request.height);
+  bool success = torso_.SetHeight(request.height, request.blocking);
   response.success = success;
   return success;
 }
