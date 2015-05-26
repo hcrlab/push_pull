@@ -211,7 +211,7 @@
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1,
+    "grasp_effort": 30,
     "success_prior": 0.8,
     "speech_name": "sticky notes"
   },
