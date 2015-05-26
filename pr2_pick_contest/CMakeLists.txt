@@ -6,6 +6,7 @@ project(pr2_pick_contest)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   pr2_pick_perception
+  roscpp
   rospy
   std_msgs
   message_generation
