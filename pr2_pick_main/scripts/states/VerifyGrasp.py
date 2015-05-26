@@ -7,6 +7,7 @@ import rospy
 import smach
 import outcomes
 import visualization as viz
+import numpy as np
 
 
 class VerifyGrasp(smach.State):
