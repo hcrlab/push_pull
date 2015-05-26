@@ -23,20 +23,29 @@ git submodule update
 ## Running the code
 [Recommended .bashrc](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/recommended_bashrc.md)
 
+
+### On a desktop computer
 ```bash
-# On a desktop computer
 setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
 roslaunch pr2_pick_main rviz.launch
+```
 
-# On hal9k
-# hal9k is the laptop in the robot's backpack.
-# We run MoveIt on hal9k because it runs too slowly on c1.
-# You must launch MoveIt first, or else the prerequisites below won't work.
+### On hal9k
+hal9k is the laptop in the robot's backpack.
+We run MoveIt on hal9k because it runs too slowly on c1.
+You must launch MoveIt first, or else the prerequisites below won't work.
+```bash
 ssh c1
 ssh apc@hal9k # SSH into hal9k via c1
 roslaunch pr2_pick_manipulation move_group.launch
+```
 
-# On the robot
+### On the robot
+Before running `robot start`, verify that the latest version of pr2_robot from our repository is sourced.
+Try running `roscd pr2_robot`, it should take you to our repository.
+
+```bash
+robot start
 roslaunch pr2_pick_main main_prereqs.launch
 rosrun pr2_pick_main main.py
 ```

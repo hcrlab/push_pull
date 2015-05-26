@@ -19,6 +19,7 @@ from pr2_pick_perception.srv import CountPointsInBox
 from pr2_pick_perception.srv import SegmentItems
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
+from pr2_pretouch_optical_dist.srv import OpticalRefine
 import states
 from states.GraspTool import GraspTool, ReleaseTool
 
@@ -113,6 +114,7 @@ class StateMachineBuilder(object):
                                                        ClassifyTargetItem),
             'count_points_in_box': rospy.ServiceProxy('perception/count_points_in_box',
                                                        CountPointsInBox),
+            'optical_detect_item': rospy.ServiceProxy('optical_detect_item', OpticalRefine),
 
             # Contest
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),

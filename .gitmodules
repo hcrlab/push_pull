@@ -5,3 +5,6 @@
 	path = pr2_ethercat_drivers
 	url = https://bitbucket.org/uwsensors/pr2_ethercat_drivers.git 
   branch = hydro-fingersensors
+[submodule "pr2_robot"]
+	path = pr2_robot
+	url = https://github.com/PR2/pr2_robot

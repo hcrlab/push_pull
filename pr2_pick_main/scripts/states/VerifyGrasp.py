@@ -3,6 +3,7 @@ from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import MoveArmRequest, MoveArmIkRequest
 from pr2_pick_perception.srv import CountPointsInBox, CountPointsInBoxRequest
 from sensor_msgs.msg import Image
+from pr2_pretouch_optical_dist.srv import OpticalRefineRequest
 import rospy
 import smach
 import outcomes
@@ -33,6 +34,7 @@ class VerifyGrasp(smach.State):
         self._count_points_in_box = kwargs['count_points_in_box']
         self._markers = kwargs['markers']
         self._tts = kwargs['tts']
+        self._optical_detect_item = kwargs['optical_detect_item']
 
     def _check_thin_object(self, debug=False):
         """Holds the item up and checks if it's there.
@@ -81,9 +83,6 @@ class VerifyGrasp(smach.State):
         box_request.dimensions.z = 0.2
         response = self._count_points_in_box(box_request)
 
-        img = np.array(cvb.imgmsg_to_cv(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image)))
-        num_missing_depth_pixels = np.sum(img[320:450,220:320]==0)
-
         box_pose = PoseStamped()
         box_pose.header.frame_id = 'torso_lift_link'
         box_pose.pose.position = box_request.center
@@ -94,7 +93,7 @@ class VerifyGrasp(smach.State):
             viz.publish_bounding_box(self._markers, box_pose, 0.12, 0.12, 0.2, 0.5,
                                      0.5, 0.5, 0.25, 2345)
             raw_input('[VerifyGrasp] Press enter to continue: ')
-        return response.num_points > 1400 or num_missing_depth_pixels > 1000
+        return response.num_points > 1400
 
     @handle_service_exceptions(outcomes.VERIFY_GRASP_FAILURE)
     def execute(self, userdata):
@@ -109,12 +108,29 @@ class VerifyGrasp(smach.State):
         grasp_succeeded = False
         thin_object = userdata.item_model.zero_width_grasp
         gripper_states = self._get_grippers()
+
+        # Grasp succeeded if gripper is not closed all the way
         grasp_succeeded = gripper_states.right_open
+
+        # OR the optical sensor detects something within 10cm of one of its
+        # sensors.
+        if not grasp_succeeded:
+            self._optical_detect_item.wait_for_service()
+            response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
+            grasp_succeeded = grasp_succeeded or response.detect
+
+        # OR the depth pixels 
+        if not grasp_succeeded:
+            img = np.array(cvb.imgmsg_to_cv(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image)))
+            num_missing_depth_pixels = np.sum(img[320:450,220:320]==0)
+            rospy.loginfo('Number of missing depth pixels near hand: {}'.format(num_missing_depth_pixels))
+            grasp_succeeded = grasp_succeeded or num_missing_depth_pixels > 1000
 
         if grasp_succeeded:
             rospy.loginfo('[VerifyGrasp] Item in hand.')
             self._tts.publish('Item in hand.')
 
+        # OR we verify visually that something is in the hand.
         if not grasp_succeeded:
             grasp_succeeded = self._check_thin_object(debug=userdata.debug)
             if grasp_succeeded:

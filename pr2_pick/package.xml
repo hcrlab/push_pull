@@ -6,8 +6,6 @@
   <maintainer email="amazonpickingchallenge@cs.washington.edu">UW Amazon Picking Challenge Team</maintainer>
   <license>BSD</license>
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <run_depend>roscpp</run_depend>
   <run_depend>festival_tts</run_depend>
   <run_depend>joint_states_listener</run_depend>
   <run_depend>pr2_ethercat_drivers</run_depend>
