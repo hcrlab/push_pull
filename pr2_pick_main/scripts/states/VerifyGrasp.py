@@ -103,7 +103,7 @@ class VerifyGrasp(smach.State):
         # OR the optical sensor detects something within 10cm of one of its
         # sensors.
         if not grasp_succeeded:
-            self._optical_detect_item.wait_for_service()
+            self._optical_detect_item.wait_for_service(timeout=10)
             response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
             grasp_succeeded = grasp_succeeded or response.detect
 
