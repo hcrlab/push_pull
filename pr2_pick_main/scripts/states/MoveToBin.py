@@ -7,6 +7,7 @@ from std_msgs.msg import Header
 import tf
 import visualization as viz
 
+from joint_states_listener.srv import ReturnJointStatesRequest
 import outcomes
 
 
@@ -121,9 +122,13 @@ class MoveToBin(smach.State):
         # Wait until torso is done
         done = False
         while not done:
-            torso_state = self.joint_states_listener("torso_lift_joint")
-            if torso_state.positions[0] == self.torso_height_by_bin[userdata.bin_id]:
+            torso_req = ReturnJointStatesRequest()
+            torso_req.name = ["torso_lift_joint"]  
+            torso_state = self.joint_states_listener(torso_req)
+            if math.fabs(torso_state.position[0] - self.torso_height_by_bin[userdata.bin_id]) < 0.005:
                 done = True
+            rospy.loginfo("Torso pose: " + str(torso_state.position[0]))
+            rospy.loginfo("Desired Torso pose: " + str(self.torso_height_by_bin[userdata.bin_id]))
             rospy.sleep(0.1)
 
         # face the head towards the bin

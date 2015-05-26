@@ -121,7 +121,7 @@ class ExtractItem(smach.State):
         attempts = 3
         for i in range(attempts):
             if userdata.bin_id > "C":
-                """
+                
                 # Lift item to clear bin lip
                 pose_target = geometry_msgs.msg.PoseStamped()
                 pose_target.header.frame_id = 'base_footprint'
@@ -145,6 +145,7 @@ class ExtractItem(smach.State):
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
                 self._move_arm_ik.wait_for_service()
+                """
                 try:
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
                 except rospy.ServiceException:
