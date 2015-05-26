@@ -34,19 +34,22 @@ bool Torso::SetHeight(double height, bool blocking) {
 
   pr2_controllers_msgs::SingleJointPositionGoal goal;
   goal.position = height;
-
+  ROS_INFO("About to send torso goal!");
   torso_client_->sendGoal(goal);
   ROS_INFO("Sent torso goal %0.3f", height);
 
 	if(blocking) {
 		torso_client_->waitForResult();
+        ROS_INFO("Got torso client result");
 	}
   
 
   if (torso_client_->getState() == SimpleClientGoalState::SUCCEEDED) {
+    ROS_INFO("Torso goal success");
     return true;
   }
   else {
+    ROS_INFO("Torso goal failed");
     return false;
   }
 }

@@ -51,8 +51,11 @@ def main(mock=False,
     # Holds data about the state of each bin.
     sm.userdata.bin_data = {}
     for bin_id in 'ABCDEFGHIJKL':
+        num_attempts = attempts_per_bin
+        if bin_id in 'ABC':
+            num_attempts = 1
         sm.userdata.bin_data[bin_id] = BinData(id, False, False,
-                                               attempts_per_bin)
+                                               num_attempts)
 
     # The starting pose of the robot, in odom_combined.
     sm.userdata.start_pose = None
