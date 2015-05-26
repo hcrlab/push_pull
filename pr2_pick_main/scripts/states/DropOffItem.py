@@ -1,3 +1,4 @@
+import actionlib
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
 from pr2_controllers_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from pr2_pick_main import handle_service_exceptions
@@ -124,13 +125,13 @@ class DropOffItem(smach.State):
         rospy.loginfo('Dropping off item from bin {}'.format(userdata.bin_id))
         self._tts.publish('Dropping off item from bin {}'.format(userdata.bin_id))
 
-        if userdata.bin_id < D:
+        if userdata.bin_id < "D":
             self._above_bin_joint_positions = above_joint_positions_a_c
             self._lower_arm_joint_positions = lower_joint_positions_a_c
-        elif userdata.bin_id < G:
+        elif userdata.bin_id < "G":
             self._above_bin_joint_positions = above_joint_positions_d_f
             self._lower_arm_joint_positions = lower_joint_positions_d_f
-        elif userdata.bin_id < J:
+        elif userdata.bin_id < "J":
             self._above_bin_joint_positions = above_joint_positions_g_i
             self._lower_arm_joint_positions = lower_joint_positions_g_i
         else:
