@@ -83,6 +83,7 @@ class VerifyGrasp(smach.State):
 
         img = np.array(cvb.imgmsg_to_cv(rospy.wait_for_message('/head_mount_kinect/depth_registered/image_raw',Image)))
         num_missing_depth_pixels = np.sum(img[320:450,220:320]==0)
+        rospy.loginfo('Number of missing depth pixels near hand: {}'.format(num_missing_depth_pixels))
 
         box_pose = PoseStamped()
         box_pose.header.frame_id = 'torso_lift_link'
