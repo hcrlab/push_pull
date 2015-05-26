@@ -42,8 +42,6 @@ def dummy(idx, box, num_points, transformed_point):
                 num_points[idx] += 1
 
 
-
-
 class Grasp(smach.State):
     ''' Grasps an item in the bin. '''
     name = 'GRASP'
@@ -2147,7 +2145,7 @@ class Grasp(smach.State):
         if userdata.item_model.allow_finger_collisions:
             self.max_finger_collision_points = 1000
 
-        self._tts.publish('Grasping item')
+        self._tts.publish('Grasping {}'.format(userdata.item_model.speech_name))
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
@@ -2165,7 +2163,6 @@ class Grasp(smach.State):
         #     )
         # )
 
-        
         self._tf_listener.waitForTransform("base_footprint", 
                 userdata.target_descriptor.planar_bounding_box.pose.header.frame_id, 
                 rospy.Time(0), rospy.Duration(10.0))
