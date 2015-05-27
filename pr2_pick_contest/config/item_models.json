@@ -9,7 +9,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.4,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "oreos"
   },
   "champion_copper_plus_spark_plug": {
@@ -22,7 +22,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.8,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "spark plug"
   },
   "expo_dry_erase_board_eraser": {
@@ -35,7 +35,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.9,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "eraser"
   },
   "genuine_joe_plastic_stir_sticks": {
@@ -48,7 +48,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "stir sticks"
   },
   "munchkin_white_hot_duck_bath_toy": {
@@ -61,7 +61,7 @@
     "bonus_points": 1,
     "grasp_effort": -1,
     "success_prior": 0.8,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "bath duck"
   },
   "crayola_64_ct": {
@@ -74,7 +74,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.8,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "crayons"
   },
   "mommys_helper_outlet_plugs": {
@@ -87,7 +87,7 @@
     "bonus_points": 0,
     "grasp_effort": 15,
     "success_prior": 0.1,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "outlet plugs"
   },
   "sharpie_accent_tank_style_highlighters": {
@@ -100,7 +100,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.1,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "highlighters"
   },
   "stanley_66_052": {
@@ -113,7 +113,7 @@
     "bonus_points": 3,
     "grasp_effort": -1,
     "success_prior": 0.1,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "screwdrivers"
   },
   "safety_works_safety_glasses": {
@@ -126,7 +126,7 @@
     "bonus_points": 1,
     "grasp_effort": 30,
     "success_prior": 0.7,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "safety glasses"
   },
   "cheezit_big_original": {
@@ -139,7 +139,7 @@
     "bonus_points": 0,
     "grasp_effort": 30,
     "success_prior": 0.8,
-    "tall_item:": true,
+    "tall_item": true,
     "speech_name": "cheese its"
   },
   "paper_mate_12_count_mirado_black_warrior": {
@@ -152,7 +152,7 @@
     "bonus_points": 0,
     "grasp_effort": 20,
     "success_prior": 0.7,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "pencils"
   },
   "feline_greenies_dental_treats": {
@@ -165,7 +165,7 @@
     "bonus_points": 0,
     "grasp_effort": 30,
     "success_prior": 0.7,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "cat treats"
   },
   "elmers_washable_no_run_school_glue": {
@@ -178,7 +178,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.9,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "school glue"
   },
   "mead_index_cards": {
@@ -191,7 +191,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.7,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "index cards"
   },
   "rolodex_jumbo_pencil_cup": {
@@ -204,7 +204,7 @@
     "bonus_points": 2,
     "grasp_effort": -1,
     "success_prior": 0.1,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "pencil cup"
   },
   "first_years_take_and_toss_straw_cup": {
@@ -217,7 +217,7 @@
     "bonus_points": 2,
     "grasp_effort": -1,
     "success_prior": 0.5,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "straw cups"
   },
   "highland_6539_self_stick_notes": {
@@ -230,7 +230,7 @@
     "bonus_points": 0,
     "grasp_effort": -1,
     "success_prior": 0.8,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "sticky notes"
   },
   "mark_twain_huckleberry_finn": {
@@ -243,7 +243,7 @@
     "bonus_points": 3,
     "grasp_effort": -1,
     "success_prior": 0.1,
-    "tall_item:": true,
+    "tall_item": true,
     "speech_name": "huckleberry finn book"
   },
   "kyjen_squeakin_eggs_plush_puppies": {
@@ -256,7 +256,7 @@
     "bonus_points": 1,
     "grasp_effort": -1,
     "success_prior": 0.9,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "squeaky egg dog toy"
   },
   "kong_sitting_frog_dog_toy": {
@@ -269,7 +269,7 @@
     "bonus_points": 1,
     "grasp_effort": -1,
     "success_prior": 0.8,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "frog dog toy"
   },
   "kong_air_dog_squeakair_tennis_ball": {
@@ -282,7 +282,7 @@
     "bonus_points": 1,
     "grasp_effort": -1,
     "success_prior": 0.6,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "tennis ball dog toy"
   },
   "dr_browns_bottle_brush": {
@@ -295,7 +295,7 @@
     "bonus_points": 2,
     "grasp_effort": -1,
     "success_prior": 0.3,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "bottle brush"
   },
   "kong_duck_dog_toy": {
@@ -308,7 +308,7 @@
     "bonus_points": 1,
     "grasp_effort": -1,
     "success_prior": 0.8,
-    "tall_item:": false,
+    "tall_item": false,
     "speech_name": "duck dog toy"
   },
   "laugh_out_loud_joke_book": {
@@ -321,7 +321,7 @@
     "bonus_points": 3,
     "grasp_effort": -1,
     "success_prior": 0.1,
-    "tall_item:": true,
+    "tall_item": true,
     "speech_name": "joke book"
   }
 }
