@@ -133,7 +133,7 @@ class ExtractItem(smach.State):
                 pose_target.pose.orientation.z = current_pose.pose.orientation.z
                 pose_target.pose.orientation.w = current_pose.pose.orientation.w 
                 pose_target.pose.position.z = current_pose.pose.position.z + self._lift_height
-                pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
+                pose_target.pose.position.x = current_pose.pose.position.x - 0.015 * i 
 
                 # pose_target.header.frame_id = "base_footprint";
                 # pose_target.pose.orientation.w = 1
@@ -145,14 +145,12 @@ class ExtractItem(smach.State):
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
                 self._move_arm_ik.wait_for_service()
-                """
                 try:
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 except rospy.ServiceException:
                     rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
                     success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
-                """
             else:
 
                 euler_tuple = tf.transformations.euler_from_quaternion(
