@@ -122,7 +122,7 @@ class MoveToBin(smach.State):
         # Wait until torso is done
         start = rospy.Time.now()
         time_spent = rospy.Duration(0)
-        while time_spent < rospy.Duration(20):
+        while time_spent < rospy.Duration(60):
             torso_req = ReturnJointStatesRequest()
             torso_req.name = ["torso_lift_joint"]  
             torso_state = self.joint_states_listener(torso_req)
