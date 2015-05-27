@@ -126,7 +126,7 @@ class MoveToBin(smach.State):
             torso_req = ReturnJointStatesRequest()
             torso_req.name = ["torso_lift_joint"]  
             torso_state = self.joint_states_listener(torso_req)
-            if math.fabs(torso_state.position[0] - self.torso_height_by_bin[userdata.bin_id]) < 0.01:
+            if math.fabs(torso_state.position[0] - self.torso_height_by_bin[userdata.bin_id]) < 0.005:
                 break
             rospy.loginfo("Torso pose: " + str(torso_state.position[0]))
             rospy.loginfo("Desired Torso pose: " + str(self.torso_height_by_bin[userdata.bin_id]))
