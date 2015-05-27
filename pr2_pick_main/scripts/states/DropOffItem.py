@@ -18,7 +18,7 @@ class DropOffItem(smach.State):
 
     # The x,y coordinates the base should drive to for dropoffs in the order
     # bin frame
-    DROPOFF_POS_BASE_X = -0.5040 
+    DROPOFF_POS_BASE_X = -0.6040
     DROPOFF_POS_BASE_Y = 0.6604
     # The position the arm will move to before it lets go of the object
     DROPOFF_POS_ARM_X = 0.0872
