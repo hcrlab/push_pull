@@ -3,7 +3,7 @@
   <arg name="debug_crop" default="false" /> <!-- If true, doesn't run shelf cropping. -->
   <arg name="debug_openni" default="false" /> <!-- If true, doesn't run openni. -->
   <arg name="alternate_kinect_frames" default="false" />
-  <arg name="contest_file" default="random3.json" />
+  <arg name="contest_file" default="apc.json" />
   <include file="$(find pr2_pick_contest)/launch/track_time.launch"/>
 
   <node name="festival_tts" pkg="festival_tts" type="speak.py" />

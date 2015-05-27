@@ -25,6 +25,7 @@ class ItemDatabase(object):
             model.bonus_points = data_dict['bonus_points']
             model.grasp_effort = data_dict['grasp_effort']
             model.success_prior = data_dict['success_prior']
+            model.tall_item = data_dict['tall_item']
             model.speech_name = data_dict['speech_name']
 
             self._item_data[item] = model

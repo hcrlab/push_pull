@@ -24,6 +24,8 @@ class ExtractItem(smach.State):
     third_row_torso_height = 0.16
     bottom_row_torso_height = 0.055
 
+    tall_item_roll = 3.14/4
+
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -32,7 +34,7 @@ class ExtractItem(smach.State):
                 outcomes.EXTRACT_ITEM_SUCCESS,
                 outcomes.EXTRACT_ITEM_FAILURE
             ],
-            input_keys=['bin_id', 'debug', 'target_descriptor']
+            input_keys=['bin_id', 'debug', 'target_descriptor', 'item_model']
         )
 
         self._moveit_move_arm = services['moveit_move_arm']
@@ -114,6 +116,80 @@ class ExtractItem(smach.State):
 
         rospy.loginfo("pose x: " + str(current_pose.pose.position.x) + ", y: " + str(current_pose.pose.position.y) + ", z: " + str(current_pose.pose.position.z))
         rospy.loginfo("orientation x: " + str(current_pose.pose.orientation.x) + ", y: " + str(current_pose.pose.orientation.y) + ", z: " + str(current_pose.pose.orientation.z) + ", w: " + str(current_pose.pose.orientation.w))
+
+
+        # if item is tall_item
+        # and if hand is upright
+        # check which direction is closer 
+
+        if userdata.item_model.tall_item:
+
+
+            quaternion = (
+                current_pose.pose.orientation.x,
+                current_pose.pose.orientation.y,
+                current_pose.pose.orientation.z,
+                current_pose.pose.orientation.w)
+            euler = tf.transformations.euler_from_quaternion(quaternion)
+            roll = euler[0]
+            pitch = euler[1]
+            yaw = euler[2]
+
+            rospy.loginfo("Grasp roll: " + str(roll))
+            if math.fabs(roll % 3.14) < self.tall_item_roll:
+                # Rotate hand
+
+                # put object pose in bin_frame 
+                object_pose_in_bin_frame = self._tf_listener.transformPose('bin_' + str(userdata.bin_id), object_pose)
+
+                if object_pose_in_bin_frame.pose.position.y > 0:
+                    quaternion = tf.transformations.quaternion_from_euler(self.tall_item_roll, 0, 0)
+                else:
+                    quaternion = tf.transformations.quaternion_from_euler(-self.tall_item_roll, 0, 0)
+
+                pose_target = geometry_msgs.msg.PoseStamped()
+                pose_target.header.frame_id = 'r_wrist_roll_link'
+                rospy.loginfo("Rotate hand")
+                pose_target.pose.position.x = 0
+                pose_target.pose.position.y = 0
+                pose_target.pose.orientation.x = quaternion[0]
+                pose_target.pose.orientation.y = quaternion[1]
+                pose_target.pose.orientation.z = quaternion[2]
+                pose_target.pose.orientation.w = quaternion[3]
+
+                self._move_arm_ik.wait_for_service()
+                try:
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                except rospy.ServiceException:
+                    rospy.sleep(3.0)
+                    self._move_arm_ik.wait_for_service()
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+
+
+        self._tf_listener.waitForTransform(
+            'base_footprint',
+            'r_wrist_roll_link',
+            rospy.Time(0),
+            self._wait_for_transform_duration
+        )
+
+        (current_position, current_orientation) = self._tf_listener.lookupTransform(
+            'base_footprint', 'r_wrist_roll_link', rospy.Time(0))#self._ee_pose("right_arm", "r_wrist_roll_link")
+        current_pose = geometry_msgs.msg.PoseStamped()
+        current_pose.header.frame_id = 'base_footprint'
+        current_pose.pose.position.x = current_position[0]
+        current_pose.pose.position.y = current_position[1] 
+        current_pose.pose.position.z = current_position[2]
+
+        current_pose.pose.orientation.x = current_orientation[0]
+        current_pose.pose.orientation.y = current_orientation[1]
+        current_pose.pose.orientation.z = current_orientation[2]
+        current_pose.pose.orientation.w = current_orientation[3]
+
+        rospy.loginfo("pose x: " + str(current_pose.pose.position.x) + ", y: " + str(current_pose.pose.position.y) + ", z: " + str(current_pose.pose.position.z))
+        rospy.loginfo("orientation x: " + str(current_pose.pose.orientation.x) + ", y: " + str(current_pose.pose.orientation.y) + ", z: " + str(current_pose.pose.orientation.z) + ", w: " + str(current_pose.pose.orientation.w))
+
+
 
 
         success_lift = False
