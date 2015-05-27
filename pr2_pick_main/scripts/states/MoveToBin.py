@@ -130,7 +130,7 @@ class MoveToBin(smach.State):
                 break
             rospy.loginfo("Torso pose: " + str(torso_state.position[0]))
             rospy.loginfo("Desired Torso pose: " + str(self.torso_height_by_bin[userdata.bin_id]))
-            time_spent += rospy.Time.now() - start
+            time_spent = rospy.Time.now() - start
             rospy.sleep(0.1)
 
         # face the head towards the bin
