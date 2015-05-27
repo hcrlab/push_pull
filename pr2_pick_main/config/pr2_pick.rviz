@@ -10,7 +10,6 @@ Panels:
         - /Marker1
         - /Marker1/Namespaces1
         - /TF1
-        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 668
   - Class: rviz/Selection
@@ -588,7 +587,8 @@ Visualization Manager:
       Marker Topic: /pr2_pick_visualization
       Name: Marker
       Namespaces:
-        {}
+        shelf: true
+        target_location: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -604,6 +604,30 @@ Visualization Manager:
           Value: false
         base_link:
           Value: false
+        bin_A:
+          Value: true
+        bin_B:
+          Value: true
+        bin_C:
+          Value: true
+        bin_D:
+          Value: true
+        bin_E:
+          Value: true
+        bin_F:
+          Value: true
+        bin_G:
+          Value: true
+        bin_H:
+          Value: true
+        bin_I:
+          Value: true
+        bin_J:
+          Value: true
+        bin_K:
+          Value: true
+        bin_L:
+          Value: true
         bl_caster_l_wheel_link:
           Value: false
         bl_caster_r_wheel_link:
@@ -796,6 +820,8 @@ Visualization Manager:
           Value: false
         sensor_mount_link:
           Value: false
+        shelf:
+          Value: true
         torso_lift_link:
           Value: false
         torso_lift_motor_screw_link:
@@ -812,7 +838,7 @@ Visualization Manager:
           Value: false
         wide_stereo_r_stereo_camera_optical_frame:
           Value: false
-      Marker Scale: 1
+      Marker Scale: 0.5
       Name: TF
       Show Arrows: false
       Show Axes: true
@@ -972,6 +998,31 @@ Visualization Manager:
                   {}
               torso_lift_motor_screw_link:
                 {}
+          shelf:
+            bin_A:
+              {}
+            bin_B:
+              {}
+            bin_C:
+              {}
+            bin_D:
+              {}
+            bin_E:
+              {}
+            bin_F:
+              {}
+            bin_G:
+              {}
+            bin_H:
+              {}
+            bin_I:
+              {}
+            bin_J:
+              {}
+            bin_K:
+              {}
+            bin_L:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz/InteractiveMarkers
@@ -1007,22 +1058,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.94595
+      Distance: 4.01198
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.910843
-        Y: 0.267867
-        Z: 1.4517
+        X: 0.964937
+        Y: -0.193268
+        Z: 1.34302
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.364797
+      Pitch: 0.564797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.16046
+      Yaw: 3.04546
     Saved: ~
 Window Geometry:
   Displays:
@@ -1042,5 +1093,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1871
-  X: 49
+  X: 1969
   Y: 24
