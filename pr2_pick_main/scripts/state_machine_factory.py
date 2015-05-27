@@ -680,7 +680,8 @@ class StateMachineBuilder(object):
                     outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
                 },
                 remapping={
-                    'bin_id': 'current_bin'
+                    'bin_id': 'current_bin',
+                    'item_model': 'target_model'
                 }
             )
             smach.StateMachine.add(
