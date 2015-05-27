@@ -1565,7 +1565,7 @@ class Grasp(smach.State):
         self._moveit_move_arm.wait_for_service()
         self.loginfo("_moveit_move_arm.wait_for_service() completed")
         success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"],
-                                                  0.01, 0.01, 0, 'right_arm', 
+                                                  0.005, 0.005, 0, 'right_arm', 
                                                   True).success
         self.loginfo("Pre-grasp reachable: {}".format(success_pre_grasp))
         grasp["pre_grasp_reachable"] = success_pre_grasp
@@ -1700,7 +1700,7 @@ class Grasp(smach.State):
 
                 self._moveit_move_arm.wait_for_service()
                 success_pre_grasp = self._moveit_move_arm(transformed_pose,
-                                                  0.02, 0.1, 0, 'right_arm',
+                                                  0.005, 0.005, 0, 'right_arm',
                                                   True).success
                 grasp["pre_grasp_reachable"] = success_pre_grasp
                 grasp["pre_grasp"] =  pose_in_base_footprint
@@ -2015,7 +2015,7 @@ class Grasp(smach.State):
 
                 for i in range(self.pre_grasp_attempts):
                     success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
-                                                        0.03, 0.2, 12, 'right_arm',
+                                                        0.005, 0.005, 12, 'right_arm',
                                                         False).success
                     if success_pre_grasp:
                         break
