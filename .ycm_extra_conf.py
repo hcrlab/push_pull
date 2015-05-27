@@ -55,6 +55,8 @@ flags = [
 '-I',
 'pr2_pick_manipulation/include',
 '-I',
+'pr2_pick_contest/include',
+'-I',
 '/usr/include/pcl-1.7',
 '-I',
 '/usr/include/eigen3'

@@ -9,3 +9,4 @@ int32 bonus_points
 float64 grasp_effort # -1 for maximum strength, ~10 for less.
 float64 success_prior # Number between 0 - 1, likelihood of success for this item.
 bool tall_item
+string speech_name

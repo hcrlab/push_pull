@@ -42,8 +42,6 @@ def dummy(idx, box, num_points, transformed_point):
                 num_points[idx] += 1
 
 
-
-
 class Grasp(smach.State):
     ''' Grasps an item in the bin. '''
     name = 'GRASP'
@@ -1565,6 +1563,7 @@ class Grasp(smach.State):
         self.loginfo("Checking pre-grasp feasible")
 
         self._moveit_move_arm.wait_for_service()
+        self.loginfo("_moveit_move_arm.wait_for_service() completed")
         success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"],
                                                   0.01, 0.01, 0, 'right_arm', 
                                                   True).success
@@ -2025,7 +2024,7 @@ class Grasp(smach.State):
                 self._move_arm_ik.wait_for_service()
                 self.loginfo("Service available")
                 success_pre_grasp = self._move_arm_ik(grasp["pre_grasp"], 
-                                        MoveArmIkRequest().RIGHT_ARM).success
+                                        MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
 
 
             if not success_pre_grasp:
@@ -2065,7 +2064,7 @@ class Grasp(smach.State):
             self._move_arm_ik.wait_for_service()
 
             success_grasp = self._move_arm_ik(grasp["grasp"], 
-                                MoveArmIkRequest().RIGHT_ARM).success
+                                MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
 
             #self._moveit_move_arm.wait_for_service()
             #success_grasp = self._moveit_move_arm(grasp["grasp"], 
@@ -2147,7 +2146,7 @@ class Grasp(smach.State):
         if userdata.item_model.allow_finger_collisions:
             self.max_finger_collision_points = 1000
 
-        self._tts.publish('Grasping item')
+        self._tts.publish('Grasping {}'.format(userdata.item_model.speech_name))
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
@@ -2165,7 +2164,6 @@ class Grasp(smach.State):
         #     )
         # )
 
-        
         self._tf_listener.waitForTransform("base_footprint", 
                 userdata.target_descriptor.planar_bounding_box.pose.header.frame_id, 
                 rospy.Time(0), rospy.Duration(10.0))
@@ -2190,6 +2188,7 @@ class Grasp(smach.State):
 
         # Weird loop that you have to do because Moveit it weird
         for i in range(10):
+            self.loginfo("MoveIt looping hack, iteration %d" % i)
             scene.add_box("bbox", planar_bounding_box.pose, 
                         (planar_bounding_box.dimensions.x, 
                         planar_bounding_box.dimensions.y, 
@@ -2197,6 +2196,7 @@ class Grasp(smach.State):
             rospy.sleep(0.1)
 
         # Make a frame that has the same yaw as head frame
+        self.loginfo("About to wait for transform")
         (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
         self.loginfo("Tranform: {}, {}".format(trans, rot))
 

@@ -193,9 +193,11 @@ class ExtractItem(smach.State):
 
 
         success_lift = False
-        attempts = 5
+       
+        attempts = 3
         for i in range(attempts):
             if userdata.bin_id > "C":
+                
                 # Lift item to clear bin lip
                 pose_target = geometry_msgs.msg.PoseStamped()
                 pose_target.header.frame_id = 'base_footprint'
@@ -207,7 +209,7 @@ class ExtractItem(smach.State):
                 pose_target.pose.orientation.z = current_pose.pose.orientation.z
                 pose_target.pose.orientation.w = current_pose.pose.orientation.w 
                 pose_target.pose.position.z = current_pose.pose.position.z + self._lift_height
-                pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
+                pose_target.pose.position.x = current_pose.pose.position.x - 0.015 * i 
 
                 # pose_target.header.frame_id = "base_footprint";
                 # pose_target.pose.orientation.w = 1
@@ -220,11 +222,11 @@ class ExtractItem(smach.State):
                 
                 self._move_arm_ik.wait_for_service()
                 try:
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                    rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
             else:
 
                 euler_tuple = tf.transformations.euler_from_quaternion(
@@ -262,18 +264,18 @@ class ExtractItem(smach.State):
             
                 self._move_arm_ik.wait_for_service()
                 try:
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                    rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
 
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
             if success_lift:
                 rospy.loginfo("Lift success")
                 break
             else:
                 pose_target.pose.orientation = Quaternion() 
-                success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 rospy.loginfo("Lift attempt " + str(i) + " failed")
                 continue
 

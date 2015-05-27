@@ -1,0 +1,3 @@
+<launch>
+<node name="track_time_service" pkg="pr2_pick_contest" type="TrackTimeServiceNode" output="screen"/>
+</launch>

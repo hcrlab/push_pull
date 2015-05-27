@@ -1,7 +1,9 @@
+#include <stdio.h>
 #include <ros/ros.h>
 #include "pr2_pick_manipulation/driver.h"
 #include "pr2_pick_manipulation/driver_service.h"
-
+#include <ros/console.h>
+#include <iostream>
 namespace pr2_pick_manipulation {
 DriverService::DriverService()
     : nh_(),
@@ -34,9 +36,11 @@ bool DriverService::LinearCallback(DriveLinear::Request& request,
 
 bool DriverService::PoseCallback(DriveToPose::Request& request,
                                    DriveToPose::Response& response) {
+  ROS_INFO("Received drive to pose request");
   bool success = driver_.DriveToPose(request.pose, request.linearVelocity,
     request.angularVelocity);
   response.success = success;
+  ROS_INFO("Sending response!");
   return success;
 }
 
