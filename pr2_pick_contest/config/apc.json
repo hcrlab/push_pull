@@ -1,0 +1,103 @@
+{
+    "bin_contents": {
+        "bin_A": [
+            "kyjen_squeakin_eggs_plush_puppies",
+            "champion_copper_plus_spark_plug"
+        ],
+        "bin_B": [
+            "feline_greenies_dental_treats"
+        ],
+        "bin_C": [
+            "kong_air_dog_squeakair_tennis_ball",
+            "mark_twain_huckleberry_finn"
+        ],
+        "bin_D": [
+            "mommys_helper_outlet_plugs",
+            "genuine_joe_plastic_stir_sticks"
+        ],
+        "bin_E": [
+            "rolodex_jumbo_pencil_cup"
+        ],
+        "bin_F": [
+            "elmers_washable_no_run_school_glue",
+            "kong_sitting_frog_dog_toy",
+            "stanley_66_052"
+        ],
+        "bin_G": [
+            "kong_duck_dog_toy",
+            "expo_dry_erase_board_eraser",
+            "highland_6539_self_stick_notes"
+        ],
+        "bin_H": [
+            "dr_browns_bottle_brush",
+            "paper_mate_12_count_mirado_black_warrior",
+            "laugh_out_loud_joke_book"
+        ],
+        "bin_I": [
+            "oreo_mega_stuf",
+            "crayola_64_ct"
+        ],
+        "bin_J": [
+            "first_years_take_and_toss_straw_cup"
+        ],
+        "bin_K": [
+            "sharpie_accent_tank_style_highlighters",
+            "cheezit_big_original"
+        ],
+        "bin_L": [
+            "mead_index_cards",
+            "munchkin_white_hot_duck_bath_toy",
+            "safety_works_safety_glasses"
+        ]
+    },
+    "work_order": [
+        {
+            "bin": "bin_A",
+            "item": "kyjen_squeakin_eggs_plush_puppies"
+        },
+        {
+            "bin": "bin_B",
+            "item": "feline_greenies_dental_treats"
+        },
+        {
+            "bin": "bin_C",
+            "item": "mark_twain_huckleberry_finn"
+        },
+        {
+            "bin": "bin_D",
+            "item": "mommys_helper_outlet_plugs"
+        },
+        {
+            "bin": "bin_E",
+            "item": "rolodex_jumbo_pencil_cup"
+        },
+        {
+            "bin": "bin_F",
+            "item": "elmers_washable_no_run_school_glue"
+        },
+        {
+            "bin": "bin_G",
+            "item": "highland_6539_self_stick_notes"
+        },
+        {
+            "bin": "bin_H",
+            "item": "paper_mate_12_count_mirado_black_warrior"
+        },
+        {
+            "bin": "bin_I",
+            "item": "oreo_mega_stuf"
+        },
+        {
+            "bin": "bin_J",
+            "item": "first_years_take_and_toss_straw_cup"
+        },
+        {
+            "bin": "bin_K",
+            "item": "cheezit_big_original"
+        },
+        {
+            "bin": "bin_L",
+            "item": "munchkin_white_hot_duck_bath_toy"
+        }
+    ]
+}
