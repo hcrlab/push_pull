@@ -14,7 +14,6 @@ import json
 import numpy as np
 from sklearn.metrics import precision_recall_curve
 from sklearn.cross_validation import train_test_split
-import random
 import rosbag
 import sys
 from pr2_pick_perception import ItemClassifier
@@ -32,7 +31,7 @@ def read_data(data_path, train_size):
     full_data = [(msg.descriptor, msg.label)
                  for topic, msg, time in bag.read_messages(topics=['examples'])
                  ]
-    split_data = train_test_split(full_data, train_size=train_size)
+    split_data = train_test_split(full_data, train_size=train_size, random_state=0)
     return split_data[0], split_data[1]
 
 
@@ -194,9 +193,9 @@ def print_accuracy(results, items_in_bin):
 
 if __name__ == '__main__':
     dataset_file = sys.argv[1]
-    training_set, test_set = read_data(dataset_file, 0.9)
+    training_set, test_set = read_data(dataset_file, 0.8)
 
-    classifier = ItemClassifier(training_set)
+    classifier = ItemClassifier(training_set, normalize=True)
     target_item_classifier = TargetItemClassifier(classifier)
 
     print('Item by item classification')

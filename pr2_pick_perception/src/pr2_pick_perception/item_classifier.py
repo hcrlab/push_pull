@@ -9,19 +9,22 @@ import rospy
 
 
 class ItemClassifier(object):
-    def __init__(self, training_data):
+    def __init__(self, training_data, normalize=False):
         """Constructor.
 
         training_data: A list of (descriptor, label), where descriptor is a
             pr2_pick_perception/ItemDescriptor, and label is a string item
             name.
         """
+        self._normalize = normalize
         self._data_by_class = self._load_data(training_data)
 
     def _load_data(self, data):
         data_by_class = {}
         for descriptor, label in data:
             histogram = np.array(descriptor.histogram.histogram)
+            if self._normalize:
+                histogram = histogram / sum(histogram)
             if label in data_by_class:
                 data_by_class[label].append(histogram)
             else:
@@ -42,6 +45,8 @@ class ItemClassifier(object):
 
         # Find nearest point of each class.
         histogram = np.array(descriptor.histogram.histogram)
+        if self._normalize:
+            histogram = histogram / sum(histogram)
         points = []
         for label in labels:
             point, distance = self._find_nearest_with_label(histogram, label)
