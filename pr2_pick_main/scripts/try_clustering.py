@@ -1,13 +1,15 @@
 from geometry_msgs.msg import Point
+from visualization_msgs.msg import Marker
 from pr2_pick_perception.msg import MultiItemCloud
 from pr2_pick_perception.srv import SegmentItems, SegmentItemsRequest
 from visualization_msgs.msg import Marker
 from sensor_msgs.msg import PointCloud2
+import random
 import rosbag
 import rospy
 import sensor_msgs.point_cloud2 as pc2
 import sys
-import visualization as viz
+#import visualization as viz
 
 def read_bag(bag):
     messages = []
@@ -29,83 +31,149 @@ def try_segmentation(cloud, labels):
     clusters = segment_cloud(segment_items, cloud, labels)
     return clusters
 
-def delete_marker(markers, ns, i):
-    marker = Marker()
-    marker.header.frame_id = 'map'
-    marker.ns = ns;
-    marker.id = i;
-    marker.action = Marker.DELETE
-    for j in range(5):
-        if markers.get_num_connections() == 0:
-            rospy.logwarn('Waiting for subscriber to delete marker.')
-            rospy.sleep(1)
-        else:
-            markers.publish(marker)
-            break
 
-def debug_visualization(messages):
+def debug_visualization(visualization, messages):
     for cloud, labels in messages[:]:
-        # Publish cloud
-        #cloud_pub = rospy.Publisher('cloud', PointCloud2)
-        #for i in range(2):
-        #    if cloud_pub.get_num_connections() == 0:
-        #        rospy.logwarn('Waiting for subscriber to cloud')
-        #        rospy.sleep(1)
-        #    else:
-        #        cloud_pub.publish(cloud)
-        #        break
+        visualization.clear()
+        visualization.visualize_cloud(cloud)
 
         clusters = try_segmentation(cloud, labels)    
 
-        # Publish visualization
-        markers = rospy.Publisher('pr2_pick_visualization', Marker)
-        for i in range(100):
-            delete_marker(markers, 'clusters', i)
         for i, cluster in enumerate(clusters):
-            points = pc2.read_points(cluster.pointcloud, skip_nans=True)
-            point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
-            if len(point_list) == 0:
-                print 'Cluster {} has 0 points, skipping'.format(i)
-                continue
-            viz.publish_cluster(markers, point_list, 'map', 'clusters', i)
+            visualization.visualize_cluster(cluster)
 
         raw_input('Press enter to continue: ')
 
+class Visualization(object):
+    def __init__(self, cloud_pub, marker_pub):
+        self._cloud_pub = cloud_pub
+        self._marker_pub = marker_pub
+        self._current_markers = []
 
-def yield_grid_search_params():
-    for y_scale_factor in [0.01, 0.1, 0.5, 1, 2, 4, 6, 10, 20, 40]:
-        for color_meta_scale_factor in [0.01, 0.1, 0.5, 1, 2, 4, 6, 10, 20, 40]:
-            for point_color in [10]:
-                for region_color in [20]:
-                    for min_cluster_size in [200]:
-                        yield y_scale_factor, color_meta_scale_factor, point_color, region_color, min_cluster_size
+    def visualize_cloud(self, cloud):
+        self._publish(self._cloud_pub, cloud)
 
-def grid_search(messages):
-    for ysf, cmsf, pc, rc, mcs in yield_grid_search_params():
-        rospy.set_param('y_scale_factor', ysf)
-        rospy.set_param('color_meta_scale_factor', cmsf)
-        rospy.set_param('point_color', pc)
-        rospy.set_param('region_color', rc)
-        rospy.set_param('min_cluster_size', mcs)
-        good_clusters = 0
-        for cloud, labels in messages[:]:
-            clusters = try_segmentation(cloud, labels)
+    def visualize_cluster(self, cluster, label=None):
+        points = pc2.read_points(cluster.pointcloud, skip_nans=True)
+        point_list = [Point(x=x, y=y-0.3, z=z) for x, y, z, rgb in points]
+        if len(point_list) == 0:
+            rospy.logwarn('Point list was of size 0, skipping.')
+            return
 
-            num_nonzero = 0
-            for i, cluster in enumerate(clusters):
-                points = pc2.read_points(cluster.pointcloud, skip_nans=True)
-                point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
-                if len(point_list) > 0:
-                    num_nonzero += 1
+        marker_id = len(self._current_markers)
 
-            if num_nonzero == 2:
-                good_clusters += 1
-        rospy.loginfo('ysf: {}, cmsf: {}, pc: {}, rc: {}, mcs: {}; num dual-clusterings: {}'.format(ysf, cmsf, pc, rc, mcs, good_clusters))
+        marker = Marker()
+        marker.header.frame_id = 'map'
+        marker.header.stamp = rospy.Time().now()
+        marker.ns = 'clusters'
+        marker.id = marker_id
+        marker.type = Marker.POINTS
+        marker.action = Marker.ADD
+        marker.color.r = random.random()
+        marker.color.g = random.random()
+        marker.color.b = random.random()
+        marker.color.a = 0.5
+        marker.points = point_list
+        marker.scale.x = 0.002
+        marker.scale.y = 0.002
+        marker.lifetime = rospy.Duration()
+    
+        center = [0, 0, 0]
+        for point in point_list:
+            center[0] += point.x
+            center[1] += point.y
+            center[2] += point.z
+        center[0] /= len(point_list)
+        center[1] /= len(point_list)
+        center[2] /= len(point_list)
+    
+        text_marker = Marker()
+        text_marker.header.frame_id = 'map'
+        text_marker.header.stamp = rospy.Time().now()
+        text_marker.ns = 'labels'
+        text_marker.id = marker_id + 1
+        text_marker.type = Marker.TEXT_VIEW_FACING
+        text_marker.action = Marker.ADD
+        text_marker.pose.position.x = center[0] - 0.1
+        text_marker.pose.position.y = center[1]
+        text_marker.pose.position.z = center[2]
+        text_marker.color.r = 1
+        text_marker.color.g = 1
+        text_marker.color.b = 1
+        text_marker.color.a = 1
+        text_marker.scale.z = 0.05
+        text_marker.text = '{}'.format(marker_id/2) if label is None else label
+        text_marker.lifetime = rospy.Duration()
+    
+        self.visualize_marker(marker)
+        self.visualize_marker(text_marker)
+
+    def visualize_marker(self, marker):
+        self._publish(self._marker_pub, marker)
+        self._current_markers.append((marker.ns, marker.id))
+
+    def clear(self):
+        for marker_ns, marker_id in self._current_markers:
+            self.delete_marker(self._marker_pub, marker_ns, marker_id)
+        self._current_markers = []
+
+    def delete_marker(self, publisher, ns, i):
+        marker = Marker()
+        marker.header.frame_id = 'map'
+        marker.ns = ns;
+        marker.id = i;
+        marker.action = Marker.DELETE
+        self._publish(publisher, marker)
+
+    def _publish(self, publisher, msg):
+        for i in range(2):
+            if publisher.get_num_connections() == 0:
+                rospy.logwarn('Waiting for subscriber.')
+                rospy.sleep(1)
+            else:
+                publisher.publish(msg)
+                break
+
+
+#def yield_grid_search_params():
+#    for y_scale_factor in [0.01, 0.1, 0.5, 1, 2, 4, 6, 10, 20, 40]:
+#        for color_meta_scale_factor in [0.01, 0.1, 0.5, 1, 2, 4, 6, 10, 20, 40]:
+#            for point_color in [10]:
+#                for region_color in [20]:
+#                    for min_cluster_size in [200]:
+#                        yield y_scale_factor, color_meta_scale_factor, point_color, region_color, min_cluster_size
+#
+#def grid_search(messages):
+#    for ysf, cmsf, pc, rc, mcs in yield_grid_search_params():
+#        rospy.set_param('y_scale_factor', ysf)
+#        rospy.set_param('color_meta_scale_factor', cmsf)
+#        rospy.set_param('point_color', pc)
+#        rospy.set_param('region_color', rc)
+#        rospy.set_param('min_cluster_size', mcs)
+#        good_clusters = 0
+#        for cloud, labels in messages[:]:
+#            clusters = try_segmentation(cloud, labels)
+#
+#            num_nonzero = 0
+#            for i, cluster in enumerate(clusters):
+#                points = pc2.read_points(cluster.pointcloud, skip_nans=True)
+#                point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
+#                if len(point_list) > 0:
+#                    num_nonzero += 1
+#
+#            if num_nonzero == 2:
+#                good_clusters += 1
+#        rospy.loginfo('ysf: {}, cmsf: {}, pc: {}, rc: {}, mcs: {}; num dual-clusterings: {}'.format(ysf, cmsf, pc, rc, mcs, good_clusters))
 
 
 if __name__ == '__main__':
     rospy.init_node('try_clustering')
     bag = rosbag.Bag(sys.argv[1])
     messages = read_bag(bag)
-    debug_visualization(messages)
+
+    cloud_pub = rospy.Publisher('cloud', PointCloud2)
+    marker_pub = rospy.Publisher('pr2_pick_visualization', Marker)
+    visualization = Visualization(cloud_pub, marker_pub)
+
+    debug_visualization(visualization, messages)
     #grid_search(messages)

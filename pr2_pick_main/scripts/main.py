@@ -23,7 +23,7 @@ def main(mock=False,
          gather_data=False,
          debug=False,
          auto_reset=True,
-         attempts_per_bin=3):
+         attempts_per_bin=2):
     rospy.init_node('pr2_pick_state_machine')
 
     if test_drop_off_item:
@@ -156,7 +156,7 @@ if __name__ == '__main__':
               ' point when the state machine exits.'))
     parser.add_argument(
         '--attempts_per_bin',
-        default='3',
+        default='2',
         type=int,
         help=('Number of times to attempt to grasp each item before'
               ' giving up.'))
