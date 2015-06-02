@@ -32,16 +32,50 @@ def try_segmentation(cloud, labels):
     return clusters
 
 
+def try_over_segmentation(cloud, labels):
+    segment_items = rospy.ServiceProxy('over_segment_items', SegmentItems)
+    segment_items.wait_for_service()
+    clusters = segment_cloud(segment_items, cloud, labels)
+    return clusters
+
+def try_kmeans_segmentation(cloud, labels):
+    segment_items = rospy.ServiceProxy('kmeans_segment_items', SegmentItems)
+    segment_items.wait_for_service()
+    clusters = segment_cloud(segment_items, cloud, labels)
+    return clusters
+
+def try_over_kmeans_segmentation(cloud, labels):
+    segment_items = rospy.ServiceProxy('over_kmeans_segment_items', SegmentItems)
+    segment_items.wait_for_service()
+    clusters = segment_cloud(segment_items, cloud, labels)
+    return clusters
+
 def debug_visualization(visualization, messages):
-    for cloud, labels in messages[:]:
+    for cloud, labels in messages[4:]:
         visualization.clear()
         visualization.visualize_cloud(cloud)
 
-        clusters = try_segmentation(cloud, labels)    
-
+        clusters = try_over_segmentation(cloud, labels)    
         for i, cluster in enumerate(clusters):
             visualization.visualize_cluster(cluster)
+        raw_input('Press enter to continue: ')
 
+        visualization.clear()
+        clusters = try_kmeans_segmentation(cloud, labels)    
+        for i, cluster in enumerate(clusters):
+            visualization.visualize_cluster(cluster)
+        raw_input('Press enter to continue: ')
+
+        visualization.clear()
+        clusters = try_over_kmeans_segmentation(cloud, labels)    
+        for i, cluster in enumerate(clusters):
+            visualization.visualize_cluster(cluster)
+        raw_input('Press enter to continue: ')
+
+        visualization.clear()
+        clusters = try_segmentation(cloud, labels)    
+        for i, cluster in enumerate(clusters):
+            visualization.visualize_cluster(cluster)
         raw_input('Press enter to continue: ')
 
 class Visualization(object):

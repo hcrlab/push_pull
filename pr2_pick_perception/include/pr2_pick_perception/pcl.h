@@ -140,6 +140,10 @@ void ClusterBinItems(
     const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
 
+void ClusterBinItemsWithKMeans(
+    const pcl::PointCloud<pcl::PointXYZRGB>& cloud, const int num_clusters,
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>* clusters);
+
 // Clusters the point cloud with the Euclidean clustering method.
 //
 // Args:

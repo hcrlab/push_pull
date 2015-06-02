@@ -24,6 +24,52 @@ class ItemSegmentationService {
   bool Callback(SegmentItems::Request& request,
                 SegmentItems::Response& response);
 };
+
+class ItemOverSegmentationService {
+ public:
+  ItemOverSegmentationService(const std::string& name);
+
+ private:
+  std::string name_;
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_local_;
+  ros::ServiceServer server_;
+  int min_cluster_points_;
+  int max_cluster_points_;
+  bool Callback(SegmentItems::Request& request,
+                SegmentItems::Response& response);
+};
+
+class ItemKMeansSegmentationService {
+ public:
+  ItemKMeansSegmentationService(const std::string& name);
+
+ private:
+  std::string name_;
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_local_;
+  ros::ServiceServer server_;
+  int min_cluster_points_;
+  int max_cluster_points_;
+  bool Callback(SegmentItems::Request& request,
+                SegmentItems::Response& response);
+};
+
+class ItemOverKMeansSegmentationService {
+ public:
+  ItemOverKMeansSegmentationService(const std::string& name);
+
+ private:
+  std::string name_;
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_local_;
+  ros::ServiceServer server_;
+  int min_cluster_points_;
+  int max_cluster_points_;
+  bool Callback(SegmentItems::Request& request,
+                SegmentItems::Response& response);
+};
+
 }  // namespace pr2_pick_perception
 
 #endif

@@ -566,4 +566,59 @@ void ClusterWithEuclidean(
   }
 }
 
+void ClusterBinItemsWithKMeans(
+    const PointCloud<PointXYZRGB>& cloud, const int num_clusters,
+    std::vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
+  std::vector<PointCloud<PointXYZRGB>::Ptr> overclustering;
+  ClusterWithRegionGrowing(cloud, &overclustering);
+
+  PointCloud<PointXYZRGB> centroids;
+  for (size_t i = 0; i < overclustering.size(); ++i) {
+    const PointCloud<PointXYZRGB>::Ptr& overcluster = overclustering[i];
+    PointXYZRGB centroid;
+    pcl::computeCentroid(*overcluster, centroid);
+    centroids.push_back(centroid);
+  }
+
+  std::vector<PointCloud<PointXYZRGB>::Ptr> centroid_clusters;
+
+  // Sometimes K-means has no points in a cluster, try again if so.
+  for (int tries = 0; tries < 10; ++tries) {
+    centroid_clusters.clear();
+    bool success =
+        ClusterWithKMeans(centroids, num_clusters, &centroid_clusters);
+    if (success) {
+      break;
+    }
+  }
+
+  // Merge clusters together.
+  clusters->clear();
+  clusters->resize(num_clusters);
+  for (size_t i = 0; i < centroid_clusters.size(); ++i) {
+    PointCloud<PointXYZRGB>::Ptr centroids_in_cluster = centroid_clusters[i];
+
+    PointCloud<PointXYZRGB>::Ptr cluster(new PointCloud<PointXYZRGB>());
+    cluster->height = 1;
+
+    for (size_t j = 0; j < centroids_in_cluster->size(); ++j) {
+      const PointXYZRGB& centroid = (*centroids_in_cluster)[j];
+      int centroid_index = 0;
+      for (size_t k = 0; k < centroids.size(); ++k) {
+        if (pcl::squaredEuclideanDistance(centroid, centroids.points[k]) == 0) {
+          centroid_index = k;
+          break;
+        }
+      }
+      const PointCloud<PointXYZRGB>::Ptr& prev_cluster =
+          overclustering[centroid_index];
+      (*cluster) += (*prev_cluster);
+      // for (size_t k = 0; k < prev_cluster->size(); ++k) {
+      //  cluster->push_back((*prev_cluster)[k]);
+      //}
+      // cluster->width += prev_cluster->size();
+    }
+    (*clusters)[i] = cluster;
+  }
+}
 }  // namespace pr2_pick_perception
