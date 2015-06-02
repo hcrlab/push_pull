@@ -34,7 +34,7 @@ class VerifyGrasp(smach.State):
         self._count_points_in_box = kwargs['count_points_in_box']
         self._markers = kwargs['markers']
         self._tts = kwargs['tts']
-        self._optical_detect_item = kwargs['optical_detect_item']
+        #self._optical_detect_item = kwargs['optical_detect_item']
 
     def _check_thin_object(self, debug=False):
         """Holds the item up and checks if it's there.
@@ -118,14 +118,14 @@ class VerifyGrasp(smach.State):
 
         # OR the optical sensor detects something within 10cm of one of its
         # sensors.
-        if not grasp_succeeded:
-            self._optical_detect_item.wait_for_service(timeout=10)
-            response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
-            if response.detect:
-                rospy.loginfo('[VerifyGrasp] Optical sensor detected an item in hand.')
-            else:
-                rospy.loginfo('[VerifyGrasp] Optical sensor: no detection.')
-            grasp_succeeded = grasp_succeeded or response.detect
+        # if not grasp_succeeded:
+        #     self._optical_detect_item.wait_for_service(timeout=10)
+        #     response = self._optical_detect_item(arm=OpticalRefineRequest.RIGHT_ARM)
+        #     if response.detect:
+        #         rospy.loginfo('[VerifyGrasp] Optical sensor detected an item in hand.')
+        #     else:
+        #         rospy.loginfo('[VerifyGrasp] Optical sensor: no detection.')
+        #     grasp_succeeded = grasp_succeeded or response.detect
 
         # OR the depth pixels 
         if not grasp_succeeded:
