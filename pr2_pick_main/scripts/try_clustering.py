@@ -225,7 +225,6 @@ class Visualization(object):
 
 if __name__ == '__main__':
     rospy.init_node('try_clustering')
-    rospy.loginfo(rospy.myargv())
     bag = rosbag.Bag(sys.argv[1])
     messages = read_bag(bag)
 
