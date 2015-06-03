@@ -499,6 +499,11 @@ void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
         if (overlap_percentage >= overlap_threshold) {
           // Merge subcluster into output cluster.
           (*output_cluster.pc_) += (*subcluster.pc_);
+          pcl::PointXYZRGB min;
+          pcl::PointXYZRGB max;
+          pcl::getMinMax3D(*output_cluster.pc_, min, max);
+          output_cluster.min_y_ = min.y;
+          output_cluster.max_y_ = max.y;
           merged_subcluster = true;
           break;
         }
@@ -513,14 +518,16 @@ void ClusterBinItems(const PointCloud<PointXYZRGB>& cloud,
       }
     }
     if (static_cast<int>(output_clusters.size()) < num_clusters) {
-      ROS_WARN("Got %ld clusters, less than expected (%d).",
-               output_clusters.size(), num_clusters);
+      ROS_WARN("Got %ld clusters with threshold %f, less than expected (%d)",
+               output_clusters.size(), overlap_threshold, num_clusters);
       break;
     } else if (static_cast<int>(output_clusters.size()) == num_clusters) {
       ROS_INFO("Got %d clusters with overlap threshold of %f", num_clusters,
                overlap_threshold);
       break;
     } else {
+      ROS_INFO("Got %ld clusters with threshold %f, more than expected (%d)",
+               output_clusters.size(), overlap_threshold, num_clusters);
     }
   }
 
