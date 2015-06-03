@@ -102,6 +102,16 @@ void ComputeColorHistogram(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
 // measurements to a scale of 0 to 1.
 float SquaredDistance(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
 
+// Computes the centroid in RGB as well as XYZ space.
+//
+// This is part of PCL 1.8.0, but we are on 1.7.0 right now.
+//
+// Args:
+//   cluster: The colored point cloud to find the centroid of.
+//   centroid: The returned centroid.
+void ComputeCentroidXYZRGB(const pcl::PointCloud<pcl::PointXYZRGB>& cluster,
+                           pcl::PointXYZRGB* centroid);
+
 // Clusters the point cloud with K-means, using both distance and color
 // information.
 //

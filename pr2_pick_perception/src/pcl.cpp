@@ -566,6 +566,34 @@ void ClusterWithEuclidean(
   }
 }
 
+void ComputeCentroidXYZRGB(const PointCloud<PointXYZRGB>& cluster,
+                           PointXYZRGB* centroid) {
+  centroid->x = 0;
+  centroid->y = 0;
+  centroid->z = 0;
+  float centroid_r = 0;
+  float centroid_g = 0;
+  float centroid_b = 0;
+  for (size_t p = 0; p < cluster.size(); ++p) {
+    const PointXYZRGB& point = cluster[p];
+    centroid->x += point.x;
+    centroid->y += point.y;
+    centroid->z += point.z;
+    centroid_r += point.r;
+    centroid_g += point.g;
+    centroid_b += point.b;
+  }
+  centroid->x /= cluster.size();
+  centroid->y /= cluster.size();
+  centroid->z /= cluster.size();
+  centroid_r /= cluster.size();
+  centroid_g /= cluster.size();
+  centroid_b /= cluster.size();
+  centroid->r = static_cast<uint8_t>(centroid_r);
+  centroid->g = static_cast<uint8_t>(centroid_g);
+  centroid->b = static_cast<uint8_t>(centroid_b);
+}
+
 void ClusterBinItemsWithKMeans(
     const PointCloud<PointXYZRGB>& cloud, const int num_clusters,
     std::vector<PointCloud<PointXYZRGB>::Ptr>* clusters) {
@@ -576,7 +604,7 @@ void ClusterBinItemsWithKMeans(
   for (size_t i = 0; i < overclustering.size(); ++i) {
     const PointCloud<PointXYZRGB>::Ptr& overcluster = overclustering[i];
     PointXYZRGB centroid;
-    pcl::computeCentroid(*overcluster, centroid);
+    ComputeCentroidXYZRGB(*overcluster, &centroid);
     centroids.push_back(centroid);
   }
 
