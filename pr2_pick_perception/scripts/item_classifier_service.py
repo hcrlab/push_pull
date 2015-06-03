@@ -5,6 +5,7 @@
 from pr2_pick_perception import ItemClassifier
 from pr2_pick_perception import RosbagDataset
 from pr2_pick_perception import TargetItemClassifier
+from pr2_pick_perception.srv import ClassifyCluster
 from pr2_pick_perception.srv import ClassifyTargetItem
 import argparse
 import rosbag
@@ -36,5 +37,7 @@ if __name__ == '__main__':
 
     rospy.Service('item_classifier/classify_target_item', ClassifyTargetItem,
                   target_item_classifier.classify_request)
+    rospy.Service('item_classifier/classify_cluster', ClassifyCluster,
+                  item_classifier.classify_request)
 
     rospy.spin()

@@ -1,6 +1,10 @@
+#!/usr/bin/env python
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
+from pr2_pick_perception.msg import Cluster
 from pr2_pick_perception.msg import MultiItemCloud
+from pr2_pick_perception.srv import GetItemDescriptor
+from pr2_pick_perception.srv import ClassifyCluster
 from pr2_pick_perception.srv import SegmentItems, SegmentItemsRequest
 from visualization_msgs.msg import Marker
 from sensor_msgs.msg import PointCloud2
@@ -31,7 +35,6 @@ def try_segmentation(cloud, labels):
     clusters = segment_cloud(segment_items, cloud, labels)
     return clusters
 
-
 def try_over_segmentation(cloud, labels):
     segment_items = rospy.ServiceProxy('over_segment_items', SegmentItems)
     segment_items.wait_for_service()
@@ -50,33 +53,52 @@ def try_over_kmeans_segmentation(cloud, labels):
     clusters = segment_cloud(segment_items, cloud, labels)
     return clusters
 
-def debug_visualization(visualization, messages):
-    for cloud, labels in messages[4:]:
+def classify(cluster, labels):
+    get_item_descriptor = rospy.ServiceProxy('perception/get_item_descriptor', GetItemDescriptor)
+    get_item_descriptor.wait_for_service()
+    descriptor = get_item_descriptor(cluster=cluster).descriptor
+    classify_cluster = rospy.ServiceProxy('item_classifier/classify_cluster', ClassifyCluster)
+    classify_cluster.wait_for_service()
+    response = classify_cluster(descriptor, labels)
+    return response.label, response.confidence
+
+def visualize_pipeline(visualization, messages, pause_fn):
+    for cloud, labels in messages[:]:
         visualization.clear()
         visualization.visualize_cloud(cloud)
 
         clusters = try_over_segmentation(cloud, labels)    
         for i, cluster in enumerate(clusters):
             visualization.visualize_cluster(cluster)
-        raw_input('Press enter to continue: ')
+        pause_fn()
 
-        visualization.clear()
-        clusters = try_kmeans_segmentation(cloud, labels)    
-        for i, cluster in enumerate(clusters):
-            visualization.visualize_cluster(cluster)
-        raw_input('Press enter to continue: ')
-
-        visualization.clear()
-        clusters = try_over_kmeans_segmentation(cloud, labels)    
-        for i, cluster in enumerate(clusters):
-            visualization.visualize_cluster(cluster)
-        raw_input('Press enter to continue: ')
+#        visualization.clear()
+#        clusters = try_kmeans_segmentation(cloud, labels)    
+#        for i, cluster in enumerate(clusters):
+#            visualization.visualize_cluster(cluster)
+#        raw_input('Press enter to continue: ')
+#
+#        visualization.clear()
+#        clusters = try_over_kmeans_segmentation(cloud, labels)    
+#        for i, cluster in enumerate(clusters):
+#            visualization.visualize_cluster(cluster)
+#        raw_input('Press enter to continue: ')
 
         visualization.clear()
         clusters = try_segmentation(cloud, labels)    
         for i, cluster in enumerate(clusters):
-            visualization.visualize_cluster(cluster)
-        raw_input('Press enter to continue: ')
+            label, confidence = classify(cluster, labels)
+            text_label = '{} ({:.4f})'.format(label, confidence)
+            visualization.visualize_cluster(cluster, label=text_label)
+        pause_fn()
+
+def debug_visualization(visualization, messages):
+    pause_fn = lambda: raw_input('Press enter to continue: ')
+    visualize_pipeline(visualization, messages, pause_fn)
+
+def demo_visualization(visualization, messages):
+    pause_fn = lambda: rospy.sleep(5.0)
+    visualize_pipeline(visualization, messages, pause_fn)
 
 class Visualization(object):
     def __init__(self, cloud_pub, marker_pub):
@@ -106,41 +128,42 @@ class Visualization(object):
         marker.color.r = random.random()
         marker.color.g = random.random()
         marker.color.b = random.random()
-        marker.color.a = 0.5
+        marker.color.a = 0.5 + random.random()
         marker.points = point_list
         marker.scale.x = 0.002
         marker.scale.y = 0.002
         marker.lifetime = rospy.Duration()
-    
-        center = [0, 0, 0]
-        for point in point_list:
-            center[0] += point.x
-            center[1] += point.y
-            center[2] += point.z
-        center[0] /= len(point_list)
-        center[1] /= len(point_list)
-        center[2] /= len(point_list)
-    
-        text_marker = Marker()
-        text_marker.header.frame_id = 'map'
-        text_marker.header.stamp = rospy.Time().now()
-        text_marker.ns = 'labels'
-        text_marker.id = marker_id + 1
-        text_marker.type = Marker.TEXT_VIEW_FACING
-        text_marker.action = Marker.ADD
-        text_marker.pose.position.x = center[0] - 0.1
-        text_marker.pose.position.y = center[1]
-        text_marker.pose.position.z = center[2]
-        text_marker.color.r = 1
-        text_marker.color.g = 1
-        text_marker.color.b = 1
-        text_marker.color.a = 1
-        text_marker.scale.z = 0.05
-        text_marker.text = '{}'.format(marker_id/2) if label is None else label
-        text_marker.lifetime = rospy.Duration()
-    
         self.visualize_marker(marker)
-        self.visualize_marker(text_marker)
+    
+        if label is not None:
+            center = [0, 0, 0]
+            for point in point_list:
+                center[0] += point.x
+                center[1] += point.y
+                center[2] += point.z
+            center[0] /= len(point_list)
+            center[1] /= len(point_list)
+            center[2] /= len(point_list)
+    
+            text_marker = Marker()
+            text_marker.header.frame_id = 'map'
+            text_marker.header.stamp = rospy.Time().now()
+            text_marker.ns = 'labels'
+            text_marker.id = marker_id + 1
+            text_marker.type = Marker.TEXT_VIEW_FACING
+            text_marker.action = Marker.ADD
+            text_marker.pose.position.x = center[1] - 0.05
+            text_marker.pose.position.y = center[1]
+            text_marker.pose.position.z = center[2]
+            text_marker.color.r = 1
+            text_marker.color.g = 1
+            text_marker.color.b = 1
+            text_marker.color.a = 1
+            text_marker.scale.z = 0.05
+            text_marker.text = label
+            text_marker.lifetime = rospy.Duration()
+    
+            self.visualize_marker(text_marker)
 
     def visualize_marker(self, marker):
         self._publish(self._marker_pub, marker)
@@ -202,6 +225,7 @@ class Visualization(object):
 
 if __name__ == '__main__':
     rospy.init_node('try_clustering')
+    rospy.loginfo(rospy.myargv())
     bag = rosbag.Bag(sys.argv[1])
     messages = read_bag(bag)
 
@@ -209,5 +233,6 @@ if __name__ == '__main__':
     marker_pub = rospy.Publisher('pr2_pick_visualization', Marker)
     visualization = Visualization(cloud_pub, marker_pub)
 
-    debug_visualization(visualization, messages)
+    while True:
+        demo_visualization(visualization, messages)
     #grid_search(messages)

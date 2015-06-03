@@ -104,6 +104,7 @@ add_service_files(
   CountPointsInBox.srv
   SegmentItems.srv
   MatchCluster.srv
+  ClassifyCluster.srv
 )
 
 ## Generate actions in the 'action' folder
