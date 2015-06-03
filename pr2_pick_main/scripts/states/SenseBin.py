@@ -1,4 +1,5 @@
 from pr2_pick_main import handle_service_exceptions
+from pr2_pick_perception import DataSaver
 from pr2_pick_perception.srv import CropShelfRequest
 from pr2_pick_perception.srv import SegmentItemsRequest
 from geometry_msgs.msg import Point
@@ -33,7 +34,6 @@ class SenseBin(smach.State):
         self._crop_shelf = crop_shelf
         self._segment_items = kwargs['segment_items']
         self._markers = markers
-        self._tuck_arms = kwargs['tuck_arms']
         self._get_item_descriptor = kwargs['get_item_descriptor']
         self._classify_target_item = kwargs['classify_target_item']
         self._lookup_item = kwargs['lookup_item']
@@ -56,16 +56,24 @@ class SenseBin(smach.State):
         target_model = lookup_response.model
         userdata.target_model = target_model
 
-        self._tuck_arms.wait_for_service()
-        self._tuck_arms(tuck_left=False, tuck_right=False)
-        # If the arms are already tucked (usually true), then give some
-        # time for the point cloud to update.
         rospy.sleep(2)
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID=userdata.bin_id)
         self._crop_shelf.wait_for_service()
         crop_response = self._crop_shelf(crop_request)
+
+        # Save point cloud for later analysis
+        #try:
+        #    if len(userdata.current_bin_items) > 1:
+        #        filename = '_'.join([x[:5] for x in [userdata.current_target] + userdata.current_bin_items])
+        #        filename += '.bag'
+        #        data_saver = DataSaver('/tmp/cell_pc', filename)
+        #        data_saver.save_message('cell_pc', crop_response.cloud)
+        #        data_saver.close()
+        #        rospy.loginfo('Saved cropped point cloud to /tmp/cell_pc/{}'.format(filename))
+        #except e:
+        #    rospy.logerr('Failed to save point cloud data: {}'.format(e))
 
         # Segment items.
         segment_request = SegmentItemsRequest(cloud=crop_response.cloud, items=userdata.current_bin_items)

@@ -1,0 +1,25 @@
+%YAML:1.0
+cameraMatrix: !!opencv-matrix 
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 609.8155, 0.0, 323.1520, 0.0, 608.1229, 233.9956, 0.0, 0.0,  1.0000 ]
+
+distCoeffs: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ 0.1423,   -0.6265, 0.0 ]
+
+RotationMatrix:  !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [  0.9999,   -0.0071,   -0.0149, 0.0072, 1.0000,  0.0022, 0.0149,   -0.0023,    0.9999 ]
+   
+Translation:  !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ 0.0237909,    0.004945,    0.001383]
+      

@@ -2,201 +2,326 @@
   "oreo_mega_stuf": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.4,
+    "tall_item": false,
+    "speech_name": "oreos"
   },
   "champion_copper_plus_spark_plug": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.8,
+    "tall_item": false,
+    "speech_name": "spark plug"
   },
   "expo_dry_erase_board_eraser": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": false,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.9,
+    "tall_item": false,
+    "speech_name": "eraser"
   },
   "genuine_joe_plastic_stir_sticks": {
     "graspable": false,
     "allowed_grasps": [],
+    "grasp_wide_end": false,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0,
+    "tall_item": false,
+    "speech_name": "stir sticks"
   },
   "munchkin_white_hot_duck_bath_toy": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": true,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.8,
+    "tall_item": false,
+    "speech_name": "bath duck"
   },
   "crayola_64_ct": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": false,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.8,
+    "tall_item": false,
+    "speech_name": "crayons"
   },
   "mommys_helper_outlet_plugs": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": false,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 15
+    "grasp_effort": 15,
+    "success_prior": 0.1,
+    "tall_item": false,
+    "speech_name": "outlet plugs"
   },
   "sharpie_accent_tank_style_highlighters": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": true,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.1,
+    "tall_item": false,
+    "speech_name": "highlighters"
   },
   "stanley_66_052": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": true,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 3,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.1,
+    "tall_item": false,
+    "speech_name": "screwdrivers"
   },
   "safety_works_safety_glasses": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
-    "allow_finger_collisions": false,
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
+    "allow_finger_collisions": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": 30
+    "grasp_effort": 30,
+    "success_prior": 0.7,
+    "tall_item": false,
+    "speech_name": "safety glasses"
   },
   "cheezit_big_original": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": false,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": 30
+    "grasp_effort": 30,
+    "success_prior": 0.8,
+    "tall_item": true,
+    "speech_name": "cheese its"
   },
   "paper_mate_12_count_mirado_black_warrior": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": true,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": 20
+    "grasp_effort": 20,
+    "success_prior": 0.7,
+    "tall_item": false,
+    "speech_name": "pencils"
   },
   "feline_greenies_dental_treats": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 0,
-    "grasp_effort": 30
+    "grasp_effort": 30,
+    "success_prior": 0.7,
+    "tall_item": false,
+    "speech_name": "cat treats"
   },
   "elmers_washable_no_run_school_glue": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.9,
+    "tall_item": false,
+    "speech_name": "school glue"
   },
   "mead_index_cards": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.7,
+    "tall_item": false,
+    "speech_name": "index cards"
   },
   "rolodex_jumbo_pencil_cup": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 2,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.1,
+    "tall_item": false,
+    "speech_name": "pencil cup"
   },
   "first_years_take_and_toss_straw_cup": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": true,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.5,
+    "tall_item": false,
+    "speech_name": "straw cups"
   },
   "highland_6539_self_stick_notes": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 0,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.8,
+    "tall_item": false,
+    "speech_name": "sticky notes"
   },
   "mark_twain_huckleberry_finn": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": true,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.1,
+    "tall_item": true,
+    "speech_name": "huckleberry finn book"
   },
   "kyjen_squeakin_eggs_plush_puppies": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.9,
+    "tall_item": false,
+    "speech_name": "squeaky egg dog toy"
   },
   "kong_sitting_frog_dog_toy": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.8,
+    "tall_item": false,
+    "speech_name": "frog dog toy"
   },
   "kong_air_dog_squeakair_tennis_ball": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.6,
+    "tall_item": false,
+    "speech_name": "tennis ball dog toy"
   },
   "dr_browns_bottle_brush": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": false,
     "zero_width_grasp": true,
     "bonus_points": 2,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.3,
+    "tall_item": false,
+    "speech_name": "bottle brush"
   },
   "kong_duck_dog_toy": {
     "graspable": true,
     "allowed_grasps": ["pitched", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": false,
     "allow_finger_collisions": true,
     "zero_width_grasp": true,
     "bonus_points": 1,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.8,
+    "tall_item": false,
+    "speech_name": "duck dog toy"
   },
   "laugh_out_loud_joke_book": {
     "graspable": true,
     "allowed_grasps": ["pitched", "rolled", "level"],
+    "grasp_wide_end": true,
+    "grasp_multiple_heights": true,
     "allow_finger_collisions": false,
     "zero_width_grasp": false,
     "bonus_points": 3,
-    "grasp_effort": -1
+    "grasp_effort": -1,
+    "success_prior": 0.1,
+    "tall_item": true,
+    "speech_name": "joke book"
   }
 }

@@ -6,6 +6,7 @@ import smach
 import tf
 from visualization_msgs.msg import Marker
 
+from joint_states_listener.srv import ReturnJointStates
 import outcomes
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
@@ -18,6 +19,7 @@ from pr2_pick_perception.srv import CountPointsInBox
 from pr2_pick_perception.srv import SegmentItems
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
+from pr2_pretouch_optical_dist.srv import OpticalRefine
 import states
 from states.GraspTool import GraspTool, ReleaseTool
 
@@ -89,6 +91,7 @@ class StateMachineBuilder(object):
             'set_grippers': rospy.ServiceProxy('set_grippers_service', SetGrippers),
             'get_grippers': rospy.ServiceProxy('get_grippers_service', GetGrippers),
             'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
+            'joint_states_listener': rospy.ServiceProxy('return_joint_states', ReturnJointStates),
 
             # World and Perception
             'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
@@ -111,6 +114,7 @@ class StateMachineBuilder(object):
                                                        ClassifyTargetItem),
             'count_points_in_box': rospy.ServiceProxy('perception/count_points_in_box',
                                                        CountPointsInBox),
+            'optical_detect_item': rospy.ServiceProxy('optical_detect_item', OpticalRefine),
 
             # Contest
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
@@ -676,7 +680,8 @@ class StateMachineBuilder(object):
                     outcomes.EXTRACT_ITEM_FAILURE: states.UpdatePlan.name
                 },
                 remapping={
-                    'bin_id': 'current_bin'
+                    'bin_id': 'current_bin',
+                    'item_model': 'target_model'
                 }
             )
             smach.StateMachine.add(

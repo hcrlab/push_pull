@@ -6,6 +6,7 @@ project(pr2_pick_contest)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   pr2_pick_perception
+  roscpp
   rospy
   std_msgs
   message_generation
@@ -18,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -57,6 +58,7 @@ add_service_files(
   GetTargetItems.srv
   SetItems.srv
   LookupItem.srv
+  TrackTime.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -97,8 +99,13 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  ${catkin_INCLUDE_DIRS}
+  include ${catkin_INCLUDE_DIRS}
 )
+link_directories(${catkin_LIBRARY_DIRS})
+
+add_library(TrackTimeService src/pr2_pick_contest/TrackTimeService.cpp)
+add_dependencies(TrackTimeService pr2_pick_contest_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+target_link_libraries(TrackTimeService ${catkin_LIBRARIES})
 
 ## Declare a cpp library
 # add_library(pr2_pick_contest
@@ -106,8 +113,12 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-# add_executable(pr2_pick_contest_node src/pr2_pick_contest_node.cpp)
+add_executable(TrackTimeServiceNode src/pr2_pick_contest/TrackTimeServiceNode.cpp)
+target_link_libraries(TrackTimeServiceNode TrackTimeService ${catkin_LIBRARIES})
 
+add_executable(TrackTimeServiceClient src/pr2_pick_contest/TrackTimeServiceClient.cpp)
+add_dependencies(TrackTimeServiceClient pr2_pick_contest_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+target_link_libraries(TrackTimeServiceClient ${catkin_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(pr2_pick_contest_node pr2_pick_contest_generate_messages_cpp)

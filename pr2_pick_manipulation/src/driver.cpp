@@ -98,6 +98,8 @@ bool RobotDriver::DriveToPose(geometry_msgs::PoseStamped pose,
   // Transform pose to be relative to "base_footprint"
   geometry_msgs::PoseStamped newPose;
   pose.header.stamp = ros::Time(0);
+  listener_.waitForTransform("base_footprint", pose.header.frame_id,
+                              ros::Time(0), ros::Duration(10.0));
   listener_.transformPose("base_footprint", pose, newPose);
 
   tf::Matrix3x3 m(

@@ -7,6 +7,7 @@ from std_msgs.msg import Header
 import tf
 import visualization as viz
 
+from joint_states_listener.srv import ReturnJointStatesRequest
 import outcomes
 
 
@@ -65,6 +66,7 @@ class MoveToBin(smach.State):
         self.move_torso = move_torso
         self.markers = markers
         self._tuck_arms = kwargs['tuck_arms']
+        self.joint_states_listener = kwargs['joint_states_listener']
 
         self.torso_height_by_bin = \
             {letter: self.top_row_torso_height for letter in ('A', 'B', 'C')}
@@ -110,12 +112,26 @@ class MoveToBin(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
+        # set torso height for the given shelf
+        self.move_torso.wait_for_service()
+        result = self.move_torso(self.torso_height_by_bin[userdata.bin_id], False)
+
         self.drive_to_pose.wait_for_service()
         self.drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
 
-        # set torso height for the given shelf
-        self.move_torso.wait_for_service()
-        result = self.move_torso(self.torso_height_by_bin[userdata.bin_id])
+        # Wait until torso is done
+        start = rospy.Time.now()
+        time_spent = rospy.Duration(0)
+        while time_spent < rospy.Duration(60):
+            torso_req = ReturnJointStatesRequest()
+            torso_req.name = ["torso_lift_joint"]  
+            torso_state = self.joint_states_listener(torso_req)
+            if math.fabs(torso_state.position[0] - self.torso_height_by_bin[userdata.bin_id]) < 0.005:
+                break
+            rospy.loginfo("Torso pose: " + str(torso_state.position[0]))
+            rospy.loginfo("Desired Torso pose: " + str(self.torso_height_by_bin[userdata.bin_id]))
+            time_spent = rospy.Time.now() - start
+            rospy.sleep(0.1)
 
         # face the head towards the bin
         self.move_head.wait_for_service()

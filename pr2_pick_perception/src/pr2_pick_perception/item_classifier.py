@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 
 from pr2_pick_perception.msg import ItemDescriptor
+from pr2_pick_perception.srv import ClassifyClusterResponse
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
@@ -9,19 +10,22 @@ import rospy
 
 
 class ItemClassifier(object):
-    def __init__(self, training_data):
+    def __init__(self, training_data, normalize=False):
         """Constructor.
 
         training_data: A list of (descriptor, label), where descriptor is a
             pr2_pick_perception/ItemDescriptor, and label is a string item
             name.
         """
+        self._normalize = normalize
         self._data_by_class = self._load_data(training_data)
 
     def _load_data(self, data):
         data_by_class = {}
         for descriptor, label in data:
             histogram = np.array(descriptor.histogram.histogram)
+            if self._normalize:
+                histogram = histogram / sum(histogram)
             if label in data_by_class:
                 data_by_class[label].append(histogram)
             else:
@@ -42,6 +46,8 @@ class ItemClassifier(object):
 
         # Find nearest point of each class.
         histogram = np.array(descriptor.histogram.histogram)
+        if self._normalize:
+            histogram = histogram / sum(histogram)
         points = []
         for label in labels:
             point, distance = self._find_nearest_with_label(histogram, label)
@@ -71,6 +77,13 @@ class ItemClassifier(object):
         """
         labels, confidences = self.compute_confidences(descriptor, labels)
         return labels[0], confidences[0]
+
+    def classify_request(self, request):
+        label, confidence = self.classify(request.descriptor, request.labels)
+        response = ClassifyClusterResponse()
+        response.label = label
+        response.confidence = confidence
+        return response
 
 
 if __name__ == '__main__':

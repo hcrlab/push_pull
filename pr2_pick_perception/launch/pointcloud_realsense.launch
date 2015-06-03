@@ -1,0 +1,19 @@
+<!-- Launches point cloud publisher realsense-->
+<launch>
+  <node ns="perception" pkg="pr2_pick_perception" type="pointcloud_realsense" name="realsense_pointcloud" respawn="true" output="screen">
+   <remap from="/color_info" to="/camera/color/camera_info"/>
+   <remap from="/depth_info" to="/camera/depth/camera_info"/>
+  
+   <remap from="/image_topic" to="/camera/color/image_raw"/>
+   <remap from="/depth_topic" to="/camera/depth/image_raw"/>
+  
+   <remap from="/pc_realsense" to="/camera/realsense/points"/>
+   </node>
+   
+  
+
+
+   <!--   params are "x y z yaw pitch roll parent child rate" -->
+    <node pkg="tf" type="static_transform_publisher" name="cam_to_robot_pub" args=" 0.129494314071  -0.00876467382714  -0.253208487104 
+      0.0334145945836  -0.735172084959  -0.0420980822476  0.675746418294  /l_forearm_link /realsense_frame  200"/> 
+</launch>

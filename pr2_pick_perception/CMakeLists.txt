@@ -23,7 +23,7 @@ find_package(catkin REQUIRED
 ## System dependencies are found with CMake's conventions
 find_package(Boost 1.46.1 REQUIRED COMPONENTS signals regex system thread filesystem)
 find_package(OpenCV)
-find_package(PCL 1.7.0 REQUIRED)
+find_package(PCL REQUIRED)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
 
@@ -86,6 +86,7 @@ add_message_files(
   MultiItemCloud.msg
   ROI2d.msg
   DescriptorExample.msg
+  ObjectMatchRequest.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -102,6 +103,8 @@ add_service_files(
   ClassifyTargetItem.srv
   CountPointsInBox.srv
   SegmentItems.srv
+  MatchCluster.srv
+  ClassifyCluster.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -174,6 +177,22 @@ add_executable(shelf_localization_service_node
 add_executable(shelf_localization_service_node_lidar
   src/shelf_localization_LIDAR.cpp
 )
+
+add_executable(object_recognition_service
+  src/obj_recognition_cluster.cpp
+)
+#add_executable(test_match_descriptor
+#  src/test_matcher.cpp
+#)
+
+add_executable(realsense_camerainfo
+  src/camera_info.cpp
+)
+
+add_executable(pointcloud_realsense
+  src/pointcloud_realsense.cpp
+)
+
 
 add_executable(shelf_cropping_service_node
   src/shelf_cropping.cpp
@@ -251,6 +270,10 @@ add_dependencies(convert_rosbag_to_descriptors
   pr2_pick_perception_generate_messages_cpp
 )
 
+add_dependencies(object_recognition_service
+  pr2_pick_perception_generate_messages_cpp
+)
+
 # Hopefully not needed.
 #add_dependencies(pcl_lib
 #  pr2_pick_msgs_generate_messages_cpp
@@ -265,6 +288,20 @@ target_link_libraries(shelf_localization_service_node
   ${catkin_LIBRARIES}
 )
 
+target_link_libraries(pointcloud_realsense
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+
+
+target_link_libraries(realsense_camerainfo
+  ${catkin_LIBRARIES}
+)
+
+
 # target_link_libraries(shelf_localization_service_node_lidar
 #   ${VTK_LIBRARIES}
 #   ${OpenCV_LIBRARIES}
@@ -278,6 +315,21 @@ target_link_libraries(shelf_cropping_service_node
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+#target_link_libraries(test_match_descriptor
+#  ${VTK_LIBRARIES}
+#  ${OpenCV_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  ${catkin_LIBRARIES}
+#)
+
+target_link_libraries(object_recognition_service
+  ${VTK_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
 
 target_link_libraries(item_segmentation_service_node
   ${VTK_LIBRARIES}

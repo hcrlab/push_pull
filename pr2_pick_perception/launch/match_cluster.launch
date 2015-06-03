@@ -1,0 +1,15 @@
+<!-- Launches object matcher using descriptors-->
+<launch>
+  <arg name="debug" default="true" /> <!-- Whether to show debug visualizations. -->
+  
+  <node   ns="perception" pkg="pr2_pick_perception" type="object_recognition_service" name="match_object" respawn="true" output="screen">
+  
+   <param name="descriptor_dir" value="$(find pr2_pick_perception)/descriptors/"/>
+   <param name="min_matches" value="20"/>
+   <param name="descriptor_distance" value="2.0"/>
+  
+    <param name="debug" value="$(arg debug)"/>
+
+  </node>
+
+</launch>

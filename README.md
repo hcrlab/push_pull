@@ -4,6 +4,7 @@ This is the main code repository for the UW Amazon Picking Challenge team.
 ## Getting started
 ```
 sudo pip install mock
+sudo pip install scikit-learn
 sudo apt-get install ros-hydro-cmake-modules
 
 cd ~/catkin_ws_hydro/src
@@ -22,16 +23,31 @@ git submodule update
 ## Running the code
 [Recommended .bashrc](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/recommended_bashrc.md)
 
-```bash
-# On a desktop computer
-setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
-roslaunch pr2_moveit_config move_group.launch
-rviz # Use the config file in pr2_pick/config
 
-# On the robot
-# Launch move_group.launch first, otherwise the MoveIt service will crash.
+### On a desktop computer
+```bash
+setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
+roslaunch pr2_pick_main rviz.launch
+```
+
+### On hal9k
+hal9k is the laptop in the robot's backpack.
+We run MoveIt on hal9k because it runs too slowly on c1.
+You must launch MoveIt first, or else the prerequisites below won't work.
+```bash
+ssh c1
+ssh apc@hal9k # SSH into hal9k via c1
+roslaunch pr2_pick_manipulation move_group.launch
+```
+
+### On the robot
+Before running `robot start`, verify that the latest version of pr2_robot from our repository is sourced.
+Try running `roscd pr2_robot`, it should take you to our repository.
+
+```bash
+robot start
 roslaunch pr2_pick_main main_prereqs.launch
-python main.py --debug
+rosrun pr2_pick_main main.py
 ```
 
 To see a visualization of the execution, open rviz and use the config file in `pr2_pick/config`
@@ -74,6 +90,9 @@ Unused, put messages in the related package instead.
 - *trajopt_test*:
 Unused.
 A service that moves the arm using trajopt.
+
+## Backpack computer network configuration
+See [Backpack configuration](https://github.com/hcrlab/wiki/blob/master/pr2/backpack_configuration.md)
 
 ## Style guides
 These are just suggested:

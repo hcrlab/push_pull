@@ -1,0 +1,20 @@
+<!-- Launches camera infos-->
+<launch>
+  <node ns="perception" pkg="pr2_pick_perception" type="realsense_camerainfo" name="realsense_camcolorinfo" respawn="true" output="screen">
+   <param name="calibration_file" value="$(find pr2_pick_perception)/calib_files/realsense_color.yaml"/>
+
+   <param name="image_width" value="640" />
+   <param name="image_height" value="480" />
+   <remap from="/camera_info" to="/camera/color/camera_info"/>
+   
+   </node>
+   
+   <node ns="perception" pkg="pr2_pick_perception" type="realsense_camerainfo" name="realsense_camdepthinfo" respawn="true" output="screen">
+   <param name="calibration_file" value="$(find pr2_pick_perception)/calib_files/realsense_depth.yaml"/>
+
+   <param name="image_width" value="640" />
+   <param name="image_height" value="480" />
+   <remap from="/camera_info" to="/camera/depth/camera_info"/>
+   
+   </node>
+</launch>

@@ -9,6 +9,7 @@ from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import GetPose
 from pr2_pick_manipulation.srv import MoveArm, MoveArmIkRequest
 from std_msgs.msg import Header
+import math
 import json
 import os
 import tf
@@ -24,6 +25,8 @@ class ExtractItem(smach.State):
     third_row_torso_height = 0.16
     bottom_row_torso_height = 0.055
 
+    tall_item_roll = 3.14/4
+
 
     def __init__(self, **services):
         smach.State.__init__(
@@ -32,7 +35,7 @@ class ExtractItem(smach.State):
                 outcomes.EXTRACT_ITEM_SUCCESS,
                 outcomes.EXTRACT_ITEM_FAILURE
             ],
-            input_keys=['bin_id', 'debug', 'target_descriptor']
+            input_keys=['bin_id', 'debug', 'target_descriptor', 'item_model']
         )
 
         self._moveit_move_arm = services['moveit_move_arm']
@@ -116,10 +119,87 @@ class ExtractItem(smach.State):
         rospy.loginfo("orientation x: " + str(current_pose.pose.orientation.x) + ", y: " + str(current_pose.pose.orientation.y) + ", z: " + str(current_pose.pose.orientation.z) + ", w: " + str(current_pose.pose.orientation.w))
 
 
+        # if item is tall_item
+        # and if hand is upright
+        # check which direction is closer 
+
+        lift = True
+        if userdata.item_model.tall_item and userdata.bin_id > 'C':
+            quaternion = (
+                current_pose.pose.orientation.x,
+                current_pose.pose.orientation.y,
+                current_pose.pose.orientation.z,
+                current_pose.pose.orientation.w)
+            euler = tf.transformations.euler_from_quaternion(quaternion)
+            roll = euler[0]
+            pitch = euler[1]
+            yaw = euler[2]
+
+            angle = math.fabs(roll % (2*math.pi))
+            rospy.loginfo("Grasp roll: {}, normalized angle: {}".format(roll, angle))
+            if (angle < (15 * math.pi / 180.0) or angle > (345 * math.pi / 180.0) or (angle > (165 * math.pi / 180.0) and (angle < 195 * math.pi / 180.0))):
+                # Rotate hand
+                lift = False
+
+                # put object pose in bin_frame 
+                object_pose_in_bin_frame = self._tf_listener.transformPose('bin_' + str(userdata.bin_id), object_pose)
+
+                if object_pose_in_bin_frame.pose.position.y > 0:
+                    quaternion = tf.transformations.quaternion_from_euler(self.tall_item_roll, 0, 0)
+                else:
+                    quaternion = tf.transformations.quaternion_from_euler(-self.tall_item_roll, 0, 0)
+
+                pose_target = PoseStamped()
+                pose_target.header.frame_id = 'r_wrist_roll_link'
+                rospy.loginfo("Rotate hand")
+                pose_target.pose.position.x = 0
+                pose_target.pose.position.y = 0
+                pose_target.pose.orientation.x = quaternion[0]
+                pose_target.pose.orientation.y = quaternion[1]
+                pose_target.pose.orientation.z = quaternion[2]
+                pose_target.pose.orientation.w = quaternion[3]
+
+                self._move_arm_ik.wait_for_service()
+                try:
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest.RIGHT_ARM, rospy.Duration(5)).success
+                except rospy.ServiceException:
+                    rospy.sleep(3.0)
+                    self._move_arm_ik.wait_for_service()
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest.RIGHT_ARM, rospy.Duration(5)).success
+
+
+        self._tf_listener.waitForTransform(
+            'base_footprint',
+            'r_wrist_roll_link',
+            rospy.Time(0),
+            self._wait_for_transform_duration
+        )
+
+        (current_position, current_orientation) = self._tf_listener.lookupTransform(
+            'base_footprint', 'r_wrist_roll_link', rospy.Time(0))#self._ee_pose("right_arm", "r_wrist_roll_link")
+        current_pose = PoseStamped()
+        current_pose.header.frame_id = 'base_footprint'
+        current_pose.pose.position.x = current_position[0]
+        current_pose.pose.position.y = current_position[1] 
+        current_pose.pose.position.z = current_position[2]
+
+        current_pose.pose.orientation.x = current_orientation[0]
+        current_pose.pose.orientation.y = current_orientation[1]
+        current_pose.pose.orientation.z = current_orientation[2]
+        current_pose.pose.orientation.w = current_orientation[3]
+
+        rospy.loginfo("pose x: " + str(current_pose.pose.position.x) + ", y: " + str(current_pose.pose.position.y) + ", z: " + str(current_pose.pose.position.z))
+        rospy.loginfo("orientation x: " + str(current_pose.pose.orientation.x) + ", y: " + str(current_pose.pose.orientation.y) + ", z: " + str(current_pose.pose.orientation.z) + ", w: " + str(current_pose.pose.orientation.w))
+
+
+
+
         success_lift = False
-        attempts = 5
+       
+        attempts = 3
         for i in range(attempts):
             if userdata.bin_id > "C":
+                
                 # Lift item to clear bin lip
                 pose_target = geometry_msgs.msg.PoseStamped()
                 pose_target.header.frame_id = 'base_footprint'
@@ -131,7 +211,7 @@ class ExtractItem(smach.State):
                 pose_target.pose.orientation.z = current_pose.pose.orientation.z
                 pose_target.pose.orientation.w = current_pose.pose.orientation.w 
                 pose_target.pose.position.z = current_pose.pose.position.z + self._lift_height
-                pose_target.pose.position.x = current_pose.pose.position.x - 0.01 * i 
+                pose_target.pose.position.x = current_pose.pose.position.x - 0.015 * i 
 
                 # pose_target.header.frame_id = "base_footprint";
                 # pose_target.pose.orientation.w = 1
@@ -142,13 +222,14 @@ class ExtractItem(smach.State):
                 rospy.loginfo("pose x: " + str(pose_target.pose.position.x) + ", y: " + str(pose_target.pose.position.y) + ", z: " + str(pose_target.pose.position.z))
                 rospy.loginfo("orientation x: " + str(pose_target.pose.orientation.x) + ", y: " + str(pose_target.pose.orientation.y) + ", z: " + str(pose_target.pose.orientation.z) + ", w: " + str(pose_target.pose.orientation.w))
                 
-                self._move_arm_ik.wait_for_service()
-                try:
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
-                except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                if lift:
                     self._move_arm_ik.wait_for_service()
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    try:
+                        success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
+                    except rospy.ServiceException:
+                        rospy.sleep(1.0)
+                        self._move_arm_ik.wait_for_service()
+                        success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
             else:
 
                 euler_tuple = tf.transformations.euler_from_quaternion(
@@ -186,24 +267,24 @@ class ExtractItem(smach.State):
             
                 self._move_arm_ik.wait_for_service()
                 try:
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 except rospy.ServiceException:
-                    rospy.sleep(5.0)
+                    rospy.sleep(1.0)
                     self._move_arm_ik.wait_for_service()
 
-                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                    success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
             if success_lift:
                 rospy.loginfo("Lift success")
                 break
             else:
                 pose_target.pose.orientation = Quaternion() 
-                success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM).success
+                success_lift = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5)).success
                 rospy.loginfo("Lift attempt " + str(i) + " failed")
                 continue
 
 
         if not success_lift and userdata.bin_id > "C":
-            self._move_torso(self.torso_height_by_bin[userdata.bin_id])
+            self._move_torso(self.torso_height_by_bin[userdata.bin_id], True)
         attempts = 5
 
         # Pull item out of bin
@@ -216,7 +297,7 @@ class ExtractItem(smach.State):
         target_in_shelf_frame = geometry_msgs.msg.PoseStamped(
             header=Header(frame_id='shelf'),
             pose=Pose(
-                position=Point(x=-1.35,
+                position=Point(x=-1.55,
                                y=position[1],
                                z=0.0),
                 orientation=Quaternion(w=1, x=0, y=0, z=0)
@@ -254,7 +335,7 @@ class ExtractItem(smach.State):
         self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
 
         if not success_lift:
-            self._move_torso(self.torso_height_by_bin[userdata.bin_id] - 0.04)  
+            self._move_torso(self.torso_height_by_bin[userdata.bin_id] - 0.04, True)  
 
 
         # Center Arm
