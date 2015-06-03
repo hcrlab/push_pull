@@ -64,7 +64,7 @@ bool ItemSegmentationService::Callback(SegmentItems::Request& request,
 
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  ClusterWithEuclidean(*cell_pc_filtered, 0.01, min_cluster_points_,
+  ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
   if (clusters.size() != request.items.size()) {
@@ -148,7 +148,7 @@ bool ItemOverSegmentationService::Callback(SegmentItems::Request& request,
 
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  ClusterWithEuclidean(*cell_pc_filtered, 0.01, min_cluster_points_,
+  ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
   if (clusters.size() != request.items.size()) {
@@ -233,7 +233,7 @@ bool ItemKMeansSegmentationService::Callback(SegmentItems::Request& request,
 
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  ClusterWithEuclidean(*cell_pc_filtered, 0.01, min_cluster_points_,
+  ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
   if (clusters.size() != request.items.size()) {
@@ -318,7 +318,7 @@ bool ItemOverKMeansSegmentationService::Callback(
 
   // Do clustering.
   std::vector<PointCloud<PointXYZRGB>::Ptr> clusters;
-  ClusterWithEuclidean(*cell_pc_filtered, 0.01, min_cluster_points_,
+  ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
   if (clusters.size() != request.items.size()) {
