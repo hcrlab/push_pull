@@ -372,18 +372,18 @@ void ClusterWithRegionGrowing(
   reg.setSearchMethod(tree);
 
   float distance_threshold;
-  ros::param::param<float>("distance_threshold", distance_threshold, 0.05);
+  ros::param::param<float>("region_growing/distance_threshold", distance_threshold, 0.05);
   reg.setDistanceThreshold(distance_threshold);
 
   float point_color;
-  ros::param::param<float>("point_color", point_color, 10);
+  ros::param::param<float>("region_growing/point_color", point_color, 10);
   float region_color;
-  ros::param::param<float>("region_color", region_color, 20);
+  ros::param::param<float>("region_growing/region_color", region_color, 20);
   reg.setPointColorThreshold(point_color);
   reg.setRegionColorThreshold(region_color);
 
   int min_cluster_size;
-  ros::param::param<int>("min_cluster_size", min_cluster_size, 150);
+  ros::param::param<int>("region_growing/min_cluster_size", min_cluster_size, 150);
   reg.setMinClusterSize(min_cluster_size);
 
   std::vector<pcl::PointIndices> clusters_ind;
