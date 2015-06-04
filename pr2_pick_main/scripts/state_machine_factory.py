@@ -1,5 +1,4 @@
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
-import mock #Take this out
 import rospy
 from std_msgs.msg import String
 import smach
@@ -279,7 +278,6 @@ class StateMachineBuilder(object):
             outcomes.CHALLENGE_FAILURE
         ])
 
-        # mock stuff
         mock_update_plan = states.UpdatePlan(**services)
         mock_update_plan.execute = self.mock_update_plan_execute
 
@@ -309,7 +307,6 @@ class StateMachineBuilder(object):
             )
             smach.StateMachine.add(
                 states.UpdatePlan.name,
-                # is this kinda thang okay?
                 mock_update_plan,
                 transitions={
                     outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
@@ -359,7 +356,6 @@ class StateMachineBuilder(object):
             outcomes.CHALLENGE_FAILURE
         ])
 
-        # mock stuff
         mock_update_plan = states.UpdatePlan(**services)
         mock_update_plan.execute = self.mock_update_plan_execute
 
@@ -389,7 +385,6 @@ class StateMachineBuilder(object):
             )
             smach.StateMachine.add(
                 states.UpdatePlan.name,
-                # more mock
                 mock_update_plan,
                 transitions={
                     outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
