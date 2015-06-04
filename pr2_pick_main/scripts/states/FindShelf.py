@@ -207,10 +207,13 @@ class FindShelf(smach.State):
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
         
-        visualize_dropoff_bin()
+        self.visualize_dropoff_bin()
         return outcomes.FIND_SHELF_SUCCESS
 
     def visualize_dropoff_bin(self):
+        # Finds and publishes the transform from the shelf
+        # to the order bin and then publishes a marker for
+        # the order bin.
         order_bin_tf = TransformStamped()
         order_bin_tf.header.frame_id = 'shelf'
         order_bin_tf.header.stamp = rospy.Time.now()
