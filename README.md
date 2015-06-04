@@ -27,16 +27,11 @@ git submodule update
 ### On a desktop computer
 ```bash
 setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
-roslaunch pr2_pick_main rviz.launch
+roslaunch pr2_pick_main rviz.launch # Run after "robot start"
 ```
 
-### On hal9k
-hal9k is the laptop in the robot's backpack.
-We run MoveIt on hal9k because it runs too slowly on c1.
-You must launch MoveIt first, or else the prerequisites below won't work.
+You must launch MoveIt before running anything on the robot, or else the prerequisites below won't work.
 ```bash
-ssh c1
-ssh apc@hal9k # SSH into hal9k via c1
 roslaunch pr2_pick_manipulation move_group.launch
 ```
 
