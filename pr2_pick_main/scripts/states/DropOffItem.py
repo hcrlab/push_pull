@@ -79,28 +79,28 @@ class DropOffItem(smach.State):
         rospy.loginfo('Dropping off item from bin {}'.format(userdata.bin_id))
         self._tts.publish('Dropping off item from bin {}'.format(userdata.bin_id))
 
-        if not self._order_bin_found:
-            rospy.loginfo('Creating a static TF for the order bin relative to the shelf')
+#        if not self._order_bin_found:
+#            rospy.loginfo('Creating a static TF for the order bin relative to the shelf')
 
 
             # Do it the simple way! Assumes the shelf is not too tilted
             # TODO(jstn): move this to FindShelf.
             # Creates a stransform from the shelf frame to the order bin fame
-            order_bin_tf = TransformStamped()
-            order_bin_tf.header.frame_id = 'shelf'
-            order_bin_tf.header.stamp = rospy.Time.now()
-            order_bin_tf.transform.translation.x = -36 * 0.0254
-            order_bin_tf.transform.translation.y = -27 * 0.0254 # -27
-            order_bin_tf.transform.translation.z = 12 * 0.0254
-            order_bin_tf.transform.rotation.w = 1
-            order_bin_tf.child_frame_id = 'order_bin'
-            self._set_static_tf.wait_for_service()
-            self._set_static_tf(order_bin_tf)
+#            order_bin_tf = TransformStamped()
+#            order_bin_tf.header.frame_id = 'shelf'
+#            order_bin_tf.header.stamp = rospy.Time.now()
+#            order_bin_tf.transform.translation.x = -36 * 0.0254
+#            order_bin_tf.transform.translation.y = -27 * 0.0254 # -27
+#            order_bin_tf.transform.translation.z = 12 * 0.0254
+#            order_bin_tf.transform.rotation.w = 1
+#            order_bin_tf.child_frame_id = 'order_bin'
+#            self._set_static_tf.wait_for_service()
+#            self._set_static_tf(order_bin_tf)
 
-            self._order_bin_found = True
+#            self._order_bin_found = True
 
         # TODO(jstn): move this to FindShelf.
-        viz.publish_order_bin(self._markers)
+#        viz.publish_order_bin(self._markers)
 
 
         #rospy.loginfo('Untucking right arm')
