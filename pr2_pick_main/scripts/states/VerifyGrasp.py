@@ -66,8 +66,8 @@ class VerifyGrasp(smach.State):
         #self._moveit_move_arm(request)
 
         self._move_arm_ik.wait_for_service()
-        self._move_arm_ik(request.goal,
-                          MoveArmIkRequest().RIGHT_ARM,
+        self._move_arm_ik(goal=request.goal,
+                          arm=MoveArmIkRequest().RIGHT_ARM,
                           duration=rospy.Duration(5))
 
         self._move_head.wait_for_service()
