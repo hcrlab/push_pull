@@ -14,8 +14,7 @@ from state_machine_factory import StateMachineBuilder
 import states
 
 
-def main(mock=False, # Take out this bit 
-         test_drop_off_item=False,
+def main(test_drop_off_item=False,
          test_grasp_tool=False,
          test_move_to_bin=False,
          test_push_item=False,
@@ -39,7 +38,7 @@ def main(mock=False, # Take out this bit
     else:
         state_machine_type = StateMachineBuilder.DEFAULT
 
-    sm = (StateMachineBuilder().set_mock(mock)
+    sm = (StateMachineBuilder()
           .set_state_machine(state_machine_type).build())
 
     # Whether to step through checkpoints.
@@ -139,11 +138,6 @@ if __name__ == '__main__':
         action='store_true',
         help=('True to create a minimal state machine for gathering data.'))
 
-    parser.add_argument( # This can go too
-        '--mock',
-        action='store_true',
-        help=('True if you want to create a state machine with mock robot'
-              ' components.'))
     parser.add_argument(
         '--debug',
         action='store_true',
@@ -166,7 +160,7 @@ if __name__ == '__main__':
         rospy.logwarn('Warning: use_sim_time was set to true. Setting back to '
                       'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
-    main(args.mock, args.test_drop_off_item, args.test_grasp_tool, # Take out args.mock
+    main(args.test_drop_off_item, args.test_grasp_tool,
          args.test_move_to_bin, args.test_push_item,
          args.capture_item_descriptor, args.gather_data, args.debug, args.auto_reset,
          args.attempts_per_bin)
