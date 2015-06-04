@@ -1,5 +1,4 @@
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
-import mock #Take this out
 import rospy
 from std_msgs.msg import String
 import smach
