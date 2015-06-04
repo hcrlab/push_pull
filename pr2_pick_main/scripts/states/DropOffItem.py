@@ -1,4 +1,4 @@
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion, TransformStamped
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from pr2_pick_main import handle_service_exceptions
 from std_msgs.msg import Header
 from pr2_pick_manipulation.srv import MoveArmIk, MoveArmIkRequest
@@ -47,12 +47,9 @@ class DropOffItem(smach.State):
         self._moveit_move_arm = kwargs["moveit_move_arm"]
         self._move_arm_ik = kwargs["move_arm_ik"]
         self._tuck_arms = kwargs["tuck_arms"]
-        self._set_static_tf = kwargs["set_static_tf"]
         self._markers = kwargs["markers"]
         self._drive_to_pose = kwargs["drive_to_pose"]
         self._tf_listener = kwargs["tf_listener"]
-
-        self._order_bin_found = False
 
     def get_position(self, base_frame="odom_combined"):
         self._tf_listener.waitForTransform(base_frame,"base_footprint",rospy.Time(0), 
