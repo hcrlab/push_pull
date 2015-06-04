@@ -124,7 +124,7 @@ class StateMachineBuilder(object):
             bin_letter = default_next_bin
 
         userdata.next_bin = bin_letter
-        return outcomes.UPDATE_PLAN_NEXT_OBJEC
+        return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
     def build_interactive_bin_choosing_sm(self, success_transition, failure_transition, **services):
         '''
@@ -137,6 +137,8 @@ class StateMachineBuilder(object):
             outcomes.CHALLENGE_SUCCESS,
             outcomes.CHALLENGE_FAILURE
         ])
+        
+        mock_update_plan = states.UpdatePlan(**services)
 
         with sm:
             smach.StateMachine.add(
