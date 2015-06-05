@@ -1,0 +1,5 @@
+pr2_pick_perception/ItemDescriptor descriptor
+string[] labels
+---
+string label
+float64 confidence

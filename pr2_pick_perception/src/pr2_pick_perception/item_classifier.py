@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 
 from pr2_pick_perception.msg import ItemDescriptor
+from pr2_pick_perception.srv import ClassifyClusterResponse
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
@@ -76,6 +77,13 @@ class ItemClassifier(object):
         """
         labels, confidences = self.compute_confidences(descriptor, labels)
         return labels[0], confidences[0]
+
+    def classify_request(self, request):
+        label, confidence = self.classify(request.descriptor, request.labels)
+        response = ClassifyClusterResponse()
+        response.label = label
+        response.confidence = confidence
+        return response
 
 
 if __name__ == '__main__':

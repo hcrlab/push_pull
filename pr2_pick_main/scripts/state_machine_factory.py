@@ -1,5 +1,4 @@
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
-import mock
 import rospy
 from std_msgs.msg import String
 import smach
@@ -36,13 +35,7 @@ class StateMachineBuilder(object):
     DEFAULT = 'default'
 
     def __init__(self):
-        self.mock = False
         self.state_machine_identifier = StateMachineBuilder.DEFAULT
-
-    def set_mock(self, mock):
-        ''' Sets mock status. True to use mock services, false to use real services. '''
-        self.mock = mock
-        return self
 
     def set_state_machine(self, state_machine_identifier):
         ''' Sets which state machine to use. '''
@@ -52,11 +45,7 @@ class StateMachineBuilder(object):
     def build(self):
         ''' Build the state machine with previously specified mock status and
         state machine type. '''
-        services = None
-        if self.mock:
-            services = self.mock_robot_services()
-        else:
-            services = self.real_robot_services()
+        services = self.real_robot_services()
 
         if self.state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
             build = self.build_sm_for_drop_off_item
@@ -123,132 +112,8 @@ class StateMachineBuilder(object):
             'lookup_item': rospy.ServiceProxy('item_database/lookup_item', LookupItem)
         }
 
-    def side_effect(self, name, return_value=True):
-        '''A side effect for mock functions.
-
-        Causes all wrapped functions to return True, and logs their arguments.
-        '''
-        def wrapped(*args, **kwargs):
-            rospy.loginfo('Calling {}{}'.format(name, args))
-            return return_value
-        return wrapped
-
-    def mock_robot_services(self):
-        '''Mock robot service builder.
-
-        This will cause all services and publishers to do nothing. Their arguments
-        will be printed to the screen, and all service calls will succeed.  This is
-        useful for when the robot is being used by someone else, but you want to
-        run the state machine and test the logic of your code at the same time.
-
-        To change the behavior for a particular state, you can just instantiate
-        real publishers or services for the state you're testing.
-        '''
-        tts = rospy.Publisher('/festival_tts', String)
-        tts.publish = mock.Mock(side_effect=self.side_effect('tts'))
-
-        tuck_arms = rospy.ServiceProxy('tuck_arms_service', TuckArms)
-        tuck_arms.wait_for_service = mock.Mock(return_value=None)
-        tuck_arms.call = mock.Mock(side_effect=self.side_effect('tuck_arms'))
-
-        move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
-        move_torso.wait_for_service = mock.Mock(return_value=None)
-        move_torso.call = mock.Mock(side_effect=self.side_effect('move_torso'))
-
-        set_grippers = rospy.ServiceProxy('set_grippers_service', SetGrippers)
-        set_grippers.wait_for_service = mock.Mock(return_value=None)
-        set_grippers.call = mock.Mock(side_effect=self.side_effect('set_grippers'))
-
-        move_head = rospy.ServiceProxy('move_head_service', MoveHead)
-        move_head.wait_for_service = mock.Mock(return_value=None)
-        move_head.call = mock.Mock(side_effect=self.side_effect('move_head'))
-
-        moveit_move_arm = rospy.ServiceProxy('moveit_service', MoveArm)
-        moveit_move_arm.wait_for_service = mock.Mock(return_value=None)
-        moveit_move_arm.call = mock.Mock(
-            side_effect=self.side_effect('moveit_move_arm'))
-
-        move_arm_ik = rospy.ServiceProxy('move_arm_ik', MoveArm)
-        move_arm_ik.wait_for_service = mock.Mock(return_value=None)
-        move_arm_ik.call = mock.Mock(
-            side_effect=self.side_effect('move_arm_ik'))
-
-        shelf_response = LocalizeShelfResponse()
-        shelf_obj = Object()
-        shelf_obj.header.frame_id = 'odom_combined'
-        shelf_response.locations.objects.append(shelf_obj)
-        localize_object = rospy.ServiceProxy('perception/localize_object',
-                                             LocalizeShelf)
-        localize_object.wait_for_service = mock.Mock(return_value=None)
-        localize_object.call = mock.Mock(
-            side_effect=self.side_effect('localize_object',
-                                    return_value=shelf_response))
-
-        set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
-                                            SetStaticTransform)
-        set_static_tf.wait_for_service = mock.Mock(return_value=None)
-        set_static_tf.call = mock.Mock(
-            side_effect=self.side_effect('set_static_tf'))
-
-        drive_linear = rospy.ServiceProxy('drive_linear_service', DriveLinear)
-        drive_linear.wait_for_service = mock.Mock(return_value=None)
-        drive_linear.call = mock.Mock(side_effect=self.side_effect('drive_linear'))
-
-        drive_angular = rospy.ServiceProxy('drive_angular_service', DriveAngular)
-        drive_angular.wait_for_service = mock.Mock(return_value=None)
-        drive_angular.call = mock.Mock(side_effect=self.side_effect('drive_angular'))
-
-        markers = rospy.Publisher('pr2_pick_visualization', Marker)
-        markers.publish = mock.Mock(side_effect=self.side_effect('markers'))
-
-        crop_response = CropShelfResponse()
-        crop_shelf = rospy.ServiceProxy('perception/shelf_cropper', CropShelf)
-        crop_shelf.wait_for_service = mock.Mock(return_value=None)
-        crop_shelf.call = mock.Mock(
-            side_effect=self.side_effect('shelf_cropper', return_value=crop_response))
-
-        drive_to_pose = rospy.ServiceProxy('drive_to_pose_service', DriveToPose)
-        drive_to_pose.wait_for_service = mock.Mock(return_value=None)
-        drive_to_pose.call = mock.Mock(side_effect=self.side_effect('drive_to_pose'))
-
-        interactive_marker_server = InteractiveMarkerServer('pr2_pick_interactive_markers')
-        interactive_marker.insert = mock.Mock(side_effect=self.side_effect('server.insert'))
-        interactive_marker.applyChanges = mock.Mock(
-            side_effect=self.side_effect('server.applyChanges'))
-
-        get_items = mock.Mock(side_effect=self.side_effect('get_items'))
-        set_items = mock.Mock(side_effect=self.side_effect('set_items'))
-        get_target_items = mock.Mock(side_effect=self.side_effect('get_target_items'))
-        lookup_item = mock.Mock(side_effect=self.side_effect('lookup_item'))
-
-        return {
-            # Speech
-            'tts': tts,
-
-            # Manipulation
-            'drive_angular': drive_angular,
-            'drive_linear': drive_linear,
-            'drive_to_pose': drive_to_pose,
-            'move_torso': move_torso,
-            'move_head': move_head,
-            'moveit_move_arm': moveit_move_arm,
-            'set_grippers': set_grippers,
-            'tuck_arms': tuck_arms,
-
-            # World and Perception
-            'crop_shelf': crop_shelf,
-            'interactive_marker_server': interactive_marker_server,
-            'localize_object': localize_object,
-            'markers': markers,
-            'set_static_tf': set_static_tf,
-
-            # Contest
-            'get_items': get_items,
-            'set_items': set_items,
-            'get_target_items': get_target_items,
-            'lookup_item': lookup_item
-         }
-
+    # This isn't actually mocking but rather it asks for user input
+    # It should probably be renamed instead of deleted
     def mock_update_plan_execute(self, userdata):
         ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
         default_next_bin = 'A'
@@ -272,9 +137,8 @@ class StateMachineBuilder(object):
             outcomes.CHALLENGE_SUCCESS,
             outcomes.CHALLENGE_FAILURE
         ])
-
+        
         mock_update_plan = states.UpdatePlan(**services)
-        mock_update_plan.execute = self.mock_update_plan_execute
 
         with sm:
             smach.StateMachine.add(
