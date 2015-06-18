@@ -13,7 +13,6 @@ import smach_ros
 from state_machine_factory import StateMachineBuilder
 import states
 
-         # plan_grasp = False,
 def main(test_drop_off_item=False,
          plan_grasp = False,
          test_grasp_tool=False,
@@ -37,7 +36,7 @@ def main(test_drop_off_item=False,
     elif gather_data:
         state_machine_type = StateMachineBuilder.GATHER_DATA
     elif plan_grasp:
-        state_machine_type = StateMachineBuilder.DEFAULT
+        state_machine_type = StateMachineBuilder.PLAN_GRASP
     else:
         state_machine_type = StateMachineBuilder.DEFAULT
 
