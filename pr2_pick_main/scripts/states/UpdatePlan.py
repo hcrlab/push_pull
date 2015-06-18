@@ -61,13 +61,13 @@ class UpdatePlan(smach.State):
         else:
             self._calls_since_shelf_localization += 1
 
-        # If all bins have been visited, reset the visit states.
-        # all_visited = self.check_all_visited(userdata.bin_data)
-        # if all_visited:
-        #     for bin_id in self._preferred_order:
-        #         bin_data = userdata.bin_data.copy()
-        #         bin_data[bin_id] = bin_data[bin_id]._replace(visited=False)
-        #         userdata.output_bin_data = bin_data
+        If all bins have been visited, reset the visit states.
+        all_visited = self.check_all_visited(userdata.bin_data)
+        if all_visited:
+            for bin_id in self._preferred_order:
+                bin_data = userdata.bin_data.copy()
+                bin_data[bin_id] = bin_data[bin_id]._replace(visited=False)
+                userdata.output_bin_data = bin_data
 
         for bin_id in self._preferred_order:            
             has_target_item, target_item, bin_items = self.bin_contains_target_item(bin_id)
