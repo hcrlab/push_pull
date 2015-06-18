@@ -15,6 +15,7 @@ import states
 
 
 def main(test_drop_off_item=False,
+         plan_grasp = False,
          test_grasp_tool=False,
          test_move_to_bin=False,
          test_push_item=False,
@@ -35,6 +36,8 @@ def main(test_drop_off_item=False,
         state_machine_type = StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR
     elif gather_data:
         state_machine_type = StateMachineBuilder.GATHER_DATA
+    elif plan_grasp:
+        state_machine_type = StateMachineBuilder.PLAN_GRASP
     else:
         state_machine_type = StateMachineBuilder.DEFAULT
 
@@ -154,6 +157,11 @@ if __name__ == '__main__':
         type=int,
         help=('Number of times to attempt to grasp each item before'
               ' giving up.'))
+    group.add_argument(
+        '--plan_grasp',
+        action='store_true',
+        help=('True to test grasp planning.'))
+
     args = parser.parse_args(args=rospy.myargv()[1:])
     sim_time = rospy.get_param('use_sim_time', False)
     if sim_time != False:
