@@ -32,6 +32,7 @@ class StateMachineBuilder(object):
     TEST_PUSH_ITEM = 'test-push-item'
     CAPTURE_ITEM_DESCRIPTOR = 'capture-item-descriptor'
     GATHER_DATA = 'gather-data'
+    PLAN_GRASP = 'plan-grasp'
     DEFAULT = 'default'
 
     def __init__(self):
@@ -59,6 +60,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_item_descriptor_capture
         elif self.state_machine_identifier == StateMachineBuilder.GATHER_DATA:
             build = self.build_sm_for_gather_data
+        elif self.state_machine_identifier == StateMachineBuilder.PLAN_GRASP:
+            build = self.build_sm_grasp_planner
         else:
             build = self.build_sm
 
