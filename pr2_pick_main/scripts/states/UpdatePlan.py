@@ -61,7 +61,7 @@ class UpdatePlan(smach.State):
         else:
             self._calls_since_shelf_localization += 1
 
-        If all bins have been visited, reset the visit states.
+        #If all bins have been visited, reset the visit states.
         all_visited = self.check_all_visited(userdata.bin_data)
         if all_visited:
             for bin_id in self._preferred_order:
