@@ -655,7 +655,7 @@ class StateMachineBuilder(object):
                 states.SenseBin.name,
                 states.SenseBin(**services),
                 transitions={
-                    outcomes.SENSE_BIN_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.SENSE_BIN_SUCCESS: states.StartPose.name,
                     outcomes.SENSE_BIN_NO_OBJECTS: outcomes.CHALLENGE_FAILURE,
                     outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
                 },
