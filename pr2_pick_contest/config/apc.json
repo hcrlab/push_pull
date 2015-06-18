@@ -66,6 +66,14 @@
   "work_order":
   [
     {
+      "bin": "bin_A",
+      "item": "kong_sitting_frog_dog_toy"
+    },
+    {
+      "bin": "bin_K",
+      "item": "cheezit_big_original"
+    },
+    {
       "bin": "bin_K",
       "item": "cheezit_big_original"
     }
