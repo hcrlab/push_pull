@@ -39,7 +39,7 @@ class UpdatePlan(smach.State):
         self._calls_since_shelf_localization = 0
         self._strategy = PickingStrategy(self._get_items, self._get_target_items, self._lookup_item)
         plan = self._strategy.get_plan_by_expected_value()
-        self._preferred_order = [letter for letter, value in plan]
+        self._preferred_order = ["A", "A"]
         plan_string = '\n'.join(['{} {}'.format(letter, value) for letter, value in plan])
         rospy.loginfo('Picking plan:\n{}'.format(plan_string))
 
