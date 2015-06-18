@@ -579,7 +579,7 @@ class StateMachineBuilder(object):
             )
         return sm
 
-        def build_sm_grasp_planner(self, **services):
+    def build_sm_grasp_planner(self, **services):
         '''Builds the main state machine.
 
         You probably want to call either real_robot() or mock_robot() to build a
