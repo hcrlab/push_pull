@@ -39,8 +39,9 @@ class UpdatePlan(smach.State):
         self._calls_since_shelf_localization = 0
         self._strategy = PickingStrategy(self._get_items, self._get_target_items, self._lookup_item)
         plan = self._strategy.get_plan_by_expected_value()
-        self._preferred_order = ["K"]
-        rospy.loginfo('Picking plan: K\n')
+        self._preferred_order = [letter for letter, value in plan]
+        plan_string = '\n'.join(['{} {}'.format(letter, value) for letter, value in plan])
+        rospy.loginfo('Picking plan:\n{}'.format(plan_string))
 
     def check_all_visited(self, bin_data):
         all_visited = True
@@ -61,7 +62,7 @@ class UpdatePlan(smach.State):
         else:
             self._calls_since_shelf_localization += 1
 
-        #If all bins have been visited, reset the visit states.
+        # If all bins have been visited, reset the visit states.
         all_visited = self.check_all_visited(userdata.bin_data)
         if all_visited:
             for bin_id in self._preferred_order:
@@ -72,7 +73,6 @@ class UpdatePlan(smach.State):
         for bin_id in self._preferred_order:            
             has_target_item, target_item, bin_items = self.bin_contains_target_item(bin_id)
             if not userdata.bin_data[bin_id].visited and not userdata.bin_data[bin_id].succeeded and has_target_item:
-                rospy.loginfo('It has target item.')
                 userdata.next_bin = bin_id
                 bin_data = userdata.bin_data.copy()
                 bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
@@ -82,7 +82,6 @@ class UpdatePlan(smach.State):
                 userdata.next_bin_items = bin_items
                 return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
-        rospy.loginfo('End. :)')
         return outcomes.UPDATE_PLAN_NO_MORE_OBJECTS
 
     def bin_contains_target_item(self, bin_id):
@@ -95,4 +94,3 @@ class UpdatePlan(smach.State):
         target_item = target_items[0]
         items = self._get_items(bin_id).items
         return target_item in items, target_item, items
-        
