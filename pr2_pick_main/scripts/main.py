@@ -157,10 +157,10 @@ if __name__ == '__main__':
         type=int,
         help=('Number of times to attempt to grasp each item before'
               ' giving up.'))
-    group.add_argument(
-        '--plan_grasp',
-        action='store_true',
-        help=('True to test grasp planning.'))
+    # group.add_argument(
+    #     '--plan_grasp',
+    #     action='store_true',
+    #     help=('True to test grasp planning.'))
 
     args = parser.parse_args(args=rospy.myargv()[1:])
     sim_time = rospy.get_param('use_sim_time', False)
