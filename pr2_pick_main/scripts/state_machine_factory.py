@@ -655,7 +655,7 @@ class StateMachineBuilder(object):
                 states.SenseBin.name,
                 states.SenseBin(**services),
                 transitions={
-                    outcomes.SENSE_BIN_SUCCESS: states.StartPose.name,
+                    outcomes.SENSE_BIN_SUCCESS: states.GraspPlanner.name,
                     outcomes.SENSE_BIN_NO_OBJECTS: outcomes.CHALLENGE_FAILURE,
                     outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
                 },
@@ -669,22 +669,22 @@ class StateMachineBuilder(object):
                     'target_model': 'target_model'
                 }
             )
-            # smach.StateMachine.add(
-            #     states.GraspPlanner.name,
-            #     states.GraspPlanner(**services),
-            #     transitions={
-            #         outcomes.GRASP_PLAN_SUCCESS: outcomes.CHALLENGE_SUCCESS,
-            #         outcomes.GRASP_PLAN_NONE: outcomes.CHALLENGE_SUCCESS,
-            #         outcomes.GRASP_PLAN_FAILURE: (
-            #             outcomes.CHALLENGE_FAILURE
-            #         )
-            #     },
-            #     remapping={
-            #         'bin_id': 'current_bin',
-            #         'target_cluster': 'target_cluster',
-            #         'current_target': 'current_target',
-            #         'item_model': 'target_model',
-            #         'target_descriptor': 'target_descriptor'
-            #     }
-            # )
+            smach.StateMachine.add(
+                states.GraspPlanner.name,
+                states.GraspPlanner(**services),
+                transitions={
+                    outcomes.GRASP_PLAN_SUCCESS: states.StartPose.name,
+                    outcomes.GRASP_PLAN_NONE: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.GRASP_PLAN_FAILURE: (
+                        outcomes.CHALLENGE_FAILURE
+                    )
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'target_cluster': 'target_cluster',
+                    'current_target': 'current_target',
+                    'item_model': 'target_model',
+                    'target_descriptor': 'target_descriptor'
+                }
+            )
         return sm
