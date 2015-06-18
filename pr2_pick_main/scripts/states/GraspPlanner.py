@@ -23,7 +23,7 @@ import smach
 from std_msgs.msg import Header, String
 import tf
 from trajectory_msgs.msg import JointTrajectoryPoint
-import visualization as viz
+
 
 
 import outcomes
