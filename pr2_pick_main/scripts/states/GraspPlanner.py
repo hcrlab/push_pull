@@ -1772,7 +1772,8 @@ class GraspPlanner(smach.State):
                 #        is_diff=True,
                 #        allowed_collision_matrix=acm)
 
-                    #self._pubPlanningScene.publish(planning_scene_diff)
+                    #self._pubPlann
+                    ngScene.publish(planning_scene_diff)
                     #rospy.sleep(1.0)
 
                 #success_grasp = self._moveit_move_arm(grasp["grasp"],
@@ -2097,7 +2098,7 @@ class GraspPlanner(smach.State):
             return False
 
     def call_set_params(side_step = 0.02, palm_step = 0.005, overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = True, pregrasp_just_outside_box = False, backoff_depth_steps = 5):
-    
+        
         req = SetPointClusterGraspParamsRequest()
         req.height_good_for_side_grasps = 0.05
         req.gripper_opening = 0.083
@@ -2193,7 +2194,7 @@ class GraspPlanner(smach.State):
         #set params for planner (change to try different settings)
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
-        (box_pose, box_dims) = call_find_cluster_bounding_box(cluster)
+        (box_pose, box_dims) = self.call_find_cluster_bounding_box(cluster)
 
 
         grasps = self.call_plan_point_cluster_grasp(cluster)
