@@ -24,8 +24,6 @@ from std_msgs.msg import Header, String
 import tf
 from trajectory_msgs.msg import JointTrajectoryPoint
 
-
-
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers, MoveArmIkRequest
 from pr2_pick_perception.msg import Box
@@ -36,7 +34,6 @@ from manipulation_msgs.srv import GraspPlanning, GraspPlanningRequest
 from manipulation_msgs.msg import GraspPlanningAction, GraspPlanningGoal
 from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
-
 
 def dummy(idx, box, num_points, transformed_point):
         if (transformed_point.point.x >= box.min_x and
@@ -2148,7 +2145,7 @@ class GraspPlanner(smach.State):
         
         req = GraspPlanningRequest()
         req.target.reference_frame_id = "/base_link"
-        req.target.cluster = cluster
+        req.target.region.cloud = cluster
         req.arm_name = "right_arm"
         req.collision_support_surface_name = "table"
         service_name = "plan_point_cluster_grasp"
