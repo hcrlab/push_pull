@@ -2094,15 +2094,12 @@ class GraspPlanner(smach.State):
         else:
             return False
 
-    def call_set_params(side_step = 0.02, palm_step = 0.005, overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = True, pregrasp_just_outside_box = False, backoff_depth_steps = 5):
+    def call_set_params(self, side_step = 0.02, palm_step = 0.005, overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = True, pregrasp_just_outside_box = False, backoff_depth_steps = 5):
         
         req = SetPointClusterGraspParamsRequest()
         req.height_good_for_side_grasps = 0.05
         req.gripper_opening = 0.083
-        req.side_step = 0.02
-        rospy.loginfo("SIDE STEP:")
-        rospy.loginfo(req.side_step)
-        rospy.loginfo(side_step)
+        req.side_step = side_step
         req.palm_step = palm_step
         req.overhead_grasps_only = overhead_grasps_only
         req.side_grasps_only = side_grasps_only
@@ -2121,7 +2118,7 @@ class GraspPlanner(smach.State):
         return 1
 
     #call find_cluster_bounding_box to get the bounding box for a cluster
-    def call_find_cluster_bounding_box(cluster):
+    def call_find_cluster_bounding_box(self, cluster):
     
         req = FindClusterBoundingBoxRequest()
         req.cluster = cluster
@@ -2141,7 +2138,7 @@ class GraspPlanner(smach.State):
             return (None, None)
 
         #call plan_point_cluster_grasp to get candidate grasps for a cluster
-    def call_plan_point_cluster_grasp(cluster):
+    def call_plan_point_cluster_grasp(self, cluster):
         
         req = GraspPlanningRequest()
         req.target.reference_frame_id = "/base_link"
@@ -2165,11 +2162,11 @@ class GraspPlanner(smach.State):
 
 
     #call plan_point_cluster_grasp_action to get candidate grasps for a cluster
-    def call_plan_point_cluster_grasp_action(cluster):
+    def call_plan_point_cluster_grasp_action(self, cluster):
         
         goal = GraspPlanningGoal()
         goal.target.reference_frame_id = "/base_link"
-        goal.target.cluster = cluster
+        goal.target.region.cloud = cluster
         goal.arm_name = "right_arm"
         goal.collision_support_surface_name = "table"
         action_name = "plan_point_cluster_grasp"
@@ -2189,16 +2186,16 @@ class GraspPlanner(smach.State):
         rospy.loginfo("Started Grasp Planner")
         self._cluster = userdata.target_cluster
         #cluster = self._cluster
-	#rospy.loginfo("CLUSTER:")
-	#rospy.loginfo(self._cluster)
-	tf_broadcaster = tf.TransformBroadcaster()
+        #rospy.loginfo("CLUSTER:")
+        #rospy.loginfo(self._cluster)
+        tf_broadcaster = tf.TransformBroadcaster()
         tf_listener = tf.TransformListener()
 
         #set params for planner (change to try different settings)
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
         #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
-	grasps = self.call_plan_point_cluster_grasp(self._cluster.pointcloud)
+        grasps = self.call_plan_point_cluster_grasp(self._cluster.pointcloud)
         grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
         grasp_poses = [grasp.grasp_pose for grasp in grasps]
         rospy.loginfo(grasps)
