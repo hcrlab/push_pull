@@ -2191,13 +2191,13 @@ class GraspPlanner(smach.State):
         tf_listener = tf.TransformListener()
 
         #set params for planner (change to try different settings)
-        call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
+        self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
         (box_pose, box_dims) = call_find_cluster_bounding_box(cluster)
 
 
-        grasps = call_plan_point_cluster_grasp(cluster)
-        grasps = call_plan_point_cluster_grasp_action(cluster)
+        grasps = self.call_plan_point_cluster_grasp(cluster)
+        grasps = self.call_plan_point_cluster_grasp_action(cluster)
         grasp_poses = [grasp.grasp_pose for grasp in grasps]
         rospy.loginfo(grasps)
 
