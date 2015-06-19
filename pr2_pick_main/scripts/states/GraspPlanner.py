@@ -1773,7 +1773,7 @@ class GraspPlanner(smach.State):
                 #        allowed_collision_matrix=acm)
 
                     #self._pubPlann
-                    ngScene.publish(planning_scene_diff)
+                    #ngScene.publish(planning_scene_diff)
                     #rospy.sleep(1.0)
 
                 #success_grasp = self._moveit_move_arm(grasp["grasp"],
@@ -2103,6 +2103,9 @@ class GraspPlanner(smach.State):
         req.height_good_for_side_grasps = 0.05
         req.gripper_opening = 0.083
         req.side_step = side_step
+        ros.loginfo("SIDE STEP:")
+        ros.loginfo(res.side_step)
+        ros.loginfo(side_step)
         req.palm_step = palm_step
         req.overhead_grasps_only = overhead_grasps_only
         req.side_grasps_only = side_grasps_only
