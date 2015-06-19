@@ -33,7 +33,8 @@ from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest, PlanarPrincipal
 from manipulation_msgs.srv import GraspPlanning, GraspPlanningRequest
 from manipulation_msgs.msg import GraspPlanningAction, GraspPlanningGoal
 from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
-from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
+from object_recognition_clusters.srv import FindClusterBoundingBox2, FindClusterBoundingBox2Request
+import numpy as np
 
 def dummy(idx, box, num_points, transformed_point):
         if (transformed_point.point.x >= box.min_x and
@@ -2120,7 +2121,7 @@ class GraspPlanner(smach.State):
     #call find_cluster_bounding_box to get the bounding box for a cluster
     def call_find_cluster_bounding_box(self, cluster):
     
-        req = FindClusterBoundingBoxRequest()
+        req = FindClusterBoundingBox2Request()
         req.cluster = cluster
         service_name = "find_cluster_bounding_box"
         rospy.loginfo("waiting for find_cluster_bounding_box service")
@@ -2194,11 +2195,18 @@ class GraspPlanner(smach.State):
         #set params for planner (change to try different settings)
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
-        #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
-        grasps = self.call_plan_point_cluster_grasp(self._cluster.pointcloud)
-        grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
-        grasp_poses = [grasp.grasp_pose for grasp in grasps]
-        rospy.loginfo(grasps)
+        (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster.pointcloud)
+
+        viz.publish_bounding_box(self._markers, box_pose, 
+                    (box_dims.x/2), 
+                    (box_dims.y/2), 
+                    (box_dims.z/2),
+                    1.0, 0.0, 0.0, 0.5, 1)
+
+        #grasps = self.call_plan_point_cluster_grasp(self._cluster.pointcloud)
+        #grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
+        #grasp_poses = [grasp.grasp_pose for grasp in grasps]
+        #rospy.loginfo(grasps)
 
         return outcomes.GRASP_SUCCESS
 
