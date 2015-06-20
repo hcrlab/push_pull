@@ -2129,22 +2129,14 @@ class GraspPlanner(smach.State):
         rospy.loginfo("service found")
         serv = rospy.ServiceProxy(service_name, FindClusterBoundingBox2)
         try:
-	    rospy.loginfo("TESTE1")
             req = FindClusterBoundingBox2Request()
             req.cluster = cluster
-            rospy.loginfo("TESTE1.2")
-	    res = serv(req)
-	    rospy.loginfo("POSE: ", res.pose)
-            rospy.loginfo("DIM: ", res.box_dims)
-	    rospy.loginfo("TESTE2")
+	        res = serv(req)
         except rospy.ServiceException, e:
             rospy.logerr("error when calling find_cluster_bounding_box: %s"%e)  
             return 0
         if not res.error_code:
-	    rospy.loginfo("TESTE3")
-            rospy.loginfo("POSE: ", res.pose)
-            rospy.loginfo("DIM: ", res.box_dims)
-	    return (res.pose, res.box_dims)
+	       return (res.pose, res.box_dims)
         else:
             return (None, None)
 
@@ -2195,245 +2187,246 @@ class GraspPlanner(smach.State):
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
-        self._cluster = userdata.target_cluster.pointcloud
-        #cluster = self._cluster
-        #rospy.loginfo("CLUSTER:")
-        rospy.loginfo(type(self._cluster))
-        tf_broadcaster = tf.TransformBroadcaster()
-        tf_listener = tf.TransformListener()
+        # self._cluster = userdata.target_cluster.pointcloud
+        # #rospy.loginfo("CLUSTER:")
+        # rospy.loginfo(type(self._cluster))
+        # tf_broadcaster = tf.TransformBroadcaster()
+        # tf_listener = tf.TransformListener()
 
-        #set params for planner (change to try different settings)
-        self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
+        # #set params for planner (change to try different settings)
+        # self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
-        #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
+        # #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
 
-        #viz.publish_bounding_box(self._markers, box_pose, 
-                   # (box_dims.x/2), 
-                   # (box_dims.y/2), 
-                   # (box_dims.z/2),
-                   # 1.0, 0.0, 0.0, 0.5, 1)
+        # #viz.publish_bounding_box(self._markers, box_pose, 
+        #            # (box_dims.x/2), 
+        #            # (box_dims.y/2), 
+        #            # (box_dims.z/2),
+        #            # 1.0, 0.0, 0.0, 0.5, 1)
 
-        grasps = self.call_plan_point_cluster_grasp(self._cluster)
-        #grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
-        #grasp_poses = [grasp.grasp_pose for grasp in grasps]
-        #rospy.loginfo(grasps)
+        # grasps = self.call_plan_point_cluster_grasp(self._cluster)
+        # #grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
+        # #grasp_poses = [grasp.grasp_pose for grasp in grasps]
+        # #rospy.loginfo(grasps)
 
-        return outcomes.GRASP_SUCCESS
+        # return outcomes.GRASP_SUCCESS
 
 
         # start = datetime.datetime.now()
 
-        # # Delete any leftover transforms from previous runs
-        # bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
-        # for bin_id in bin_ids:
-        #     self._delete_static_tf.wait_for_service()
-        #     req = DeleteStaticTransformRequest()
-        #     req.parent_frame = "bin_" + str(bin_id)
-        #     req.child_frame = "object_axis"
-        #     self._delete_static_tf(req)
-        #     req = DeleteStaticTransformRequest()
-        #     req.child_frame = "bin_" + str(bin_id)
-        #     req.parent_frame = "object_axis"
-        #     self._delete_static_tf(req)
-        #     req = DeleteStaticTransformRequest()
-        #     req.child_frame = "bin_" + str(bin_id)
-        #     req.parent_frame = "bounding_box"
-        #     self._delete_static_tf(req)
+        # Delete any leftover transforms from previous runs
+        bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
+        for bin_id in bin_ids:
+            self._delete_static_tf.wait_for_service()
+            req = DeleteStaticTransformRequest()
+            req.parent_frame = "bin_" + str(bin_id)
+            req.child_frame = "object_axis"
+            self._delete_static_tf(req)
+            req = DeleteStaticTransformRequest()
+            req.child_frame = "bin_" + str(bin_id)
+            req.parent_frame = "object_axis"
+            self._delete_static_tf(req)
+            req = DeleteStaticTransformRequest()
+            req.child_frame = "bin_" + str(bin_id)
+            req.parent_frame = "bounding_box"
+            self._delete_static_tf(req)
 
 
-        # self._delete_static_tf.wait_for_service()
-        # req = DeleteStaticTransformRequest()
-        # req.parent_frame = "base_footprint"
-        # req.child_frame = "head_yaw"
-        # self._delete_static_tf(req)
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "head_yaw"
+        self._delete_static_tf(req)
 
-        # # Set a bunch of member variables
-        # # These could be way better organised and consistently named! Sorry!
-        # if userdata.bin_id < 'D':
-        #     self.top_shelf = True
-        # else:
-        #     self.top_shelf = False
+        # Set a bunch of member variables
+        # These could be way better organised and consistently named! Sorry!
+        if userdata.bin_id < 'D':
+            self.top_shelf = True
+        else:
+            self.top_shelf = False
 
-        # self.shelf_width = self._shelf_widths[userdata.bin_id]
-        # self.shelf_height = self._shelf_heights[userdata.bin_id]
-        # self.bin_id = userdata.bin_id
-        # self._debug = userdata.debug
-        # self.allowed_grasps = userdata.item_model.allowed_grasps
-        # self.target_descriptor = userdata.target_descriptor
-        # self.bin_bound_left = self._bin_bounds_left[userdata.bin_id] 
-        # self.bin_bound_right = self._bin_bounds_right[userdata.bin_id]
-        # self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
-        # self.grasp_wide_end = userdata.item_model.grasp_wide_end
-        # self._cluster = userdata.target_cluster
+        self.shelf_width = self._shelf_widths[userdata.bin_id]
+        self.shelf_height = self._shelf_heights[userdata.bin_id]
+        self.bin_id = userdata.bin_id
+        self._debug = userdata.debug
+        self.allowed_grasps = userdata.item_model.allowed_grasps
+        self.target_descriptor = userdata.target_descriptor
+        self.bin_bound_left = self._bin_bounds_left[userdata.bin_id] 
+        self.bin_bound_right = self._bin_bounds_right[userdata.bin_id]
+        self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
+        self.grasp_wide_end = userdata.item_model.grasp_wide_end
+        self._cluster = userdata.target_cluster
 
-        # self.downsampled_cluster = self.downsample_cluster(self._cluster)
+        self.downsampled_cluster = self.downsample_cluster(self._cluster)
 
-        # rospy.loginfo("Downsampled cluster size: " + str(len(self.downsampled_cluster)))
+        rospy.loginfo("Downsampled cluster size: " + str(len(self.downsampled_cluster)))
 
-        # if userdata.item_model.allow_finger_collisions:
-        #     self.max_finger_collision_points = 1000
+        if userdata.item_model.allow_finger_collisions:
+            self.max_finger_collision_points = 1000
 
-        # self._tts.publish('Grasping {}'.format(userdata.item_model.speech_name))
-        # self._tuck_arms.wait_for_service()
-        # tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+        self._tts.publish('Grasping {}'.format(userdata.item_model.speech_name))
+        self._tuck_arms.wait_for_service()
+        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
-        # # # Get the pose of the target item in the base frame
-        # # response = self._find_centroid(userdata.target_cluster)
-        # # item_point = response.centroid
-        # # item_pose = PoseStamped(
-        # #     header=Header(
-        # #         frame_id=item_point.header.frame_id,
-        # #         stamp=rospy.Time(0),
-        # #     ),
-        # #     pose=Pose(
-        # #         position=item_point.point,
-        # #         orientation=Quaternion(w=1, x=0, y=0, z=0),
-        # #     )
-        # # )
-
-        # self._tf_listener.waitForTransform("base_footprint", 
-        #         userdata.target_descriptor.planar_bounding_box.pose.header.frame_id, 
-        #         rospy.Time(0), rospy.Duration(10.0))
-
-        # base_frame_item_pose = self._tf_listener.transformPose('base_footprint',
-        #                             userdata.target_descriptor.planar_bounding_box.pose)
-
-        # self.loginfo(
-        #     'Grasping item in bin {} from pose {}'
-        #     .format(userdata.bin_id, base_frame_item_pose)
+        # # Get the pose of the target item in the base frame
+        # response = self._find_centroid(userdata.target_cluster)
+        # item_point = response.centroid
+        # item_pose = PoseStamped(
+        #     header=Header(
+        #         frame_id=item_point.header.frame_id,
+        #         stamp=rospy.Time(0),
+        #     ),
+        #     pose=Pose(
+        #         position=item_point.point,
+        #         orientation=Quaternion(w=1, x=0, y=0, z=0),
+        #     )
         # )
-        # if userdata.debug:
-        #     raw_input('(Debug) Press enter to continue >')
 
-        # # Add shelf and bounding box to planning scene
-        # planar_bounding_box = userdata.target_descriptor.planar_bounding_box
-        # scene = moveit_commander.PlanningSceneInterface()
-        # scene.remove_world_object('bbox')
-        # scene.remove_world_object("shelf")
+        self._tf_listener.waitForTransform("base_footprint", 
+                userdata.target_descriptor.planar_bounding_box.pose.header.frame_id, 
+                rospy.Time(0), rospy.Duration(10.0))
 
-        # self.add_shelf_mesh_to_scene(scene)
+        base_frame_item_pose = self._tf_listener.transformPose('base_footprint',
+                                    userdata.target_descriptor.planar_bounding_box.pose)
 
-        # # Weird loop that you have to do because Moveit it weird
-        # for i in range(10):
-        #     self.loginfo("MoveIt looping hack, iteration %d" % i)
-        #     scene.add_box("bbox", planar_bounding_box.pose, 
-        #                 (planar_bounding_box.dimensions.x, 
-        #                 planar_bounding_box.dimensions.y, 
-        #                 planar_bounding_box.dimensions.z))
-        #     rospy.sleep(0.1)
+        self.loginfo(
+            'Grasping item in bin {} from pose {}'
+            .format(userdata.bin_id, base_frame_item_pose)
+        )
+        if userdata.debug:
+            raw_input('(Debug) Press enter to continue >')
 
-        # # Make a frame that has the same yaw as head frame
-        # self.loginfo("About to wait for transform")
-        # (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
-        # self.loginfo("Tranform: {}, {}".format(trans, rot))
+        # Add shelf and bounding box to planning scene
+        planar_bounding_box = userdata.target_descriptor.planar_bounding_box
+        scene = moveit_commander.PlanningSceneInterface()
+        scene.remove_world_object('bbox')
+        scene.remove_world_object("shelf")
 
-        # quaternion = (
-        #     rot[0],
-        #     rot[1],
-        #     rot[2],
-        #     rot[3])
-        # euler = tf.transformations.euler_from_quaternion(quaternion)
-        # roll = 0
-        # pitch = 0
-        # yaw = euler[2] 
+        self.add_shelf_mesh_to_scene(scene)
 
-        # pose = PoseStamped()
+        # Weird loop that you have to do because Moveit it weird
+        for i in range(10):
+            self.loginfo("MoveIt looping hack, iteration %d" % i)
+            scene.add_box("bbox", planar_bounding_box.pose, 
+                        (planar_bounding_box.dimensions.x, 
+                        planar_bounding_box.dimensions.y, 
+                        planar_bounding_box.dimensions.z))
+            rospy.sleep(0.1)
 
-        # quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-        # pose.pose.orientation.x = quaternion[0]
-        # pose.pose.orientation.y = quaternion[1]
-        # pose.pose.orientation.z = quaternion[2]
-        # pose.pose.orientation.w = quaternion[3]
+        # Make a frame that has the same yaw as head frame
+        self.loginfo("About to wait for transform")
+        (trans, rot) = self._tf_listener.lookupTransform("base_footprint", "head_mount_link", rospy.Time(0))
+        self.loginfo("Tranform: {}, {}".format(trans, rot))
+
+        quaternion = (
+            rot[0],
+            rot[1],
+            rot[2],
+            rot[3])
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        roll = 0
+        pitch = 0
+        yaw = euler[2] 
+
+        pose = PoseStamped()
+
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        pose.pose.orientation.x = quaternion[0]
+        pose.pose.orientation.y = quaternion[1]
+        pose.pose.orientation.z = quaternion[2]
+        pose.pose.orientation.w = quaternion[3]
         
-        # pose.pose.position.x = trans[0]
-        # pose.pose.position.y = trans[1]
-        # pose.pose.position.z = trans[2]
+        pose.pose.position.x = trans[0]
+        pose.pose.position.y = trans[1]
+        pose.pose.position.z = trans[2]
 
-        # transform = TransformStamped()
-        # transform.header.frame_id = 'base_footprint'
-        # transform.header.stamp = rospy.Time.now()
-        # transform.transform.translation = pose.pose.position
-        # transform.transform.rotation = pose.pose.orientation
-        # transform.child_frame_id = 'head_yaw'
-        # self._set_static_tf.wait_for_service()
-        # self._set_static_tf(transform)
-        # rospy.sleep(0.25)
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = pose.pose.position
+        transform.transform.rotation = pose.pose.orientation
+        transform.child_frame_id = 'head_yaw'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.25)
 
-        # transform = TransformStamped()
-        # transform.header.frame_id = planar_bounding_box.pose.header.frame_id
-        # transform.header.stamp = rospy.Time.now()
-        # transform.transform.translation = planar_bounding_box.pose.pose.position
-        # transform.transform.rotation = planar_bounding_box.pose.pose.orientation
-        # transform.child_frame_id = 'bounding_box'
-        # self._set_static_tf.wait_for_service()
-        # self._set_static_tf(transform)
-        # rospy.sleep(0.25)
-
-
-        # viz.publish_bounding_box(self._markers,  planar_bounding_box.pose, planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z,
-        #     1.0, 0.0, 0.0, 0.5, 25)
-        # grasp_gen_start = datetime.datetime.now()
-        # grasping_pairs = self.generate_grasps(planar_bounding_box, userdata.bin_id)
-        # grasp_gen_end = datetime.datetime.now()
-        # rospy.loginfo("Grasp gen: " + str((grasp_gen_end - grasp_gen_start).total_seconds()))
-        # filter_start = datetime.datetime.now()
-        # filtered_grasps = self.filter_grasps(grasping_pairs)
-        # filter_end = datetime.datetime.now()
-        # rospy.loginfo("Filter: " + str((filter_end - filter_start).total_seconds()))
-
-        # self._delete_static_tf.wait_for_service()
-        # req = DeleteStaticTransformRequest()
-        # req.parent_frame = "bin_" + str(self.bin_id)
-        # req.child_frame = "object_axis"
-        # self._delete_static_tf(req)
-
-        # self._delete_static_tf.wait_for_service()
-        # req = DeleteStaticTransformRequest()
-        # req.parent_frame = "base_footprint"
-        # req.child_frame = "head_yaw"
-        # self._delete_static_tf(req)
-
-        # self._delete_static_tf.wait_for_service()
-        # req = DeleteStaticTransformRequest()
-        # req.parent_frame = planar_bounding_box.pose.header.frame_id
-        # req.child_frame = "bounding_box"
-        # self._delete_static_tf(req)
-        # end = datetime.datetime.now()
-        # self.timer1 += (end - start).total_seconds()
-        # rospy.loginfo("Total: " + str(self.timer1))
-        # rospy.loginfo("Intersection Function: " + str(self.timer))
-        # rospy.loginfo("IK/Moveit Functiona: " + str(self.timer2))
+        transform = TransformStamped()
+        transform.header.frame_id = planar_bounding_box.pose.header.frame_id
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = planar_bounding_box.pose.pose.position
+        transform.transform.rotation = planar_bounding_box.pose.pose.orientation
+        transform.child_frame_id = 'bounding_box'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)
+        rospy.sleep(0.25)
 
 
-        # if len(filtered_grasps) > 0:
-        #     success_grasp = self.execute_grasp(filtered_grasps, userdata.item_model)
-            
-        # else:
-        #     #end = datetime.datetime.now()
-        #     #self.timer1 += int((end - start).total_seconds())
-        #     #rospy.loginfo("Total: " + str(self.timer1/1e6))
-        #     #rospy.loginfo("Function: " + str(self.timer/1e6))
-        #     self.loginfo('No good grasps found')
-        #     self._tts.publish('No grasps found.')
-        #     if not userdata.re_grasp_attempt:
-        #         userdata.re_sense_attempt = True
-        #         return outcomes.GRASP_NONE
-        #     else:
-        #         userdata.re_sense_attempt = False
-        #         return outcomes.GRASP_FAILURE
+        viz.publish_bounding_box(self._markers,  planar_bounding_box.pose, planar_bounding_box.dimensions.x, planar_bounding_box.dimensions.y, planar_bounding_box.dimensions.z,
+            1.0, 0.0, 0.0, 0.5, 25)
+        grasp_gen_start = datetime.datetime.now()
+        grasping_pairs = self.generate_grasps(planar_bounding_box, userdata.bin_id)
+        grasp_gen_end = datetime.datetime.now()
+        rospy.loginfo("Grasp gen: " + str((grasp_gen_end - grasp_gen_start).total_seconds()))
+        filter_start = datetime.datetime.now()
+        filtered_grasps = self.filter_grasps(grasping_pairs)
+        filter_end = datetime.datetime.now()
+        rospy.loginfo("Filter: " + str((filter_end - filter_start).total_seconds()))
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "bin_" + str(self.bin_id)
+        req.child_frame = "object_axis"
+        self._delete_static_tf(req)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "head_yaw"
+        self._delete_static_tf(req)
+
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = planar_bounding_box.pose.header.frame_id
+        req.child_frame = "bounding_box"
+        self._delete_static_tf(req)
+        end = datetime.datetime.now()
+        self.timer1 += (end - start).total_seconds()
+        rospy.loginfo("Total: " + str(self.timer1))
+        rospy.loginfo("Intersection Function: " + str(self.timer))
+        rospy.loginfo("IK/Moveit Functiona: " + str(self.timer2))
 
 
-        # if self._debug:
-        #         raw_input('(Debug) Press enter to continue >')
+        if len(filtered_grasps) > 0:
+            #success_grasp = self.execute_grasp(filtered_grasps, userdata.item_model)
+            self.__tts.publish("The object is graspable.")
+            self.loginfo("The object is graspable.")
+            success_grasp = True
+        else:
+            #end = datetime.datetime.now()
+            #self.timer1 += int((end - start).total_seconds())
+            #rospy.loginfo("Total: " + str(self.timer1/1e6))
+            #rospy.loginfo("Function: " + str(self.timer/1e6))
+            self.loginfo('No good grasps found')
+            self._tts.publish('No grasps found.')
+            # if not userdata.re_grasp_attempt:
+            #     userdata.re_sense_attempt = True
+            #     return outcomes.GRASP_NONE
+            # else:
+            #     userdata.re_sense_attempt = False
+            #     return outcomes.GRASP_FAILURE
 
-        # if not success_grasp:
-        #     self.loginfo('Grasping failed')
-        #     self._tts.publish('Grasping failed. Giving up.')
-        #     userdata.re_sense_attempt = False
-        #     return outcomes.GRASP_FAILURE
 
-        # else:
-        #     self.loginfo('Grasping succeeded')
-        #     self._tts.publish('Grasping succeeded.')
-        #     userdata.re_sense_attempt = False
-        #     return outcomes.GRASP_SUCCESS
+        if self._debug:
+                raw_input('(Debug) Press enter to continue >')
+
+        if not success_grasp:
+            self.loginfo('Grasping failed')
+            self._tts.publish('Grasping failed. Giving up.')
+            userdata.re_sense_attempt = False
+            return outcomes.GRASP_FAILURE
+
+        else:
+            self.loginfo('Grasping succeeded')
+            self._tts.publish('Grasping succeeded.')
+            userdata.re_sense_attempt = False
+            return outcomes.GRASP_SUCCESS
