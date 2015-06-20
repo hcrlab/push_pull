@@ -2123,18 +2123,28 @@ class GraspPlanner(smach.State):
     
         req = FindClusterBoundingBox2Request()
         req.cluster = cluster
-        service_name = "find_cluster_bounding_box"
+        service_name = "find_cluster_bounding_box2"
         rospy.loginfo("waiting for find_cluster_bounding_box service")
         rospy.wait_for_service(service_name)
         rospy.loginfo("service found")
-        serv = rospy.ServiceProxy(service_name, FindClusterBoundingBox)
+        serv = rospy.ServiceProxy(service_name, FindClusterBoundingBox2)
         try:
-            res = serv(req)
+	    rospy.loginfo("TESTE1")
+            req = FindClusterBoundingBox2Request()
+            req.cluster = cluster
+            rospy.loginfo("TESTE1.2")
+	    res = serv(req)
+	    rospy.loginfo("POSE: ", res.pose)
+            rospy.loginfo("DIM: ", res.box_dims)
+	    rospy.loginfo("TESTE2")
         except rospy.ServiceException, e:
             rospy.logerr("error when calling find_cluster_bounding_box: %s"%e)  
             return 0
         if not res.error_code:
-            return (res.pose, res.box_dims)
+	    rospy.loginfo("TESTE3")
+            rospy.loginfo("POSE: ", res.pose)
+            rospy.loginfo("DIM: ", res.box_dims)
+	    return (res.pose, res.box_dims)
         else:
             return (None, None)
 
@@ -2185,25 +2195,25 @@ class GraspPlanner(smach.State):
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
-        self._cluster = userdata.target_cluster
+        self._cluster = userdata.target_cluster.pointcloud
         #cluster = self._cluster
         #rospy.loginfo("CLUSTER:")
-        #rospy.loginfo(self._cluster)
+        rospy.loginfo(type(self._cluster))
         tf_broadcaster = tf.TransformBroadcaster()
         tf_listener = tf.TransformListener()
 
         #set params for planner (change to try different settings)
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
-        (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster.pointcloud)
+        #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
 
-        viz.publish_bounding_box(self._markers, box_pose, 
-                    (box_dims.x/2), 
-                    (box_dims.y/2), 
-                    (box_dims.z/2),
-                    1.0, 0.0, 0.0, 0.5, 1)
+        #viz.publish_bounding_box(self._markers, box_pose, 
+                   # (box_dims.x/2), 
+                   # (box_dims.y/2), 
+                   # (box_dims.z/2),
+                   # 1.0, 0.0, 0.0, 0.5, 1)
 
-        #grasps = self.call_plan_point_cluster_grasp(self._cluster.pointcloud)
+        grasps = self.call_plan_point_cluster_grasp(self._cluster)
         #grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
         #grasp_poses = [grasp.grasp_pose for grasp in grasps]
         #rospy.loginfo(grasps)
