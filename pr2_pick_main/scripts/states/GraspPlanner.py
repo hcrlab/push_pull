@@ -35,6 +35,8 @@ from manipulation_msgs.msg import GraspPlanningAction, GraspPlanningGoal
 from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
 from object_recognition_clusters.srv import FindClusterBoundingBox2, FindClusterBoundingBox2Request
 import numpy as np
+import visualization as viz
+
 
 def dummy(idx, box, num_points, transformed_point):
         if (transformed_point.point.x >= box.min_x and
@@ -2131,7 +2133,7 @@ class GraspPlanner(smach.State):
         try:
             req = FindClusterBoundingBox2Request()
             req.cluster = cluster
-	        res = serv(req)
+	    res = serv(req)
         except rospy.ServiceException, e:
             rospy.logerr("error when calling find_cluster_bounding_box: %s"%e)  
             return 0
