@@ -2142,29 +2142,26 @@ class GraspPlanner(smach.State):
 	       return (res.pose, res.box_dims)
         else:
             return (None, None)
-
-        #call plan_point_cluster_grasp to get candidate grasps for a cluster
-   def call_plan_point_cluster_grasp(cluster):
+    def call_plan_point_cluster_grasp(self, cluster):
+	req = GraspPlanningRequest()
+    	req.target.reference_frame_id = "/base_link"
+    	req.target.cluster = cluster
+    	req.arm_name = "right_arm"
+    	req.collision_support_surface_name = "table"
+    	service_name = "plan_point_cluster_grasp"
+    	rospy.loginfo("waiting for plan_point_cluster_grasp service")
+   	rospy.wait_for_service(service_name)
+    	rospy.loginfo("service found")
+    	serv = rospy.ServiceProxy(service_name, GraspPlanning)
+    	try:
+        	res = serv(req)
+    	except rospy.ServiceException, e:
+        	rospy.logerr("error when calling plan_point_cluster_grasp: %s"%e)  
+        	return 0
+    	if res.error_code.value != 0:
+        	return []
     
-    req = GraspPlanningRequest()
-    req.target.reference_frame_id = "/base_link"
-    req.target.cluster = cluster
-    req.arm_name = "right_arm"
-    req.collision_support_surface_name = "table"
-    service_name = "plan_point_cluster_grasp"
-    rospy.loginfo("waiting for plan_point_cluster_grasp service")
-    rospy.wait_for_service(service_name)
-    rospy.loginfo("service found")
-    serv = rospy.ServiceProxy(service_name, GraspPlanning)
-    try:
-        res = serv(req)
-    except rospy.ServiceException, e:
-        rospy.logerr("error when calling plan_point_cluster_grasp: %s"%e)  
-        return 0
-    if res.error_code.value != 0:
-        return []
-    
-    return res.grasps
+    	return res.grasps
 
 
     #call plan_point_cluster_grasp_action to get candidate grasps for a cluster
@@ -2220,7 +2217,7 @@ class GraspPlanner(smach.State):
         # #rospy.loginfo(grasps)
 
         rospy.loginfo("Number of grasps: ")
-        rospy.loginfo(len(grasps))
+        rospy.loginfo(grasps)
 
         return outcomes.GRASP_SUCCESS
 
