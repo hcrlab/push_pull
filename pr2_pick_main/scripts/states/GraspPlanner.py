@@ -33,7 +33,7 @@ from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest, PlanarPrincipal
 from manipulation_msgs.srv import GraspPlanning, GraspPlanningRequest
 from manipulation_msgs.msg import GraspPlanningAction, GraspPlanningGoal
 from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
-from object_recognition_clusters.srv import FindClusterBoundingBox2, FindClusterBoundingBox2Request
+from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 import numpy as np
 import visualization as viz
 
@@ -2124,15 +2124,15 @@ class GraspPlanner(smach.State):
     #call find_cluster_bounding_box to get the bounding box for a cluster
     def call_find_cluster_bounding_box(self, cluster):
     
-        req = FindClusterBoundingBox2Request()
+        req = FindClusterBoundingBoxRequest()
         req.cluster = cluster
-        service_name = "find_cluster_bounding_box2"
+        service_name = "find_cluster_bounding_box"
         rospy.loginfo("waiting for find_cluster_bounding_box service")
         rospy.wait_for_service(service_name)
         rospy.loginfo("service found")
-        serv = rospy.ServiceProxy(service_name, FindClusterBoundingBox2)
+        serv = rospy.ServiceProxy(service_name, FindClusterBoundingBox)
         try:
-            req = FindClusterBoundingBox2Request()
+            req = FindClusterBoundingBoxRequest()
             req.cluster = cluster
 	    res = serv(req)
         except rospy.ServiceException, e:
@@ -2203,7 +2203,7 @@ class GraspPlanner(smach.State):
         # #set params for planner (change to try different settings)
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
-        #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
+        (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
 
         # #viz.publish_bounding_box(self._markers, box_pose, 
         #            # (box_dims.x/2), 
@@ -2211,7 +2211,7 @@ class GraspPlanner(smach.State):
         #            # (box_dims.z/2),
         #            # 1.0, 0.0, 0.0, 0.5, 1)
 
-        grasps = self.call_plan_point_cluster_grasp(self._cluster)
+        #grasps = self.call_plan_point_cluster_grasp(self._cluster)
         # #grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
         # #grasp_poses = [grasp.grasp_pose for grasp in grasps]
         # #rospy.loginfo(grasps)

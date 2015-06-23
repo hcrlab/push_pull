@@ -674,10 +674,10 @@ class StateMachineBuilder(object):
                 states.GraspPlanner.name,
                 states.GraspPlanner(**services),
                 transitions={
-                    outcomes.GRASP_PLAN_SUCCESS: states.StartPose.name,
+                    outcomes.GRASP_PLAN_SUCCESS: outcomes.CHALLENGE_SUCCESS,
                     outcomes.GRASP_PLAN_NONE: outcomes.CHALLENGE_SUCCESS,
                     outcomes.GRASP_PLAN_FAILURE: (
-                        outcomes.CHALLENGE_FAILURE
+                        outcomes.CHALLENGE_SUCCESS
                     )
                 },
                 remapping={
