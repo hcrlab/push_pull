@@ -2168,7 +2168,7 @@ class GraspPlanner(smach.State):
         
         goal = GraspPlanningGoal()
         goal.target.reference_frame_id = "/base_link"
-        req.target.cluster = cluster
+        goal.target.cluster = cluster
         goal.arm_name = "right_arm"
         goal.collision_support_surface_name = "table"
         action_name = "plan_point_cluster_grasp"
@@ -2187,10 +2187,10 @@ class GraspPlanner(smach.State):
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
 
-	   rospy.loginfo("Waiting for convert_pcl service")
+	rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
         rospy.loginfo("PCL service found")
-	   self._cluster = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
+	self._cluster = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
         rospy.loginfo("Conversion ended")
         rospy.loginfo(type(self._cluster))
         # self._cluster = userdata.target_cluster.pointcloud
@@ -2204,19 +2204,20 @@ class GraspPlanner(smach.State):
 
         (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
 
-        # #viz.publish_bounding_box(self._markers, box_pose, 
-        #            # (box_dims.x/2), 
-        #            # (box_dims.y/2), 
-        #            # (box_dims.z/2),
-        #            # 1.0, 0.0, 0.0, 0.5, 1)
+        viz.publish_bounding_box(self._markers, box_pose, 
+                     (box_dims.x/2), 
+                     (box_dims.y/2), 
+                     (box_dims.z/2),
+                     1.0, 0.0, 0.0, 0.5, 1)
 
-        #grasps = self.call_plan_point_cluster_grasp(self._cluster)
-        # #grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
-        # #grasp_poses = [grasp.grasp_pose for grasp in grasps]
+        grasps = self.call_plan_point_cluster_grasp(self._cluster)
+        grasps = self.call_plan_point_cluster_grasp_action(self._cluster)
+        grasp_poses = [grasp.grasp_pose for grasp in grasps]
         # #rospy.loginfo(grasps)
 
         rospy.loginfo("Number of grasps: ")
-        rospy.loginfo(grasps)
+        rospy.loginfo(len(grasps))
+
 
         return outcomes.GRASP_SUCCESS
 
