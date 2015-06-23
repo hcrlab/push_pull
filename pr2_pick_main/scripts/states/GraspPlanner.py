@@ -2191,9 +2191,11 @@ class GraspPlanner(smach.State):
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
 
+	rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
-        self._cluster = self.convert_pcl(userdata.target_cluster.pointcloud)
-
+        rospy.loginfo("PCL service found")
+	self._cluster = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
+        rospy.loginfo("Conversion ended")
         rospy.loginfo(type(self._cluster))
         # self._cluster = userdata.target_cluster.pointcloud
         # #rospy.loginfo("CLUSTER:")

@@ -21,7 +21,7 @@ from pr2_pick_contest.srv import LookupItem
 from pr2_pretouch_optical_dist.srv import OpticalRefine
 import states
 from states.GraspTool import GraspTool, ReleaseTool
-
+from convert_pcl.srv import ConvertPCL
 
 class StateMachineBuilder(object):
 
@@ -112,7 +112,8 @@ class StateMachineBuilder(object):
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
             'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
             'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems),
-            'lookup_item': rospy.ServiceProxy('item_database/lookup_item', LookupItem)
+            'lookup_item': rospy.ServiceProxy('item_database/lookup_item', LookupItem),
+	    'convert_pcl_service': rospy.ServiceProxy('convert_pcl_service', ConvertPCL)
         }
 
     # This isn't actually mocking but rather it asks for user input
