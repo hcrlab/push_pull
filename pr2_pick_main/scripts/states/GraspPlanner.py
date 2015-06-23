@@ -2123,7 +2123,7 @@ class GraspPlanner(smach.State):
 
     #call find_cluster_bounding_box to get the bounding box for a cluster
     def call_find_cluster_bounding_box(self, cluster):
-    
+
         req = FindClusterBoundingBoxRequest()
         req.cluster = cluster
         service_name = "find_cluster_bounding_box"
@@ -2132,16 +2132,15 @@ class GraspPlanner(smach.State):
         rospy.loginfo("service found")
         serv = rospy.ServiceProxy(service_name, FindClusterBoundingBox)
         try:
-            req = FindClusterBoundingBoxRequest()
-            req.cluster = cluster
-	    res = serv(req)
+            res = serv(req)
         except rospy.ServiceException, e:
             rospy.logerr("error when calling find_cluster_bounding_box: %s"%e)  
             return 0
         if not res.error_code:
-	       return (res.pose, res.box_dims)
+            return (res.pose, res.box_dims)
         else:
             return (None, None)
+            
     def call_plan_point_cluster_grasp(self, cluster):
 	req = GraspPlanningRequest()
     	req.target.reference_frame_id = "/base_link"
@@ -2188,10 +2187,10 @@ class GraspPlanner(smach.State):
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
 
-	rospy.loginfo("Waiting for convert_pcl service")
+	   rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
         rospy.loginfo("PCL service found")
-	self._cluster = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
+	   self._cluster = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
         rospy.loginfo("Conversion ended")
         rospy.loginfo(type(self._cluster))
         # self._cluster = userdata.target_cluster.pointcloud
