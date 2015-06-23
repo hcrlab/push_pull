@@ -2144,27 +2144,27 @@ class GraspPlanner(smach.State):
             return (None, None)
 
         #call plan_point_cluster_grasp to get candidate grasps for a cluster
-    def call_plan_point_cluster_grasp(self, cluster):
-        
-        req = GraspPlanningRequest()
-        req.target.reference_frame_id = "/base_link"
-        req.target.region.cloud = cluster
-        req.arm_name = "right_arm"
-        req.collision_support_surface_name = "table"
-        service_name = "plan_point_cluster_grasp"
-        rospy.loginfo("waiting for plan_point_cluster_grasp service")
-        rospy.wait_for_service(service_name)
-        rospy.loginfo("service found")
-        serv = rospy.ServiceProxy(service_name, GraspPlanning)
-        try:
-            res = serv(req)
-        except rospy.ServiceException, e:
-            rospy.logerr("error when calling plan_point_cluster_grasp: %s"%e)  
-            return 0
-        if res.error_code.value != 0:
-            return []
-        
-        return res.grasps
+   def call_plan_point_cluster_grasp(cluster):
+    
+    req = GraspPlanningRequest()
+    req.target.reference_frame_id = "/base_link"
+    req.target.cluster = cluster
+    req.arm_name = "right_arm"
+    req.collision_support_surface_name = "table"
+    service_name = "plan_point_cluster_grasp"
+    rospy.loginfo("waiting for plan_point_cluster_grasp service")
+    rospy.wait_for_service(service_name)
+    rospy.loginfo("service found")
+    serv = rospy.ServiceProxy(service_name, GraspPlanning)
+    try:
+        res = serv(req)
+    except rospy.ServiceException, e:
+        rospy.logerr("error when calling plan_point_cluster_grasp: %s"%e)  
+        return 0
+    if res.error_code.value != 0:
+        return []
+    
+    return res.grasps
 
 
     #call plan_point_cluster_grasp_action to get candidate grasps for a cluster
@@ -2172,7 +2172,7 @@ class GraspPlanner(smach.State):
         
         goal = GraspPlanningGoal()
         goal.target.reference_frame_id = "/base_link"
-        goal.target.region.cloud = cluster
+        req.target.cluster = cluster
         goal.arm_name = "right_arm"
         goal.collision_support_surface_name = "table"
         action_name = "plan_point_cluster_grasp"
@@ -2200,13 +2200,13 @@ class GraspPlanner(smach.State):
         # self._cluster = userdata.target_cluster.pointcloud
         # #rospy.loginfo("CLUSTER:")
         # rospy.loginfo(type(self._cluster))
-        # tf_broadcaster = tf.TransformBroadcaster()
-        # tf_listener = tf.TransformListener()
+        tf_broadcaster = tf.TransformBroadcaster()
+        tf_listener = tf.TransformListener()
 
         # #set params for planner (change to try different settings)
-        # self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
+        self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
-        # #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
+        #(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
 
         # #viz.publish_bounding_box(self._markers, box_pose, 
         #            # (box_dims.x/2), 
@@ -2214,10 +2214,13 @@ class GraspPlanner(smach.State):
         #            # (box_dims.z/2),
         #            # 1.0, 0.0, 0.0, 0.5, 1)
 
-        # grasps = self.call_plan_point_cluster_grasp(self._cluster)
+        grasps = self.call_plan_point_cluster_grasp(self._cluster)
         # #grasps = self.call_plan_point_cluster_grasp_action(self._cluster.pointcloud)
         # #grasp_poses = [grasp.grasp_pose for grasp in grasps]
         # #rospy.loginfo(grasps)
+
+        rospy.loginfo("Number of grasps: ")
+        rospy.loginfo(len(grasps))
 
         return outcomes.GRASP_SUCCESS
 
