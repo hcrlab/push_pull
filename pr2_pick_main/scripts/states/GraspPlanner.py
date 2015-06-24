@@ -37,6 +37,7 @@ from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterB
 import numpy as np
 import visualization as viz
 
+from visualization_msgs.msg import Marker
 
 def dummy(idx, box, num_points, transformed_point):
         if (transformed_point.point.x >= box.min_x and
@@ -47,6 +48,53 @@ def dummy(idx, box, num_points, transformed_point):
                 transformed_point.point.z < box.max_z):
                 num_points[idx] += 1
 
+def draw_grasps(self, grasps, frame, ns = 'grasps', pause = 0, frame_locked = False):
+
+        marker = Marker()
+        marker_pub = rospy.Publisher('grasp_markers', Marker)
+        marker.header.frame_id = frame
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = ns
+        marker.type = Marker.ARROW
+        marker.action = Marker.ADD
+        marker.color.a = 1.0
+        marker.lifetime = rospy.Duration(0)
+        marker.frame_locked = frame_locked
+
+        for (grasp_num, grasp) in enumerate(grasps):
+            if grasp_num == 0:
+                marker.scale.x = 0.015
+                marker.scale.y = 0.025
+                length_fact = 1.5
+
+            else:
+                marker.scale.x = 0.01
+                marker.scale.y = 0.015
+                length_fact = 1.0
+
+            orientation = grasp.orientation
+            quat = [orientation.x, orientation.y, orientation.z, orientation.w]
+            mat = tf.transformations.quaternion_matrix(quat)
+            start = [grasp.position.x, grasp.position.y, grasp.position.z]
+            x_end = list(mat[:,0][0:3]*.05*length_fact + scipy.array(start))    
+            y_end = list(mat[:,1][0:3]*.02*length_fact + scipy.array(start))
+            marker.id = grasp_num*3
+            marker.points = [Point(*start), Point(*x_end)]
+            marker.color.r = 1.0
+            marker.color.g = 0.0
+            marker.color.b = 0.0
+            marker_pub.publish(marker)
+            marker.id = grasp_num*3+1
+            marker.points = [Point(*start), Point(*y_end)]
+            marker.color.r = 0.0
+            marker.color.g = 1.0
+            marker.color.b = 0.0
+            marker_pub.publish(marker)
+            marker.id = grasp_num*3+2
+            if pause:
+                print "press enter to continue"
+                raw_input()
+        time.sleep(.5)
 
 class GraspPlanner(smach.State):
     ''' Grasps an item in the bin. '''
@@ -2217,11 +2265,16 @@ class GraspPlanner(smach.State):
 
         rospy.loginfo("Number of grasps: ")
         rospy.loginfo(len(grasps))
+        grasp_not_stamped = []
+        for pose_stamped in grasp_poses:
+            grasp_not_stamped.append(pose_stamped.pose)
 
-	for grasp in grasp_poses:
-		rospy.loginfo(type(grasp))
-		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
-		raw_input("Enter for next grasp")
+        draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
+
+	# for grasp in grasp_poses:
+	# 	rospy.loginfo(type(grasp))
+	# 	viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+	# 	raw_input("Enter for next grasp")
         return outcomes.GRASP_SUCCESS
 
 
