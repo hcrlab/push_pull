@@ -2204,11 +2204,11 @@ class GraspPlanner(smach.State):
 
         (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
 
-        viz.publish_bounding_box(self._markers, box_pose, 
-                     (box_dims.x/2), 
-                     (box_dims.y/2), 
-                     (box_dims.z/2),
-                     1.0, 0.0, 0.0, 0.5, 1)
+        #viz.publish_bounding_box(self._markers, box_pose, 
+        #             (box_dims.x/2), 
+        #             (box_dims.y/2), 
+        #             (box_dims.z/2),
+        #             1.0, 0.0, 0.0, 0.5, 1)
 
         grasps = self.call_plan_point_cluster_grasp(self._cluster)
         grasps = self.call_plan_point_cluster_grasp_action(self._cluster)
@@ -2218,7 +2218,10 @@ class GraspPlanner(smach.State):
         rospy.loginfo("Number of grasps: ")
         rospy.loginfo(len(grasps))
 
-
+	for grasp in grasp_poses:
+		rospy.loginfo(type(grasp))
+		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+		raw_input("Enter for next grasp")
         return outcomes.GRASP_SUCCESS
 
 
