@@ -63,7 +63,9 @@ class StartPose(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Setting start pose.')
         self._tts.publish('Setting start pose.')
-
+	move = raw_input("Press s to skip it")
+	if(move == 's'):
+		return outcomes.START_POSE_SUCCESS
         self._move_head.wait_for_service()
         move_head_success = self._move_head(1.5, 0, 1.05, 'base_footprint')
         if not move_head_success:

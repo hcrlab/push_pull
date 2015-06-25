@@ -77,6 +77,7 @@ add_message_files(
   Box.msg
   Cell.msg
   Cluster.msg
+  Cluster2.msg
   ClusterList.msg
   ColorHistogram.msg
   ItemDescriptor.msg
