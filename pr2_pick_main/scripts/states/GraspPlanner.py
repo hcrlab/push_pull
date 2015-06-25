@@ -6,6 +6,7 @@ from geometry_msgs.msg import Pose, PoseStamped, Quaternion, TransformStamped, P
 from joblib import Parallel, delayed 
 import json
 import math
+import time
 import moveit_commander
 from moveit_msgs.msg import Grasp, PlanningScene, PlanningSceneComponents 
 from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, \
@@ -23,7 +24,7 @@ import smach
 from std_msgs.msg import Header, String
 import tf
 from trajectory_msgs.msg import JointTrajectoryPoint
-
+import scipy
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers, MoveArmIkRequest
 from pr2_pick_perception.msg import Box
@@ -48,11 +49,12 @@ def dummy(idx, box, num_points, transformed_point):
                 transformed_point.point.z < box.max_z):
                 num_points[idx] += 1
 
-def draw_grasps(self, grasps, frame, ns = 'grasps', pause = 0, frame_locked = False):
+def draw_grasps(grasps, frame, ns = 'grasps', pause = 0, frame_locked = False):
 
         marker = Marker()
         marker_pub = rospy.Publisher('grasp_markers', Marker)
         marker.header.frame_id = frame
+	rospy.loginfo("Frame: " + frame)
         marker.header.stamp = rospy.Time.now()
         marker.ns = ns
         marker.type = Marker.ARROW
@@ -2235,12 +2237,32 @@ class GraspPlanner(smach.State):
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
 
+
+	 # Delete any leftover transforms from previous runs
+        bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
+        for bin_id in bin_ids:
+            self._delete_static_tf.wait_for_service()
+            req = DeleteStaticTransformRequest()
+            req.parent_frame = "bin_" + str(bin_id)
+            req.child_frame = "object_axis"
+            self._delete_static_tf(req)
+            req = DeleteStaticTransformRequest()
+            req.child_frame = "bin_" + str(bin_id)
+            req.parent_frame = "object_axis"
+            self._delete_static_tf(req)
+            req = DeleteStaticTransformRequest()
+            req.child_frame = "bin_" + str(bin_id)
+            req.parent_frame = "bounding_box"
+            self._delete_static_tf(req)
+
 	rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
         rospy.loginfo("PCL service found")
-	self._cluster = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
-        rospy.loginfo("Conversion ended")
-        rospy.loginfo(type(self._cluster))
+	self._cluster_pointcloud = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
+        self._cluster = userdata.target_cluster
+	self._cluster_pointcloud.header = userdata.target_cluster.header
+	rospy.loginfo("Conversion ended")
+        rospy.loginfo(type(self._cluster_pointcloud))
         # self._cluster = userdata.target_cluster.pointcloud
         # #rospy.loginfo("CLUSTER:")
         # rospy.loginfo(type(self._cluster))
@@ -2250,16 +2272,16 @@ class GraspPlanner(smach.State):
         # #set params for planner (change to try different settings)
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
-        (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster)
+        (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster_pointcloud)
+	box_pose.header.frame_id = self._cluster.header.frame_id
+        viz.publish_bounding_box(self._markers, box_pose, 
+                     (box_dims.x), 
+                     (box_dims.y), 
+                     (box_dims.z),
+                     1.0, 0.0, 0.0, 0.5, 1)
 
-        #viz.publish_bounding_box(self._markers, box_pose, 
-        #             (box_dims.x/2), 
-        #             (box_dims.y/2), 
-        #             (box_dims.z/2),
-        #             1.0, 0.0, 0.0, 0.5, 1)
-
-        grasps = self.call_plan_point_cluster_grasp(self._cluster)
-        grasps = self.call_plan_point_cluster_grasp_action(self._cluster)
+        grasps = self.call_plan_point_cluster_grasp(self._cluster_pointcloud)
+        #grasps = self.call_plan_point_cluster_grasp_action(self._cluster_pointcloud)
         grasp_poses = [grasp.grasp_pose for grasp in grasps]
         # #rospy.loginfo(grasps)
 
@@ -2268,8 +2290,9 @@ class GraspPlanner(smach.State):
         grasp_not_stamped = []
         for pose_stamped in grasp_poses:
             grasp_not_stamped.append(pose_stamped.pose)
-
-        draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
+	rospy.loginfo(grasp_not_stamped)
+        rospy.loginfo("Cluster frame id: " + self._cluster.header.frame_id)
+	draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 1)
 
 	# for grasp in grasp_poses:
 	# 	rospy.loginfo(type(grasp))
