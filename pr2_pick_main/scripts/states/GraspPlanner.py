@@ -2261,8 +2261,12 @@ class GraspPlanner(smach.State):
 	self._cluster_pointcloud = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud
         self._cluster = userdata.target_cluster
 	self._cluster_pointcloud.header = userdata.target_cluster.header
+	rospy.loginfo("Cluster frame id: " + self._cluster.header.frame_id)
+	rospy.loginfo("Poincloud frame id: " + self._cluster_pointcloud.header.frame_id)
 	rospy.loginfo("Conversion ended")
         rospy.loginfo(type(self._cluster_pointcloud))
+	rospy.loginfo(type(self._cluster))
+	raw_input("PERAI")
         # self._cluster = userdata.target_cluster.pointcloud
         # #rospy.loginfo("CLUSTER:")
         # rospy.loginfo(type(self._cluster))
@@ -2295,12 +2299,15 @@ class GraspPlanner(smach.State):
 	draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 1)
 
         if(len(grasps) > 0):
-            success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
-            self.__tts.publish("The object is graspable.")
+	    for grasp in grasp_poses:
+            	viz.publish_gripper(self._im_server, grasp , 'grasp_target')
+		raw_input("Press enter to see another grasp")
+	    #success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
+            self._tts.publish("The object is graspable.")
             self.loginfo("The object is graspable.")
             success_grasp = True
         else:
-            self.__tts.publish("The object is not graspable.")
+            self._tts.publish("The object is not graspable.")
             self.loginfo("The object is not graspable.")
 	# for grasp in grasp_poses:
 	# 	rospy.loginfo(type(grasp))
