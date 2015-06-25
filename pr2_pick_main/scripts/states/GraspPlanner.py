@@ -575,6 +575,31 @@ class GraspPlanner(smach.State):
             req.parent_frame = "bounding_box"
             self._delete_static_tf(req)
 
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "base_footprint"
+        req.child_frame = "head_yaw"
+        self._delete_static_tf(req)
+
+        # Set a bunch of member variables
+        # These could be way better organised and consistently named! Sorry!
+        if userdata.bin_id < 'D':
+            self.top_shelf = True
+        else:
+            self.top_shelf = False
+
+        self.shelf_width = self._shelf_widths[userdata.bin_id]
+        self.shelf_height = self._shelf_heights[userdata.bin_id]
+        self.bin_id = userdata.bin_id
+        self._debug = userdata.debug
+        self.allowed_grasps = userdata.item_model.allowed_grasps
+        self.target_descriptor = userdata.target_descriptor
+        self.bin_bound_left = self._bin_bounds_left[userdata.bin_id] 
+        self.bin_bound_right = self._bin_bounds_right[userdata.bin_id]
+        self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
+        self.grasp_wide_end = userdata.item_model.grasp_wide_end
+        self._cluster = userdata.target_cluster
+
 	rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
         rospy.loginfo("PCL service found")
