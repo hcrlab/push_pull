@@ -298,8 +298,7 @@ class GraspPlanner(smach.State):
         Check if a pose is within the width and height of the bin
         i.e. That it will not hit the shelf
         """
-
-        viz.publish_gripper(self._im_server, pose, 'grasp_target')
+	viz.publish_gripper(self._im_server, pose, 'grasp_target')
 
 
 
@@ -332,9 +331,9 @@ class GraspPlanner(smach.State):
             gripper_offset = self.half_gripper_height
 
         if ((pose_in_base_footprint.pose.position.z > 
-                (self.shelf_bottom_height + 2*gripper_offset))
+                (self._shelf_bottom_height_g_i + 2*gripper_offset))
                 and (pose_in_base_footprint.pose.position.z < 
-                (self.shelf_bottom_height + self.shelf_height - (gripper_offset)))):
+                (self._shelf_bottom_height_g_i + self.shelf_height - (gripper_offset)))):
             pose_in_base_footprint.pose.position.z = pose_in_base_footprint.pose.position.z
         else:
             #if pose_in_bin_frame.pose.position.x > 0:
@@ -633,22 +632,26 @@ class GraspPlanner(smach.State):
 
         grasps = self.call_plan_point_cluster_grasp(self._cluster2.pointcloud)
         #grasps = self.call_plan_point_cluster_grasp_action(self._cluster_pointcloud)
-        grasp_poses = [grasp.grasp_pose for grasp in grasps]
+        #grasp_poses = [grasp.grasp_pose for grasp in grasps]
         # #rospy.loginfo(grasps)
 
         rospy.loginfo("Number of grasps: ")
         rospy.loginfo(len(grasps))
-        grasp_not_stamped = []
-        for pose_stamped in grasp_poses:
-            grasp_not_stamped.append(pose_stamped.pose)
-	rospy.loginfo(grasp_not_stamped)
-        rospy.loginfo("Cluster frame id: " + self._cluster.header.frame_id)
+        #grasp_not_stamped = []
+        #for pose_stamped in grasp_poses:
+        #    grasp_not_stamped.append(pose_stamped.pose)
+	#rospy.loginfo(grasp_not_stamped)
+        #rospy.loginfo("Cluster frame id: " + self._cluster.header.frame_id)
 	
         grasps = self.filter_grasps(grasps)
         rospy.loginfo("Number of grasps after filter: ")
 	rospy.loginfo( len(grasps))
-	draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 1)
+	grasp_poses = [grasp.grasp_pose for grasp in grasps]
+	grasp_not_stamped = []
+        for pose_stamped in grasp_poses:
+            grasp_not_stamped.append(pose_stamped.pose)
 	if(len(grasps) > 0):
+	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 1)
 	    for grasp in grasp_poses:
             	viz.publish_gripper(self._im_server, grasp , 'grasp_target')
 		raw_input("Press enter to see another grasp")
