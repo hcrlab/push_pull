@@ -2294,6 +2294,14 @@ class GraspPlanner(smach.State):
         rospy.loginfo("Cluster frame id: " + self._cluster.header.frame_id)
 	draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 1)
 
+        if(len(grasps) > 0):
+            success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
+            self.__tts.publish("The object is graspable.")
+            self.loginfo("The object is graspable.")
+            success_grasp = True
+        else:
+            self.__tts.publish("The object is not graspable.")
+            self.loginfo("The object is not graspable.")
 	# for grasp in grasp_poses:
 	# 	rospy.loginfo(type(grasp))
 	# 	viz.publish_gripper(self._im_server, grasp, 'grasp_target')
