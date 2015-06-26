@@ -58,7 +58,8 @@ class MoveToBin(smach.State):
                 outcomes.MOVE_TO_BIN_SUCCESS,
                 outcomes.MOVE_TO_BIN_FAILURE
             ],
-            input_keys=['bin_id', 'debug']
+            input_keys=['bin_id', 'debug'],
+	    output_keys = ['previous_item']
         )
         self._tts = tts
         self.drive_to_pose = drive_to_pose
@@ -90,7 +91,7 @@ class MoveToBin(smach.State):
         self._tts.publish('Moving to bin {}'.format(userdata.bin_id))
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
-
+	userdata.previous_item = ""
         robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
         if userdata.bin_id > "C":
             robot_distance_from_shelf = self.robot_distance_from_shelf_d_l

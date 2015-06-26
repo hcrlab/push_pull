@@ -87,9 +87,10 @@ class UpdatePlan(smach.State):
     def bin_contains_target_item(self, bin_id):
         self._get_target_items.wait_for_service()
         self._get_items.wait_for_service()
-
+	
         target_items = self._get_target_items(bin_id).items
-        if len(target_items) == 0:
+        rospy.loginfo(target_items)
+	if len(target_items) == 0:
             return False, None
         target_item = target_items[0]
         items = self._get_items(bin_id).items

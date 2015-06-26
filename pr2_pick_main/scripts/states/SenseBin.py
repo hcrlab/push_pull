@@ -46,13 +46,13 @@ class SenseBin(smach.State):
         else:
             userdata.re_grasp_attempt = False
 
-        userdata.bin_id = 'H'
+        #bin_id = 'H'
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
 
         self.target_items = ["highland_6539_self_stick_notes", "cheezit_big_original"] 
-        num_items = len(target_items)
-        if(userdata.previous_item = ""):
+        num_items = len(self.target_items)
+        if( not userdata.previous_item ):
             userdata.current_target = self.target_items[0]
         else:
             count = 0 
