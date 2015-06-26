@@ -64,7 +64,7 @@ def draw_grasps(grasps, frame, ns = 'grasps', pause = 0, frame_locked = False):
         marker.color.a = 1.0
         marker.lifetime = rospy.Duration(0)
         marker.frame_locked = frame_locked
-
+	marker_pub.publish(marker)
         for (grasp_num, grasp) in enumerate(grasps):
             if grasp_num == 0:
                 marker.scale.x = 0.015
@@ -473,12 +473,12 @@ class GraspPlanner(smach.State):
         req = SetPointClusterGraspParamsRequest()
         req.height_good_for_side_grasps = 0.05
         req.gripper_opening = 0.083
-        req.side_step = side_step
+        req.side_step = 0.01
         req.palm_step = palm_step
         req.overhead_grasps_only = False
         req.side_grasps_only = False
         req.include_high_point_grasps = include_high_point_grasps
-        req.pregrasp_just_outside_box = pregrasp_just_outside_box
+        req.pregrasp_just_outside_box = True
         req.backoff_depth_steps = backoff_depth_steps
         req.randomize_grasps = False
         rospy.loginfo("waiting for set params service")
@@ -534,10 +534,10 @@ class GraspPlanner(smach.State):
 
 
     #call plan_point_cluster_grasp_action to get candidate grasps for a cluster
-    def call_plan_point_cluster_grasp_action(self, cluster):
+    def call_plan_point_cluster_grasp_action(self, cluster, frame_id):
         
         goal = GraspPlanningGoal()
-        goal.target.reference_frame_id = 'base_footprint'
+        goal.target.reference_frame_id = frame_id
         goal.target.cluster = cluster
         goal.arm_name = "right_arm"
         action_name = "plan_point_cluster_grasp"
@@ -633,7 +633,7 @@ class GraspPlanner(smach.State):
                      1.0, 0.0, 0.0, 0.5, 1)
 
         #grasps = self.call_plan_point_cluster_grasp(self._cluster2.pointcloud)
-        grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud)
+        grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
         #grasp_poses = [grasp.grasp_pose for grasp in grasps]
         # #rospy.loginfo(grasps)
 
@@ -658,7 +658,10 @@ class GraspPlanner(smach.State):
             	viz.publish_gripper(self._im_server, grasp , 'grasp_target')
 		#raw_input("Press enter to see another grasp")
 	    #success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
-            self._tts.publish("The object is graspable.")
+            #success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
+                                                        0.005, 0.005, 12, 'right_arm',
+                                                        False).success
+	    self._tts.publish("The object is graspable.")
 	    time.sleep(2) 
             self.loginfo("The object is graspable.")
             success_grasp = True
