@@ -675,9 +675,9 @@ class StateMachineBuilder(object):
                 states.GraspPlanner(**services),
                 transitions={
                     outcomes.GRASP_PLAN_SUCCESS: states.SenseBin.name,
-                    outcomes.GRASP_PLAN_NONE: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.GRASP_PLAN_NONE: states.SenseBin.name,
                     outcomes.GRASP_PLAN_FAILURE: (
-                        outcomes.CHALLENGE_SUCCESS
+                        states.SenseBin.name
                     )
                 },
                 remapping={

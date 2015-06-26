@@ -57,12 +57,16 @@ class SenseBin(smach.State):
         else:
             count = 0 
             for item in self.target_items:
+		rospy.loginfo("item: " + item)
+		rospy.loginfo("previous item: " + userdata.previous_item)
                 if(item == userdata.previous_item):
-                    if(count < num_items - 1):
+		    rospy.loginfo("Count: " + str(count))
+		    rospy.loginfo("Num items: " + str(num_items))
+                    if(count != num_items - 1):
                         current_target = self.target_items[count + 1]
                     else:
                         current_target = self.target_items[0]
-
+		count = count + 1
         self._lookup_item.wait_for_service()
         lookup_response = self._lookup_item(item=current_target)
         target_model = lookup_response.model

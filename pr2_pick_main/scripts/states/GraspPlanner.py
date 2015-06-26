@@ -599,7 +599,7 @@ class GraspPlanner(smach.State):
         self.grasp_wide_end = userdata.item_model.grasp_wide_end
         self._cluster = userdata.target_cluster
         userdata.previous_item = userdata.current_target
-
+	rospy.loginfo("Current Target in GraspPlanner: " + userdata.current_target)
 	rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
         rospy.loginfo("PCL service found")
