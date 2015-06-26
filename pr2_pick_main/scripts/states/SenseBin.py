@@ -27,7 +27,7 @@ class SenseBin(smach.State):
             outcomes=[outcomes.SENSE_BIN_SUCCESS, outcomes.SENSE_BIN_NO_OBJECTS,
                       outcomes.SENSE_BIN_FAILURE],
             input_keys=['bin_id', 'debug', 'current_target',
-                        'current_bin_items', 're_sense_attempt'],
+                        'current_bin_items', 're_sense_attempt', 'previous_item'],
             output_keys=['clusters', 'target_cluster', 'target_descriptor',
                          'target_model', 're_grasp_attempt'])
         self._tts = tts
@@ -46,17 +46,32 @@ class SenseBin(smach.State):
         else:
             userdata.re_grasp_attempt = False
 
+        userdata.bin_id = 'H'
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
 
-        rospy.loginfo('Expecting target: {}, items: {}'.format(
-            userdata.current_target, userdata.current_bin_items))
+        self.target_items = ["highland_6539_self_stick_notes", "cheezit_big_original"] 
+        num_items = len(target_items)
+        if(userdata.previous_item = ""):
+            userdata.current_target = self.target_items[0]
+        else:
+            count = 0 
+            for item in self.target_items:
+                if(item == userdata.previous_item):
+                    if(count < num_items - 1):
+                        userdata.current_target = self.target_items[count + 1]
+                    else:
+                        userdata.current_target = self.target_items[0]
+
         self._lookup_item.wait_for_service()
         lookup_response = self._lookup_item(item=userdata.current_target)
         target_model = lookup_response.model
         userdata.target_model = target_model
-
+        rospy.loginfo("Place item : " + userdata.current_target)
+        self._tts.publish('Place item {}'.format(target_model.speech_name))
         rospy.sleep(2)
+        raw_input("Press enter after placing the item.")
+        userdata.current_bin_items = userdata.current_target
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID=userdata.bin_id)

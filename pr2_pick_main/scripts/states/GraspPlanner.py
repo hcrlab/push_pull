@@ -176,7 +176,7 @@ class GraspPlanner(smach.State):
             ],
             input_keys=['bin_id', 'debug', 'target_cluster', 'current_target',
                         'item_model', 'target_descriptor', 're_grasp_attempt'],
-            output_keys=['re_sense_attempt']
+            output_keys=['re_sense_attempt', 'previous_item']
         )
 
         self._find_centroid = services['find_centroid']
@@ -598,6 +598,7 @@ class GraspPlanner(smach.State):
         self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
         self.grasp_wide_end = userdata.item_model.grasp_wide_end
         self._cluster = userdata.target_cluster
+        userdata.previous_item = userdata.current_target
 
 	rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()

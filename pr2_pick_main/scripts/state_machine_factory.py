@@ -584,7 +584,7 @@ class StateMachineBuilder(object):
         return sm
 
     def build_sm_grasp_planner(self, **services):
-        '''Builds the main state machine.
+        '''Builds the state machine for the grasp planner.
 
         You probably want to call either real_robot() or mock_robot() to build a
         state machine instead of this method.
@@ -674,7 +674,7 @@ class StateMachineBuilder(object):
                 states.GraspPlanner.name,
                 states.GraspPlanner(**services),
                 transitions={
-                    outcomes.GRASP_PLAN_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.GRASP_PLAN_SUCCESS: states.SenseBin.name,
                     outcomes.GRASP_PLAN_NONE: outcomes.CHALLENGE_SUCCESS,
                     outcomes.GRASP_PLAN_FAILURE: (
                         outcomes.CHALLENGE_SUCCESS
