@@ -552,6 +552,27 @@ class GraspPlanner(smach.State):
             return []
         return result.grasps
 
+    def create_grasps(self, grasp, boudingbox_pose):
+
+        object_pose = boudingbox_pose
+        object_pose = self._tf_listener.transformPose('base_footprint',
+                                                                object_pose)
+        self.shelf_bottom_height = self._shelf_bottom_heights['H']
+
+        pre_grasp_pose_target = PoseStamped()
+        pre_grasp_pose_target.header.frame_id = 'base_footprint';
+
+        pre_grasp_pose_target.pose.orientation.w = 1
+        pre_grasp_pose_target.pose.position.x = 0.37 
+        pre_grasp_pose_target.pose.position.y = object_pose.pose.position.y
+
+        grasp_pose_target = PoseStamped()
+        grasp_pose_target.header.frame_id = 'base_footprint';
+
+        grasp_pose_target.pose = grasp.grasp_pose
+
+        return pre_grasp_pose_target, grasp_pose_target
+
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
@@ -652,15 +673,22 @@ class GraspPlanner(smach.State):
 	grasp_not_stamped = []
         for pose_stamped in grasp_poses:
             grasp_not_stamped.append(pose_stamped.pose)
+
+
 	if(len(grasps) > 0):
 	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
 	    for grasp in grasp_poses:
             	viz.publish_gripper(self._im_server, grasp , 'grasp_target')
+                pre_grasp_target, grasp_target = self.create_grasps(grasp, box_pose)
+                success_pre_grasp = self._moveit_move_arm(pre_grasp_target, 
+                                                        0.005, 0.005, 12, 'right_arm',
+                                                        False).success
+                break
 		#raw_input("Press enter to see another grasp")
 	    #success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
             #success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
-                                                        0.005, 0.005, 12, 'right_arm',
-                                                        False).success
+                                                        #0.005, 0.005, 12, 'right_arm',
+                                                        #False).success
 	    self._tts.publish("The object is graspable.")
 	    time.sleep(2) 
             self.loginfo("The object is graspable.")
