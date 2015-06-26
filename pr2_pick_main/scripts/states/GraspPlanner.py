@@ -40,6 +40,7 @@ import numpy as np
 import visualization as viz
 
 from visualization_msgs.msg import Marker
+from object_manipulation_msgs.msg import GraspableObject
 
 def dummy(idx, box, num_points, transformed_point):
         if (transformed_point.point.x >= box.min_x and
@@ -512,10 +513,10 @@ class GraspPlanner(smach.State):
             
     def call_plan_point_cluster_grasp(self, cluster):
 	req = GraspPlanningRequest()
-    	req.target.reference_frame_id = "/base_link"
+        rospy.loginfo("TESTE frame id: " + cluster.header.frame_id)
+    	req.target.reference_frame_id = cluster.header.frame_id
     	req.target.cluster = cluster
     	req.arm_name = "right_arm"
-    	req.collision_support_surface_name = "table"
     	service_name = "plan_point_cluster_grasp"
     	rospy.loginfo("waiting for plan_point_cluster_grasp service")
    	rospy.wait_for_service(service_name)
@@ -536,10 +537,9 @@ class GraspPlanner(smach.State):
     def call_plan_point_cluster_grasp_action(self, cluster):
         
         goal = GraspPlanningGoal()
-        goal.target.reference_frame_id = "/base_link"
+        req.target.reference_frame_id = cluster.header.frame_id
         goal.target.cluster = cluster
         goal.arm_name = "right_arm"
-        goal.collision_support_surface_name = "table"
         action_name = "plan_point_cluster_grasp"
         rospy.loginfo("waiting for plan_point_cluster_grasp action")
         client = actionlib.SimpleActionClient(action_name, GraspPlanningAction)
@@ -612,7 +612,7 @@ class GraspPlanner(smach.State):
 	rospy.loginfo("Conversion ended")
         rospy.loginfo(type(self._cluster2))
 	rospy.loginfo(type(self._cluster))
-	raw_input("PERAI")
+
         # self._cluster = userdata.target_cluster.pointcloud
         # #rospy.loginfo("CLUSTER:")
         # rospy.loginfo(type(self._cluster))
