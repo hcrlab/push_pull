@@ -53,25 +53,25 @@ class SenseBin(smach.State):
         self.target_items = ["highland_6539_self_stick_notes", "cheezit_big_original"] 
         num_items = len(self.target_items)
         if( not userdata.previous_item ):
-            userdata.current_target = self.target_items[0]
+            current_target = self.target_items[0]
         else:
             count = 0 
             for item in self.target_items:
                 if(item == userdata.previous_item):
                     if(count < num_items - 1):
-                        userdata.current_target = self.target_items[count + 1]
+                        current_target = self.target_items[count + 1]
                     else:
-                        userdata.current_target = self.target_items[0]
+                        current_target = self.target_items[0]
 
         self._lookup_item.wait_for_service()
-        lookup_response = self._lookup_item(item=userdata.current_target)
+        lookup_response = self._lookup_item(item=current_target)
         target_model = lookup_response.model
         userdata.target_model = target_model
-        rospy.loginfo("Place item : " + userdata.current_target)
+        rospy.loginfo("Place item : " + current_target)
         self._tts.publish('Place item {}'.format(target_model.speech_name))
         rospy.sleep(2)
         raw_input("Press enter after placing the item.")
-        userdata.current_bin_items = userdata.current_target
+        current_bin_items = current_target
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID=userdata.bin_id)
@@ -80,8 +80,8 @@ class SenseBin(smach.State):
 
         # Save point cloud for later analysis
         #try:
-        #    if len(userdata.current_bin_items) > 1:
-        #        filename = '_'.join([x[:5] for x in [userdata.current_target] + userdata.current_bin_items])
+        #    if len(current_bin_items) > 1:
+        #        filename = '_'.join([x[:5] for x in [current_target] + current_bin_items])
         #        filename += '.bag'
         #        data_saver = DataSaver('/tmp/cell_pc', filename)
         #        data_saver.save_message('cell_pc', crop_response.cloud)
@@ -91,7 +91,7 @@ class SenseBin(smach.State):
         #    rospy.logerr('Failed to save point cloud data: {}'.format(e))
 
         # Segment items.
-        segment_request = SegmentItemsRequest(cloud=crop_response.cloud, items=userdata.current_bin_items)
+        segment_request = SegmentItemsRequest(cloud=crop_response.cloud, items=current_bin_items)
         self._segment_items.wait_for_service()
         segment_response = self._segment_items(segment_request)
         clusters = segment_response.clusters.clusters
@@ -119,12 +119,12 @@ class SenseBin(smach.State):
             response = self._get_item_descriptor(cluster=cluster)
             descriptors.append(response.descriptor)
 
-        if len(userdata.current_bin_items) != len(descriptors):
+        if len(current_bin_items) != len(descriptors):
             rospy.logwarn((
                 '[SenseBin] Only {} descriptors from {} clusters returned, '
                 'expected {} items in bin'
             ).format(len(descriptors), len(clusters),
-                     len(userdata.current_bin_items)))
+                     len(current_bin_items)))
 
         # Classify which cluster is the target item.
         if len(descriptors) == 0:
@@ -133,8 +133,8 @@ class SenseBin(smach.State):
         self._classify_target_item.wait_for_service()
         response = self._classify_target_item(
             descriptors=descriptors,
-            target_item=userdata.current_target,
-            all_items=userdata.current_bin_items)
+            target_item=current_target,
+            all_items=current_bin_items)
         index = response.target_item_index
         userdata.target_cluster = clusters[index]
         userdata.target_descriptor = descriptors[index]

@@ -653,10 +653,10 @@ class GraspPlanner(smach.State):
         for pose_stamped in grasp_poses:
             grasp_not_stamped.append(pose_stamped.pose)
 	if(len(grasps) > 0):
-	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 1)
+	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
 	    for grasp in grasp_poses:
             	viz.publish_gripper(self._im_server, grasp , 'grasp_target')
-		raw_input("Press enter to see another grasp")
+		#raw_input("Press enter to see another grasp")
 	    #success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
             self._tts.publish("The object is graspable.")
             self.loginfo("The object is graspable.")
@@ -668,7 +668,7 @@ class GraspPlanner(smach.State):
 	# 	rospy.loginfo(type(grasp))
 	# 	viz.publish_gripper(self._im_server, grasp, 'grasp_target')
 	# 	raw_input("Enter for next grasp")
-        return outcomes.GRASP_SUCCESS
+        return outcomes.GRASP_PLAN_SUCCESS
 
 
         # start = datetime.datetime.now()
