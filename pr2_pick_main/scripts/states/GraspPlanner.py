@@ -659,11 +659,13 @@ class GraspPlanner(smach.State):
 		#raw_input("Press enter to see another grasp")
 	    #success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
             self._tts.publish("The object is graspable.")
+	    time.sleep(2) 
             self.loginfo("The object is graspable.")
             success_grasp = True
         else:
             self._tts.publish("The object is not graspable.")
-            self.loginfo("The object is not graspable.")
+            time.sleep(2)
+	    self.loginfo("The object is not graspable.")
 	# for grasp in grasp_poses:
 	# 	rospy.loginfo(type(grasp))
 	# 	viz.publish_gripper(self._im_server, grasp, 'grasp_target')

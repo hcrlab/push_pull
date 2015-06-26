@@ -95,13 +95,6 @@ class MoveToBin(smach.State):
         robot_distance_from_shelf = self.robot_distance_from_shelf_a_c
         if userdata.bin_id > "C":
             robot_distance_from_shelf = self.robot_distance_from_shelf_d_l
-
-	move = raw_input('press s to stay in the same position')  
-
-        if(move == 's'):
-            self.move_head.wait_for_service()
-            self.move_head(x=0.0, y=0.0, z=0.0, frame='bin_{}'.format(userdata.bin_id))
-            return outcomes.MOVE_TO_BIN_SUCCESS
             
         # find the target pose in robot coordinates
         target_in_shelf_frame = PoseStamped(

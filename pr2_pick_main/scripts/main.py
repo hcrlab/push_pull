@@ -70,9 +70,9 @@ def main(test_drop_off_item=False,
             try:
                 drive_to_pose = rospy.ServiceProxy('drive_to_pose_service',
                                                    DriveToPose)
-                #drive_to_pose(pose=sm.userdata.start_pose,
-                 #             linearVelocity=0.1,
-                  #            angularVelocity=0.1)
+                drive_to_pose(pose=sm.userdata.start_pose,
+                              linearVelocity=0.1,
+                              angularVelocity=0.1)
                 set_grippers = rospy.ServiceProxy('set_grippers_service',
                                                   SetGrippers)
                 set_grippers.wait_for_service()
