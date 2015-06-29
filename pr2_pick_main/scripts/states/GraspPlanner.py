@@ -678,8 +678,10 @@ class GraspPlanner(smach.State):
 	if(len(grasps) > 0):
 	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
 	    for grasp in grasp_poses:
-            	viz.publish_gripper(self._im_server, grasp , 'grasp_target')
+            	viz.publish_gripper(self._im_server, grasp , 'grasp_target') 
                 pre_grasp_target, grasp_target = self.create_grasps(grasp, box_pose)
+                moveit_move_arm.wait_for_service()
+
                 success_pre_grasp = self._moveit_move_arm(pre_grasp_target, 
                                                         0.005, 0.005, 12, 'right_arm',
                                                         False).success
