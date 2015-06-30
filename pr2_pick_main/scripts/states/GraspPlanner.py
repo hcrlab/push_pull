@@ -569,7 +569,7 @@ class GraspPlanner(smach.State):
         grasp_pose_target = PoseStamped()
         grasp_pose_target.header.frame_id = 'base_footprint';
 
-        grasp_pose_target.pose = grasp.grasp_pose
+        grasp_pose_target.pose = grasp
 
         return pre_grasp_pose_target, grasp_pose_target
 
@@ -680,10 +680,10 @@ class GraspPlanner(smach.State):
 	    for grasp in grasp_poses:
             	viz.publish_gripper(self._im_server, grasp , 'grasp_target')
                 pre_grasp_target, grasp_target = self.create_grasps(grasp, box_pose)
-                success_pre_grasp = self._moveit_move_arm(pre_grasp_target, 
-                                                        0.005, 0.005, 12, 'right_arm',
-                                                        False).success
-                break
+                #success_pre_grasp = self._moveit_move_arm(pre_grasp_target, 
+                #                                        0.005, 0.005, 12, 'right_arm',
+                #                                        False).success
+                #break
 		#raw_input("Press enter to see another grasp")
 	    #success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
             #success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
