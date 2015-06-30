@@ -577,9 +577,11 @@ class GraspPlanner(smach.State):
         fk_request = GetPositionFKRequest()
 
 
-        fk_request.header.frame_id = "torso_lift_link";
-        fk_request.fk_link_names[0] = "r_wrist_roll_link";
+        fk_request.header.frame_id = "torso_lift_link"
+         
+	fk_request.fk_link_names.append("r_wrist_roll_link")
 
+	
         fk_request.robot_state.joint_state = pre_grasp
 
         fk_response = self._fk_client(fk_request)
@@ -659,7 +661,7 @@ class GraspPlanner(smach.State):
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
         (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster2.pointcloud)
-	    box_pose.header.frame_id = self._cluster.header.frame_id
+	box_pose.header.frame_id = self._cluster.header.frame_id
         viz.publish_bounding_box(self._markers, box_pose, 
                      (box_dims.x), 
                      (box_dims.y), 
@@ -681,21 +683,29 @@ class GraspPlanner(smach.State):
 	
         #grasps = self.filter_grasps(grasps)
         rospy.loginfo("Number of grasps after filter: ")
-	    rospy.loginfo( len(grasps))
-	    grasp_poses = [grasp.grasp_pose for grasp in grasps]
-	    grasp_not_stamped = []
+	rospy.loginfo( len(grasps))
+	grasp_poses = [grasp.grasp_pose for grasp in grasps]
+	grasp_not_stamped = []
         for pose_stamped in grasp_poses:
             grasp_not_stamped.append(pose_stamped.pose)
 
 
     	if(len(grasps) > 0):
     	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
-    	    for grasp in grasp_poses:
-                	viz.publish_gripper(self._im_server, grasp , 'grasp_target') 
-                    res = get_ik_position(grasp.pre_grasp)
-                    rospy.loginfo("Pre grasp: ")
-                    rospy.loginfo(res.pose_stamped)
-                    break
+    	    for grasp in grasps:
+		res = self.get_ik_position(grasp.pre_grasp_posture)
+                rospy.loginfo("Pre grasp: ")
+                rospy.loginfo(res.pose_stamped)
+		pre_grasp_poses.append(res.pose_stamped)
+		#for pose in res.pose_stamped:
+		#	viz.publish_gripper(self._im_server, pose, 'grasp_target')
+		#	raw_input("Press enter")
+	    for grasp in grasp_poses:
+            	viz.publish_gripper(self._im_server, grasp , 'grasp_target') 
+                res = self.get_ik_position(grasp.pre_grasp)
+                #rospy.loginfo("Pre grasp: ")
+                #rospy.loginfo(res.pose_stamped)
+                #break
 		#raw_input("Press enter to see another grasp")
 	    #success_grasp = self.execute_grasp(grasp_poses, userdata.item_model)
             #success_pre_grasp = self._moveit_move_arm(grasp["pre_grasp"], 
