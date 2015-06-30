@@ -577,7 +577,7 @@ class GraspPlanner(smach.State):
         fk_request = GetPositionFKRequest()
 
 
-        fk_request.header.frame_id = "torso_lift_link"
+        fk_request.header.frame_id = "bin_K"
          
 	fk_request.fk_link_names.append("r_wrist_roll_link")
 
@@ -692,17 +692,26 @@ class GraspPlanner(smach.State):
 
     	if(len(grasps) > 0):
     	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
-    	    for grasp in grasps:
-		res = self.get_ik_position(grasp.pre_grasp_posture)
-                rospy.loginfo("Pre grasp: ")
-                rospy.loginfo(res.pose_stamped)
-		pre_grasp_poses.append(res.pose_stamped)
+    	    pre_grasp_poses = []
+	    #for grasp in grasps:
+		#res = self.get_ik_position(grasp.pre_grasp_posture)
+                #rospy.loginfo("Pre grasp: ")
+                #rospy.loginfo(res.pose_stamped)
+		
+		#rospy.loginfo("Size of the pre grasp pose: " + str(len(res.pose_stamped)))
+		#pre_grasp_poses.append(res.pose_stamped[0])
 		#for pose in res.pose_stamped:
 		#	viz.publish_gripper(self._im_server, pose, 'grasp_target')
 		#	raw_input("Press enter")
-	    for grasp in grasp_poses:
-            	viz.publish_gripper(self._im_server, grasp , 'grasp_target') 
-                res = self.get_ik_position(grasp.pre_grasp)
+	    #rospy.loginfo("Size of pre_grasp_poses: " + str(len(pre_grasp_poses)))
+	    #for grasp in grasp_poses:
+            pre_grasp_pose = PoseStamped()
+	    pre_grasp_pose.header.frame_id = "bin_K"
+	    pre_grasp_pose.position.x = 0.10
+	    rospy.loginfo("Pre grasp: ")
+            rospy.loginfo(grasp)
+	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+                #res = self.get_ik_position(grasp.pre_grasp)
                 #rospy.loginfo("Pre grasp: ")
                 #rospy.loginfo(res.pose_stamped)
                 #break
