@@ -674,7 +674,7 @@ class StateMachineBuilder(object):
                 states.GraspPlanner.name,
                 states.GraspPlanner(**services),
                 transitions={
-                    outcomes.GRASP_PLAN_SUCCESS: states.SenseBin.name,
+                    outcomes.GRASP_PLAN_SUCCESS: states.ExtractItem.name,
                     outcomes.GRASP_PLAN_NONE: states.SenseBin.name,
                     outcomes.GRASP_PLAN_FAILURE: (
                         states.SenseBin.name
@@ -686,6 +686,18 @@ class StateMachineBuilder(object):
                     'current_target': 'current_target',
                     'item_model': 'target_model',
                     'target_descriptor': 'target_descriptor'
+                }
+            )
+            smach.StateMachine.add(
+                states.ExtractItem.name,
+                states.ExtractItem(**services),
+                transitions={
+                    outcomes.EXTRACT_ITEM_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                    outcomes.EXTRACT_ITEM_FAILURE: outcomes.CHALLENGE_FAILURE
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'item_model': 'target_model'
                 }
             )
         return sm
