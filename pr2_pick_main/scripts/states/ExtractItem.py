@@ -35,7 +35,7 @@ class ExtractItem(smach.State):
                 outcomes.EXTRACT_ITEM_SUCCESS,
                 outcomes.EXTRACT_ITEM_FAILURE
             ],
-            input_keys=['bin_id', 'debug', 'target_descriptor', 'item_model']
+            input_keys=['bin_id', 'debug', 'target_descriptor', 'item_model', 'bounding_box_pose']
         )
 
         self._moveit_move_arm = services['moveit_move_arm']
@@ -92,7 +92,7 @@ class ExtractItem(smach.State):
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
-        object_pose = self._tf_listener.transformPose('base_footprint', userdata.target_descriptor.planar_bounding_box.pose)
+        object_pose = self._tf_listener.transformPose('base_footprint', userdata.bounding_box_pose)
         #self._ee_pose.wait_for_service()
         
         self._tf_listener.waitForTransform(
