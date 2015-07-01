@@ -727,27 +727,29 @@ class GraspPlanner(smach.State):
 	    #for grasp in grasp_poses:
             pre_grasp_pose = PoseStamped()
 	    pre_grasp_pose.header.frame_id = "bin_K"
-	    pre_grasp_pose.pose.position.x = -0.20
+	    pre_grasp_pose.pose.position.x = -0.30
 	    pre_grasp_pose.pose.position.y = 0.0
-	    pre_grasp_pose.pose.position.z = 0.10
+	    pre_grasp_pose.pose.position.z = 0.20
 	    pre_grasp_pose.pose.orientation.x = 0.0
 	    pre_grasp_pose.pose.orientation.y = 0.0
 	    pre_grasp_pose.pose.orientation.z = 0.0
 	    pre_grasp_pose.pose.orientation.w = 0.0
 	    rospy.loginfo("Pre grasp: ")
             rospy.loginfo(grasp)
-	    for i in range(0,10):
-	    	viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
-                success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
+	    #for i in range(0,10):
+	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+            success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
                                                         0.005, 0.005, 12, 'right_arm',
                                                         False).success
 	    for grasp in grasp_poses:
 		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
-		success_grasp = self._moveit_move_arm(grasp,
+		g = raw_input("Enter y to grasp ")
+		if(g == 'y'):
+			success_grasp = self._moveit_move_arm(grasp,
                                                         0.005, 0.005, 12, 'right_arm',
                                                         False).success	
-		if(success_grasp == True):
-			break
+			if(success_grasp == True):
+				return outcomes.GRASP_PLAN_SUCCESS
 		#res = self.get_ik_position(grasp.pre_grasp)
                 #rospy.loginfo("Pre grasp: ")
                 #rospy.loginfo(res.pose_stamped)
@@ -769,4 +771,4 @@ class GraspPlanner(smach.State):
 	# 	rospy.loginfo(type(grasp))
 	# 	viz.publish_gripper(self._im_server, grasp, 'grasp_target')
 	# 	raw_input("Enter for next grasp")
-        return outcomes.GRASP_PLAN_SUCCESS
+        return outcomes.GRASP_PLAN_FAILURE
