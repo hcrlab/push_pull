@@ -587,7 +587,21 @@ class GraspPlanner(smach.State):
         fk_response = self._fk_client(fk_request)
 
         return fk_response
-
+    
+    def add_shelf_mesh_to_scene(self, scene):
+        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
+        shelf_pose = PoseStamped(
+            header=Header(frame_id='/shelf'),
+            pose=Pose(
+                position=Point(x=0.0, y=0.0, z=0.0),
+                orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
+            ),
+        )
+        rospack = rospkg.RosPack()
+        path = rospack.get_path('pr2_pick_contest')
+        shelf_mesh = path + '/config/kiva_pod/meshes/pod_lowres.stl'
+        scene.add_mesh('shelf', shelf_pose, shelf_mesh)
+    
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Started Grasp Planner")
@@ -635,7 +649,13 @@ class GraspPlanner(smach.State):
         self.grasp_wide_end = userdata.item_model.grasp_wide_end
         self._cluster = userdata.target_cluster
         userdata.previous_item = userdata.current_target
-	       
+	
+
+	# Add shelf to the scene
+	scene = moveit_commander.PlanningSceneInterface()
+        scene.remove_world_object("shelf")
+	self.add_shelf_mesh_to_scene(scene)       
+
         rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
         rospy.loginfo("PCL service found")
@@ -694,12 +714,12 @@ class GraspPlanner(smach.State):
     	    draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
     	    pre_grasp_poses = []
 	    #for grasp in grasps:
-		#res = self.get_ik_position(grasp.pre_grasp_posture)
-                #rospy.loginfo("Pre grasp: ")
-                #rospy.loginfo(res.pose_stamped)
+	    #	res = self.get_ik_position(grasp.pre_grasp_posture)
+            #    rospy.loginfo("Pre grasp: ")
+            #    rospy.loginfo(res.pose_stamped)
 		
-		#rospy.loginfo("Size of the pre grasp pose: " + str(len(res.pose_stamped)))
-		#pre_grasp_poses.append(res.pose_stamped[0])
+	#	rospy.loginfo("Size of the pre grasp pose: " + str(len(res.pose_stamped)))
+	#	pre_grasp_poses.append(res.pose_stamped[0])
 		#for pose in res.pose_stamped:
 		#	viz.publish_gripper(self._im_server, pose, 'grasp_target')
 		#	raw_input("Press enter")
@@ -707,11 +727,28 @@ class GraspPlanner(smach.State):
 	    #for grasp in grasp_poses:
             pre_grasp_pose = PoseStamped()
 	    pre_grasp_pose.header.frame_id = "bin_K"
-	    pre_grasp_pose.position.x = 0.10
+	    pre_grasp_pose.pose.position.x = -0.20
+	    pre_grasp_pose.pose.position.y = 0.0
+	    pre_grasp_pose.pose.position.z = 0.10
+	    pre_grasp_pose.pose.orientation.x = 0.0
+	    pre_grasp_pose.pose.orientation.y = 0.0
+	    pre_grasp_pose.pose.orientation.z = 0.0
+	    pre_grasp_pose.pose.orientation.w = 0.0
 	    rospy.loginfo("Pre grasp: ")
             rospy.loginfo(grasp)
-	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
-                #res = self.get_ik_position(grasp.pre_grasp)
+	    for i in range(0,10):
+	    	viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+                success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
+                                                        0.005, 0.005, 12, 'right_arm',
+                                                        False).success
+	    for grasp in grasp_poses:
+		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+		success_grasp = self._moveit_move_arm(grasp,
+                                                        0.005, 0.005, 12, 'right_arm',
+                                                        False).success	
+		if(success_grasp == True):
+			break
+		#res = self.get_ik_position(grasp.pre_grasp)
                 #rospy.loginfo("Pre grasp: ")
                 #rospy.loginfo(res.pose_stamped)
                 #break
