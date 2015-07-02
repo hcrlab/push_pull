@@ -33,7 +33,7 @@ class StartPose(smach.State):
         self._tf_listener = tf_listener
         self._markers = kwargs['markers']
         self._drive_to_pose = kwargs['drive_to_pose']
-
+	self._im_server = kwargs['interactive_marker_server']
         # The location the robot started at.
         # When the robot relocalizes, it goes back to this start pose.
         self._start_pose = None
@@ -61,6 +61,19 @@ class StartPose(smach.State):
 
     @handle_service_exceptions(outcomes.START_POSE_FAILURE)
     def execute(self, userdata):
+	pre_grasp_pose = PoseStamped()
+        pre_grasp_pose.header.frame_id = "bin_K"
+        pre_grasp_pose.pose.position.x = -0.20
+        pre_grasp_pose.pose.position.y = 0.0
+        pre_grasp_pose.pose.position.z = 0.10
+        pre_grasp_pose.pose.orientation.x = 0.0
+        pre_grasp_pose.pose.orientation.y = 0.0
+        pre_grasp_pose.pose.orientation.z = 0.0
+        pre_grasp_pose.pose.orientation.w = 0.0
+        
+        
+        #for i in range(0,10):
+        #   viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
         rospy.loginfo('Setting start pose.')
         self._tts.publish('Setting start pose.')
         self._move_head.wait_for_service()

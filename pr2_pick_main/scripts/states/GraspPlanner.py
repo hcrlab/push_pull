@@ -495,15 +495,15 @@ class GraspPlanner(smach.State):
         # Grasp planner found possible grasps
     	if(len(grasps) > 0):
 
-    	    self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
-            self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
+    	    #self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
+            #self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
 
             # Hard code pre grasp state
             pre_grasp_pose = PoseStamped()
     	    pre_grasp_pose.header.frame_id = "bin_K"
-    	    pre_grasp_pose.pose.position.x = -0.30
+    	    pre_grasp_pose.pose.position.x = -0.25
     	    pre_grasp_pose.pose.position.y = 0.0
-    	    pre_grasp_pose.pose.position.z = 0.20
+    	    pre_grasp_pose.pose.position.z = 0.15
     	    pre_grasp_pose.pose.orientation.x = 0.0
     	    pre_grasp_pose.pose.orientation.y = 0.0
     	    pre_grasp_pose.pose.orientation.z = 0.0

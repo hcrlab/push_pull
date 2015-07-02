@@ -92,7 +92,7 @@ class ExtractItem(smach.State):
 
         shelf_height = self._shelf_heights[userdata.bin_id]
 
-        object_pose = self._tf_listener.transformPose('base_footprint', userdata.bounding_box_pose)
+        object_pose = self._tf_listener.transformPose('base_footprint', userdata.target_descriptor.planar_bounding_box.pose)
         #self._ee_pose.wait_for_service()
         
         self._tf_listener.waitForTransform(
