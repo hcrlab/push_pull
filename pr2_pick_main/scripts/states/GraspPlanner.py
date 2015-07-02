@@ -59,7 +59,7 @@ class GraspPlanner(smach.State):
     grasp_attempts = 8
 
     # desired distance from palm frame to object centroid
-    pre_grasp_x_distance = 0.37
+    re_grasp_x_distance = 0.37
 
     pre_grasp_offset = 0.08
 
@@ -501,7 +501,7 @@ class GraspPlanner(smach.State):
             # Hard code pre grasp state
             pre_grasp_pose = PoseStamped()
     	    pre_grasp_pose.header.frame_id = "bin_K"
-    	    pre_grasp_pose.pose.position.x = -0.25
+    	    pre_grasp_pose.pose.position.x = -0.30
     	    pre_grasp_pose.pose.position.y = 0.0
     	    pre_grasp_pose.pose.position.z = 0.15
     	    pre_grasp_pose.pose.orientation.x = 0.0
