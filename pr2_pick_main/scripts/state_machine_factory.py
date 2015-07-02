@@ -691,12 +691,25 @@ class StateMachineBuilder(object):
                 states.ExtractItem.name,
                 states.ExtractItem(**services),
                 transitions={
-                    outcomes.EXTRACT_ITEM_SUCCESS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.EXTRACT_ITEM_FAILURE: outcomes.CHALLENGE_FAILURE
+                    outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
+                    outcomes.EXTRACT_ITEM_FAILURE: states.SenseBin.name
                 },
                 remapping={
                     'bin_id': 'current_bin',
                     'item_model': 'target_model'
+                }
+            )
+            smach.StateMachine.add(
+                states.DropOffItem.name,
+                states.DropOffItem(**services),
+                transitions={
+                    outcomes.DROP_OFF_ITEM_SUCCESS: states.MoveToBin.name,
+                    outcomes.DROP_OFF_ITEM_FAILURE: states.MoveToBin.name
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data'
                 }
             )
         return sm
