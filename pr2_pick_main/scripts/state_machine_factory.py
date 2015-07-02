@@ -676,7 +676,8 @@ class StateMachineBuilder(object):
                 transitions={
                     outcomes.GRASP_PLAN_SUCCESS: states.ExtractItem.name,
                     outcomes.GRASP_PLAN_NONE: states.SenseBin.name,
-                    outcomes.GRASP_PLAN_FAILURE: states.SenseBin.name
+                    outcomes.GRASP_PLAN_FAILURE: states.SenseBin.name,
+                    outcomes.GRASP_PLAN_MOVE_OBJECT: states.GraspTool.name
                     
                 },
                 remapping={
@@ -686,6 +687,14 @@ class StateMachineBuilder(object):
                     'item_model': 'target_model',
                     'target_descriptor': 'target_descriptor'
                 }
+            )
+            smach.StateMachine.add(
+                GraspTool.name,
+                GraspTool(**services),
+                transitions={
+                    outcomes.GRASP_TOOL_SUCCESS: MoveObject.name,
+                    outcomes.GRASP_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
+                },
             )
             smach.StateMachine.add(
                 states.ExtractItem.name,
@@ -711,5 +720,26 @@ class StateMachineBuilder(object):
                     'bin_data': 'bin_data',
                     'output_bin_data': 'bin_data'
                 }
+            )
+            smach.StateMachine.add(
+                states.MoveObject.name,
+                states.MoveObject(**services),
+                transitions={
+                    outcomes.MOVE_OBJECT_SUCCESS: states.ReleaseTool.name,
+                    outcomes.MOVE_OBJECT_FAILURE: states.ReleaseTool.name
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data'
+                }
+            )
+            smach.StateMachine.add(
+                ReleaseTool.name,
+                ReleaseTool(**services),
+                transitions={
+                    outcomes.RELEASE_TOOL_SUCCESS: states.MoveToBin.name,
+                    outcomes.RELEASE_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
+                },
             )
         return sm

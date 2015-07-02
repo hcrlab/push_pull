@@ -511,6 +511,8 @@ class GraspPlanner(smach.State):
 
             # Go to pre grasp 
     	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+            self.loginfo("Going to pre-grasp position.")
+
             if self._debug:
                 raw_input('(Debug) Press enter to continue >')
             success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
@@ -519,6 +521,7 @@ class GraspPlanner(smach.State):
     	    # Analyze and perform grasps
             for grasp in grasp_poses:
 
+                self.loginfo("Finding a good grasp position.")
                 # Visualize the gripper in the grasp position
         		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
 
@@ -526,7 +529,6 @@ class GraspPlanner(smach.State):
     			success_grasp = self._moveit_move_arm(grasp,
                                                             0.005, 0.005, 12, 'right_arm',
                                                             True).success
-
     			if(success_grasp == True):
                     		self._tts.publish("The object is graspable.")
                     		time.sleep(2) 
@@ -551,6 +553,7 @@ class GraspPlanner(smach.State):
                             	
                             			# Close gripper to grasp object
                             			self.loginfo('Close Hand')
+
                            	 		if self._debug:
                                 			raw_input('(Debug) Press enter to continue >')
                             			self._set_grippers.wait_for_service()
@@ -567,9 +570,12 @@ class GraspPlanner(smach.State):
                             			rospy.loginfo("It was not possible to grasp the object.")
 
 
-        	# No grasps found
+        # No grasps found
         self.loginfo("The object is not graspable.")
         self._tts.publish("The object is not graspable.")
+        push = raw_input("Do you want to move the object? (y)es / (n)o")
+        if(push == 'y' or push == "yes"):
+            return outcomes.GRASP_PLAN_PUSH
         time.sleep(2)
         return outcomes.GRASP_PLAN_NONE
 
