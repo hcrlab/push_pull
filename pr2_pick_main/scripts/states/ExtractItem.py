@@ -35,8 +35,9 @@ class ExtractItem(smach.State):
                 outcomes.EXTRACT_ITEM_SUCCESS,
                 outcomes.EXTRACT_ITEM_FAILURE
             ],
-            input_keys=['bin_id', 'debug', 'target_descriptor', 'item_model', 'bounding_box_pose']
-        )
+            input_keys=['bin_id', 'debug', 'target_descriptor', 'item_model', 'bounding_box_pose', 'previous_item'],
+            output_keys =['previous_item']
+	)
 
         self._moveit_move_arm = services['moveit_move_arm']
         self._tts = services['tts']

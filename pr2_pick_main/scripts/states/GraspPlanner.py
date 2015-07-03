@@ -503,16 +503,18 @@ class GraspPlanner(smach.State):
     	    pre_grasp_pose.header.frame_id = "bin_K"
     	    pre_grasp_pose.pose.position.x = -0.30
     	    pre_grasp_pose.pose.position.y = 0.0
-    	    pre_grasp_pose.pose.position.z = 0.15
-    	    pre_grasp_pose.pose.orientation.x = 0.0
+    	    pre_grasp_pose.pose.position.z = 0.20
+    	    pre_grasp_pose.pose.orientation.x = 1.0
     	    pre_grasp_pose.pose.orientation.y = 0.0
     	    pre_grasp_pose.pose.orientation.z = 0.0
     	    pre_grasp_pose.pose.orientation.w = 0.0
 
             # Go to pre grasp 
-    	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+    	    #viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
             if self._debug:
                 raw_input('(Debug) Press enter to continue >')
+	    rospy.loginfo("\n\nPossible Grasp: \n")
+	    rospy.loginfo(grasp)
             success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
                                                             0.005, 0.005, 12, 'right_arm',
                                                             False).success
@@ -520,19 +522,40 @@ class GraspPlanner(smach.State):
             for grasp in grasp_poses:
 
                 # Visualize the gripper in the grasp position
-        		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
-
-                # Test if grasp is going to hit the shelf
-    			success_grasp = self._moveit_move_arm(grasp,
+        		
+			viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+			if(grasp.pose.position.x < 0.01):
+                		# Test if grasp is going to hit the shelf
+    				success_grasp = self._moveit_move_arm(grasp,
                                                             0.005, 0.005, 12, 'right_arm',
                                                             True).success
-
+			else:
+				success_grasp = False
     			if(success_grasp == True):
                     		self._tts.publish("The object is graspable.")
                     		time.sleep(2) 
-                    		self.loginfo("The object is graspable.")
+                    		rospy.loginfo("The object is graspable.")
+				rospy.loginfo(grasp)
+				pre_grasp_pose = PoseStamped()
+            			pre_grasp_pose.header.frame_id = "bin_K"
+		                pre_grasp_pose.pose.position.x = -0.30
+			        pre_grasp_pose.pose.position.y = 0.0
+			        pre_grasp_pose.pose.position.z = 0.20
+			        pre_grasp_pose.pose.orientation.x = grasp.pose.orientation.x
+			        pre_grasp_pose.pose.orientation.y = 0.0
+        			pre_grasp_pose.pose.orientation.z = 0.0
+			        pre_grasp_pose.pose.orientation.w = 0.0	
+                    		viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
 
-                    		grasp_object = raw_input("Do you want to grasp the object? (y)es or (n)o")
+				if self._debug:
+                			raw_input('(Debug) Press enter to continue >')
+
+
+				rospy.loginfo("Going to pre grasp position")
+				success_pre_grasp = self._moveit_move_arm(pre_grasp_pose,
+                                                            0.005, 0.005, 12, 'right_arm',
+                                                            False).success
+				grasp_object = raw_input("Do you want to grasp the object? (y)es or (n)o")
 
                     		if(grasp_object == 'y' or grasp_object == 'yes'):
 

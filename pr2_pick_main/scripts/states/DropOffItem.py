@@ -38,8 +38,8 @@ class DropOffItem(smach.State):
                 outcomes.DROP_OFF_ITEM_SUCCESS,
                 outcomes.DROP_OFF_ITEM_FAILURE
             ],
-            input_keys=['bin_id', 'bin_data'],
-            output_keys=['output_bin_data']
+            input_keys=['bin_id', 'bin_data', 'previous_item'],
+            output_keys=['output_bin_data', 'previous_item']
         )
         self._tts = kwargs["tts"]
         self._set_grippers = kwargs["set_grippers"]

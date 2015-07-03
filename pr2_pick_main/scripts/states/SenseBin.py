@@ -49,7 +49,7 @@ class SenseBin(smach.State):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
 
-        self.target_items = ["highland_6539_self_stick_notes"] 
+        self.target_items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
         num_items = len(self.target_items)
         if( not userdata.previous_item ):
             userdata.current_target = self.target_items[0]
