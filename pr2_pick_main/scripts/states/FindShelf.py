@@ -108,12 +108,14 @@ class FindShelf(smach.State):
 
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
-        shelf_odom.pose.position.x = 0.10
+        shelf_odom.pose.position.x = 1.7
         shelf_odom.pose.position.y = 0.0
         shelf_odom.pose.position.z = 0.0
         shelf_odom.pose.orientation.x = 0.0
         shelf_odom.pose.orientation.y = 0.0
-        shelf_odom.pose.orientation.z = 0.0
+	shelf_odom.pose.orientation.z = 0.0
+        shelf_odom.pose.orientation.w = 1.0
+	success = True 
         return success, shelf_odom
 
     @handle_service_exceptions(outcomes.FIND_SHELF_FAILURE)
@@ -122,7 +124,9 @@ class FindShelf(smach.State):
         self._tts.publish('Finding shelf.')
 
         success, shelf_odom = self.localize_shelf()
-        if not success:
+        
+	
+	if not success:
             rospy.logerr('[FindShelf]: Failed to localize shelf.')
             return outcomes.FIND_SHELF_FAILURE
 
@@ -146,10 +150,13 @@ class FindShelf(smach.State):
         transform.transform.rotation = shelf_odom.pose.orientation
         transform.child_frame_id = 'shelf'
         self._set_static_tf.wait_for_service()
+	
         self._set_static_tf(transform)
+	
 
         # Publish marker
         viz.publish_shelf(self._markers, shelf_odom)
+	
 
         # Set up static a transform for each bin relative to shelf.
         # Bin origin is the front center of the bin opening, equidistant
@@ -205,6 +212,7 @@ class FindShelf(smach.State):
         }
 
         for (bin_id, translation) in bin_translations.items():
+	   
             transform = TransformStamped(
                 header=Header(frame_id='shelf',
                               stamp=rospy.Time.now(), ),
