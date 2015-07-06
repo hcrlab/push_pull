@@ -384,19 +384,21 @@ class GraspPlanner(smach.State):
 
         return fk_response
     
-    def add_shelf_mesh_to_scene(self, scene):
-        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
-        shelf_pose = PoseStamped(
-            header=Header(frame_id='/shelf'),
-            pose=Pose(
-                position=Point(x=0.0, y=0.0, z=0.0),
-                orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
-            ),
-        )
-        rospack = rospkg.RosPack()
-        path = rospack.get_path('pr2_pick_contest')
-        shelf_mesh = path + '/config/kiva_pod/meshes/pod_lowres.stl'
-        scene.add_mesh('shelf', shelf_pose, shelf_mesh)
+    def add_shelf_to_scene(self, scene):
+        scene.remove_world_object("table")
+        scene.remove_world_object("shelf")
+
+        table_pose = geometry_msgs.msg.PoseStamped()
+        table_pose.header.frame_id = "/base_link"
+        table_pose.pose.position.x = 0.45
+        table_pose.pose.position.y = 0.0
+        table_pose.pose.position.z = 0.40
+
+        rate = rospy.Rate(1)
+        for i in range(2):
+            scene.add_box("table", table_pose, (0.3, 0.4, 0.02))
+            rospy.sleep(2)
+            rate.sleep()
     
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
@@ -448,9 +450,10 @@ class GraspPlanner(smach.State):
 	
 
 	    # Add shelf to the scene
-	scene = moveit_commander.PlanningSceneInterface()
-        scene.remove_world_object("shelf")
-	self.add_shelf_mesh_to_scene(scene)       
+        raw_input("Add shelf to the scene")
+	    scene = moveit_commander.PlanningSceneInterface()
+	    self.add_shelf_to_scene(scene)       
+        rospy.loginfo("Shelf added to the scene")
 
         # Convert cluster PointCloud2 to PointCloud
         rospy.loginfo("Waiting for convert_pcl service")
