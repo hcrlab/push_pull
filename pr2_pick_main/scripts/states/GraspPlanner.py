@@ -386,20 +386,57 @@ class GraspPlanner(smach.State):
     
     def add_shelf_to_scene(self, scene):
         scene.remove_world_object("table")
-        scene.remove_world_object("shelf")
-
-        table_pose = geometry_msgs.msg.PoseStamped()
+        scene.remove_world_object("shelf1")
+	scene.remove_world_object("shelf")
+	scene.remove_world_object("shelf2")
+	scene.remove_world_object("shelf3")
+        
+	table_pose = PoseStamped()
         table_pose.header.frame_id = "/base_link"
-        table_pose.pose.position.x = 0.45
+        table_pose.pose.position.x = 0.9
         table_pose.pose.position.y = 0.0
-        table_pose.pose.position.z = 0.40
+        table_pose.pose.position.z = 0.37
+
+	wall_pose1 = PoseStamped()
+	wall_pose1.header.frame_id = "/base_link"
+	wall_pose1.pose.position.x = 0.9
+	wall_pose1.pose.position.y = -0.06
+	wall_pose1.pose.position.z = 0.90
+
+	wall_pose2 = PoseStamped()
+        wall_pose2.header.frame_id = "/base_link"
+        wall_pose2.pose.position.x = 0.9
+        wall_pose2.pose.position.y = -0.42
+        wall_pose2.pose.position.z = 0.90
+
+	wall_pose3 = PoseStamped()
+        wall_pose3.header.frame_id = "/base_link"
+        wall_pose3.pose.position.x = 0.9
+        wall_pose3.pose.position.y = -0.24
+        wall_pose3.pose.position.z = 1.085
 
         rate = rospy.Rate(1)
         for i in range(2):
-            scene.add_box("table", table_pose, (0.3, 0.4, 0.02))
-            rospy.sleep(2)
+           # scene.add_box("table", table_pose, (0.74, 1.22, 0.74))
+	    scene.add_box("shelf1", wall_pose1, (0.38, 0.015, 0.38 ))
+            scene.add_box("shelf2", wall_pose2, (0.38, 0.015, 0.38 ))
+	    scene.add_box("shelf3", wall_pose3, (0.38, 0.38, 0.015 ))
+	    rospy.sleep(2)
             rate.sleep()
-    
+   
+	marker = Marker()
+        marker_pub = rospy.Publisher('grasp_markers', Marker)
+        marker.header.frame_id = "/base_link"
+        
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = "new_shelf"
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.color.a = 1.0
+        marker.lifetime = rospy.Duration(0)
+    	marker.pose = wall_pose1    
+        marker_pub.publish(marker)
+ 
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Starting Grasp Planner")
@@ -451,8 +488,8 @@ class GraspPlanner(smach.State):
 
 	    # Add shelf to the scene
         raw_input("Add shelf to the scene")
-	    scene = moveit_commander.PlanningSceneInterface()
-	    self.add_shelf_to_scene(scene)       
+	scene = moveit_commander.PlanningSceneInterface()
+	self.add_shelf_to_scene(scene)       
         rospy.loginfo("Shelf added to the scene")
 
         # Convert cluster PointCloud2 to PointCloud

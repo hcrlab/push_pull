@@ -148,6 +148,7 @@ void ShelfCropper::visualizeShelf(float width, float height, float depth) {
       return;
     }
   }
+  
   ROS_WARN("No subscribers to shelf cropping marker.");
 }
 
