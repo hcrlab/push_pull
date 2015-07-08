@@ -56,34 +56,44 @@ class UpdatePlan(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Updating plan.')
         self._tts.publish('Updating plan.')
-	userdata.previous_item = ""
-        if self._calls_since_shelf_localization == 1:
+        items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
+	    userdata.previous_item = ""
+
+        if self._calls_since_shelf_localization == len(items):
             self._calls_since_shelf_localization = 0
-            return outcomes.UPDATE_PLAN_RELOCALIZE_SHELF
         else:
             self._calls_since_shelf_localization += 1
 
         # If all bins have been visited, reset the visit states.
-        all_visited = self.check_all_visited(userdata.bin_data)
-        if all_visited:
-            for bin_id in self._preferred_order:
-                bin_data = userdata.bin_data.copy()
-                bin_data[bin_id] = bin_data[bin_id]._replace(visited=False)
-                userdata.output_bin_data = bin_data
+        # all_visited = self.check_all_visited(userdata.bin_data)
+        # if all_visited:
+        #     for bin_id in self._preferred_order:
+        #         bin_data = userdata.bin_data.copy()
+        #         bin_data[bin_id] = bin_data[bin_id]._replace(visited=False)
+        #         userdata.output_bin_data = bin_data
+        bin_id = "K"
+        userdata.next_bin = bin_id
+        bin_data = userdata.bin_data.copy()
+        bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
+        userdata.output_bin_data = bin_data
+        userdata.next_target = items[self._calls_since_shelf_localization]
+        userdata.next_bin_items = items[self._calls_since_shelf_localization]
+        
+        return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
-        for bin_id in self._preferred_order:            
-            has_target_item, target_item, bin_items = self.bin_contains_target_item(bin_id)
-            if not userdata.bin_data[bin_id].visited and not userdata.bin_data[bin_id].succeeded and has_target_item:
-                userdata.next_bin = bin_id
-                bin_data = userdata.bin_data.copy()
-                bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
+        # for bin_id in self._preferred_order:            
+        #     has_target_item, target_item, bin_items = self.bin_contains_target_item(bin_id)
+        #     if not userdata.bin_data[bin_id].visited and not userdata.bin_data[bin_id].succeeded and has_target_item:
+        #         userdata.next_bin = bin_id
+        #         bin_data = userdata.bin_data.copy()
+        #         bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
 
-                userdata.output_bin_data = bin_data
-                userdata.next_target = target_item
-                userdata.next_bin_items = bin_items
-                return outcomes.UPDATE_PLAN_NEXT_OBJECT
+        #         userdata.output_bin_data = bin_data
+        #         userdata.next_target = target_item
+        #         userdata.next_bin_items = bin_items
+        #         return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
-        return outcomes.UPDATE_PLAN_NO_MORE_OBJECTS
+        # return outcomes.UPDATE_PLAN_NO_MORE_OBJECTS
 
     def bin_contains_target_item(self, bin_id):
         self._get_target_items.wait_for_service()

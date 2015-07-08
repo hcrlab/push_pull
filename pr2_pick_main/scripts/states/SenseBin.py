@@ -9,14 +9,14 @@ import outcomes
 import rospy
 import smach
 import visualization as viz
-from pr2_pick_manipulation.srv import MoveHead
+
 
 class SenseBin(smach.State):
     """Performs sensing on a bin.
     """
     name = 'SENSE_BIN'
 
-    def __init__(self, tts, crop_shelf, markers,move_head, **kwargs):
+    def __init__(self, tts, crop_shelf, markers, **kwargs):
         """Constructor for this state.
 
         tts: The text-to-speech publisher.
@@ -37,11 +37,10 @@ class SenseBin(smach.State):
         self._get_item_descriptor = kwargs['get_item_descriptor']
         self._classify_target_item = kwargs['classify_target_item']
         self._lookup_item = kwargs['lookup_item']
-	self._move_head = move_head
+
     @handle_service_exceptions(outcomes.SENSE_BIN_FAILURE)
     def execute(self, userdata):
-	self._move_head.wait_for_service()
-        move_head_success = self._move_head(0, 0, 0, 'bin_K')
+
         if 're_sense_attempt' in userdata and userdata.re_sense_attempt:
             userdata.re_grasp_attempt = True
         else:
@@ -50,23 +49,25 @@ class SenseBin(smach.State):
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
 
-        self.target_items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
-        num_items = len(self.target_items)
-        if( not userdata.previous_item ):
-            userdata.current_target = self.target_items[0]
-        else:
-            count = 0 
-            for item in self.target_items:
-		rospy.loginfo("item: " + item)
-		rospy.loginfo("previous item: " + userdata.previous_item)
-                if(item == userdata.previous_item):
-		    rospy.loginfo("Count: " + str(count))
-		    rospy.loginfo("Num items: " + str(num_items))
-                    if(count != num_items - 1):
-                        userdata.current_target = self.target_items[count + 1]
-                    else:
-                        userdata.current_target = self.target_items[0]
-		count = count + 1
+  #       self.target_items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
+  #       num_items = len(self.target_items)
+  #       if( not userdata.previous_item ):
+  #           userdata.current_target = self.target_items[0]
+  #       else:
+  #           count = 0 
+  #           for item in self.target_items:
+        # rospy.loginfo("item: " + item)
+        # rospy.loginfo("previous item: " + userdata.previous_item)
+  #               if(item == userdata.previous_item):
+        #     rospy.loginfo("Count: " + str(count))
+        #     rospy.loginfo("Num items: " + str(num_items))
+  #                   if(count != num_items - 1):
+  #                       userdata.current_target = self.target_items[count + 1]
+  #                   else:
+  #                       userdata.current_target = self.target_items[0]
+        # count = count + 1
+
+        
         self._lookup_item.wait_for_service()
         lookup_response = self._lookup_item(item=userdata.current_target)
         target_model = lookup_response.model
