@@ -8,6 +8,7 @@ import sensor_msgs.point_cloud2 as pc2
 import outcomes
 import rospy
 import smach
+from pr2_pick_manipulation.srv import MoveHead
 import visualization as viz
 
 
@@ -16,7 +17,7 @@ class SenseBin(smach.State):
     """
     name = 'SENSE_BIN'
 
-    def __init__(self, tts, crop_shelf, markers, **kwargs):
+    def __init__(self, tts, crop_shelf, markers,move_head, **kwargs):
         """Constructor for this state.
 
         tts: The text-to-speech publisher.
@@ -37,6 +38,7 @@ class SenseBin(smach.State):
         self._get_item_descriptor = kwargs['get_item_descriptor']
         self._classify_target_item = kwargs['classify_target_item']
         self._lookup_item = kwargs['lookup_item']
+	self._move_head = move_head
 
     @handle_service_exceptions(outcomes.SENSE_BIN_FAILURE)
     def execute(self, userdata):
@@ -48,7 +50,8 @@ class SenseBin(smach.State):
 
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
-
+	self._move_head.wait_for_service()
+        move_head_success = self._move_head(0, 0, 0, 'bin_K')
   #       self.target_items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
   #       num_items = len(self.target_items)
   #       if( not userdata.previous_item ):
