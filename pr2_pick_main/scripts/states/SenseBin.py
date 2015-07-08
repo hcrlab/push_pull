@@ -9,14 +9,14 @@ import outcomes
 import rospy
 import smach
 import visualization as viz
-
+from pr2_pick_manipulation.srv import MoveHead
 
 class SenseBin(smach.State):
     """Performs sensing on a bin.
     """
     name = 'SENSE_BIN'
 
-    def __init__(self, tts, crop_shelf, markers, **kwargs):
+    def __init__(self, tts, crop_shelf, markers,move_head, **kwargs):
         """Constructor for this state.
 
         tts: The text-to-speech publisher.
@@ -37,10 +37,11 @@ class SenseBin(smach.State):
         self._get_item_descriptor = kwargs['get_item_descriptor']
         self._classify_target_item = kwargs['classify_target_item']
         self._lookup_item = kwargs['lookup_item']
-
+	self._move_head = move_head
     @handle_service_exceptions(outcomes.SENSE_BIN_FAILURE)
     def execute(self, userdata):
-
+	self._move_head.wait_for_service()
+        move_head_success = self._move_head(0, 0, 0, 'bin_K')
         if 're_sense_attempt' in userdata and userdata.re_sense_attempt:
             userdata.re_grasp_attempt = True
         else:

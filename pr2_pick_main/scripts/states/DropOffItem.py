@@ -93,12 +93,12 @@ class DropOffItem(smach.State):
         )
 
         # Visualize target pose.
-        viz.publish_base(self._markers, target_in_order_bin_frame)
+       # viz.publish_base(self._markers, target_in_order_bin_frame)
 
-        rospy.loginfo('Sending drive command')
-        self._drive_to_pose.wait_for_service()
-        move_success = self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
-        rospy.loginfo(move_success)
+        #rospy.loginfo('Sending drive command')
+        #self._drive_to_pose.wait_for_service()
+        #move_success = self._drive_to_pose(pose=target_in_order_bin_frame, linearVelocity=0.1, angularVelocity=0.1)
+        #rospy.loginfo(move_success)
 
         # move arm above bin
         rospy.loginfo('Move arm above order bin')
@@ -111,18 +111,19 @@ class DropOffItem(smach.State):
         pose_target.pose.orientation.y = self.DROPOFF_QUAT_ARM_Y
         pose_target.pose.orientation.z = self.DROPOFF_QUAT_ARM_Z
         pose_target.pose.orientation.w = self.DROPOFF_QUAT_ARM_W 
-        self._move_arm_ik.wait_for_service()
-        arm_above_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5))
-        rospy.loginfo(arm_above_bin_success)
+        #self._move_arm_ik.wait_for_service()
+        #arm_above_bin_success = self._move_arm_ik(pose_target, MoveArmIkRequest().RIGHT_ARM, rospy.Duration(5))
+        #rospy.loginfo(arm_above_bin_success)
 
         # lower arm into bin
         rospy.loginfo('Move arm above order bin')
         pose_target.pose.position.z = self.DROPOFF_POS_ARM_Z 
-        self._move_arm_ik.wait_for_service()
-        arm_into_bin_success = self._move_arm_ik(goal=pose_target, arm=MoveArmIkRequest.RIGHT_ARM, duration=rospy.Duration(5))
-        rospy.loginfo(arm_into_bin_success)
+        #self._move_arm_ik.wait_for_service()
+        #arm_into_bin_success = self._move_arm_ik(goal=pose_target, arm=MoveArmIkRequest.RIGHT_ARM, duration=rospy.Duration(5))
+        #rospy.loginfo(arm_into_bin_success)
 
         # open gripper
+	raw_input("Release item")
         rospy.loginfo('Open gripper')
         self._set_grippers.wait_for_service()
         open_gripper_success = self._set_grippers(False, True, -1)
@@ -130,9 +131,9 @@ class DropOffItem(smach.State):
 
         # raise arm
         pose_target.pose.position.z = self.DROPOFF_POS_ARM_START_Z
-        self._move_arm_ik.wait_for_service()
-        arm_out_of_bin_success = self._move_arm_ik(goal=pose_target, arm=MoveArmIkRequest.RIGHT_ARM, duration=rospy.Duration(1))
-        rospy.loginfo(arm_out_of_bin_success)
+        #self._move_arm_ik.wait_for_service()
+       # arm_out_of_bin_success = self._move_arm_ik(goal=pose_target, arm=MoveArmIkRequest.RIGHT_ARM, duration=rospy.Duration(1))
+        #rospy.loginfo(arm_out_of_bin_success)
 
         # get back to "untucked" position
         rospy.loginfo('Untucking right arm')

@@ -59,7 +59,7 @@ class GraspPlanner(smach.State):
     grasp_attempts = 8
 
     # desired distance from palm frame to object centroid
-    re_grasp_x_distance = 0.37
+    pre_grasp_x_distance = 0.37
 
     pre_grasp_offset = 0.08
 
@@ -384,53 +384,20 @@ class GraspPlanner(smach.State):
 
         return fk_response
     
-    def add_shelf_to_scene(self, scene):
-        for i in range(5):
-		scene.remove_world_object("table")
-        	scene.remove_world_object("shelf1")
-        	scene.remove_world_object("shelf")
-        	scene.remove_world_object("shelf2")
-        	scene.remove_world_object("shelf3")
-
-        table_pose = PoseStamped()
-        table_pose.header.frame_id = "odom_combined"
-        table_pose.pose.position.x = 0.9
-        table_pose.pose.position.y = -0.18
-        table_pose.pose.position.z = 0.375
-
-        wall_pose1 = PoseStamped()
-        wall_pose1.header.frame_id = "odom_combined"
-        wall_pose1.pose.position.x = 0.9
-        wall_pose1.pose.position.y = -0.00
-        wall_pose1.pose.position.z = 0.92
-
-        wall_pose2 = PoseStamped()
-        wall_pose2.header.frame_id = "odom_combined"
-        wall_pose2.pose.position.x = 0.9
-        wall_pose2.pose.position.y = -0.36
-        wall_pose2.pose.position.z = 0.92
-
-        wall_pose3 = PoseStamped()
-        wall_pose3.header.frame_id = "odom_combined"
-        wall_pose3.pose.position.x = 0.9
-        wall_pose3.pose.position.y = -0.18
-        wall_pose3.pose.position.z = 1.12
-
-        rate = rospy.Rate(1)
-        for i in range(5):
-            scene.add_box("table", table_pose, (0.38, 0.38, 0.78))
-	    scene.add_box("shelf1", wall_pose1, (0.38, 0.015, 0.38 ))
-            scene.add_box("shelf2", wall_pose2, (0.38, 0.015, 0.38 ))
-	    scene.add_box("shelf3", wall_pose3, (0.38, 0.38, 0.015 ))
-	    rospy.sleep(1)
-            rate.sleep()
-
-    #    viz.publish_bounding_box(self._markers, wall_pose1, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
-    #    viz.publish_bounding_box(self._markers, wall_pose2, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
-    #    viz.publish_bounding_box(self._markers, wall_pose3, 0.38, 0.38, 0.015, 0.0, 0.0, 1.0, 0.5, 1)
-    #    viz.publish_bounding_box(self._markers, table_pose, 0.74, 1.22, 0.74, 0.0, 0.0, 1.0, 0.5, 1)
- 
- 
+    def add_shelf_mesh_to_scene(self, scene):
+        q = tf.transformations.quaternion_from_euler(1.57,0,1.57)
+        shelf_pose = PoseStamped(
+            header=Header(frame_id='/shelf'),
+            pose=Pose(
+                position=Point(x=0.0, y=0.0, z=0.0),
+                orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]),
+            ),
+        )
+        rospack = rospkg.RosPack()
+        path = rospack.get_path('pr2_pick_contest')
+        shelf_mesh = path + '/config/kiva_pod/meshes/pod_lowres.stl'
+        scene.add_mesh('shelf', shelf_pose, shelf_mesh)
+    
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Starting Grasp Planner")
@@ -480,10 +447,10 @@ class GraspPlanner(smach.State):
         userdata.previous_item = userdata.current_target
 	
 
-	# Add shelf to the scene
-        rospy.loginfo("Adding shelf to the scene")
+	    # Add shelf to the scene
 	scene = moveit_commander.PlanningSceneInterface()
-	self.add_shelf_to_scene(scene)       
+        scene.remove_world_object("shelf")
+	self.add_shelf_mesh_to_scene(scene)       
 
         # Convert cluster PointCloud2 to PointCloud
         rospy.loginfo("Waiting for convert_pcl service")
@@ -528,8 +495,8 @@ class GraspPlanner(smach.State):
         # Grasp planner found possible grasps
     	if(len(grasps) > 0):
 
-    	    #self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
-            #self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
+    	    self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
+            self.draw_grasps(grasp_not_stamped, self._cluster.header.frame_id, pause = 0)
 
             # Hard code pre grasp state
             pre_grasp_pose = PoseStamped()
@@ -537,94 +504,70 @@ class GraspPlanner(smach.State):
     	    pre_grasp_pose.pose.position.x = -0.30
     	    pre_grasp_pose.pose.position.y = 0.0
     	    pre_grasp_pose.pose.position.z = 0.20
-    	    pre_grasp_pose.pose.orientation.x = 1.0
+    	    pre_grasp_pose.pose.orientation.x = 0.0
     	    pre_grasp_pose.pose.orientation.y = 0.0
     	    pre_grasp_pose.pose.orientation.z = 0.0
     	    pre_grasp_pose.pose.orientation.w = 0.0
 
             # Go to pre grasp 
-    	    #viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+    	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
             if self._debug:
                 raw_input('(Debug) Press enter to continue >')
-	    #rospy.loginfo("\n\nPossible Grasp: \n")
-	    #rospy.loginfo(grasp)
-            #success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
-                                                           # 0.005, 0.005, 12, 'right_arm',
-                                                            #False).success
+            success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
+                                                            0.005, 0.005, 12, 'right_arm',
+                                                            False).success
     	    # Analyze and perform grasps
             for grasp in grasp_poses:
 
                 # Visualize the gripper in the grasp position
-        		rospy.loginfo("\n\nPossible Grasp: \n")
-            		rospy.loginfo(grasp)		
-			viz.publish_gripper(self._im_server, grasp, 'grasp_target')
-			if(True):
-                		# Test if grasp is going to hit the shelf
-    				success_grasp = self._moveit_move_arm(grasp,
+        		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+
+                # Test if grasp is going to hit the shelf
+    			success_grasp = self._moveit_move_arm(grasp,
                                                             0.005, 0.005, 12, 'right_arm',
                                                             True).success
-			else:
-				success_grasp = False
+
     			if(success_grasp == True):
                     		self._tts.publish("The object is graspable.")
                     		time.sleep(2) 
-                    		rospy.loginfo("The object is graspable.")
-				rospy.loginfo(grasp)
-				pre_grasp_pose = PoseStamped()
-            			pre_grasp_pose.header.frame_id = "bin_K"
-		                pre_grasp_pose.pose.position.x = -0.30
-			        pre_grasp_pose.pose.position.y = 0.0
-			        pre_grasp_pose.pose.position.z = grasp.pose.position.z
-			        pre_grasp_pose.pose.orientation.x = grasp.pose.orientation.x
-			        pre_grasp_pose.pose.orientation.y = 0.0
-        			pre_grasp_pose.pose.orientation.z = 0.0
-			        pre_grasp_pose.pose.orientation.w = 0.0	
-                    		viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
+                    		self.loginfo("The object is graspable.")
 
-				if self._debug:
-                			raw_input('(Debug) Press enter to continue >')
-
-
-				rospy.loginfo("Going to pre grasp position")
-				success_pre_grasp = self._moveit_move_arm(pre_grasp_pose,
-                                                            0.005, 0.005, 12, 'right_arm',
-                                                            False).success
-				grasp_object = raw_input("Do you want to grasp the object? (y)es or (n)o")
+                    		grasp_object = raw_input("Do you want to grasp the object? (y)es or (n)o")
 
                     		if(grasp_object == 'y' or grasp_object == 'yes'):
 
                         # Visualize the gripper in the grasp position
-                        		viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+                        	viz.publish_gripper(self._im_server, grasp, 'grasp_target')
 
-                        		self._tts.publish("Grasping object.")
+                        	self._tts.publish("Grasping object.")
 
                         	# Try to grasp the object
-                        		possible_grasp = self._moveit_move_arm(grasp,
+                        	possible_grasp = self._moveit_move_arm(grasp,
                                                             0.005, 0.005, 12, 'right_arm',
                                                             False).success
                         
-                        		if(possible_grasp == True):
-                            			rospy.loginfo("Good grasp!")
-                            	
-                            			# Close gripper to grasp object
-                            			self.loginfo('Close Hand')
-                           	 		if self._debug:
-                                			raw_input('(Debug) Press enter to continue >')
-                            			self._set_grippers.wait_for_service()
-                            			grippers_open = self._set_grippers(open_left=False, open_right=False,
-                                                               effort=userdata.item_model.grasp_effort)
-                            			gripper_states = self._get_grippers()
-                            			if not gripper_states.right_open:
-                                			self._set_grippers(open_left=False, open_right=False,
+                        	if(possible_grasp == True):
+                            		rospy.loginfo("Good grasp!")
+                            
+                            		# Close gripper to grasp object
+                            		self.loginfo('Close Hand')
+                            		if self._debug:
+                                		raw_input('(Debug) Press enter to continue >')
+                            		self._set_grippers.wait_for_service()
+                            		grippers_open = self._set_grippers(open_left=False, open_right=False,
+                                                               effort=item_model.grasp_effort)
+                            		gripper_states = self._get_grippers()
+                            		if not gripper_states.right_open:
+                                		self._set_grippers(open_left=False, open_right=False,
                                                                effort=-1)
 
-                            			return outcomes.GRASP_PLAN_SUCCESS
+                            		return outcomes.GRASP_PLAN_SUCCESS
 
-                        		else:
-                            			rospy.loginfo("It was not possible to grasp the object.")
+                        	else:
+                            		rospy.loginfo("It was not possible to grasp the object.")
 
 
-        	# No grasps found
+	        	# No grasps found
         self.loginfo("The object is not graspable.")
         self._tts.publish("The object is not graspable.")
         time.sleep(2)

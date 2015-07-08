@@ -28,8 +28,9 @@ class UpdatePlan(smach.State):
                 outcomes.UPDATE_PLAN_FAILURE
             ],
             input_keys=['bin_data'],
-            output_keys=['output_bin_data', 'next_bin', 'next_target', 'next_bin_items']
+            output_keys=['output_bin_data', 'next_bin', 'next_target', 'next_bin_items', 'previous_item']
         )
+	
         self._tts = kwargs['tts']
         self._get_items = kwargs['get_items']
         self._get_target_items = kwargs['get_target_items']
@@ -55,7 +56,7 @@ class UpdatePlan(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Updating plan.')
         self._tts.publish('Updating plan.')
-
+	userdata.previous_item = ""
         if self._calls_since_shelf_localization == 1:
             self._calls_since_shelf_localization = 0
             return outcomes.UPDATE_PLAN_RELOCALIZE_SHELF
