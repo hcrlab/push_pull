@@ -350,8 +350,9 @@ def _publish(publisher, marker, marker_type):
     topic within 5 seconds, we give up.
     """
 
-    if(marker_type == "bounding_box" or marker_type == "cluster"):
-        bag = rosbag.Bag("bagfiles/" + datetime.datetime.now(), 'w')
+    if(marker_type == "bounding_box" or marker_type == "cluster" or marker_type == "text_marker"):
+        rospy.loginfo("Saving bag : " + marker_type)
+	bag = rosbag.Bag("bagfiles/notes2.bag" , 'a')
         bag.write('/pr2_pick_visualization', marker)
         bag.close()
 

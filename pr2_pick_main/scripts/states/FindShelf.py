@@ -109,7 +109,7 @@ class FindShelf(smach.State):
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
         shelf_odom.pose.position.x = 1.15
-        shelf_odom.pose.position.y = -0.18
+        shelf_odom.pose.position.y = -0.22
         shelf_odom.pose.position.z = 0.0
         shelf_odom.pose.orientation.x = 0.0
         shelf_odom.pose.orientation.y = 0.0
