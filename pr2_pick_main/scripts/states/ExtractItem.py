@@ -332,8 +332,8 @@ class ExtractItem(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
-        self._drive_to_pose.wait_for_service()
-        self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
+        #self._drive_to_pose.wait_for_service()
+        #self._drive_to_pose(pose=target_in_shelf_frame, linearVelocity=0.1, angularVelocity=0.1)
 
         if not success_lift:
             self._move_torso(self.torso_height_by_bin[userdata.bin_id] - 0.04, True)  
@@ -370,8 +370,8 @@ class ExtractItem(smach.State):
             pose.pose.orientation.z = -0.4802;
             pose.pose.orientation.w = -0.2458;
 
-        #self._moveit_move_arm.wait_for_service()
-        #self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm', False)
+        self._moveit_move_arm.wait_for_service()
+        self._moveit_move_arm(pose, 0.01, 0.01, 0, 'right_arm', False)
 
 
         if success:
