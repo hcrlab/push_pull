@@ -13,7 +13,8 @@ import math
 import random
 import rospy
 import tf
-
+import rosbag
+import datetime 
 
 def publish_shelf(publisher, pose_stamped):
     """Publishes a shelf marker at a given pose.
@@ -40,7 +41,7 @@ def publish_shelf(publisher, pose_stamped):
     marker.scale.y = 1
     marker.scale.z = 1
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker)
+    _publish(publisher, marker, "shelf")
 
 
 def publish_order_bin(publisher):
@@ -66,7 +67,7 @@ def publish_order_bin(publisher):
     marker.scale.z = 8 * 0.0254
     marker.pose.orientation.w = 1
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker)
+    _publish(publisher, marker, "order_bin")
 
 
 def publish_base(publisher, pose_stamped):
@@ -100,7 +101,7 @@ def publish_base(publisher, pose_stamped):
     marker.color.b = 0
     marker.color.a = 1
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker)
+    _publish(publisher, marker, "base")
 
 
 def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
@@ -159,8 +160,8 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     text_marker.text = '{}'.format(cluster_id)
     text_marker.lifetime = rospy.Duration()
 
-    _publish(publisher, marker)
-    _publish(publisher, text_marker)
+    _publish(publisher, marker, "cluster")
+    _publish(publisher, text_marker, "text_marker")
 
 
 def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
@@ -191,8 +192,7 @@ def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
     marker.color.b = b
     marker.color.a = a
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker)
-
+    _publish(publisher, marker, "bounding_box")
 
 def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
     """Publishes a marker representing a bounding box.
@@ -220,7 +220,7 @@ def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
     marker.color.b = b
     marker.color.a = a
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker)
+    _publish(publisher, marker, "pose")
 
 
 def _get_pose_from_transform(transform):
@@ -343,12 +343,18 @@ def publish_gripper(server, pose_stamped, name):
     server.applyChanges()
 
 
-def _publish(publisher, marker):
+def _publish(publisher, marker, marker_type):
     """Publishes a marker to the given publisher.
 
     We need to wait for rviz to subscribe. If there are no subscribers to the
     topic within 5 seconds, we give up.
     """
+
+    if(marker_type == "bounding_box" or marker_type == "cluster"):
+        bag = rosbag.Bag("bagfiles/" + datetime.datetime.now(), 'w')
+        bag.write('/pr2_pick_visualization', marker)
+        bag.close()
+
     rate = rospy.Rate(1)
     for i in range(5):
         if publisher.get_num_connections() > 0:
