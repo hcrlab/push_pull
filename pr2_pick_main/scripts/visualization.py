@@ -352,9 +352,9 @@ def _publish(publisher, marker, marker_type):
 
     if(marker_type == "bounding_box" or marker_type == "cluster" or marker_type == "text_marker"):
         rospy.loginfo("Saving bag : " + marker_type)
-	bag = rosbag.Bag("bagfiles/notes2.bag" , 'a')
-        bag.write('/pr2_pick_visualization', marker)
-        bag.close()
+	#bag = rosbag.Bag("bagfiles/notes2.bag" , 'a')
+        #bag.write('/pr2_pick_visualization', marker)
+        #bag.close()
 
     rate = rospy.Rate(1)
     for i in range(5):

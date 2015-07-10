@@ -8,6 +8,7 @@ import smach
 import tf
 import visualization as viz
 
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 class StartPose(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
@@ -37,6 +38,7 @@ class StartPose(smach.State):
         # The location the robot started at.
         # When the robot relocalizes, it goes back to this start pose.
         self._start_pose = None
+	self._move_torso = kwargs['move_torso']
 
     def _adjust_start_pose_orientation(self):
         # After driving around enough, odom_combined seems to have a lot of
@@ -61,16 +63,6 @@ class StartPose(smach.State):
 
     @handle_service_exceptions(outcomes.START_POSE_FAILURE)
     def execute(self, userdata):
-	pre_grasp_pose = PoseStamped()
-        pre_grasp_pose.header.frame_id = "bin_K"
-        pre_grasp_pose.pose.position.x = -0.20
-        pre_grasp_pose.pose.position.y = 0.0
-        pre_grasp_pose.pose.position.z = 0.10
-        pre_grasp_pose.pose.orientation.x = 0.0
-        pre_grasp_pose.pose.orientation.y = 0.0
-        pre_grasp_pose.pose.orientation.z = 0.0
-        pre_grasp_pose.pose.orientation.w = 0.0
-        
         
         #for i in range(0,10):
         #   viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
@@ -83,7 +75,8 @@ class StartPose(smach.State):
         #    self._tts.publish('Failed to move head.')
         #else:
         #    rospy.loginfo('StartPose: MoveHead success')
-
+	self._move_torso.wait_for_service()
+	self._move_torso(0.058899518946705996, True)
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
         if not tuck_success:

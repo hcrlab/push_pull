@@ -84,7 +84,7 @@ class StateMachineBuilder(object):
             'get_grippers': rospy.ServiceProxy('get_grippers_service', GetGrippers),
             'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
             'joint_states_listener': rospy.ServiceProxy('return_joint_states', ReturnJointStates),
-            'attached_collision_objects': rospy.Publisher('/attached_collision_object', AttachedCollisionObject)
+            'attached_collision_objects': rospy.Publisher('/attached_collision_object', AttachedCollisionObject),
 
             # World and Perception
             'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
