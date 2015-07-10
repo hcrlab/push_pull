@@ -38,9 +38,11 @@ from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, Se
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 import numpy as np
 import visualization as viz
-
+import rosbag
 from visualization_msgs.msg import Marker
 #from manipulation_msgs.msg import GraspableObject
+import sensor_msgs.point_cloud2 as pc2
+from geometry_msgs.msg import Point
 
 class GraspPlanner(smach.State):
     ''' Grasps an item in the bin. '''
@@ -402,19 +404,19 @@ class GraspPlanner(smach.State):
         wall_pose1.header.frame_id = "odom_combined"
         wall_pose1.pose.position.x = 0.9
         wall_pose1.pose.position.y = -0.00
-        wall_pose1.pose.position.z = 0.92
+        wall_pose1.pose.position.z = 0.94
 
         wall_pose2 = PoseStamped()
         wall_pose2.header.frame_id = "odom_combined"
         wall_pose2.pose.position.x = 0.9
         wall_pose2.pose.position.y = -0.36
-        wall_pose2.pose.position.z = 0.92
+        wall_pose2.pose.position.z = 0.94
 
         wall_pose3 = PoseStamped()
         wall_pose3.header.frame_id = "odom_combined"
         wall_pose3.pose.position.x = 0.9
         wall_pose3.pose.position.y = -0.18
-        wall_pose3.pose.position.z = 1.12
+        wall_pose3.pose.position.z = 1.14
 
         rate = rospy.Rate(1)
         for i in range(5):
@@ -425,10 +427,10 @@ class GraspPlanner(smach.State):
 	    rospy.sleep(1)
             rate.sleep()
 
-        show_shelf(self, table_pose, [0.38, 0.38, 0.78], 'table')
-        show_shelf(self, wall_pose1, [0.38, 0.015, 0.38], 'wall1')
-        show_shelf(self, wall_pose2, [0.38, 0.015, 0.38], 'wall2')
-        show_shelf(self, wall_pose3, [0.38, 0.38, 0.015], 'wall3')
+        #self.show_shelf(table_pose, [0.38, 0.38, 0.78], 'table')
+        #self.show_shelf(wall_pose1, [0.38, 0.015, 0.38], 'wall1')
+        #self.show_shelf(wall_pose2, [0.38, 0.015, 0.38], 'wall2')
+        #self.show_shelf(wall_pose3, [0.38, 0.38, 0.015], 'wall3')
 
     #    viz.publish_bounding_box(self._markers, wall_pose1, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
     #    viz.publish_bounding_box(self._markers, wall_pose2, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
@@ -442,8 +444,8 @@ class GraspPlanner(smach.State):
         marker.ns = ns
         marker.type = Marker.CUBE
         marker.action = Marker.ADD
-        marker.pose.position = pose.position
-        marker.pose.orientation = pose.orientation
+        marker.pose.position = pose.pose.position
+        marker.pose.orientation = pose.pose.orientation
         marker.scale.x = dims[0]
         marker.scale.y = dims[1]
         marker.scale.z = dims[2]
@@ -464,8 +466,11 @@ class GraspPlanner(smach.State):
 
         bag = rosbag.Bag("bagfiles/data.bag" , 'w')
 
+	points = pc2.read_points(userdata.target_cluster.pointcloud, skip_nans=True)
+        point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
         viz.publish_cluster(self._markers, point_list,
-                                'bin_K','bin_K_items', i, bag)
+                                'bin_K','bin_K_items', 0, bag)
+
 	    # Delete any leftover transforms from previous runs
         bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
         for bin_id in bin_ids:
@@ -547,18 +552,19 @@ class GraspPlanner(smach.State):
                      1.0, 0.0, 0.0, 0.5, 1, bag)
 
         # Publish scene bouding box (smaller than normal one)
-        viz.publish_bounding_box(self._markers, box_pose, 
-                     (box_dims.x - 0.1), 
-                     (box_dims.y - 0.1), 
-                     (box_dims.z - 0.1),
-                     1.0, 1.0, 0.0, 0.5, 1, bag)
+        #viz.publish_bounding_box(self._markers, box_pose, 
+        #             (box_dims.x - 0.1), 
+        #             (box_dims.y - 0.1), 
+        #             (box_dims.z - 0.1),
+        #             1.0, 1.0, 0.0, 0.5, 1, bag)
 
         # Adding bouding box to the scene
+	rospy.loginfo("Adding bounding box to the scene")
         for i in range(10):
             scene.add_box("bbox", box_pose, 
-            (box_dims.x - 0.1, 
-            box_dims.y - 0.1, 
-            box_dims.z - 0.1))
+            (box_dims.x - 0.01, 
+            box_dims.y - 0.01, 
+            box_dims.z - 0.01))
             rospy.sleep(0.1)
 
         # Plan Grasp

@@ -118,9 +118,9 @@ class SenseBin(smach.State):
             if len(point_list) == 0:
                 rospy.logwarn('[SenseBin]: Cluster with 0 points returned!')
                 continue
-            viz.publish_cluster(self._markers, point_list,
-                                'bin_{}'.format(userdata.bin_id),
-                                'bin_{}_items'.format(userdata.bin_id), i)
+            #viz.publish_cluster(self._markers, point_list,
+            #                    'bin_{}'.format(userdata.bin_id),
+            #                    'bin_{}_items'.format(userdata.bin_id), i)
 
             # Get descriptor
             self._get_item_descriptor.wait_for_service()
