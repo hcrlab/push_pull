@@ -425,17 +425,47 @@ class GraspPlanner(smach.State):
 	    rospy.sleep(1)
             rate.sleep()
 
+        show_shelf(self, table_pose, [0.38, 0.38, 0.78], 'table')
+        show_shelf(self, wall_pose1, [0.38, 0.015, 0.38], 'wall1')
+        show_shelf(self, wall_pose2, [0.38, 0.015, 0.38], 'wall2')
+        show_shelf(self, wall_pose3, [0.38, 0.38, 0.015], 'wall3')
+
     #    viz.publish_bounding_box(self._markers, wall_pose1, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
     #    viz.publish_bounding_box(self._markers, wall_pose2, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
     #    viz.publish_bounding_box(self._markers, wall_pose3, 0.38, 0.38, 0.015, 0.0, 0.0, 1.0, 0.5, 1)
     #    viz.publish_bounding_box(self._markers, table_pose, 0.74, 1.22, 0.74, 0.0, 0.0, 1.0, 0.5, 1)
  
- 
+    def show_shelf(self, pose, dims, ns):
+        marker = Marker()
+        marker.header.frame_id = pose.header.frame_id
+        marker.header.stamp = rospy.Time().now()
+        marker.ns = ns
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.pose.position = pose.position
+        marker.pose.orientation = pose.orientation
+        marker.scale.x = dims[0]
+        marker.scale.y = dims[1]
+        marker.scale.z = dims[2]
+        marker.color.r = 0.0
+        marker.color.g = 0.0
+        marker.color.b = 1.0
+        marker.color.a = 0.0
+        marker.lifetime = rospy.Duration()
+        
+        rate = rospy.Rate(1)
+        for i in range(5):
+            self._markers.publish(marker)
+            rate.sleep()
+
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Starting Grasp Planner")
 
+        bag = rosbag.Bag("bagfiles/data.bag" , 'w')
 
+        viz.publish_cluster(self._markers, point_list,
+                                'bin_K','bin_K_items', i, bag)
 	    # Delete any leftover transforms from previous runs
         bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
         for bin_id in bin_ids:
@@ -485,6 +515,7 @@ class GraspPlanner(smach.State):
 	scene = moveit_commander.PlanningSceneInterface()
 	self.add_shelf_to_scene(scene)       
 
+
         # Convert cluster PointCloud2 to PointCloud
         rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
@@ -513,7 +544,22 @@ class GraspPlanner(smach.State):
                      (box_dims.x), 
                      (box_dims.y), 
                      (box_dims.z),
-                     1.0, 0.0, 0.0, 0.5, 1)
+                     1.0, 0.0, 0.0, 0.5, 1, bag)
+
+        # Publish scene bouding box (smaller than normal one)
+        viz.publish_bounding_box(self._markers, box_pose, 
+                     (box_dims.x - 0.1), 
+                     (box_dims.y - 0.1), 
+                     (box_dims.z - 0.1),
+                     1.0, 1.0, 0.0, 0.5, 1, bag)
+
+        # Adding bouding box to the scene
+        for i in range(10):
+            scene.add_box("bbox", box_pose, 
+            (box_dims.x - 0.1, 
+            box_dims.y - 0.1, 
+            box_dims.z - 0.1))
+            rospy.sleep(0.1)
 
         # Plan Grasp
         grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
