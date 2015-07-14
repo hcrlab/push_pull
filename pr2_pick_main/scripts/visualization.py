@@ -104,7 +104,7 @@ def publish_base(publisher, pose_stamped):
     _publish(publisher, marker, "base")
 
 
-def publish_cluster(publisher, points, frame_id, namespace, cluster_id, bag):
+def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     """Publishes a marker representing a cluster.
     The x and y arguments specify the center of the target.
 
@@ -162,11 +162,11 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id, bag):
 
     _publish(publisher, marker, "cluster")
     _publish(publisher, text_marker, "text_marker")
-    bag.write('/pr2_pick_visualization', marker)
+    return marker
 
 
 def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
-                         marker_id, bag):
+                         marker_id):
     """Publishes a marker representing a bounding box.
 
     Args:
@@ -194,8 +194,8 @@ def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
     marker.color.a = a
     marker.lifetime = rospy.Duration()
     _publish(publisher, marker, "bounding_box")
-    bag.write('/pr2_pick_visualization', marker)
-
+    return marker
+    
 def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
     """Publishes a marker representing a bounding box.
 

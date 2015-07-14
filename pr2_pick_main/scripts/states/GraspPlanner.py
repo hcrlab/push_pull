@@ -28,7 +28,8 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 import scipy
 import outcomes
 from pr2_pick_manipulation.srv import GetPose, MoveArm, SetGrippers, MoveArmIkRequest
-from pr2_pick_perception.msg import Box, Cluster2
+from pr2_pick_perception.msg import Box, Cluster2, BoundingBox
+from pr2_pick_contest.msg import Record
 from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest, PlanarPrincipalComponentsRequest, \
     DeleteStaticTransformRequest, BoxPointsResponse #, Cluster
 
@@ -152,135 +153,8 @@ class GraspPlanner(smach.State):
 
         self.debug_grasp_pub = rospy.Publisher('debug_grasp_pub', String, queue_size=10)
 
-        # Shelf heights
-
-        self._shelf_bottom_height_a_c = 1.57
-        self._shelf_bottom_height_d_f = 1.35
-        self._shelf_bottom_height_g_i = 1.10
-        self._shelf_bottom_height_j_l = 0.85
-
-        self._shelf_bottom_heights = {
-            'A': self._shelf_bottom_height_a_c,
-            'B': self._shelf_bottom_height_a_c,
-            'C': self._shelf_bottom_height_a_c,
-            'D': self._shelf_bottom_height_d_f,
-            'E': self._shelf_bottom_height_d_f,
-            'F': self._shelf_bottom_height_d_f,
-            'G': self._shelf_bottom_height_g_i,
-            'H': self._shelf_bottom_height_g_i,
-            'I': self._shelf_bottom_height_g_i,
-            'J': self._shelf_bottom_height_j_l,
-            'K': self._shelf_bottom_height_j_l,
-            'L': self._shelf_bottom_height_j_l
-        }
-        self._shelf_widths = {
-            'A': 0.25,
-            'B': 0.28,
-            'C': 0.25,
-            'D': 0.25, 
-            'E': 0.28,
-            'F': 0.25,
-            'G': 0.25, 
-            'H': 0.28, 
-            'I': 0.25, 
-            'J': 0.25, 
-            'K': 0.28, 
-            'L': 0.25 
-        }
-
-        self._shelf_heights = {
-            'A': 0.21,
-            'B': 0.21,
-            'C': 0.21,
-            'D': 0.17, 
-            'E': 0.17,
-            'F': 0.17,
-            'G': 0.17, 
-            'H': 0.17, 
-            'I': 0.17, 
-            'J': 0.21, 
-            'K': 0.21, 
-            'L': 0.21 
-        }
-
-        self._bin_bounds_left = {
-            'A': 0.12,
-            'B': 0.10,
-            'C': 0.10,
-            'D': 0.12,
-            'E': 0.10,
-            'F': 0.10,
-            'G': 0.12,
-            'H': 0.10,
-            'I': 0.10,
-            'J': 0.12,
-            'K': 0.10,
-            'L': 0.10
-        }
-        self._bin_bounds_right = {
-            'A': 0.10,
-            'B': 0.10,
-            'C': 0.12,
-            'D': 0.10,
-            'E': 0.10,
-            'F': 0.12,
-            'G': 0.10,
-            'H': 0.10,
-            'I': 0.12,
-            'J': 0.10,
-            'K': 0.10,
-            'L': 0.12
-        }
-
-
-    def draw_grasps(self, grasps, frame, ns = 'grasps', pause = 0, frame_locked = False):
-
-        marker = Marker()
-        marker_pub = rospy.Publisher('grasp_markers', Marker)
-        marker.header.frame_id = frame
-        rospy.loginfo("Frame: " + frame)
-        marker.header.stamp = rospy.Time.now()
-        marker.ns = ns
-        marker.type = Marker.ARROW
-        marker.action = Marker.ADD
-        marker.color.a = 1.0
-        marker.lifetime = rospy.Duration(0)
-        marker.frame_locked = frame_locked
-        marker_pub.publish(marker)
-        for (grasp_num, grasp) in enumerate(grasps):
-            if grasp_num == 0:
-                marker.scale.x = 0.015
-                marker.scale.y = 0.025
-                length_fact = 1.5
-
-            else:
-                marker.scale.x = 0.01
-                marker.scale.y = 0.015
-                length_fact = 1.0
-
-            orientation = grasp.orientation
-            quat = [orientation.x, orientation.y, orientation.z, orientation.w]
-            mat = tf.transformations.quaternion_matrix(quat)
-            start = [grasp.position.x, grasp.position.y, grasp.position.z]
-            x_end = list(mat[:,0][0:3]*.05*length_fact + scipy.array(start))    
-            y_end = list(mat[:,1][0:3]*.02*length_fact + scipy.array(start))
-            marker.id = grasp_num*3
-            marker.points = [Point(*start), Point(*x_end)]
-            marker.color.r = 1.0
-            marker.color.g = 0.0
-            marker.color.b = 0.0
-            marker_pub.publish(marker)
-            marker.id = grasp_num*3+1
-            marker.points = [Point(*start), Point(*y_end)]
-            marker.color.r = 0.0
-            marker.color.g = 1.0
-            marker.color.b = 0.0
-            marker_pub.publish(marker)
-            marker.id = grasp_num*3+2
-            if pause:
-                print "press enter to continue"
-                raw_input()
-        time.sleep(.5)
+        self.bag = rosbag.Bag("bagfiles/data.bag" , 'w')
+        self.bag_data = Record()
 
     def loginfo(self, string):
         #self.debug_grasp_pub.publish(string)
@@ -370,21 +244,6 @@ class GraspPlanner(smach.State):
         if not result or result.error_code.value != 0:
             return []
         return result.grasps
-
-    def get_ik_position(self, pre_grasp):
-        fk_request = GetPositionFKRequest()
-
-
-        fk_request.header.frame_id = "bin_K"
-         
-	fk_request.fk_link_names.append("r_wrist_roll_link")
-
-	
-        fk_request.robot_state.joint_state = pre_grasp
-
-        fk_response = self._fk_client(fk_request)
-
-        return fk_response
     
     def add_shelf_to_scene(self, scene):
         for i in range(5):
@@ -427,49 +286,25 @@ class GraspPlanner(smach.State):
 	    rospy.sleep(1)
             rate.sleep()
 
-        #self.show_shelf(table_pose, [0.38, 0.38, 0.78], 'table')
-        #self.show_shelf(wall_pose1, [0.38, 0.015, 0.38], 'wall1')
-        #self.show_shelf(wall_pose2, [0.38, 0.015, 0.38], 'wall2')
-        #self.show_shelf(wall_pose3, [0.38, 0.38, 0.015], 'wall3')
-
-    #    viz.publish_bounding_box(self._markers, wall_pose1, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
-    #    viz.publish_bounding_box(self._markers, wall_pose2, 0.38, 0.015, 0.38, 0.0, 0.0, 1.0, 0.5, 1)
-    #    viz.publish_bounding_box(self._markers, wall_pose3, 0.38, 0.38, 0.015, 0.0, 0.0, 1.0, 0.5, 1)
-    #    viz.publish_bounding_box(self._markers, table_pose, 0.74, 1.22, 0.74, 0.0, 0.0, 1.0, 0.5, 1)
- 
-    def show_shelf(self, pose, dims, ns):
-        marker = Marker()
-        marker.header.frame_id = pose.header.frame_id
-        marker.header.stamp = rospy.Time().now()
-        marker.ns = ns
-        marker.type = Marker.CUBE
-        marker.action = Marker.ADD
-        marker.pose.position = pose.pose.position
-        marker.pose.orientation = pose.pose.orientation
-        marker.scale.x = dims[0]
-        marker.scale.y = dims[1]
-        marker.scale.z = dims[2]
-        marker.color.r = 0.0
-        marker.color.g = 0.0
-        marker.color.b = 1.0
-        marker.color.a = 0.0
-        marker.lifetime = rospy.Duration()
-        
-        rate = rospy.Rate(1)
-        for i in range(5):
-            self._markers.publish(marker)
-            rate.sleep()
+    def save_image(self, image):
+        bag_data.image = image
 
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
+
         rospy.loginfo("Starting Grasp Planner")
 
-        bag = rosbag.Bag("bagfiles/data.bag" , 'w')
+        rospy.Subscriber("/head_mount_kinect/rgb/image_color", Image, self.save_image)
 
-	points = pc2.read_points(userdata.target_cluster.pointcloud, skip_nans=True)
+        self.subscriber = rospy.Subscriber("/camera/image/compressed", CompressedImage, self.callback,  queue_size = 1)
+
+	    points = pc2.read_points(userdata.target_cluster.pointcloud, skip_nans=True)
         point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
-        viz.publish_cluster(self._markers, point_list,
-                                'bin_K','bin_K_items', 0, bag)
+        marker_cluster = viz.publish_cluster(self._markers, point_list,
+                                'bin_K','bin_K_items', 0)
+
+        # save marker
+        self.bag_data.marker_pointcloud = marker_cluster
 
 	    # Delete any leftover transforms from previous runs
         bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
@@ -501,8 +336,6 @@ class GraspPlanner(smach.State):
         else:
             self.top_shelf = False
 
-        self.shelf_width = self._shelf_widths[userdata.bin_id]
-        self.shelf_height = self._shelf_heights[userdata.bin_id]
         self.bin_id = userdata.bin_id
         self._debug = userdata.debug
         self.allowed_grasps = userdata.item_model.allowed_grasps
@@ -527,6 +360,7 @@ class GraspPlanner(smach.State):
         rospy.loginfo("PCL service found")
         self._cluster2 = Cluster2()
     	self._cluster2.pointcloud = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud      
+        self.bag_data.pointcloud2 = self._cluster2.pointcloud
 
     	self._cluster = userdata.target_cluster
     	self._cluster2.header = userdata.target_cluster.header
@@ -545,12 +379,19 @@ class GraspPlanner(smach.State):
 	box_pose.header.frame_id = self._cluster.header.frame_id
 
         # Publish Bounding Box
-        viz.publish_bounding_box(self._markers, box_pose, 
+        marker_bounding_box = viz.publish_bounding_box(self._markers, box_pose, 
                      (box_dims.x), 
                      (box_dims.y), 
                      (box_dims.z),
-                     1.0, 0.0, 0.0, 0.5, 1, bag)
-	bag.close()
+                     1.0, 0.0, 0.0, 0.5, 1)
+
+        bounding_box = BoundingBox()
+        bounding_box.pose = box_pose
+        bounding_box.dimensions = box_dims
+
+        self.bag_data.boundingbox = bounding_box
+        self.bag_data.marker_boundingbox = marker_bounding_box
+
         # Publish scene bouding box (smaller than normal one)
         #viz.publish_bounding_box(self._markers, box_pose, 
         #             (box_dims.x - 0.1), 
@@ -671,10 +512,15 @@ class GraspPlanner(smach.State):
                             			if not gripper_states.right_open:
                                 			self._set_grippers(open_left=False, open_right=False,
                                                                effort=-1)
-
+                                        self.bag_data.is_graspable = True
+                                        self.bag.write('record', bag_data)
+                                        self.bag.close()
                             			return outcomes.GRASP_PLAN_SUCCESS
 
                         		else:
+                                        self.bag_data.is_graspable = False
+                                        self.bag.write('record', bag_data)
+                                        self.bag.close()
                             			rospy.loginfo("It was not possible to grasp the object.")
 
 
@@ -682,5 +528,8 @@ class GraspPlanner(smach.State):
         self.loginfo("The object is not graspable.")
         self._tts.publish("The object is not graspable.")
         time.sleep(2)
+        self.bag_data.is_graspable = False
+        self.bag.write('record', bag_data)
+        self.bag.close()
         return outcomes.GRASP_PLAN_NONE
 
