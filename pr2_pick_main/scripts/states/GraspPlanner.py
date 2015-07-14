@@ -403,24 +403,24 @@ class GraspPlanner(smach.State):
         wall_pose1 = PoseStamped()
         wall_pose1.header.frame_id = "odom_combined"
         wall_pose1.pose.position.x = 0.9
-        wall_pose1.pose.position.y = -0.00
+        wall_pose1.pose.position.y = -0.02
         wall_pose1.pose.position.z = 0.94
 
         wall_pose2 = PoseStamped()
         wall_pose2.header.frame_id = "odom_combined"
         wall_pose2.pose.position.x = 0.9
-        wall_pose2.pose.position.y = -0.36
+        wall_pose2.pose.position.y = -0.40
         wall_pose2.pose.position.z = 0.94
 
         wall_pose3 = PoseStamped()
         wall_pose3.header.frame_id = "odom_combined"
         wall_pose3.pose.position.x = 0.9
-        wall_pose3.pose.position.y = -0.18
-        wall_pose3.pose.position.z = 1.14
+        wall_pose3.pose.position.y = -0.20
+        wall_pose3.pose.position.z = 1.16
 
         rate = rospy.Rate(1)
         for i in range(5):
-            scene.add_box("table", table_pose, (0.38, 0.38, 0.78))
+            #scene.add_box("table", table_pose, (0.38, 0.38, 0.78))
 	    scene.add_box("shelf1", wall_pose1, (0.38, 0.015, 0.38 ))
             scene.add_box("shelf2", wall_pose2, (0.38, 0.015, 0.38 ))
 	    scene.add_box("shelf3", wall_pose3, (0.38, 0.38, 0.015 ))
@@ -550,7 +550,7 @@ class GraspPlanner(smach.State):
                      (box_dims.y), 
                      (box_dims.z),
                      1.0, 0.0, 0.0, 0.5, 1, bag)
-
+	bag.close()
         # Publish scene bouding box (smaller than normal one)
         #viz.publish_bounding_box(self._markers, box_pose, 
         #             (box_dims.x - 0.1), 
@@ -560,12 +560,12 @@ class GraspPlanner(smach.State):
 
         # Adding bouding box to the scene
 	rospy.loginfo("Adding bounding box to the scene")
-        for i in range(10):
-            scene.add_box("bbox", box_pose, 
-            (box_dims.x - 0.01, 
-            box_dims.y - 0.01, 
-            box_dims.z - 0.01))
-            rospy.sleep(0.1)
+        #for i in range(10):
+        #    scene.add_box("bbox", box_pose, 
+        #    (box_dims.x - 0.01, 
+        #    box_dims.y - 0.01, 
+        #    box_dims.z - 0.01))
+        #    rospy.sleep(0.1)
 
         # Plan Grasp
         grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
@@ -595,14 +595,15 @@ class GraspPlanner(smach.State):
     	    pre_grasp_pose.pose.orientation.w = 0.0
 
             # Go to pre grasp 
-    	    #viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+    	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
             if self._debug:
-                raw_input('(Debug) Press enter to continue >')
+                test2 = raw_input('(Debug) Press enter to continue >')
 	    #rospy.loginfo("\n\nPossible Grasp: \n")
 	    #rospy.loginfo(grasp)
-            #success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
-                                                           # 0.005, 0.005, 12, 'right_arm',
-                                                            #False).success
+	    if(test2 != 'n'):
+            	success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
+                                                            0.005, 0.005, 12, 'right_arm',
+                                                            False).success
     	    # Analyze and perform grasps
             for grasp in grasp_poses:
 
@@ -610,7 +611,8 @@ class GraspPlanner(smach.State):
         		rospy.loginfo("\n\nPossible Grasp: \n")
             		rospy.loginfo(grasp)		
 			viz.publish_gripper(self._im_server, grasp, 'grasp_target')
-			if(True):
+			test = raw_input("y / n \n")
+			if(test == 'y'):
                 		# Test if grasp is going to hit the shelf
     				success_grasp = self._moveit_move_arm(grasp,
                                                             0.005, 0.005, 12, 'right_arm',
@@ -631,16 +633,16 @@ class GraspPlanner(smach.State):
 			        pre_grasp_pose.pose.orientation.y = 0.0
         			pre_grasp_pose.pose.orientation.z = 0.0
 			        pre_grasp_pose.pose.orientation.w = 0.0	
-                    		viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
+                    	#	viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
 
-				if self._debug:
-                			raw_input('(Debug) Press enter to continue >')
+			#	if self._debug:
+                	#		raw_input('(Debug) Press enter to continue >')
 
 
 				rospy.loginfo("Going to pre grasp position")
-				success_pre_grasp = self._moveit_move_arm(pre_grasp_pose,
-                                                            0.005, 0.005, 12, 'right_arm',
-                                                            False).success
+			#	success_pre_grasp = self._moveit_move_arm(pre_grasp_pose,
+                                                            #0.005, 0.005, 12, 'right_arm',
+                                                           # False).success
 				grasp_object = raw_input("Do you want to grasp the object? (y)es or (n)o")
 
                     		if(grasp_object == 'y' or grasp_object == 'yes'):
