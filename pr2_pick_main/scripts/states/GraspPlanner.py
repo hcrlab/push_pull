@@ -305,6 +305,7 @@ class GraspPlanner(smach.State):
 
         # save marker
         self.bag_data.marker_pointcloud = marker_cluster
+        self.bag.write('pr2_pick_visualization', self.bag_data.marker_pointcloud )
 
 	    # Delete any leftover transforms from previous runs
         bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
@@ -361,6 +362,7 @@ class GraspPlanner(smach.State):
         self._cluster2 = Cluster2()
     	self._cluster2.pointcloud = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud      
         self.bag_data.pointcloud2 = self._cluster2.pointcloud
+        self.bag.write('/head_mount_kinect/depth/points', self.bag_data.pointcloud2 )
 
     	self._cluster = userdata.target_cluster
     	self._cluster2.header = userdata.target_cluster.header
@@ -391,7 +393,8 @@ class GraspPlanner(smach.State):
 
         self.bag_data.boundingbox = bounding_box
         self.bag_data.marker_boundingbox = marker_bounding_box
-
+        self.bag.write('pr2_pick_visualization', self.bag_data.marker_boundingbox )
+        self.bag.write('pr2_pick_perception/BoundingBox', self.bag_data.boundingbox )
         # Publish scene bouding box (smaller than normal one)
         #viz.publish_bounding_box(self._markers, box_pose, 
         #             (box_dims.x - 0.1), 
@@ -518,6 +521,7 @@ class GraspPlanner(smach.State):
                             			return outcomes.GRASP_PLAN_SUCCESS
 
                         		else:
+
                                         self.bag_data.is_graspable = False
                                         self.bag.write('record', bag_data)
                                         self.bag.close()
