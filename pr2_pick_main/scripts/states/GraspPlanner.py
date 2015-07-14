@@ -19,7 +19,7 @@ import os
 from pr2_pick_main import handle_service_exceptions
 import rospkg
 import rospy
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, Image
 import sensor_msgs.point_cloud2 as pc2
 import smach
 from std_msgs.msg import Header, String
@@ -287,7 +287,7 @@ class GraspPlanner(smach.State):
             rate.sleep()
 
     def save_image(self, image):
-        bag_data.image = image
+        self.bag_data.image = image
 
     @handle_service_exceptions(outcomes.GRASP_FAILURE)
     def execute(self, userdata):
@@ -296,9 +296,9 @@ class GraspPlanner(smach.State):
 
         rospy.Subscriber("/head_mount_kinect/rgb/image_color", Image, self.save_image)
 
-        self.subscriber = rospy.Subscriber("/camera/image/compressed", CompressedImage, self.callback,  queue_size = 1)
+        #self.subscriber = rospy.Subscriber("/camera/image/compressed", CompressedImage, self.callback,  queue_size = 1)
 
-	    points = pc2.read_points(userdata.target_cluster.pointcloud, skip_nans=True)
+	points = pc2.read_points(userdata.target_cluster.pointcloud, skip_nans=True)
         point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
         marker_cluster = viz.publish_cluster(self._markers, point_list,
                                 'bin_K','bin_K_items', 0)
@@ -340,8 +340,8 @@ class GraspPlanner(smach.State):
         self._debug = userdata.debug
         self.allowed_grasps = userdata.item_model.allowed_grasps
         self.target_descriptor = userdata.target_descriptor
-        self.bin_bound_left = self._bin_bounds_left[userdata.bin_id] 
-        self.bin_bound_right = self._bin_bounds_right[userdata.bin_id]
+        #self.bin_bound_left = self._bin_bounds_left[userdata.bin_id] 
+        #self.bin_bound_right = self._bin_bounds_right[userdata.bin_id]
         self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
         self.grasp_wide_end = userdata.item_model.grasp_wide_end
         self._cluster = userdata.target_cluster
@@ -360,13 +360,13 @@ class GraspPlanner(smach.State):
         rospy.loginfo("PCL service found")
         self._cluster2 = Cluster2()
     	self._cluster2.pointcloud = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud      
-        self.bag_data.pointcloud2 = self._cluster2.pointcloud
+        #self.bag_data.pointcloud2 = self._cluster2.pointcloud
 
     	self._cluster = userdata.target_cluster
     	self._cluster2.header = userdata.target_cluster.header
     	self._cluster2.pointcloud.header = userdata.target_cluster.header
     	self._cluster2.id = userdata.target_cluster.id
-
+	self.bag_data.pointcloud2 = self._cluster.pointcloud
         tf_broadcaster = tf.TransformBroadcaster()
         tf_listener = tf.TransformListener()
 
@@ -512,15 +512,15 @@ class GraspPlanner(smach.State):
                             			if not gripper_states.right_open:
                                 			self._set_grippers(open_left=False, open_right=False,
                                                                effort=-1)
-                                        self.bag_data.is_graspable = True
-                                        self.bag.write('record', bag_data)
-                                        self.bag.close()
+                                        	self.bag_data.is_graspable = True
+                                        	self.bag.write('record', self.bag_data)
+                                        	self.bag.close()
                             			return outcomes.GRASP_PLAN_SUCCESS
 
                         		else:
-                                        self.bag_data.is_graspable = False
-                                        self.bag.write('record', bag_data)
-                                        self.bag.close()
+                                       		self.bag_data.is_graspable = False
+                                        	self.bag.write('record',self.bag_data)
+                                        	self.bag.close()
                             			rospy.loginfo("It was not possible to grasp the object.")
 
 
@@ -529,7 +529,7 @@ class GraspPlanner(smach.State):
         self._tts.publish("The object is not graspable.")
         time.sleep(2)
         self.bag_data.is_graspable = False
-        self.bag.write('record', bag_data)
+        self.bag.write('record', self.bag_data)
         self.bag.close()
         return outcomes.GRASP_PLAN_NONE
 
