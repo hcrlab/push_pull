@@ -49,6 +49,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   ItemModel.msg
+  Record.msg
 )
 
 ## Generate services in the 'srv' folder
