@@ -445,10 +445,10 @@ class GraspPlanner(smach.State):
             # Go to pre grasp 
     	    viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
             if self._debug:
-                test2 = raw_input('(Debug) Press enter to continue >')
+               raw_input('(Debug) Press enter to continue >')
 	    #rospy.loginfo("\n\nPossible Grasp: \n")
 	    #rospy.loginfo(grasp)
-	    if(test2 != 'n'):
+	    if(True):
             	success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
                                                             0.005, 0.005, 12, 'right_arm',
                                                             False).success
@@ -457,13 +457,14 @@ class GraspPlanner(smach.State):
 
                 # Visualize the gripper in the grasp position
         		rospy.loginfo("\n\nPossible Grasp: \n")
-            		rospy.loginfo(grasp)		
-			viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+            		rospy.loginfo(grasp)
+			for i in range(5):		
+				viz.publish_gripper(self._im_server, grasp, 'grasp_target')
 			test = raw_input("y / n \n")
 			if(test == 'y'):
                 		# Test if grasp is going to hit the shelf
     				success_grasp = self._moveit_move_arm(grasp,
-                                                            0.005, 0.005, 12, 'right_arm',
+                                                            0.005, 0.005, 60, 'right_arm',
                                                             True).success
 			else:
 				success_grasp = False
