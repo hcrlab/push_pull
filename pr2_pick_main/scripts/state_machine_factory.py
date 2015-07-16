@@ -26,12 +26,7 @@ from convert_pcl.srv import ConvertPCL
 class StateMachineBuilder(object):
 
     # slugs to represent different state machines
-    TEST_DROP_OFF_ITEM = 'test-drop-off-item'
     TEST_GRASP_TOOL = 'test-grasp-tool'
-    TEST_MOVE_TO_BIN = 'test-move-to-bin'
-    TEST_PUSH_ITEM = 'test-push-item'
-    CAPTURE_ITEM_DESCRIPTOR = 'capture-item-descriptor'
-    GATHER_DATA = 'gather-data'
     PLAN_GRASP = 'plan-grasp'
     DEFAULT = 'default'
 
@@ -48,18 +43,8 @@ class StateMachineBuilder(object):
         state machine type. '''
         services = self.real_robot_services()
 
-        if self.state_machine_identifier == StateMachineBuilder.TEST_DROP_OFF_ITEM:
-            build = self.build_sm_for_drop_off_item
-        elif self.state_machine_identifier == StateMachineBuilder.TEST_GRASP_TOOL:
+        if self.state_machine_identifier == StateMachineBuilder.TEST_GRASP_TOOL:
             build = self.build_sm_for_grasp_tool
-        elif self.state_machine_identifier == StateMachineBuilder.TEST_MOVE_TO_BIN:
-            build = self.build_sm_for_move_to_bin
-        elif self.state_machine_identifier == StateMachineBuilder.TEST_PUSH_ITEM:
-            build = self.build_sm_for_push_item
-        elif self.state_machine_identifier == StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR:
-            build = self.build_sm_for_item_descriptor_capture
-        elif self.state_machine_identifier == StateMachineBuilder.GATHER_DATA:
-            build = self.build_sm_for_gather_data
         elif self.state_machine_identifier == StateMachineBuilder.PLAN_GRASP:
             build = self.build_sm_grasp_planner
         else:
@@ -117,141 +102,6 @@ class StateMachineBuilder(object):
 	    'convert_pcl_service': rospy.ServiceProxy('convert_pcl_service', ConvertPCL)
         }
 
-    # This isn't actually mocking but rather it asks for user input
-    # It should probably be renamed instead of deleted
-    def mock_update_plan_execute(self, userdata):
-        ''' Ask the user which bin to go to next. Don't worry about updating bin_data. '''
-        default_next_bin = 'A'
-        input_bin = raw_input('(Debug) Enter the next bin [{}]:'.format(default_next_bin))
-        if len(input_bin) > 0 and input_bin[0] in 'ABCDEFGHIJKL':
-            bin_letter = input_bin[0]
-        else:
-            bin_letter = default_next_bin
-
-        userdata.next_bin = bin_letter
-        return outcomes.UPDATE_PLAN_NEXT_OBJECT
-
-    def build_interactive_bin_choosing_sm(self, success_transition, failure_transition, **services):
-        '''
-        Build state machine stub that starts by asking the user which bin to go to
-        and going to that bin.
-        @param success_transition - transition target for MoveToBin success
-        @param failure_transition - transition target for MoveToBin failure
-        '''
-        sm = smach.StateMachine(outcomes=[
-            outcomes.CHALLENGE_SUCCESS,
-            outcomes.CHALLENGE_FAILURE
-        ])
-        
-        mock_update_plan = states.UpdatePlan(**services)
-
-        with sm:
-            smach.StateMachine.add(
-                states.StartPose.name,
-                states.StartPose(**services),
-                transitions={
-                    outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
-                }
-            )
-            smach.StateMachine.add(
-                states.FindShelf.name,
-                states.FindShelf(**services),
-                transitions={
-                    outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
-                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
-                }
-            )
-            smach.StateMachine.add(
-                states.UpdatePlan.name,
-                mock_update_plan,
-                transitions={
-                    outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
-                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
-                    outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data',
-                    'next_bin': 'current_bin'
-                }
-            )
-            smach.StateMachine.add(
-                states.MoveToBin.name,
-                states.MoveToBin(**services),
-                transitions={
-                    outcomes.MOVE_TO_BIN_SUCCESS: success_transition,
-                    outcomes.MOVE_TO_BIN_FAILURE: failure_transition,
-                },
-                remapping={
-                    'bin_id': 'current_bin'
-                }
-            )
-        return sm
-
-    def build_sm_for_move_to_bin(self, **services):
-        ''' Minimal state machine for testing MoveToBin state '''
-        return self.build_interactive_bin_choosing_sm(
-            states.UpdatePlan.name,
-            outcomes.CHALLENGE_FAILURE,
-            **services
-        )
-
-    def build_sm_for_push_item(self, **services):
-        sm = self.build_interactive_bin_choosing_sm(
-            states.PushItem.name,
-            outcomes.CHALLENGE_FAILURE,
-            **services
-        )
-        with sm:
-            smach.StateMachine.add(
-                states.PushItem.name,
-                states.PushItem(**services),
-                transitions={
-                    outcomes.PUSH_ITEM_SUCCESS: states.MoveToBin.name,
-                    outcomes.PUSH_ITEM_FAILURE: states.MoveToBin.name,
-                },
-            )
-        return sm
-
-    def build_sm_for_drop_off_item(self, **services):
-        sm = smach.StateMachine(outcomes=[
-            outcomes.CHALLENGE_SUCCESS,
-            outcomes.CHALLENGE_FAILURE
-        ])
-        with sm:
-            smach.StateMachine.add(
-                states.StartPose.name,
-                states.StartPose(**services),
-                transitions={
-                    outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    outcomes.START_POSE_FAILURE: outcomes.CHALLENGE_FAILURE
-                }
-            )
-            smach.StateMachine.add(
-                states.FindShelf.name,
-                states.FindShelf(**services),
-                transitions={
-                    outcomes.FIND_SHELF_SUCCESS: states.DropOffItem.name,
-                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
-                }
-            )
-            smach.StateMachine.add(
-                states.DropOffItem.name,
-                states.DropOffItem(**services),
-                transitions={
-                    outcomes.DROP_OFF_ITEM_SUCCESS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.DROP_OFF_ITEM_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'bin_id': 'current_bin',
-                    'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data',
-                }
-            )
-        return sm
-
     def build_sm_for_grasp_tool(self, **services):
         ''' Test state machine for grasping tool '''
         sm = smach.StateMachine(outcomes=[
@@ -276,165 +126,6 @@ class StateMachineBuilder(object):
                 },
             )
         return sm
-
-    def build_sm_for_item_descriptor_capture(self, **services):
-        '''State machine for calling CaptureItemDescriptor.
-        '''
-        sm = smach.StateMachine(outcomes=[
-            outcomes.CHALLENGE_SUCCESS,
-            outcomes.CHALLENGE_FAILURE
-        ])
-
-        mock_update_plan = states.UpdatePlan(**services)
-        mock_update_plan.execute = self.mock_update_plan_execute
-
-        with sm:
-            smach.StateMachine.add(
-                states.StartPose.name,
-                states.StartPose(**services),
-                transitions={
-                    outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    outcomes.START_POSE_FAILURE: states.FindShelf.name
-                },
-                remapping={
-                    'start_pose': 'start_pose'
-                }
-            )
-            smach.StateMachine.add(
-                states.FindShelf.name,
-                states.FindShelf(**services),
-                transitions={
-                    outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
-                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'debug': 'debug',
-                    'bin_id': 'current_bin'
-                }
-            )
-            smach.StateMachine.add(
-                states.UpdatePlan.name,
-                mock_update_plan,
-                transitions={
-                    outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
-                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
-                    outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data',
-                    'next_bin': 'current_bin',
-                    'next_target' : 'current_target',
-                    'next_bin_items': 'current_bin_items'
-                }
-            )
-            smach.StateMachine.add(
-                states.MoveToBin.name,
-                states.MoveToBin(**services),
-                transitions={
-                    outcomes.MOVE_TO_BIN_SUCCESS: states.CaptureItemDescriptor.name,
-                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'bin_id': 'current_bin'
-                }
-            )
-            smach.StateMachine.add(
-                states.CaptureItemDescriptor.name,
-                states.CaptureItemDescriptor(**services),
-                transitions={
-                    outcomes.CAPTURE_ITEM_NEXT: states.CaptureItemDescriptor.name,
-                    outcomes.CAPTURE_ITEM_DONE: states.StartPose.name
-                },
-                remapping={
-                    'bin_id': 'current_bin',
-                    'clusters': 'clusters'
-                }
-            )
-
-        return sm
-
-    def build_sm_for_gather_data(self, **services):
-        '''State machine for calling GatherData.
-        '''
-        sm = smach.StateMachine(outcomes=[
-            outcomes.CHALLENGE_SUCCESS,
-            outcomes.CHALLENGE_FAILURE
-        ])
-
-        mock_update_plan = states.UpdatePlan(**services)
-        mock_update_plan.execute = self.mock_update_plan_execute
-
-        with sm:
-            smach.StateMachine.add(
-                states.StartPose.name,
-                states.StartPose(**services),
-                transitions={
-                    outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    outcomes.START_POSE_FAILURE: states.FindShelf.name
-                },
-                remapping={
-                    'start_pose': 'start_pose'
-                }
-            )
-            smach.StateMachine.add(
-                states.FindShelf.name,
-                states.FindShelf(**services),
-                transitions={
-                    outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
-                    outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'debug': 'debug',
-                    'bin_id': 'current_bin'
-                }
-            )
-            smach.StateMachine.add(
-                states.UpdatePlan.name,
-                mock_update_plan,
-                transitions={
-                    outcomes.UPDATE_PLAN_NEXT_OBJECT: states.MoveToBin.name,
-                    outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
-                    outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.UPDATE_PLAN_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data',
-                    'next_bin': 'current_bin',
-                    'next_target' : 'current_target',
-                    'next_bin_items': 'current_bin_items'
-                }
-            )
-            smach.StateMachine.add(
-                states.MoveToBin.name,
-                states.MoveToBin(**services),
-                transitions={
-                    outcomes.MOVE_TO_BIN_SUCCESS: states.GatherData.name,
-                    outcomes.MOVE_TO_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
-                },
-                remapping={
-                    'bin_id': 'current_bin'
-                }
-            )
-            smach.StateMachine.add(
-                states.GatherData.name,
-                states.GatherData(**services),
-                transitions={
-                    outcomes.GATHER_DATA_NEXT: states.GatherData.name,
-                    outcomes.GATHER_DATA_DONE: states.StartPose.name
-                },
-                remapping={
-                    'bin_id': 'current_bin',
-                    'current_target': 'current_target',
-                    'current_bin_items': 'current_bin_items',
-                    'clusters': 'clusters'
-                }
-            )
-
-        return sm
-
 
     def build_sm(self, **services):
         '''Builds the main state machine.
@@ -642,18 +333,7 @@ class StateMachineBuilder(object):
                     'next_bin_items': 'current_bin_items'
                 }
             )
-	
-          #  smach.StateMachine.add(
-          #      states.MoveToBin.name,
-          #      states.MoveToBin(**services),
-          #      transitions={
-          #          outcomes.MOVE_TO_BIN_SUCCESS: states.SenseBin.name,
-          #          outcomes.MOVE_TO_BIN_FAILURE: states.UpdatePlan.name
-          #      },
-          #      remapping={
-          #          'bin_id': 'current_bin'
-          #      }
-          #  )
+
             smach.StateMachine.add(
                 states.SenseBin.name,
                 states.SenseBin(**services),

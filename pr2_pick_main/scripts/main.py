@@ -13,32 +13,19 @@ import smach_ros
 from state_machine_factory import StateMachineBuilder
 import states
 
-def main(test_drop_off_item=False,
-         plan_grasp = False,
+def main(plan_grasp = False,
          test_grasp_tool=False,
-         test_move_to_bin=False,
-         test_push_item=False,
-         capture_item_descriptor=False,
-         gather_data=False,
          debug=False,
          auto_reset=True,
          attempts_per_bin=2):
     rospy.init_node('pr2_pick_state_machine')
 
-    if test_drop_off_item:
-        state_machine_type = StateMachineBuilder.TEST_DROP_OFF_ITEM
-    elif test_grasp_tool:
+    if test_grasp_tool:
         state_machine_type = StateMachineBuilder.TEST_GRASP_TOOL
-    elif test_move_to_bin:
-        state_machine_type = StateMachineBuilder.TEST_MOVE_TO_BIN
-    elif capture_item_descriptor:
-        state_machine_type = StateMachineBuilder.CAPTURE_ITEM_DESCRIPTOR
-    elif gather_data:
-        state_machine_type = StateMachineBuilder.GATHER_DATA
     elif plan_grasp:
         state_machine_type = StateMachineBuilder.PLAN_GRASP
     else:
-        state_machine_type = StateMachineBuilder.DEFAULT
+        state_machine_type = StateMachineBuilder.PLAN_GRASP
 
     sm = (StateMachineBuilder()
           .set_state_machine(state_machine_type).build())
@@ -120,26 +107,6 @@ if __name__ == '__main__':
         action='store_true',
         help=('True to create a minimal state machine for testing the'
               'GraspTool state.'))
-    group.add_argument(
-        '--test_move_to_bin',
-        action='store_true',
-        help=('True to create a minimal state machine for testing the'
-              'MoveToBin state.'))
-    group.add_argument(
-        '--test_push_item',
-        action='store_true',
-        help=('True to create a minimal state machine for testing the'
-              'PushItem state.'))
-    group.add_argument(
-        '--capture_item_descriptor',
-        action='store_true',
-        help=('True to create a minimal state machine for capturing item '
-              'descriptors.'))
-    group.add_argument(
-        '--gather_data',
-        action='store_true',
-        help=('True to create a minimal state machine for gathering data.'))
-
     parser.add_argument(
         '--debug',
         action='store_true',
