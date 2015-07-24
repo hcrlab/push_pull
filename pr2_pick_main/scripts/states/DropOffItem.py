@@ -123,7 +123,7 @@ class DropOffItem(smach.State):
         #rospy.loginfo(arm_into_bin_success)
 
         # open gripper
-	    raw_input("Release item")
+        raw_input("Release item")
         rospy.loginfo('Open gripper')
         self._set_grippers.wait_for_service()
         open_gripper_success = self._set_grippers(False, True, -1)

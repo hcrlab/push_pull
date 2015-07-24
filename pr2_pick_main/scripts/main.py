@@ -134,7 +134,5 @@ if __name__ == '__main__':
         rospy.logwarn('Warning: use_sim_time was set to true. Setting back to '
                       'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
-    main(args.test_drop_off_item, args.plan_grasp, args.test_grasp_tool,
-         args.test_move_to_bin, args.test_push_item,
-         args.capture_item_descriptor, args.gather_data, args.debug, args.auto_reset,
+    main(args.plan_grasp, args.test_grasp_tool,args.debug, args.auto_reset,
          args.attempts_per_bin)

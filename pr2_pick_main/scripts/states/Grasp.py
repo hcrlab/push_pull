@@ -3,7 +3,6 @@ from control_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from copy import deepcopy
 import datetime
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion, TransformStamped, Point, PointStamped
-from joblib import Parallel, delayed 
 import json
 import math
 import moveit_commander
