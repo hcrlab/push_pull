@@ -1,23 +1,46 @@
-"""Visualization utilties for the state machine.
-"""
+'''Visualization utilties for the state machine.
+'''
 
 from __future__ import division
 
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Quaternion
-from visualization_msgs.msg import Marker
-from visualization_msgs.msg import InteractiveMarker
-from visualization_msgs.msg import InteractiveMarkerControl
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from std_msgs.msg import Header
+from visualization_msgs.msg import InteractiveMarker, InteractiveMarkerControl, \
+    Marker
 import math
 import random
 import rospy
 import tf
-import rosbag
-import datetime 
+
+
+class IdTable(object):
+    '''
+    Manage unique ids for objects markers. This way, callers don't have
+    to worry about picking a unique integer for their object id. They
+    can identify it with a string instead, which is less likely to collide.
+    '''
+    marker_ids = {}
+    idx = 10000
+
+    @staticmethod
+    def get_id(string):
+        if string not in IdTable.marker_ids:
+            IdTable.marker_ids[string] = IdTable.idx
+            IdTable.idx += 1
+        return IdTable.marker_ids[string]
+
+
+class MarkerNamespaces(object):
+    ''' No global variables '''
+    shelf = 'shelf'
+    order_bin = 'order_bin'
+    target_location = 'target_location'
+    bounding_box = 'bounding_box'
+    pose = 'pose'
+
 
 def publish_shelf(publisher, pose_stamped):
-    """Publishes a shelf marker at a given pose.
+    '''Publishes a shelf marker at a given pose.
 
     The pose is assumed to represent the bottom center of the shelf, with the
     +x direction pointing along the depth axis of the bins and +z pointing up.
@@ -26,37 +49,41 @@ def publish_shelf(publisher, pose_stamped):
       publisher: A visualization_msgs/Marker publisher
       pose_stamped: A PoseStamped message with the location, orientation, and
         reference frame of the shelf.
-    """
+    '''
     marker = Marker()
     marker.header.frame_id = pose_stamped.header.frame_id
     marker.header.stamp = rospy.Time().now()
-    marker.ns = 'shelf'
+    marker.ns = MarkerNamespaces.shelf
     marker.id = 0
     marker.type = Marker.MESH_RESOURCE
     marker.mesh_resource = 'package://pr2_pick_perception/models/shelf/shelf.ply'
     marker.mesh_use_embedded_materials = True
     marker.action = Marker.ADD
     marker.pose = pose_stamped.pose
+    marker.color.a = 0.5
+    marker.color.r = 0.5
+    marker.color.g = 0.5
+    marker.color.b = 0.5
     marker.scale.x = 1
     marker.scale.y = 1
     marker.scale.z = 1
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker, "shelf")
+    _publish(publisher, marker)
 
 
 def publish_order_bin(publisher):
-    """Publishes the order bin marker based on tf.
+    '''Publishes the order bin marker based on tf.
 
     The pose is assumed to represent the bottom center of the order bin, with the
     +x direction pointing along the long axis of the bin and +z pointing up.
 
     Args:
       publisher: A visualization_msgs/Marker publisher
-    """
+    '''
     marker = Marker()
     marker.header.frame_id = 'order_bin'
     marker.header.stamp = rospy.Time().now()
-    marker.ns = 'order_bin'
+    marker.ns = MarkerNamespaces.order_bin
     marker.id = 0
     marker.type = Marker.CUBE
     marker.action = Marker.ADD
@@ -67,11 +94,11 @@ def publish_order_bin(publisher):
     marker.scale.z = 8 * 0.0254
     marker.pose.orientation.w = 1
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker, "order_bin")
+    _publish(publisher, marker)
 
 
 def publish_base(publisher, pose_stamped):
-    """Publishes a marker representing the robot's navigation goal.
+    '''Publishes a marker representing the robot's navigation goal.
     The x and y arguments specify the center of the target.
 
     Args:
@@ -81,11 +108,11 @@ def publish_base(publisher, pose_stamped):
       frame_id: The coordinate frame in which to interpret the target position.
         It's assumed that the frame's +z axis is in the same direction as
         base_footprint's +z axis.
-    """
+    '''
     marker = Marker()
     marker.header.frame_id = pose_stamped.header.frame_id
     marker.header.stamp = rospy.Time().now()
-    marker.ns = 'target_location'
+    marker.ns = MarkerNamespaces.target_location
     marker.id = 0
     marker.type = Marker.CUBE
     marker.action = Marker.ADD
@@ -101,11 +128,11 @@ def publish_base(publisher, pose_stamped):
     marker.color.b = 0
     marker.color.a = 1
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker, "base")
+    _publish(publisher, marker)
 
 
 def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
-    """Publishes a marker representing a cluster.
+    '''Publishes a marker representing a cluster.
     The x and y arguments specify the center of the target.
 
     Args:
@@ -114,7 +141,7 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
       frame_id: The coordinate frame in which to interpret the points.
       namespace: string, a unique name for a group of clusters.
       cluster_id: int, a unique number for this cluster in the given namespace.
-    """
+    '''
     marker = Marker()
     # TODO(jstn): Once the point clouds have the correct frame_id,
     # use them here.
@@ -160,26 +187,25 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     text_marker.text = '{}'.format(cluster_id)
     text_marker.lifetime = rospy.Duration()
 
-    _publish(publisher, marker, "cluster")
-    _publish(publisher, text_marker, "text_marker")
-    return marker
+    _publish(publisher, marker)
+    _publish(publisher, text_marker)
 
 
 def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
                          marker_id):
-    """Publishes a marker representing a bounding box.
+    '''Publishes a marker representing a bounding box.
 
     Args:
       publisher: A visualization_msgs/Marker publisher
       pose_stamped: pose of marker
       x, y, z: dimensions of bounding box
       r, g, b, a: colour information for marker
-      marker_id: id # for marker 
-    """
+      marker_id: id # for marker
+    '''
     marker = Marker()
     marker.header.frame_id = pose_stamped.header.frame_id
     marker.header.stamp = rospy.Time().now()
-    marker.ns = 'bounding_box'
+    marker.ns = MarkerNamespaces.bounding_box
     marker.id = marker_id
     marker.type = Marker.CUBE
     marker.action = Marker.ADD
@@ -193,11 +219,33 @@ def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
     marker.color.b = b
     marker.color.a = a
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker, "bounding_box")
-    return marker
-    
+    _publish(publisher, marker)
+
+def delete_bounding_box(publisher, marker_id):
+    marker = Marker()
+    marker.ns = MarkerNamespaces.bounding_box
+    marker.action = Marker.DELETE
+    marker.id = marker_id
+    _delete(publisher, marker)
+
+
+def publish_point(publisher, frame_id, point, r, g, b, a, marker_id):
+    ''' Publish a 1 cm cube at the specified point '''
+    pose = PoseStamped(
+        header=Header(
+            stamp=rospy.Time(0),
+            frame_id=frame_id,
+        ),
+        pose=Pose(
+            position=Point(x=point.x, y=point.y, z=point.z),
+            orientation=Quaternion(0.0, 0, 0, 0),
+        ),
+    )
+    publish_bounding_box(publisher, pose, 0.01, 0.01, 0.01, r, g, b, a, marker_id)
+
+
 def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
-    """Publishes a marker representing a bounding box.
+    '''Publishes a marker representing a bounding box.
 
     Args:
       publisher: A visualization_msgs/Marker publisher
@@ -205,11 +253,11 @@ def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
       x, y, z: dimensions of bounding box
       r, g, b, a: colour information for marker
       marker_id: id # for marker 
-    """
+    '''
     marker = Marker()
     marker.header.frame_id = pose_stamped.header.frame_id
     marker.header.stamp = rospy.Time().now()
-    marker.ns = 'pose'
+    marker.ns = MarkerNamespaces.pose
     marker.id = marker_id
     marker.type = Marker.ARROW
     marker.action = Marker.ADD
@@ -222,17 +270,17 @@ def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
     marker.color.b = b
     marker.color.a = a
     marker.lifetime = rospy.Duration()
-    _publish(publisher, marker, "pose")
+    _publish(publisher, marker)
 
 
 def _get_pose_from_transform(transform):
-    """Returns pose for transformation matrix.
+    '''Returns pose for transformation matrix.
     Args:
         transform (Matrix3x3): (I think this is the correct type.
             See ActionStepMarker as a reference for how to use.)
     Returns:
         Pose
-    """
+    '''
     pos = transform[:3, 3].copy()
     rot = tf.transformations.quaternion_from_matrix(transform)
     return Pose(Point(pos[0], pos[1], pos[2]),
@@ -240,7 +288,7 @@ def _get_pose_from_transform(transform):
 
 
 def publish_gripper(server, pose_stamped, name):
-    """Publishes a marker representing a gripper.
+    '''Publishes a marker representing a gripper.
 
     Code taken from action_step_marker.py in PR2/PbD.
 
@@ -248,7 +296,7 @@ def publish_gripper(server, pose_stamped, name):
       server: An InteractiveMarkerServer
       pose_stamped: A PoseStamped giving the wrist_roll_link pose.
       name: string, a unique name for this gripper.
-    """
+    '''
     # Set angle of meshes based on gripper open vs closed.
     angle = 28 * math.pi / 180.0  # Fully open.
     STR_MESH_GRIPPER_FOLDER = 'package://pr2_description/meshes/gripper_v0/'
@@ -345,18 +393,56 @@ def publish_gripper(server, pose_stamped, name):
     server.applyChanges()
 
 
-def _publish(publisher, marker, marker_type):
-    """Publishes a marker to the given publisher.
+def _publish(publisher, marker):
+    '''Publishes a marker to the given publisher.
 
     We need to wait for rviz to subscribe. If there are no subscribers to the
     topic within 5 seconds, we give up.
-    """
+    '''
+    # Figure out which of the two kinds of publishers we are using
+    # 'interactive_marker_server': InteractiveMarkerServer('pr2_pick_interactive_markers'),
+    # 'markers': rospy.Publisher('pr2_pick_visualization', Marker),
 
-    rate = rospy.Rate(1)
-    for i in range(5):
-        if publisher.get_num_connections() > 0:
-            publisher.publish(marker)
-            return
-        rate.sleep()
-    rospy.logwarn(
-        'No subscribers to the marker publisher, did not publish marker.')
+    if type(publisher) == rospy.topics.Publisher:
+        rate = rospy.Rate(1)
+        for i in range(5):
+            if publisher.get_num_connections() > 0:
+                publisher.publish(marker)
+                return
+            rate.sleep()
+        rospy.logwarn(
+            'No subscribers to the marker publisher, did not publish marker.')
+    else:
+        # stuff the marker into an interactive marker
+        control = InteractiveMarkerControl()
+        control.markers = [marker]
+        control.orientation_mode = InteractiveMarkerControl.INHERIT
+        control.interaction_mode = InteractiveMarkerControl.MOVE_ROTATE_3D
+        interactive_marker = InteractiveMarker()
+        interactive_marker.controls = [control]
+        interactive_marker.header.frame_id = marker.header.frame_id
+        interactive_marker.pose = marker.pose
+        interactive_marker.name = '{}_{}'.format(marker.ns, marker.id)
+
+        publisher.insert(interactive_marker)
+        publisher.applyChanges()
+
+        rospy.loginfo('Created interactive marker named {}'.format(
+                interactive_marker.name))
+
+def _delete(publisher, marker):
+    if type(publisher) == rospy.topics.Publisher:
+        rospy.logwarn('Deletion not implemented for non-interactive markers')
+    else:
+        interactive_marker = InteractiveMarker()
+        interactive_marker.header.frame_id = marker.header.frame_id
+        interactive_marker.name = '{}_{}'.format(marker.ns, marker.id)
+        # because of a bug in interactive markers, only markers in the pending
+        # queue can be erased, so we call insert here to queue it
+        # https://github.com/ros-visualization/rviz/issues/446
+        publisher.insert(interactive_marker)  # do not delete this line
+        publisher.erase(interactive_marker)
+        publisher.applyChanges()
+
+        rospy.loginfo('Erased interactive marker named {}'.format(
+                interactive_marker.name))

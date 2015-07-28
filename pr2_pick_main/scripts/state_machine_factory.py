@@ -18,10 +18,11 @@ from pr2_pick_perception.srv import CountPointsInBox
 from pr2_pick_perception.srv import SegmentItems
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
-from pr2_pretouch_optical_dist.srv import OpticalRefine
 import states
 from states.GraspTool import GraspTool, ReleaseTool
+from states.Simulation import Simulation
 from convert_pcl.srv import ConvertPCL
+from moveit_msgs.srv import GetPlanningScene, GetPositionFK, GetPositionIK
 
 class StateMachineBuilder(object):
 
@@ -29,6 +30,7 @@ class StateMachineBuilder(object):
     TEST_GRASP_TOOL = 'test-grasp-tool'
     PLAN_GRASP = 'plan-grasp'
     DEFAULT = 'default'
+    SIMULATION = 'simulation'
 
     def __init__(self):
         self.state_machine_identifier = StateMachineBuilder.DEFAULT
@@ -47,6 +49,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_grasp_tool
         elif self.state_machine_identifier == StateMachineBuilder.PLAN_GRASP:
             build = self.build_sm_grasp_planner
+        elif self.state_machine_identifier == StateMachineBuilder.SIMULATION:
+            build = self.build_sm_for_simulation
         else:
             build = self.build_sm
 
@@ -55,6 +59,7 @@ class StateMachineBuilder(object):
     def real_robot_services(self):
         return {
             # Speech
+
             'tts': rospy.Publisher('/festival_tts', String),
 
             # Manipulation
@@ -70,6 +75,8 @@ class StateMachineBuilder(object):
             'tuck_arms': rospy.ServiceProxy('tuck_arms_service', TuckArms),
             'joint_states_listener': rospy.ServiceProxy('return_joint_states', ReturnJointStates),
             'attached_collision_objects': rospy.Publisher('/attached_collision_object', AttachedCollisionObject),
+            'ik_client': rospy.ServiceProxy('compute_ik', GetPositionIK),
+
 
             # World and Perception
             'crop_shelf': rospy.ServiceProxy('perception/shelf_cropper', CropShelf),
@@ -92,7 +99,6 @@ class StateMachineBuilder(object):
                                                        ClassifyTargetItem),
             'count_points_in_box': rospy.ServiceProxy('perception/count_points_in_box',
                                                        CountPointsInBox),
-            'optical_detect_item': rospy.ServiceProxy('optical_detect_item', OpticalRefine),
 
             # Contest
             'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
@@ -104,6 +110,7 @@ class StateMachineBuilder(object):
 
     def build_sm_for_grasp_tool(self, **services):
         ''' Test state machine for grasping tool '''
+        rospy.loginfo("\n in state machine! \n")
         sm = smach.StateMachine(outcomes=[
             outcomes.CHALLENGE_SUCCESS,
             outcomes.CHALLENGE_FAILURE
@@ -113,18 +120,11 @@ class StateMachineBuilder(object):
                 GraspTool.name,
                 GraspTool(**services),
                 transitions={
-                    outcomes.GRASP_TOOL_SUCCESS: ReleaseTool.name,
+                    outcomes.GRASP_TOOL_SUCCESS: outcomes.CHALLENGE_SUCCESS,
                     outcomes.GRASP_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
-                },
+                }
             )
-            smach.StateMachine.add(
-                ReleaseTool.name,
-                ReleaseTool(**services),
-                transitions={
-                    outcomes.RELEASE_TOOL_SUCCESS: outcomes.CHALLENGE_SUCCESS,
-                    outcomes.RELEASE_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
-                },
-            )
+
         return sm
 
     def build_sm(self, **services):
@@ -395,3 +395,46 @@ class StateMachineBuilder(object):
                 }
             )
         return sm
+
+
+    def build_sm_for_simulation(self, **services):
+            ''' Test state machine for simulation '''
+
+            sm = smach.StateMachine(outcomes=[
+                outcomes.CHALLENGE_SUCCESS,
+                outcomes.CHALLENGE_FAILURE
+            ])
+
+            with sm:
+                
+                smach.StateMachine.add(
+                    GraspTool.name,
+                    GraspTool(**services),
+                    transitions={
+                        outcomes.GRASP_TOOL_SUCCESS: states.FindShelf.name,
+                        outcomes.GRASP_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
+                    }
+                )
+                smach.StateMachine.add(
+                    states.FindShelf.name,
+                    states.FindShelf(**services),
+                    transitions={
+                        outcomes.FIND_SHELF_SUCCESS: states.Simulation.name,
+                        outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+                    },
+                    remapping={
+                        'debug': 'debug',
+                        'bin_id': 'current_bin'
+                    }
+                )
+
+                smach.StateMachine.add(
+                    Simulation.name,
+                    Simulation(**services),
+                    transitions={
+                        outcomes.SIMULATION_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                        outcomes.SIMULATION_FAILURE: outcomes.CHALLENGE_FAILURE,
+                    }
+                )
+
+            return sm

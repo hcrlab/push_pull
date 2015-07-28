@@ -78,8 +78,8 @@ class StartPose(smach.State):
 	#self._move_torso.wait_for_service()
     #    rospy.loginfo("TESTE2")
 	#self._move_torso(0.058899518946705996, True)
-        self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+        #self._tuck_arms.wait_for_service()
+        #tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
         rospy.loginfo("TESTE1")
         tuck_success = True
         if not tuck_success:

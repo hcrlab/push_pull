@@ -13,23 +13,31 @@ import smach_ros
 from state_machine_factory import StateMachineBuilder
 import states
 
-def main(plan_grasp = False,
+def main(simulation = False,
+         plan_grasp = False,
          test_grasp_tool=False,
          debug=False,
          auto_reset=True,
          attempts_per_bin=2):
-    rospy.init_node('pr2_pick_state_machine')
 
+    rospy.init_node('pr2_pick_state_machine')
+    rospy.loginfo("plan_grasp: ")
+    rospy.loginfo(plan_grasp)
+    rospy.loginfo("grasp tool: ")
+    rospy.loginfo(test_grasp_tool)
+    
     if test_grasp_tool:
         state_machine_type = StateMachineBuilder.TEST_GRASP_TOOL
     elif plan_grasp:
         state_machine_type = StateMachineBuilder.PLAN_GRASP
+    elif simulation:
+        state_machine_type = StateMachineBuilder.SIMULATION
     else:
         state_machine_type = StateMachineBuilder.PLAN_GRASP
 
     sm = (StateMachineBuilder()
           .set_state_machine(state_machine_type).build())
-
+    rospy.loginfo("TESTE5")
     # Whether to step through checkpoints.
     sm.userdata.debug = debug
 
@@ -53,20 +61,21 @@ def main(plan_grasp = False,
     sm.userdata.clusters = []
 
     def on_shutdown():
-        if sm.userdata is not None:
-            try:
-                drive_to_pose = rospy.ServiceProxy('drive_to_pose_service',
-                                                   DriveToPose)
-                drive_to_pose(pose=sm.userdata.start_pose,
-                              linearVelocity=0.1,
-                              angularVelocity=0.1)
-                set_grippers = rospy.ServiceProxy('set_grippers_service',
-                                                  SetGrippers)
-                set_grippers.wait_for_service()
-                set_grippers(True, True, -1)
+        return 
+        # if sm.userdata is not None:
+        #     try:
+        #         #drive_to_pose = rospy.ServiceProxy('drive_to_pose_service',
+        #         #                                   DriveToPose)
+        #         #drive_to_pose(pose=sm.userdata.start_pose,
+        #         #              linearVelocity=0.1,
+        #         #              angularVelocity=0.1)
+        #         #set_grippers = rospy.ServiceProxy('set_grippers_service',
+        #         #                                  SetGrippers)
+        #         #set_grippers.wait_for_service()
+        #         #set_grippers(True, True, -1)
 
-            except:
-                pass
+        #     except:
+        #         pass
 
     if auto_reset:
         rospy.on_shutdown(on_shutdown)
@@ -95,6 +104,7 @@ def main(plan_grasp = False,
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -127,12 +137,18 @@ if __name__ == '__main__':
         '--plan_grasp',
         action='store_true',
         help=('True to test grasp planning.'))
+    group.add_argument(
+        '--simulation',
+        action='store_true',
+        help=('True to test simulation.'))
 
     args = parser.parse_args(args=rospy.myargv()[1:])
     sim_time = rospy.get_param('use_sim_time', False)
+
     if sim_time != False:
         rospy.logwarn('Warning: use_sim_time was set to true. Setting back to '
                       'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
-    main(args.plan_grasp, args.test_grasp_tool,args.debug, args.auto_reset,
+
+    main(args.simulation, args.plan_grasp, args.test_grasp_tool,args.debug, args.auto_reset,
          args.attempts_per_bin)

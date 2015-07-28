@@ -87,6 +87,7 @@ class GraspOrReleaseTool(smach.State):
         ]
     ]
     def __init__(self, **services):
+        rospy.loginfo("\nIn Grasping tool.\n")
         smach.State.__init__(
             self,
             outcomes=[
@@ -105,8 +106,8 @@ class GraspOrReleaseTool(smach.State):
         self._tuck_arms = services['tuck_arms']
 
         # wait for marker server
-        while self._markers.get_num_connections() == 0:
-            rospy.Rate(1).sleep()
+        #while self._markers.get_num_connections() == 0:
+        #    rospy.Rate(1).sleep()
 
         self.arm = SimpleActionClient(
             '{}_arm_controller/joint_trajectory_action'.format(self.arm_side),
@@ -168,12 +169,15 @@ class GraspOrReleaseTool(smach.State):
 
         pose_stamped = PoseStamped(header=collision_object.header, pose=box_pose)
 
-        viz.publish_bounding_box(
-            self._interactive_markers, pose_stamped,
-            self.tool_x_size, self.tool_y_size, self.tool_z_size,
-            0.5, 0.2, 0.1, 0.9,
-            viz.IdTable.get_id(self.tool_name),
-        )
+        rospy.loginfo("Publishing tool")
+        for i in range(5):
+
+            viz.publish_bounding_box(
+                self._interactive_markers, pose_stamped,
+                self.tool_x_size, self.tool_y_size, self.tool_z_size,
+                0.5, 0.2, 0.1, 0.9,
+                2,
+            )
 
     def remove_tool_collision_object(self):
         ''' To remove the collision object once we set down the tool '''
@@ -225,16 +229,17 @@ class GraspTool(GraspOrReleaseTool):
 
     @handle_service_exceptions(outcomes.GRASP_TOOL_FAILURE)
     def execute(self, userdata):
-        self._tuck_arms(False, False)  # untuck arms
+        rospy.loginfo("Grasping tool.")
+        #self._tuck_arms(False, False)  # untuck arms
         self._tts.publish('Grasping tool')
-        self._set_grippers(True, True, -1)  # open grippers
+        #self._set_grippers(True, True, -1)  # open grippers
         if userdata.debug:
             raw_input('(Debug) Press enter to continue:')
 
         #self.back_up(userdata)
 
         self.execute_trajectory(self.pre_grasp_waypoints, userdata.debug)
-        self._set_grippers(False, False, -1)  # close both grippers
+        #self._set_grippers(False, False, -1)  # close both grippers
         self.add_tool_collision_object()
         self.execute_trajectory(self.post_grasp_waypoints, userdata.debug)
         return self.success_value

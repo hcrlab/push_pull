@@ -48,3 +48,6 @@ GATHER_DATA_DONE = 'done'
 GRASP_PLAN_SUCCESS = 'success'
 GRASP_PLAN_NONE = 'no_grasps'
 GRASP_PLAN_FAILURE = 'failure'
+
+SIMULATION_SUCCESS = 'success'
+SIMULATION_FAILURE = 'failure'

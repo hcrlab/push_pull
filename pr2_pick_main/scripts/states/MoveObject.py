@@ -6,6 +6,7 @@ import tf
 from visualization_msgs.msg import Marker
 import outcomes
 from pr2_pick_main import handle_service_exceptions
+from PushAway import PushAway
 
 class MoveObject(smach.State):
 	''' Repositions an item with a tool. '''
@@ -85,7 +86,7 @@ class MoveObject(smach.State):
 		return yaw
 
 
-	def get_box_ends(self, item_descriptor):
+	def get_box_ends(self, bouding_box):
 		'''
 		Get the corners of the bounding box from the given descriptor.
 		return list of corners

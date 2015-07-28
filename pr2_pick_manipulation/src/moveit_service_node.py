@@ -103,6 +103,7 @@ class ArmMover:
         traj_action = None
         arm_prefix = ''
         robot_joint_names = []
+        rospy.loginfo("Move arm ik started")
         if request.arm == MoveArmIkRequest.LEFT_ARM:
             group = self._left_group
             group_name = 'left_arm'
@@ -147,7 +148,9 @@ class ArmMover:
                                  time_from_start=duration)
         ]
         traj_action.send_goal(goal)
+        rospy.loginfo("5")
         traj_action.wait_for_result()
+        rospy.loginfo("6")
 
         success = True
         return MoveArmIkResponse(success)
