@@ -231,17 +231,18 @@ class GraspTool(GraspOrReleaseTool):
     def execute(self, userdata):
         rospy.loginfo("Grasping tool.")
         #self._tuck_arms(False, False)  # untuck arms
-        self._tts.publish('Grasping tool')
+        #self._tts.publish('Grasping tool')
         #self._set_grippers(True, True, -1)  # open grippers
         if userdata.debug:
             raw_input('(Debug) Press enter to continue:')
 
         #self.back_up(userdata)
 
-        self.execute_trajectory(self.pre_grasp_waypoints, userdata.debug)
+        #self.execute_trajectory(self.pre_grasp_waypoints, userdata.debug)
+        #self.execute_trajectory(self.post_grasp_waypoints, userdata.debug)
         #self._set_grippers(False, False, -1)  # close both grippers
         self.add_tool_collision_object()
-        self.execute_trajectory(self.post_grasp_waypoints, userdata.debug)
+        #self.execute_trajectory(self.post_grasp_waypoints, userdata.debug)
         return self.success_value
 
 

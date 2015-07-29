@@ -14,6 +14,8 @@ from visualization import IdTable
 from std_msgs.msg import Header
 from PushAway import PushAway
 from PullForward import PullForward
+from PushSideways import PushSideways
+from TopSideways import TopSideways
 
 class Simulation(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
@@ -194,10 +196,6 @@ class Simulation(smach.State):
 
         bag = rosbag.Bag('bagfiles/notes_pose1.bag')
         for topic, msg, t in bag.read_messages(topics=['record']):
-            print msg.is_graspable
-            rospy.loginfo("Publishing marker!")
-            #msg.marker_pointcloud.header.frame_id = 'odom_combined'
-            #msg.marker_boundingbox.header.frame_id = 'odom_combined'
             msg.marker_boundingbox.header.stamp = rospy.Time().now()
             msg.marker_pointcloud.header.stamp = rospy.Time().now()
             self._publish(msg.marker_pointcloud)
@@ -217,38 +215,138 @@ class Simulation(smach.State):
         # position at which tip of tool makes contact with object, in cluster frame
         self.application_point = Point(0, 0, 0)
 
-        tool_action = raw_input("enter the number of the tool action:")
 
-        if(tool_action == 1):
-            target_end = ends[0]
-            self.application_point.x = (centroid.x + target_end.x) / 2.0
-            self.application_point.y = (centroid.y + target_end.y) / 2.0
+        while(True):
+            
+            tool_action = raw_input("enter the number of the tool action:")
 
-            self.application_point.z = 0.09
+            # Front side push
+            if(tool_action == '1'):
 
-            application_point = PointStamped(
-                header=Header(frame_id=frame),
-                point=self.application_point,
-            )
+                self.application_point.x = (centroid.x + target_end.x) / 2.0
+                self.application_point.y = (centroid.y + target_end.y) / 2.0
 
-            action = PushAway(
-                bounding_box,
-                application_point,
-                userdata,
-                **self.services
-            )
+                self.application_point.z = 0.09
 
-            success = action.execute()
+                application_point = PointStamped(
+                    header=Header(frame_id=frame),
+                    point=self.application_point,
+                )
 
-        if(tool_action == 2):
-            self.application_point.x = centroid.x + 0.03
-            self.application_point.y = centroid.y
-            self.application_point.z = centroid.z + (bounding_box.dimensions.y / 2.0) \
-                - self.push_down_offset
-            action = PullForward(userdata.target_descriptor, self.application_point,
-                                 userdata.debug, **self.services)
+                action = PushAway(
+                    bounding_box,
+                    application_point,
+                    userdata,
+                    **self.services
+                )
+
+                success = action.execute()
+
+            # Front center push
+            if(tool_action == '2'):
+
+                target_end = ends[0]
+                self.application_point.x = centroid.x 
+                self.application_point.y = centroid.y 
+
+                self.application_point.z = 0.09
+
+                application_point = PointStamped(
+                    header=Header(frame_id=frame),
+                    point=self.application_point,
+                )
+
+                action = PushAway(
+                    bounding_box,
+                    application_point,
+                    userdata,
+                    **self.services
+                )
+
+                success = action.execute()
+
+            if(tool_action == '3'):
+                self.push_sideways_x_clearance = 0.01
+                self.push_sideways_y_clearance = 0.02
+                self.application_height = 0.09
+                idx = 2
+
+                front_corner = ends[idx - 2]
+                rear_corner = ends[idx]
+
+                push_direction_sign = 1.0
+                if rear_corner.y - centroid.y < 0:
+                    push_direction_sign = -1.0
+
+                rospy.loginfo('Pushing sideways')
+
+                # position at which tip of tool makes contact with object, in cluster frame
+                self.application_point = Point(0, 0, 0)
+
+                # Apply tool between target end and edge of bin
+                self.application_point.x = rear_corner.x + self.push_sideways_x_clearance
+                self.application_point.y = rear_corner.y + (push_direction_sign *
+                                                            self.push_sideways_y_clearance)
+                self.application_point.z = self.application_height
+                action = PushSideways(bounding_box, self.application_point,
+                                      userdata, **self.services)
+
+                success = action.execute()
+
+            if(tool_action == '4'):
+                self.push_sideways_x_clearance = 0.01
+                self.push_sideways_y_clearance = 0.02
+                self.application_height = 0.09
+                idx = 2
+
+                front_corner = ends[idx - 2]
+                rear_corner = ends[idx]
+
+                push_direction_sign = 1.0
+                if rear_corner.y - centroid.y < 0:
+                    push_direction_sign = -1.0
+
+                rospy.loginfo('Pushing sideways')
+
+                # position at which tip of tool makes contact with object, in cluster frame
+                self.application_point = Point(0, 0, 0)
+
+                # Apply tool between target end and edge of bin
+                self.application_point.x = centroid.x - 0.02
+                self.application_point.y = rear_corner.y + (push_direction_sign *
+                                                            self.push_sideways_y_clearance)
+                self.application_point.z = self.application_height
+                action = PushSideways(bounding_box, self.application_point,
+                                      userdata, **self.services)
+
+                success = action.execute()
+
+
+            if(tool_action == '5'):
+                self.push_down_offset = 0.02
+                self.application_point.x = centroid.x 
+                self.application_point.y = centroid.y
+                self.application_point.z = centroid.z + 0.05
+                action = PullForward(bounding_box, self.application_point,
+                                     userdata, **self.services)
+            
+                success = action.execute()
+
+            if(tool_action == '6'):
+
+                self.push_down_offset = 0.02
+                self.application_point.x = centroid.x 
+                self.application_point.y = centroid.y
+                self.application_point.z = centroid.z + 0.05
+                action = TopSideways(bounding_box, self.application_point,
+                                     userdata, **self.services)
+            
+                success = action.execute()
+
+            self.pre_position_tool()
+
+            if(tool_action == '-1'):
+                break
         
-            success = action.execute()
-        
-        
+
         return outcomes.SIMULATION_SUCCESS

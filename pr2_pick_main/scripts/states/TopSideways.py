@@ -5,7 +5,7 @@ import math
 from RepositionAction import RepositionAction
 from RepositionAction import MoveArmStep, MoveBaseStep, RepositionAction
 
-class PullForward(RepositionAction):
+class TopSideways(RepositionAction):
     '''
     Parent class for actions that push away on some point of the object.
     Child classes are parameterized by where on the object they're pushing.
@@ -58,7 +58,7 @@ class PullForward(RepositionAction):
             position=Point(
                 x=self.application_point.x - self.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z + pre_application_delta.z,
+                z=self.application_point.z,
             ),
             orientation=orientation,
         )
@@ -72,8 +72,8 @@ class PullForward(RepositionAction):
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length - 0.02,
-                y=self.application_point.y,
+                x=self.application_point.x - self.tool_length,
+                y=self.application_point.y - 0.025,
                 z=self.application_point.z,
             ),
             orientation=orientation,
@@ -82,7 +82,7 @@ class PullForward(RepositionAction):
             position=Point(
                 x=self.application_point.x + post_application_delta.x - self.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z + pre_application_delta.z,
+                z=self.application_point.z + 0.05,
             ),
             orientation=orientation,
         )
