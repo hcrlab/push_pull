@@ -36,8 +36,6 @@ class Simulation(smach.State):
             input_keys=['debug'])
 
         self._markers = services['markers']
-        for key in services.keys():
-            rospy.loginfo(key)
         self._tf_listener = tf.TransformListener()
         self.services = services
 
@@ -103,9 +101,6 @@ class Simulation(smach.State):
         while yaw <= -math.pi:
             yaw += 2 * math.pi
 
-        rospy.loginfo('Sanity check: yaw should be the only nonzero')
-        rospy.loginfo('roll {}, pitch {}, yaw {}'.format(roll, pitch, yaw))
-
         return yaw
 
 
@@ -118,12 +113,6 @@ class Simulation(smach.State):
            ends[2]: rear corner of first end
            ends[3]: rear corner of second end
         '''
- 
-        rospy.loginfo('Bounding box dimensions {} {} {}'
-                      .format(bounding_box.dimensions.x,
-                              bounding_box.dimensions.y,
-                              bounding_box.dimensions.z)
-                      )
 
         # First, figure out whether the y-axis points roughly along or opposite
         # the cluster's y-axis
@@ -168,12 +157,12 @@ class Simulation(smach.State):
             0.7, 0, 0, 0.25,
             IdTable.get_id('push_item_bounding_box')
         )
-        viz.publish_pose(
-            self._markers,
-            bounding_box.pose,
-            0, 0.7, 0, 0.5,
-            IdTable.get_id('push_item_object_pose')
-        )
+        # viz.publish_pose(
+        #     self._markers,
+        #     bounding_box.pose,
+        #     0, 0.7, 0, 0.5,
+        #     IdTable.get_id('push_item_object_pose')
+        # )
         for idx, end in enumerate(ends):
             red = 0.0 if idx < 2 else 0.5
             green = 0.0 if idx < 2 else 0.5
@@ -218,12 +207,16 @@ class Simulation(smach.State):
 
         while(True):
             
+            print("1. Front side push \n2. Front center push")
+            print("3. Side push with full surface contact\n4. Side push with point contact")
+            print("5. Top pull \n6. Top sideward pull \n")
             tool_action = raw_input("enter the number of the tool action:")
 
             # Front side push
             if(tool_action == '1'):
 
-                self.application_point.x = (centroid.x + target_end.x) / 2.0
+                target_end = ends[0]
+                self.application_point.x = ((centroid.x + target_end.x) / 2.0) + 0.02
                 self.application_point.y = (centroid.y + target_end.y) / 2.0
 
                 self.application_point.z = 0.09
@@ -243,7 +236,7 @@ class Simulation(smach.State):
                 success = action.execute()
 
             # Front center push
-            if(tool_action == '2'):
+            elif(tool_action == '2'):
 
                 target_end = ends[0]
                 self.application_point.x = centroid.x 
@@ -265,7 +258,7 @@ class Simulation(smach.State):
 
                 success = action.execute()
 
-            if(tool_action == '3'):
+            elif(tool_action == '3'):
                 self.push_sideways_x_clearance = 0.01
                 self.push_sideways_y_clearance = 0.02
                 self.application_height = 0.09
@@ -277,8 +270,6 @@ class Simulation(smach.State):
                 push_direction_sign = 1.0
                 if rear_corner.y - centroid.y < 0:
                     push_direction_sign = -1.0
-
-                rospy.loginfo('Pushing sideways')
 
                 # position at which tip of tool makes contact with object, in cluster frame
                 self.application_point = Point(0, 0, 0)
@@ -293,7 +284,7 @@ class Simulation(smach.State):
 
                 success = action.execute()
 
-            if(tool_action == '4'):
+            elif(tool_action == '4'):
                 self.push_sideways_x_clearance = 0.01
                 self.push_sideways_y_clearance = 0.02
                 self.application_height = 0.09
@@ -305,8 +296,6 @@ class Simulation(smach.State):
                 push_direction_sign = 1.0
                 if rear_corner.y - centroid.y < 0:
                     push_direction_sign = -1.0
-
-                rospy.loginfo('Pushing sideways')
 
                 # position at which tip of tool makes contact with object, in cluster frame
                 self.application_point = Point(0, 0, 0)
@@ -322,22 +311,22 @@ class Simulation(smach.State):
                 success = action.execute()
 
 
-            if(tool_action == '5'):
-                self.push_down_offset = 0.02
+            elif(tool_action == '5'):
+                self.push_down_offset = 0.05
                 self.application_point.x = centroid.x 
                 self.application_point.y = centroid.y
-                self.application_point.z = centroid.z + 0.05
+                self.application_point.z = centroid.z + self.push_down_offset
                 action = PullForward(bounding_box, self.application_point,
                                      userdata, **self.services)
             
                 success = action.execute()
 
-            if(tool_action == '6'):
+            elif(tool_action == '6'):
 
-                self.push_down_offset = 0.02
+                self.push_down_offset = 0.055
                 self.application_point.x = centroid.x 
                 self.application_point.y = centroid.y
-                self.application_point.z = centroid.z + 0.05
+                self.application_point.z = centroid.z + self.push_down_offset
                 action = TopSideways(bounding_box, self.application_point,
                                      userdata, **self.services)
             

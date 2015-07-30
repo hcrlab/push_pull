@@ -87,7 +87,7 @@ class GraspOrReleaseTool(smach.State):
         ]
     ]
     def __init__(self, **services):
-        rospy.loginfo("\nIn Grasping tool.\n")
+
         smach.State.__init__(
             self,
             outcomes=[
@@ -169,15 +169,12 @@ class GraspOrReleaseTool(smach.State):
 
         pose_stamped = PoseStamped(header=collision_object.header, pose=box_pose)
 
-        rospy.loginfo("Publishing tool")
-        for i in range(5):
-
-            viz.publish_bounding_box(
-                self._interactive_markers, pose_stamped,
-                self.tool_x_size, self.tool_y_size, self.tool_z_size,
-                0.5, 0.2, 0.1, 0.9,
-                2,
-            )
+        viz.publish_bounding_box(
+            self._interactive_markers, pose_stamped,
+            self.tool_x_size, self.tool_y_size, self.tool_z_size,
+            0.5, 0.2, 0.1, 0.9,
+            2,
+        )
 
     def remove_tool_collision_object(self):
         ''' To remove the collision object once we set down the tool '''
@@ -229,7 +226,7 @@ class GraspTool(GraspOrReleaseTool):
 
     @handle_service_exceptions(outcomes.GRASP_TOOL_FAILURE)
     def execute(self, userdata):
-        rospy.loginfo("Grasping tool.")
+
         #self._tuck_arms(False, False)  # untuck arms
         #self._tts.publish('Grasping tool')
         #self._set_grippers(True, True, -1)  # open grippers

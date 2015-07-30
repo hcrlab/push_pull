@@ -79,7 +79,7 @@ class PushAway(RepositionAction):
         self.steps = [
             MoveArmStep(pre_application_pose, self.frame, False),
             MoveArmStep(application_pose, self.frame, False),
-            MoveArmStep(post_application_pose, self.frame, False),
+            #MoveArmStep(post_application_pose, self.frame, False),
             MoveArmStep(pre_application_pose, self.frame, False),
         ]
 

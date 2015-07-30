@@ -243,4 +243,4 @@ class FindShelf(smach.State):
         self._set_static_tf.wait_for_service()
         self._set_static_tf(order_bin_tf)
 
-        viz.publish_order_bin(self._markers)
+       # viz.publish_order_bin(self._markers)

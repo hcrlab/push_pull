@@ -21,11 +21,7 @@ def main(simulation = False,
          attempts_per_bin=2):
 
     rospy.init_node('pr2_pick_state_machine')
-    rospy.loginfo("plan_grasp: ")
-    rospy.loginfo(plan_grasp)
-    rospy.loginfo("grasp tool: ")
-    rospy.loginfo(test_grasp_tool)
-    
+
     if test_grasp_tool:
         state_machine_type = StateMachineBuilder.TEST_GRASP_TOOL
     elif plan_grasp:
@@ -37,7 +33,7 @@ def main(simulation = False,
 
     sm = (StateMachineBuilder()
           .set_state_machine(state_machine_type).build())
-    rospy.loginfo("TESTE5")
+
     # Whether to step through checkpoints.
     sm.userdata.debug = debug
 

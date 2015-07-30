@@ -64,9 +64,9 @@ class PullForward(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length,
+                x=self.application_point.x - self.tool_length + 0.01,
                 y=self.application_point.y,
-                z=self.application_point.z,
+                z=self.application_point.z ,
             ),
             orientation=orientation,
         )
@@ -80,7 +80,7 @@ class PullForward(RepositionAction):
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x + post_application_delta.x - self.tool_length,
+                x=self.application_point.x - self.tool_length - 0.02,
                 y=self.application_point.y,
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -92,7 +92,7 @@ class PullForward(RepositionAction):
         self.collision_checking = [True, True, True, True, True, True]
 
         self.steps = [
-            MoveArmStep(pre_application_pose, self.frame, False),
+            #MoveArmStep(pre_application_pose, self.frame, False),
             MoveArmStep(above_application_pose, self.frame, False),
             MoveArmStep(application_pose, self.frame, False),
             MoveArmStep(pull_pose, self.frame, False),

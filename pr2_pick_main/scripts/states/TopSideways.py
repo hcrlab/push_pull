@@ -48,7 +48,7 @@ class TopSideways(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + pre_application_delta.x - self.tool_length,
+                x=self.application_point.x - 0.015 - self.tool_length,
                 y=self.application_point.y,
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -56,7 +56,7 @@ class TopSideways(RepositionAction):
         )
         above_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length,
+                x=self.application_point.x - self.tool_length - 0.01,
                 y=self.application_point.y,
                 z=self.application_point.z,
             ),
@@ -64,9 +64,17 @@ class TopSideways(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length,
+                x=self.application_point.x - self.tool_length - 0.01,
                 y=self.application_point.y,
-                z=self.application_point.z,
+                z=self.application_point.z - 0.005,
+            ),
+            orientation=orientation,
+        )
+        pre_pull_pose = Pose(
+            position=Point(
+                x=self.application_point.x - self.tool_length,
+                y=self.application_point.y - 0.01,
+                z=self.application_point.z - 0.005,
             ),
             orientation=orientation,
         )
@@ -74,15 +82,15 @@ class TopSideways(RepositionAction):
             position=Point(
                 x=self.application_point.x - self.tool_length,
                 y=self.application_point.y - 0.025,
-                z=self.application_point.z,
+                z=self.application_point.z - 0.005,
             ),
             orientation=orientation,
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x + post_application_delta.x - self.tool_length,
-                y=self.application_point.y,
-                z=self.application_point.z + 0.05,
+                x=self.application_point.x - self.tool_length,
+                y=self.application_point.y - 0.025,
+                z=self.application_point.z + pre_application_delta.z,
             ),
             orientation=orientation,
         )
@@ -95,6 +103,7 @@ class TopSideways(RepositionAction):
             MoveArmStep(pre_application_pose, self.frame, False),
             MoveArmStep(above_application_pose, self.frame, False),
             MoveArmStep(application_pose, self.frame, False),
+            MoveArmStep(pre_pull_pose, self.frame, False),
             MoveArmStep(pull_pose, self.frame, False),
             MoveArmStep(lift_pose, self.frame, False)
         ]
