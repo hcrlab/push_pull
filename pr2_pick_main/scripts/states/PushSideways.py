@@ -62,7 +62,7 @@ class PushSideways(RepositionAction):
         push_application_pose = Pose(
             position=Point(
                 x=self.application_point.x - self.tool_length,
-                y=self.cap_y(self.application_point.y) + 0.03,  # halfway between centroid and bin center
+                y=post_application_pose.position.y - application_pose.position.y,  # halfway between centroid and bin center
                 z=self.application_point.z,
             ),
             orientation=orientation,

@@ -21,6 +21,7 @@ from pr2_pick_contest.srv import LookupItem
 import states
 from states.GraspTool import GraspTool, ReleaseTool
 from states.Simulation import Simulation
+from states.MoveObject import MoveObject
 from convert_pcl.srv import ConvertPCL
 from moveit_msgs.srv import GetPlanningScene, GetPositionFK, GetPositionIK
 
@@ -408,14 +409,6 @@ class StateMachineBuilder(object):
             with sm:
                 
                 smach.StateMachine.add(
-                    GraspTool.name,
-                    GraspTool(**services),
-                    transitions={
-                        outcomes.GRASP_TOOL_SUCCESS: states.FindShelf.name,
-                        outcomes.GRASP_TOOL_FAILURE: outcomes.CHALLENGE_FAILURE,
-                    }
-                )
-                smach.StateMachine.add(
                     states.FindShelf.name,
                     states.FindShelf(**services),
                     transitions={
@@ -427,14 +420,22 @@ class StateMachineBuilder(object):
                         'bin_id': 'current_bin'
                     }
                 )
-
                 smach.StateMachine.add(
                     Simulation.name,
                     Simulation(**services),
                     transitions={
-                        outcomes.SIMULATION_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                        outcomes.SIMULATION_SUCCESS: states.MoveObject.name,
                         outcomes.SIMULATION_FAILURE: outcomes.CHALLENGE_FAILURE,
                     }
                 )
+                smach.StateMachine.add(
+                    MoveObject.name,
+                    MoveObject(**services),
+                    transitions={
+                        outcomes.MOVE_OBJECT_SUCCESS: outcomes.CHALLENGE_SUCCESS,
+                        outcomes.MOVE_OBJECT_FAILURE: outcomes.CHALLENGE_FAILURE,
+                    }
+                )
+                
 
             return sm

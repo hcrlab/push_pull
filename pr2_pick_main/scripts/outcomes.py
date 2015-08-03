@@ -51,3 +51,6 @@ GRASP_PLAN_FAILURE = 'failure'
 
 SIMULATION_SUCCESS = 'success'
 SIMULATION_FAILURE = 'failure'
+
+MOVE_OBJECT_SUCCESS = 'success'
+MOVE_OBJECT_FAILURE = 'failure'

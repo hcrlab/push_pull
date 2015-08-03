@@ -10,12 +10,25 @@ import rospy
 import smach
 import tf
 import visualization as viz
-
+from shape_msgs.msg import SolidPrimitive
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
 
 class FindShelf(smach.State):
     '''Localizes the shelf.
     '''
     name = 'FIND_SHELF'
+    arm_side = 'l'
+    tool_name = 'tool'
+    # approximate tool dimensions
+    tool_x_size = 0.26
+    tool_y_size = 0.01
+    tool_z_size = 0.03
+
+    # tool position relative to wrist_roll_link
+    tool_x_pos = 0.29
+    tool_y_pos = 0.0
+    tool_z_pos = 0.0
 
     def __init__(self, tts, localize_object, set_static_tf, markers,
                  tf_listener, **kwargs):
@@ -34,6 +47,8 @@ class FindShelf(smach.State):
         self._tf_listener = tf_listener
         self._tts = tts
         self._markers = markers
+        self._attached_collision_objects = kwargs['attached_collision_objects']
+        self._interactive_markers = kwargs['interactive_marker_server']
 
     def localize_shelf(self):
         '''Calls the object localization service to get the shelf position.
@@ -47,64 +62,6 @@ class FindShelf(smach.State):
         with the shelf's pose in the odom_combined frame.
         '''
         rospy.sleep(10)
-        # success = False
-        # shelf_ps = PoseStamped()  # The shelf pose returned by the service.
-        # shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
-        # for try_num in range(100):
-        #     self._localize_object.wait_for_service()
-        #     obj_request = ObjectDetectionRequest()
-        #     obj_request.obj_type = 'shelf'
-        #     obj_request.region2d = ROI2d(top_left_x=-1,
-        #                                  top_left_y=-1,
-        #                                  bottom_right_x=-1,
-        #                                  bottom_right_y=-1)
-        #     request = LocalizeShelfRequest()
-        #     request.object = obj_request
-        #     response = self._localize_object(request)
-        #     if len(response.locations.objects) == 0:
-        #         self._tts.publish('Shelf service returned no results.')
-        #         rospy.logwarn('[FindShelf]: Shelf service returned no results.')
-        #         continue
-        #     shelf = response.locations.objects[0]
-        #     rospy.loginfo('Returned shelf pose: {}'.format(shelf))
-        #     shelf_ps.pose = shelf.pose
-
-        #     shelf_ps.header = shelf.header
-        #     shelf_ps.header.stamp = rospy.Time(0)
-
-        #     try:
-        #         shelf_odom = self._tf_listener.transformPose('odom_combined',
-        #                                                      shelf_ps)
-        #     except:
-        #         rospy.logerr(
-        #             'No transform between {} and {} in FindShelf'.format(
-        #                 shelf.header.frame_id, 'odom_combined'))
-        #         self._tts.publish('No odometry transform while finding shelf.')
-        #         continue
-
-        #     roll, pitch, yaw = tf.transformations.euler_from_quaternion(
-        #         [shelf_odom.pose.orientation.x, shelf_odom.pose.orientation.y,
-        #          shelf_odom.pose.orientation.z, shelf_odom.pose.orientation.w])
-        #     pitch_degs = 180 * pitch / math.pi
-        #     yaw_degs = 180 * yaw / math.pi
-        #     rospy.loginfo('roll: {}, pitch: {}, yaw: {}'.format(
-        #         180 * roll / math.pi, pitch_degs, yaw_degs))
-
-        #     # Check that the response is reasonable.
-        #     #if shelf_odom.pose.position.z < -0.30 or shelf_odom.pose.position.z > 0.30:
-        #     #    rospy.logwarn('[FindShelf]: Shelf not on the ground.')
-        #     #    self._tts.publish('Shelf not on the ground for try {}'.format(try_num))
-        #     #    continue
-        #     #if pitch_degs > 4 or pitch_degs < -4:
-        #     #    self._tts.publish('Shelf too tilted for try {}'.format(try_num))
-        #     #    rospy.logwarn('[FindShelf]: Shelf too tilted.')
-        #     #    continue
-
-        #     success = True
-        #     break
-
-        # if not success:
-        #     return False, None
 
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
@@ -113,10 +70,57 @@ class FindShelf(smach.State):
         shelf_odom.pose.position.z = 0.0
         shelf_odom.pose.orientation.x = 0.0
         shelf_odom.pose.orientation.y = 0.0
-	shelf_odom.pose.orientation.z = 0.0
+        shelf_odom.pose.orientation.z = 0.0
         shelf_odom.pose.orientation.w = 1.0
-	success = True 
+        success = True 
         return success, shelf_odom
+
+    def add_tool_collision_object(self):
+        '''
+        Add an attached collision object representing the tool to the moveit
+        planning scene so moveit can plan knowing that the tool is solid and
+        moves with the robot's gripper.
+        '''
+
+        box = SolidPrimitive(type=SolidPrimitive.BOX)
+        box.dimensions = [self.tool_x_size, self.tool_y_size, self.tool_z_size]
+        box_pose = Pose()
+        box_pose.position.x = self.tool_x_pos
+        box_pose.position.y = self.tool_y_pos
+        box_pose.position.z = self.tool_z_pos
+
+        collision_object = CollisionObject()
+        collision_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
+        collision_object.id = self.tool_name
+        collision_object.operation = CollisionObject.ADD
+        collision_object.primitives = [box]
+        collision_object.primitive_poses = [box_pose]
+
+        tool = AttachedCollisionObject()
+        tool.link_name = '{}_wrist_roll_link'.format(self.arm_side)
+        joints_below_forearm = [
+            '{}_forearm_link', '{}_wrist_flex_link', '{}_wrist_roll_link',
+            '{}_gripper_palm_link', '{}_gripper_l_finger_link',
+            '{}_gripper_l_finger_tip_link', '{}_gripper_motor_accelerometer_link',
+            '{}_gripper_r_finger_link', '{}_gripper_r_finger_tip_link',
+        ]
+        tool.touch_links = [
+            link.format(self.arm_side)
+            for link in joints_below_forearm
+        ]
+        tool.object = collision_object
+
+        for i in range(10):
+            self._attached_collision_objects.publish(tool)
+
+        pose_stamped = PoseStamped(header=collision_object.header, pose=box_pose)
+
+        viz.publish_bounding_box(
+            self._interactive_markers, pose_stamped,
+            self.tool_x_size, self.tool_y_size, self.tool_z_size,
+            0.5, 0.2, 0.1, 0.9,
+            2,
+        )
 
     @handle_service_exceptions(outcomes.FIND_SHELF_FAILURE)
     def execute(self, userdata):
@@ -225,22 +229,5 @@ class FindShelf(smach.State):
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
         
-        self.visualize_dropoff_bin()
+        self.add_tool_collision_object()
         return outcomes.FIND_SHELF_SUCCESS
-
-    def visualize_dropoff_bin(self):
-        # Finds and publishes the transform from the shelf
-        # to the order bin and then publishes a marker for
-        # the order bin.
-        order_bin_tf = TransformStamped()
-        order_bin_tf.header.frame_id = 'shelf'
-        order_bin_tf.header.stamp = rospy.Time.now()
-        order_bin_tf.transform.translation.x = -36 * 0.0254
-        order_bin_tf.transform.translation.y = -27 * 0.0254 # -27
-        order_bin_tf.transform.translation.z = 12 * 0.0254
-        order_bin_tf.transform.rotation.w = 1
-        order_bin_tf.child_frame_id = 'order_bin'
-        self._set_static_tf.wait_for_service()
-        self._set_static_tf(order_bin_tf)
-
-       # viz.publish_order_bin(self._markers)

@@ -48,7 +48,7 @@ class PushAway(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + pre_application_delta.x - self.tool_length,
+                x=self.application_point.x + pre_application_delta.x - self.tool_length - 0.04,
                 y=self.cap_y(self.application_point.y + pre_application_delta.y),
                 z=self.application_point.z + pre_application_delta.z,
             ),
