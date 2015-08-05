@@ -1,7 +1,7 @@
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
 import outcomes
 import rospy
 import smach
@@ -39,6 +39,7 @@ class StartPose(smach.State):
         # When the robot relocalizes, it goes back to this start pose.
         self._start_pose = None
 	self._move_torso = kwargs['move_torso']
+	self._set_static_tf = kwargs['set_static_tf']
 
     def _adjust_start_pose_orientation(self):
         # After driving around enough, odom_combined seems to have a lot of
@@ -63,7 +64,26 @@ class StartPose(smach.State):
 
     @handle_service_exceptions(outcomes.START_POSE_FAILURE)
     def execute(self, userdata):
-        
+	
+	# Publish static transform.
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+	odom = PoseStamped()
+	odom.pose.position.x = 0.0
+	odom.pose.position.y = 0.0
+	odom.pose.position.z = 0.0
+	odom.pose.orientation.x = 0.0
+	odom.pose.orientation.y = 0.0
+	odom.pose.orientation.z = 0.0
+	odom.pose.orientation.w = 1.0
+
+        transform.transform.translation = odom.pose.position
+        transform.transform.rotation = odom.pose.orientation
+        transform.child_frame_id = 'odom_combined'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)        
+
         #for i in range(0,10):
         #   viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
         rospy.loginfo('Setting start pose.')
