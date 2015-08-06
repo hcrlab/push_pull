@@ -210,6 +210,7 @@ class MoveObject(smach.State):
                     bounding_box,
                     application_point,
                     userdata,
+                    'front_center_push',
                     **self.services
                 )
 
@@ -219,13 +220,16 @@ class MoveObject(smach.State):
             elif(tool_action == '2'):
 
             	side = raw_input("1. Left \n2. Right \n")
-            	if(side == '1'):
-            		target_end = ends[3]
-            	else:
-            		target_end = ends[0]
 
+                distance_from_end = float(raw_input("Distance for application from the end of the object: "))
+
+                if(side == '1'):
+                    target_end = ends[3]
+                else:
+                    distance_from_end = -distance_from_end
+                    target_end = ends[0]
                 self.application_point.x = ((centroid.x + target_end.x) / 2.0) + 0.02
-                self.application_point.y = (centroid.y + target_end.y) / 2.0
+                self.application_point.y =  target_end.y - distance_from_end 
 
                 self.application_point.z = 0.09
 
@@ -238,6 +242,7 @@ class MoveObject(smach.State):
                     bounding_box,
                     application_point,
                     userdata,
+                    'front_side_push',
                     **self.services
                 )
 
@@ -247,58 +252,30 @@ class MoveObject(smach.State):
             # Side push with full surface contact
             elif(tool_action == '3'):
 
-            	side = raw_input("1. Left \n2. Right \n")
-            	if(side == '1'):
-            		idx = 3
-            		push_direction_sign = 1.0
-            	else:
-            		idx = 2
-            		push_direction_sign = -1.0
-
-                self.push_sideways_x_clearance = 0.01
-                self.push_sideways_y_clearance = 0.02
-                self.application_height = 0.09
-
-                front_corner = ends[idx - 2]
-                rear_corner = ends[idx]
-
                 # position at which tip of tool makes contact with object, in cluster frame
                 self.application_point = Point(0, 0, 0)
 
                 # Apply tool between target end and edge of bin
-                self.application_point.x = rear_corner.x + self.push_sideways_x_clearance
-                self.application_point.y = rear_corner.y + (push_direction_sign *
-                                                            self.push_sideways_y_clearance)
-                self.application_point.z = self.application_height
+                self.application_point.x = 0
+                self.application_point.y = 0 
+                self.application_point.z = 0
+                action = PushSideways(bounding_box, self.application_point,
+                                      userdata, 'push_full_contact', **self.services)
 
-            	action = PushSideways(bounding_box, self.application_point, userdata, **self.services)
-          
                 success = action.execute()
 
             # Side push with point contact
             elif(tool_action == '4'):
-                self.push_sideways_x_clearance = 0.01
-                self.push_sideways_y_clearance = 0.02
-                self.application_height = 0.09
-                idx = 2
-
-                front_corner = ends[idx - 2]
-                rear_corner = ends[idx]
-
-                push_direction_sign = 1.0
-                if rear_corner.y - centroid.y < 0:
-                    push_direction_sign = -1.0
-
                 # position at which tip of tool makes contact with object, in cluster frame
                 self.application_point = Point(0, 0, 0)
 
                 # Apply tool between target end and edge of bin
-                self.application_point.x = centroid.x - 0.02
-                self.application_point.y = rear_corner.y + (push_direction_sign *
-                                                            self.push_sideways_y_clearance)
-                self.application_point.z = self.application_height
+                self.application_point.x = 0
+                self.application_point.y = 0 
+                self.application_point.z = 0
+                
                 action = PushSideways(bounding_box, self.application_point,
-                                      userdata, **self.services)
+                                      userdata, 'push_point_contact', **self.services)
 
                 success = action.execute()
 
@@ -309,7 +286,7 @@ class MoveObject(smach.State):
                 self.application_point.y = centroid.y
                 self.application_point.z = centroid.z + self.push_down_offset
                 action = PullForward(bounding_box, self.application_point,
-                                     userdata, **self.services)
+                                     'top_pull', userdata, **self.services)
             
                 success = action.execute()
 
@@ -321,7 +298,7 @@ class MoveObject(smach.State):
                 self.application_point.y = centroid.y
                 self.application_point.z = centroid.z + self.push_down_offset
                 action = TopSideways(bounding_box, self.application_point,
-                                     userdata, **self.services)
+                                     'top_sideward_pull', userdata, **self.services)
             
                 success = action.execute()
 

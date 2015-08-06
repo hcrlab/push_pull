@@ -1,5 +1,6 @@
 from copy import deepcopy
 from geometry_msgs.msg import Pose, PoseStamped, Vector3
+from geometry_msgs.msg import Point,PointStamped, Pose, PoseStamped
 from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, \
     GetPositionIKRequest, GetPlanningScene
 import rospy
@@ -12,6 +13,8 @@ from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, 
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
     TuckArms, GetGrippers, MoveArmIk
+import math
+from visualization import IdTable
 
 class RepositionAction(object):
     '''
@@ -39,12 +42,13 @@ class RepositionAction(object):
         'J': side_bin_width, 'K': center_bin_width, 'L': side_bin_width,
     }
 
-    def __init__(self, bounding_box, application_point, userdata, **services):
+    def __init__(self, bounding_box, application_point, userdata, action_name, **services):
         self.debug = userdata.debug
         self.bin_id = 'K'
 
         self.application_point = application_point
         self.bounding_box = bounding_box
+        self.action_name = action_name
         self.centroid = self.bounding_box.pose.pose.position
         self.frame = self.bounding_box.pose.header.frame_id
 
@@ -58,6 +62,8 @@ class RepositionAction(object):
 
         self.trajectory = []
 
+        self.ends = self.get_box_ends(self.bounding_box)
+
     def cap_y(self, value):
         ''' Cap the given y value so it's safely inside the bin. '''
         width = self.bin_widths[self.bin_id]
@@ -67,7 +73,64 @@ class RepositionAction(object):
         elif value < -max_y:
             return -max_y
         return value
+    def get_yaw(self, bounding_box):
+        # get euler angles and normalize
+        orientation = bounding_box.pose.pose.orientation
+        (yaw, pitch, roll) = tf.transformations.euler_from_quaternion(
+            [orientation.w, orientation.x, orientation.y, orientation.z]
+        )
+        yaw = -yaw  # euler_from_quaternion gives it to us backwards
+        # make sure it's in the range (-pi, pi]
+        while yaw > math.pi:
+            yaw -= 2 * math.pi
+        while yaw <= -math.pi:
+            yaw += 2 * math.pi
 
+        return yaw
+    def get_box_ends(self, bounding_box):
+        '''
+        Get the corners of the bounding box from the given descriptor.
+        return list of corners
+           ends[0]: front corner of first end
+           ends[1]: front corner of second end
+           ends[2]: rear corner of first end
+           ends[3]: rear corner of second end
+        '''
+
+        # First, figure out whether the y-axis points roughly along or opposite
+        # the cluster's y-axis
+        yaw = self.get_yaw(bounding_box)
+
+        # get yaw sign
+        y_sign = 1.0
+        if yaw < 0:
+            y_sign = -1.0
+
+        # relative to the bounding box's pose
+        ends_in_item_frame = [
+            Point(
+                x=x_sign * bounding_box.dimensions.x / 2.0,
+                y=y_sign * bounding_box.dimensions.y / 2.0,
+                z=bounding_box.dimensions.z / 2.0,
+            )
+            for y_sign in [y_sign, -y_sign]
+            for x_sign in [1.0, -1.0]
+        ]
+
+        # transform to the cluster's pose
+        position = bounding_box.pose.pose.position
+        sin_yaw = math.sin(yaw)
+        cos_yaw = math.cos(yaw)
+        ends = [
+            Point(
+                x=point.x * cos_yaw - point.y * sin_yaw + position.x,
+                y=point.x * sin_yaw + point.y * cos_yaw + position.y,
+                z=point.z + position.z,
+            )
+            for point in ends_in_item_frame
+        ]
+
+        return ends
     def max_drivable_x_distance(self):
         tf_listener = self._tf_listener
         (base_position, base_orientation) = tf_listener.lookupTransform(
