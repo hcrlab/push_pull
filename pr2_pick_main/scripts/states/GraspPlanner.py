@@ -167,28 +167,22 @@ class GraspPlanner(smach.State):
 			scene.remove_world_object("shelf2")
 			scene.remove_world_object("shelf3")
 
-		table_pose = PoseStamped()
-		table_pose.header.frame_id = "odom_combined"
-		table_pose.pose.position.x = 0.9
-		table_pose.pose.position.y = 0.02
-		table_pose.pose.position.z = 0.375
-
 		wall_pose1 = PoseStamped()
 		wall_pose1.header.frame_id = "odom_combined"
 		wall_pose1.pose.position.x = 0.9
-		wall_pose1.pose.position.y = 0.18
+		wall_pose1.pose.position.y = 0.045
 		wall_pose1.pose.position.z = 0.94
 
 		wall_pose2 = PoseStamped()
 		wall_pose2.header.frame_id = "odom_combined"
 		wall_pose2.pose.position.x = 0.9
-		wall_pose2.pose.position.y = -0.22
+		wall_pose2.pose.position.y = 0.41
 		wall_pose2.pose.position.z = 0.94
 
 		wall_pose3 = PoseStamped()
 		wall_pose3.header.frame_id = "odom_combined"
 		wall_pose3.pose.position.x = 0.9
-		wall_pose3.pose.position.y = -0.42
+		wall_pose3.pose.position.y = 0.20
 		wall_pose3.pose.position.z = 1.16
 
 		rate = rospy.Rate(1)
@@ -257,14 +251,14 @@ class GraspPlanner(smach.State):
 		# Add shelf to the scene
 		rospy.loginfo("Adding shelf to the scene")
 		scene = moveit_commander.PlanningSceneInterface()
-		#self.add_shelf_to_scene(scene)       
-		for i in range(10):
-			rospy.loginfo("Removing Planning Scene")
-                        scene.remove_world_object("table")
-                        scene.remove_world_object("shelf1")
-                        scene.remove_world_object("shelf")
-                        scene.remove_world_object("shelf2")
-                        scene.remove_world_object("shelf3")
+		self.add_shelf_to_scene(scene)       
+		#for i in range(10):
+		#	rospy.loginfo("Removing Planning Scene")
+                #        scene.remove_world_object("table")
+                #        scene.remove_world_object("shelf1")
+                #        scene.remove_world_object("shelf")
+                #        scene.remove_world_object("shelf2")
+                #        scene.remove_world_object("shelf3")
 
 		# Convert cluster PointCloud2 to PointCloud
 		rospy.loginfo("Waiting for convert_pcl service")
@@ -354,7 +348,7 @@ class GraspPlanner(smach.State):
 			success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
 													0.005, 0.005, 12, 'left_arm',
 													False).success
-			sorted(grasp_poses, key=lambda grasp: grasp.position.x)
+			grasp_poses = sorted(grasp_poses, key=lambda grasp: grasp.pose.position.x)
 			print(grasp_poses) 
 			# Analyze and perform grasps
 			for grasp in grasp_poses:
@@ -420,7 +414,7 @@ class GraspPlanner(smach.State):
 
 
 		# No grasps found
-		self.loginfo("The object is not graspable.")
+		rospy.loginfo("The object is not graspable.")
 		self._tts.publish("The object is not graspable.")
 		time.sleep(2)
 		self.bag_data.is_graspable = False

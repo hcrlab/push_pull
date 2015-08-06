@@ -155,7 +155,7 @@ class FindShelf(smach.State):
 	
 
         # Publish marker
-        viz.publish_shelf(self._markers, shelf_odom)
+        #viz.publish_shelf(self._markers, shelf_odom)
 	
 
         # Set up static a transform for each bin relative to shelf.
