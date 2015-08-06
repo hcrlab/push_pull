@@ -219,7 +219,7 @@ class GraspPlanner(smach.State):
 
 		# Save marker
 		self.bag_data.marker_pointcloud = marker_cluster
-		self.bag.write('pr2_pick_visualization', self.bag_data.marker_pointcloud )
+		#self.bag.write('pr2_pick_visualization', self.bag_data.marker_pointcloud )
 
 		# Delete any leftover transforms from previous runs
 		bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
@@ -275,7 +275,7 @@ class GraspPlanner(smach.State):
 
 		# Save pointcloud
 		self.bag_data.pointcloud2 = self._cluster2.pointcloud
-		self.bag.write('/head_mount_kinect/depth/points', self.bag_data.pointcloud2 )
+		#self.bag.write('/head_mount_kinect/depth/points', self.bag_data.pointcloud2 )
 
 
 		self._cluster = userdata.target_cluster
@@ -308,8 +308,8 @@ class GraspPlanner(smach.State):
 		# Saving bounding box
 		self.bag_data.boundingbox = bounding_box
 		self.bag_data.marker_boundingbox = marker_bounding_box
-		self.bag.write('pr2_pick_visualization', self.bag_data.marker_boundingbox )
-		self.bag.write('pr2_pick_perception/BoundingBox', self.bag_data.boundingbox )
+		#self.bag.write('pr2_pick_visualization', self.bag_data.marker_boundingbox )
+		#self.bag.write('pr2_pick_perception/BoundingBox', self.bag_data.boundingbox )
 		
 		# Adding bouding box to the scene
 		#rospy.loginfo("Adding bounding box to the scene")
@@ -354,6 +354,8 @@ class GraspPlanner(smach.State):
 			success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
 													0.005, 0.005, 12, 'left_arm',
 													False).success
+			sorted(grasp_poses, key=lambda grasp: grasp.position.x)
+			print(grasp_poses) 
 			# Analyze and perform grasps
 			for grasp in grasp_poses:
 
