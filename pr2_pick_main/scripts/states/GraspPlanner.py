@@ -170,20 +170,20 @@ class GraspPlanner(smach.State):
 		wall_pose1 = PoseStamped()
 		wall_pose1.header.frame_id = "odom_combined"
 		wall_pose1.pose.position.x = 0.9
-		wall_pose1.pose.position.y = 0.045
+		wall_pose1.pose.position.y = 0.025
 		wall_pose1.pose.position.z = 0.94
 
 		wall_pose2 = PoseStamped()
 		wall_pose2.header.frame_id = "odom_combined"
 		wall_pose2.pose.position.x = 0.9
-		wall_pose2.pose.position.y = 0.41
+		wall_pose2.pose.position.y = 0.385
 		wall_pose2.pose.position.z = 0.94
 
 		wall_pose3 = PoseStamped()
 		wall_pose3.header.frame_id = "odom_combined"
 		wall_pose3.pose.position.x = 0.9
 		wall_pose3.pose.position.y = 0.20
-		wall_pose3.pose.position.z = 1.16
+		wall_pose3.pose.position.z = 1.14
 
 		rate = rospy.Rate(1)
 		for i in range(5):
