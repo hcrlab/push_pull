@@ -70,9 +70,10 @@ class GraspPlanner(smach.State):
 		self._debug = False
 
 		self.debug_grasp_pub = rospy.Publisher('debug_grasp_pub', String, queue_size=10)
+		#name_file = raw_input("Name of the bag file: ")
 
-		self.bag = rosbag.Bag("bagfiles/data.bag" , 'w')
-		self.bag_data = Record()
+		#self.bag = rosbag.Bag("bagfiles/" + name_file , 'w')
+		#self.bag_data = Record()
 
 	# Set params for grasp planner
 	def call_set_params(self, side_step = 0.02, palm_step = 0.005, overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = True, pregrasp_just_outside_box = True, backoff_depth_steps = 5):
@@ -161,7 +162,7 @@ class GraspPlanner(smach.State):
 	
 	def add_shelf_to_scene(self, scene):
 		for i in range(5):
-			scene.remove_world_object("table")
+			scene.remove_world_object("bbox")
 			scene.remove_world_object("shelf1")
 			scene.remove_world_object("shelf")
 			scene.remove_world_object("shelf2")
@@ -184,6 +185,12 @@ class GraspPlanner(smach.State):
 		wall_pose3.pose.position.x = 0.9
 		wall_pose3.pose.position.y = 0.20
 		wall_pose3.pose.position.z = 1.14
+		
+		wall_pose4 = PoseStamped()
+                wall_pose4.header.frame_id = "odom_combined"
+                wall_pose4.pose.position.x = 0.9
+                wall_pose4.pose.position.y = 0.20
+                wall_pose4.pose.position.z = 0.76
 
 		rate = rospy.Rate(1)
 		for i in range(5):
@@ -191,6 +198,7 @@ class GraspPlanner(smach.State):
 			scene.add_box("shelf1", wall_pose1, (0.38, 0.015, 0.38 ))
 			scene.add_box("shelf2", wall_pose2, (0.38, 0.015, 0.38 ))
 			scene.add_box("shelf3", wall_pose3, (0.38, 0.38, 0.015 ))
+			scene.add_box("shelf4", wall_pose4, (0.38,0.38,0.015))
 			rospy.sleep(1)
 			rate.sleep()
 
@@ -199,6 +207,11 @@ class GraspPlanner(smach.State):
 
 	@handle_service_exceptions(outcomes.GRASP_FAILURE)
 	def execute(self, userdata):
+
+		name_file = raw_input("Name of the bag file: ")
+
+                self.bag = rosbag.Bag("bagfiles/" + name_file , 'w')
+                self.bag_data = Record()
 
 		rospy.loginfo("Starting Grasp Planner")
 
@@ -406,11 +419,11 @@ class GraspPlanner(smach.State):
 
 						else:
 
+							#self.bag_data.is_graspable = False
+							#self.bag.write('record',self.bag_data)
+							#self.bag.close()
 							self.bag_data.is_graspable = False
-							self.bag.write('record',self.bag_data)
-							self.bag.close()
-							self.bag_data.is_graspable = False
-							self.bag.write('record', bag_data)
+							self.bag.write('record', self.bag_data)
 							self.bag.close()
 
 							rospy.loginfo("It was not possible to grasp the object.")
