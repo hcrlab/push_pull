@@ -353,6 +353,9 @@ class GraspPlanner(smach.State):
 			# Analyze and perform grasps
 			for grasp in grasp_poses:
 
+				stop = raw_input("Enter '-1' to stop testing grasps")
+				if(stop == '-1'):
+					break
 				# Visualize the gripper in the grasp position
 				rospy.loginfo("\n\nPossible Grasp: \n")
 				rospy.loginfo(grasp)
