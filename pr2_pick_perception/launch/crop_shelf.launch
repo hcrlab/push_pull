@@ -9,7 +9,7 @@
    <param name="Height1" value="0.38" />
    <param name="Height2" value="0.38" />
    <param name="Depth" value="0.365" />
-   <param name="bottom_crop_offset" value="0.018" />
+   <param name="bottom_crop_offset" value="0.02" />
    <param name="top_crop_offset" value="0.06" />
    <param name="left_crop_offset" value="0.03" />
    <param name="right_crop_offset" value="0.03" />

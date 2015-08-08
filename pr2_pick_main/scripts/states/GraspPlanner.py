@@ -319,13 +319,13 @@ class GraspPlanner(smach.State):
 		#self.bag.write('pr2_pick_perception/BoundingBox', self.bag_data.boundingbox )
 		
 		# Adding bouding box to the scene
-		#rospy.loginfo("Adding bounding box to the scene")
-		#for i in range(10):
-		#    scene.add_box("bbox", box_pose, 
-		#    (box_dims.x - 0.01, 
-		#    box_dims.y - 0.01, 
-		#    box_dims.z - 0.01))
-		#    rospy.sleep(0.1)
+		rospy.loginfo("Adding bounding box to the scene")
+		for i in range(10):
+		    scene.add_box("bbox", box_pose, 
+		    (box_dims.x - 0.03, 
+		    box_dims.y - 0.02, 
+		    box_dims.z - 0.03))
+		    rospy.sleep(0.1)
 
 		# Plan Grasp
 		grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
@@ -366,15 +366,20 @@ class GraspPlanner(smach.State):
 			# Analyze and perform grasps
 			for grasp in grasp_poses:
 
-				stop = raw_input("Enter '-1' to stop testing grasps")
-				if(stop == '-1'):
-					break
+				#stop = raw_input("Enter '-1' to stop testing grasps")
+				
+				#if(stop == '-1'):
+				#	break
 				# Visualize the gripper in the grasp position
 				rospy.loginfo("\n\nPossible Grasp: \n")
 				rospy.loginfo(grasp)
 				for i in range(10):		
 					viz.publish_gripper(self._im_server, grasp, 'grasp_target')
-
+				stop = raw_input("-1 : Stop testing grasps\n 0: Skip grasp\n")
+                                if(stop == '-1'):
+                                        break
+				if(stop == '0'):
+					continue
 				# Test if grasp is going to hit the shelf
 				success_grasp = self._moveit_move_arm(grasp,
 													0.005, 0.005, 12, 'left_arm',
@@ -422,9 +427,9 @@ class GraspPlanner(smach.State):
 							#self.bag_data.is_graspable = False
 							#self.bag.write('record',self.bag_data)
 							#self.bag.close()
-							self.bag_data.is_graspable = False
-							self.bag.write('record', self.bag_data)
-							self.bag.close()
+							#self.bag_data.is_graspable = False
+							#self.bag.write('record', self.bag_data)
+							#self.bag.close()
 
 							rospy.loginfo("It was not possible to grasp the object.")
 
