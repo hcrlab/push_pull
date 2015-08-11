@@ -209,10 +209,10 @@ class GraspPlanner(smach.State):
 	@handle_service_exceptions(outcomes.GRASP_FAILURE)
 	def execute(self, userdata):
 
-		name_file = raw_input("Name of the bag file: ")
+		# name_file = raw_input("Name of the bag file: ")
 
-                self.bag = rosbag.Bag("bagfiles/" + name_file , 'w')
-                self.bag_data = Record()
+  #               self.bag = rosbag.Bag("bagfiles/" + name_file , 'w')
+  #               self.bag_data = Record()
 
 		rospy.loginfo("Starting Grasp Planner")
 
@@ -226,7 +226,7 @@ class GraspPlanner(smach.State):
 								'bin_K','bin_K_items', 0)
 
 		# Save marker
-		self.bag_data.marker_pointcloud = marker_cluster
+		#self.bag_data.marker_pointcloud = marker_cluster
 		#self.bag.write('pr2_pick_visualization', self.bag_data.marker_pointcloud )
 
 		# Delete any leftover transforms from previous runs
@@ -282,7 +282,7 @@ class GraspPlanner(smach.State):
 		self._cluster2.pointcloud = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud      
 
 		# Save pointcloud
-		self.bag_data.pointcloud2 = self._cluster2.pointcloud
+		#self.bag_data.pointcloud2 = self._cluster2.pointcloud
 		#self.bag.write('/head_mount_kinect/depth/points', self.bag_data.pointcloud2 )
 
 
@@ -290,7 +290,7 @@ class GraspPlanner(smach.State):
 		self._cluster2.header = userdata.target_cluster.header
 		self._cluster2.pointcloud.header = userdata.target_cluster.header
 		self._cluster2.id = userdata.target_cluster.id
-		self.bag_data.pointcloud2 = self._cluster.pointcloud
+		#self.bag_data.pointcloud2 = self._cluster.pointcloud
 		tf_broadcaster = tf.TransformBroadcaster()
 		tf_listener = tf.TransformListener()
 
@@ -314,8 +314,8 @@ class GraspPlanner(smach.State):
 
 		
 		# Saving bounding box
-		self.bag_data.boundingbox = bounding_box
-		self.bag_data.marker_boundingbox = marker_bounding_box
+		#self.bag_data.boundingbox = bounding_box
+		#self.bag_data.marker_boundingbox = marker_bounding_box
 		#self.bag.write('pr2_pick_visualization', self.bag_data.marker_boundingbox )
 		#self.bag.write('pr2_pick_perception/BoundingBox', self.bag_data.boundingbox )
 		

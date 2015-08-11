@@ -16,6 +16,7 @@ from PushAway import PushAway
 from PullForward import PullForward
 from PushSideways import PushSideways
 from TopSideways import TopSideways
+import time
 
 class MoveObject(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
@@ -55,7 +56,7 @@ class MoveObject(smach.State):
           # Hard code pre grasp state
           pre_grasp_pose = PoseStamped()
           pre_grasp_pose.header.frame_id = "bin_K"
-          pre_grasp_pose.pose.position.x = -0.30
+          pre_grasp_pose.pose.position.x = -0.40
           pre_grasp_pose.pose.position.y = 0.0
           pre_grasp_pose.pose.position.z = 0.20
           pre_grasp_pose.pose.orientation.x = 1.0
@@ -67,6 +68,14 @@ class MoveObject(smach.State):
                                                   0.005, 0.005, 12, 'left_arm',
                                                   False).success
 
+          raw_input("Add tool to the robot ")
+          time.sleep(3)
+          
+          self._set_grippers.wait_for_service()
+          grippers_open = self._set_grippers(open_left=False, open_right=False, effort=userdata.item_model.grasp_effort)
+          gripper_states = self._get_grippers()
+          if not gripper_states.left_open:
+              self._set_grippers(open_left=False, open_right=False, effort=-1)
     def get_yaw(self, bounding_box):
         # get euler angles and normalize
         orientation = bounding_box.pose.pose.orientation
