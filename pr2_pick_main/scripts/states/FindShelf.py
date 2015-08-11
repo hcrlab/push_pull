@@ -110,9 +110,9 @@ class FindShelf(smach.State):
         shelf_odom.pose.position.z = 0.0
         shelf_odom.pose.orientation.x = 0.0
         shelf_odom.pose.orientation.y = 0.0
-    shelf_odom.pose.orientation.z = 0.0
+    	shelf_odom.pose.orientation.z = 0.0
         shelf_odom.pose.orientation.w = 1.0
-    success = True 
+    	success = True 
         return success, shelf_odom
 
     @handle_service_exceptions(outcomes.FIND_SHELF_FAILURE)
@@ -123,7 +123,7 @@ class FindShelf(smach.State):
         success, shelf_odom = self.localize_shelf()
         
     
-    if not success:
+    	if not success:
             rospy.logerr('[FindShelf]: Failed to localize shelf.')
             return outcomes.FIND_SHELF_FAILURE
 
