@@ -20,7 +20,7 @@ from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
 import states
 from states.GraspTool import GraspTool, ReleaseTool
-from states.Simulation import Simulation
+#from states.Simulation import Simulation
 from states.MoveObject import MoveObject
 from convert_pcl.srv import ConvertPCL
 from moveit_msgs.srv import GetPlanningScene, GetPositionFK, GetPositionIK
@@ -128,7 +128,7 @@ class StateMachineBuilder(object):
 
         return sm
 
-    def build_sm(self, **services):
+    def build_sm_for_simulation(self, **services):
             ''' Test state machine for simulation '''
 
             sm = smach.StateMachine(outcomes=[
@@ -137,12 +137,22 @@ class StateMachineBuilder(object):
             ])
 
             with sm:
-                
+            	smach.StateMachine.add(
+                	states.StartPose.name,
+                	states.StartPose(**services),
+                	transitions={
+                    	outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                    	outcomes.START_POSE_FAILURE: states.StartPose.name
+                	},
+                	remapping={
+                    	'start_pose': 'start_pose'
+                	}
+            	)                
                 smach.StateMachine.add(
                     states.FindShelf.name,
                     states.FindShelf(**services),
                     transitions={
-                        outcomes.FIND_SHELF_SUCCESS: states.Simulation.name,
+                        outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
                         outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
                     },
                     remapping={
