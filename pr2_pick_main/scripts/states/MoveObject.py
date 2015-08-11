@@ -33,7 +33,7 @@ class MoveObject(smach.State):
         self._markers = services['markers']
         self._tf_listener = tf_listener
         self.services = services
-
+	self._moveit_move_arm = services['moveit_move_arm']
     def _publish(self, marker):
         """Publishes a marker to the given publisher.
 
@@ -52,36 +52,20 @@ class MoveObject(smach.State):
 
     # Pre-move_object position
     def pre_position_tool(self):
-        goal = JointTrajectoryGoal()
-        goal.trajectory.joint_names = [
-            'l_shoulder_pan_joint',
-            'l_shoulder_lift_joint',
-            'l_upper_arm_roll_joint',
-            'l_elbow_flex_joint',
-            'l_forearm_roll_joint',
-            'l_wrist_flex_joint',
-            'l_wrist_roll_joint',
-        ]
-        point = JointTrajectoryPoint()
-        point.positions = [
-            0.1478368422400076,   # shoulder_pan_joint,
-            0.5075741451910245,   # shoulder_lift_joint,
-            0.07666276829324792,  # upper_arm_roll_joint,
-            -2.1254967913712126,  # elbow_flex_joint,
-            -3.2490637932,        # forearm_roll_joint,
-            -1.6188519772530534,  # wrist_flex_joint,
-            -0.08595766341572286  # wrist_roll_joint,
-        ]
-        point.time_from_start = rospy.Duration(2.0)
-        goal.trajectory.points.append(point)
+          # Hard code pre grasp state
+          pre_grasp_pose = PoseStamped()
+          pre_grasp_pose.header.frame_id = "bin_K"
+          pre_grasp_pose.pose.position.x = -0.30
+          pre_grasp_pose.pose.position.y = 0.0
+          pre_grasp_pose.pose.position.z = 0.20
+          pre_grasp_pose.pose.orientation.x = 1.0
+          pre_grasp_pose.pose.orientation.y = 0.0
+          pre_grasp_pose.pose.orientation.z = 0.0
+          pre_grasp_pose.pose.orientation.w = 0.0
 
-        arm = SimpleActionClient(
-            'l_arm_controller/joint_trajectory_action',
-            JointTrajectoryAction,
-        )
-        rospy.loginfo('Waiting for joint trajectory action server')
-        arm.wait_for_server()
-        return arm.send_goal_and_wait(goal)
+          success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
+                                                  0.005, 0.005, 12, 'left_arm',
+                                                  False).success
 
     def get_yaw(self, bounding_box):
         # get euler angles and normalize
@@ -309,3 +293,4 @@ class MoveObject(smach.State):
         
 
         return outcomes.MOVE_OBJECT_SUCCESS
+
