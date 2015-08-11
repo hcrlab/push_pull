@@ -7,9 +7,26 @@
   <arg name="debug_openni" default="false" /> <!-- Set to true to not run openni in this launch file. -->
   <arg name="alternate_kinect_frames" default="false" />
 
+  <!-- Turn on the Kinect -->
+  <include file="$(find freenect_launch)/launch/freenect.launch" unless="$(arg debug_openni)">
+    <arg name="depth_registration" value="true"/>
+    <arg name="camera" value="head_mount_kinect"/>
+    <arg unless="$(arg alternate_kinect_frames)" name="rgb_frame_id" value="$(arg kinect_frame_prefix)_rgb_optical_frame"/>
+    <arg unless="$(arg alternate_kinect_frames)" name="depth_frame_id" value="$(arg kinect_frame_prefix)_depth_optical_frame"/>
+    <arg if="$(arg alternate_kinect_frames)" name="rgb_frame_id" value="$(arg kinect_frame_prefix)_tuned_rgb_optical_frame"/>
+    <arg if="$(arg alternate_kinect_frames)" name="depth_frame_id" value="$(arg kinect_frame_prefix)_tuned_ir_optical_frame"/>
+    <arg name="publish_tf" value="false"/> <!-- We publish the tf ourselves with kinect_frame.launch -->
+  </include>
+  <include file="$(find pr2_pick_perception)/launch/kinect_frames.launch">
+    <arg name="camera" value="head_mount_kinect" />
+  </include>
+
   <!-- Tilt laser scan -->
   <node pkg="pr2_mechanism_controllers" type="send_periodic_cmd_srv.py" name="laser_tilt_controller_3dnav_params" 
     args="laser_tilt_controller linear 10 1.02 .31" />
+
+  <!-- Pretouch optical sensor -->
+  <include file="$(find pr2_pretouch_optical_dist)/launch/optic_pressure.launch" /> 
 
   <!-- Shelf services -->
   <!-- If you want debugging output, run these launch files separately on your local machine. -->
