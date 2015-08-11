@@ -201,8 +201,8 @@ class StateMachineBuilder(object):
                     transitions={
                         outcomes.GRASP_PLAN_SUCCESS: states.MoveObject.name,
                         outcomes.GRASP_PLAN_NONE: states.MoveObject.name,
-                        outcomes.GRASP_PLAN_FAILURE: states.SenseBin.name
-                        
+                        outcomes.GRASP_PLAN_FAILURE: states.SenseBin.name,
+                        outcomes.GRASP_MOVE_OBJECT: states.MoveObject.name 
                     },
                     remapping={
                         'bin_id': 'current_bin',
