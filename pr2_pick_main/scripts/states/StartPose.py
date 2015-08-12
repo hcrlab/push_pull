@@ -40,7 +40,7 @@ class StartPose(smach.State):
         self._start_pose = None
 	self._move_torso = kwargs['move_torso']
 	self._set_static_tf = kwargs['set_static_tf']
-
+	self._set_grippers = kwargs['set_grippers']
     def _adjust_start_pose_orientation(self):
         # After driving around enough, odom_combined seems to have a lot of
         # rotation error. Orient ourselves so we're facing the shelf.
@@ -129,7 +129,7 @@ class StartPose(smach.State):
         else:
             self._adjust_start_pose_orientation()
             self._drive_to_start_pose()
-
+	grippers_open = self._set_grippers(True, True, -1)
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 

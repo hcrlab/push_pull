@@ -19,7 +19,8 @@ from TopSideways import TopSideways
 import time
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
-
+import moveit_commander
+from moveit_msgs.msg import PlanningScene, PlanningSceneComponents
 class MoveObject(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
     """
@@ -67,6 +68,40 @@ class MoveObject(smach.State):
 	rospy.loginfo('Waiting for joint trajectory action server')
         self.arm.wait_for_server()
     	self._attached_collision_objects = services['attached_collision_objects']
+	self._get_planning_scene = services['get_planning_scene']
+	self.moveit_object_name = 'push_item_target_bbox'
+	self._planning_scene_publisher = services['planning_scene_publisher']
+    def add_allowable_collision_box(self, bounding_box):
+        ''' Add the argument to moveit's allowable collision matrix. '''
+
+        # add the box to the planning scene
+        scene = moveit_commander.PlanningSceneInterface()
+        scene.remove_world_object(self.moveit_object_name)
+        dimensions = bounding_box.dimensions
+        for i in range(10):
+            scene.add_box(
+                self.moveit_object_name, bounding_box.pose,
+                (dimensions.x, dimensions.y, dimensions.z)
+            )
+            rospy.sleep(0.1)
+
+        # get allowed collision matrix (acm)
+        request = PlanningSceneComponents(
+            components=PlanningSceneComponents.ALLOWED_COLLISION_MATRIX
+        )
+        response = self._get_planning_scene(request)
+
+        # add box to acm and publish
+        acm = response.scene.allowed_collision_matrix
+        if not self.moveit_object_name in acm.default_entry_names:
+            acm.default_entry_names += [self.moveit_object_name]
+            acm.default_entry_values += [True]
+        planning_scene_diff = PlanningScene(
+            is_diff=True,
+            allowed_collision_matrix=acm
+        )
+        self._planning_scene_publisher.publish(planning_scene_diff)
+
     def _publish(self, marker):
         """Publishes a marker to the given publisher.
 
@@ -289,7 +324,7 @@ class MoveObject(smach.State):
         frame = bounding_box.pose.header.frame_id
 
         # add the object we're pushing to the allowable collision matrix
-        #self.add_allowable_collision_box(bounding_box)
+        self.add_allowable_collision_box(bounding_box)
 
         # position at which tip of tool makes contact with object, in cluster frame
         self.application_point = Point(0, 0, 0)
@@ -306,10 +341,10 @@ class MoveObject(smach.State):
             if(tool_action == '1'):
 
                 target_end = ends[0]
-                self.application_point.x = centroid.x 
+                self.application_point.x = centroid.x  
                 self.application_point.y = centroid.y 
 
-                self.application_point.z = 0.09
+                self.application_point.z = centroid.z / 2
 
                 application_point = PointStamped(
                     header=Header(frame_id=frame),
@@ -341,7 +376,7 @@ class MoveObject(smach.State):
                 self.application_point.x = ((centroid.x + target_end.x) / 2.0) + 0.02
                 self.application_point.y =  target_end.y - distance_from_end 
 
-                self.application_point.z = 0.09
+                self.application_point.z = centroid.z / 2
 
                 application_point = PointStamped(
                     header=Header(frame_id=frame),
@@ -392,7 +427,7 @@ class MoveObject(smach.State):
             # Top pull
             elif(tool_action == '5'):
                 self.push_down_offset = 0.05
-                self.application_point.x = centroid.x 
+                self.application_point.x = ends[3].x 
                 self.application_point.y = centroid.y
                 self.application_point.z = centroid.z + self.push_down_offset
                 action = PullForward(bounding_box, self.application_point,
@@ -415,8 +450,7 @@ class MoveObject(smach.State):
             self.pre_position_tool()
 
             if(tool_action == '-1'):
-                break
-        
+       		return outcomes.MOVE_OBJECT_FAILURE 
 
         return outcomes.MOVE_OBJECT_SUCCESS
 

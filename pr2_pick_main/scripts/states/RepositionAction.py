@@ -287,9 +287,11 @@ class MoveArmStep(RepositionStep):
                 pose_stamped, 0.001, 0.01, 5, 'left_arm', False,) and success)
         else:
             rospy.loginfo('Collision checking off, using IK')
-            success = (move_arm_ik(
-                goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM).success and success)
+            #success = (move_arm_ik(
+            #    goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM).success and success)
             success = (moveit_move_arm(
                 pose_stamped, 0.001, 0.01, 5, 'left_arm', False,) and success)
-
+	    if(success == False):
+		success = (move_arm_ik(
+                	goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM).success and success)
         return success

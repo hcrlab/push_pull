@@ -64,7 +64,7 @@ class PullForward(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length + 0.01,
+                x=self.application_point.x - self.tool_length - 0.05,
                 y=self.application_point.y,
                 z=self.application_point.z ,
             ),
@@ -72,7 +72,7 @@ class PullForward(RepositionAction):
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length - 0.02,
+                x=self.application_point.x - self.tool_length - 0.08,
                 y=self.application_point.y,
                 z=self.application_point.z,
             ),
@@ -80,7 +80,7 @@ class PullForward(RepositionAction):
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length - 0.02,
+                x=self.application_point.x - self.tool_length - 0.08,
                 y=self.application_point.y,
                 z=self.application_point.z + pre_application_delta.z,
             ),

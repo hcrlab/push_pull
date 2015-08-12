@@ -100,14 +100,15 @@ class StateMachineBuilder(object):
                                                        ClassifyTargetItem),
             'count_points_in_box': rospy.ServiceProxy('perception/count_points_in_box',
                                                        CountPointsInBox),
-
+	    'get_planning_scene': rospy.ServiceProxy('/get_planning_scene', GetPlanningScene),
             # Contest
-            'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
-            'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
+            #'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
+            #'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
             'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems),
             'lookup_item': rospy.ServiceProxy('item_database/lookup_item', LookupItem),
-	    'convert_pcl_service': rospy.ServiceProxy('convert_pcl_service', ConvertPCL)
-        }
+	    'convert_pcl_service': rospy.ServiceProxy('convert_pcl_service', ConvertPCL),
+            'planning_scene_publisher': rospy.Publisher('planning_scene', PlanningScene)
+	}
 
     def build_sm_for_grasp_tool(self, **services):
         ''' Test state machine for grasping tool '''
@@ -217,7 +218,7 @@ class StateMachineBuilder(object):
                     MoveObject(**services),
                     transitions={
                         outcomes.MOVE_OBJECT_SUCCESS: outcomes.CHALLENGE_SUCCESS,
-                        outcomes.MOVE_OBJECT_FAILURE: outcomes.CHALLENGE_FAILURE,
+                        outcomes.MOVE_OBJECT_FAILURE: states.SenseBin.name,
                     }
                 )
                 

@@ -162,7 +162,7 @@ class GraspPlanner(smach.State):
 		return result.grasps
 	
 	def add_shelf_to_scene(self, scene):
-		for i in range(5):
+		for i in range(10):
 			scene.remove_world_object("bbox")
 			scene.remove_world_object("shelf1")
 			scene.remove_world_object("shelf")
@@ -321,12 +321,12 @@ class GraspPlanner(smach.State):
 		
 		# Adding bouding box to the scene
 		rospy.loginfo("Adding bounding box to the scene")
-		for i in range(10):
-		    scene.add_box("bbox", box_pose, 
-		    (box_dims.x - 0.03, 
-		    box_dims.y - 0.02, 
-		    box_dims.z - 0.03))
-		    rospy.sleep(0.1)
+		#for i in range(10):
+		#    scene.add_box("bbox", box_pose, 
+		#    (box_dims.x - 0.03, 
+		#    box_dims.y - 0.02, 
+		#    box_dims.z - 0.03))
+		#    rospy.sleep(0.1)
 
 		userdata.bounding_box = bounding_box
 
