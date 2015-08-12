@@ -52,31 +52,13 @@ class SenseBin(smach.State):
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))
 	self._move_head.wait_for_service()
         move_head_success = self._move_head(0, 0, 0, 'bin_K')
-  #       self.target_items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
-  #       num_items = len(self.target_items)
-  #       if( not userdata.previous_item ):
-  #           userdata.current_target = self.target_items[0]
-  #       else:
-  #           count = 0 
-  #           for item in self.target_items:
-        # rospy.loginfo("item: " + item)
-        # rospy.loginfo("previous item: " + userdata.previous_item)
-  #               if(item == userdata.previous_item):
-        #     rospy.loginfo("Count: " + str(count))
-        #     rospy.loginfo("Num items: " + str(num_items))
-  #                   if(count != num_items - 1):
-  #                       userdata.current_target = self.target_items[count + 1]
-  #                   else:
-  #                       userdata.current_target = self.target_items[0]
-        # count = count + 1
 
         
         self._lookup_item.wait_for_service()
         lookup_response = self._lookup_item(item=userdata.current_target)
         target_model = lookup_response.model
         userdata.target_model = target_model
-        rospy.loginfo("Place item : " + userdata.current_target)
-        self._tts.publish('Place item {}'.format(target_model.speech_name))
+        self._tts.publish('Place item')
         rospy.sleep(2)
         raw_input("Press enter after placing the item.")
         current_bin_items = userdata.current_target
@@ -85,18 +67,6 @@ class SenseBin(smach.State):
         crop_request = CropShelfRequest(cellID=userdata.bin_id)
         self._crop_shelf.wait_for_service()
         crop_response = self._crop_shelf(crop_request)
-
-        # Save point cloud for later analysis
-        #try:
-        #    if len(current_bin_items) > 1:
-        #        filename = '_'.join([x[:5] for x in [userdata.current_target] + current_bin_items])
-        #        filename += '.bag'
-        #        data_saver = DataSaver('/tmp/cell_pc', filename)
-        #        data_saver.save_message('cell_pc', crop_response.cloud)
-        #        data_saver.close()
-        #        rospy.loginfo('Saved cropped point cloud to /tmp/cell_pc/{}'.format(filename))
-        #except e:
-        #    rospy.logerr('Failed to save point cloud data: {}'.format(e))
 
         # Segment items.
         segment_request = SegmentItemsRequest(cloud=crop_response.cloud, items=current_bin_items)
@@ -126,13 +96,6 @@ class SenseBin(smach.State):
             self._get_item_descriptor.wait_for_service()
             response = self._get_item_descriptor(cluster=cluster)
             descriptors.append(response.descriptor)
-
-        #if len(current_bin_items) != len(descriptors):
-        #    rospy.logwarn((
-        #        '[SenseBin] Only {} descriptors from {} clusters returned, '
-        #        'expected {} items in bin'
-        #    ).format(len(descriptors), len(clusters),
-        #             len(current_bin_items)))
 
         # Classify which cluster is the target item.
         if len(descriptors) == 0:

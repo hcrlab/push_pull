@@ -265,13 +265,6 @@ class GraspPlanner(smach.State):
 		rospy.loginfo("Adding shelf to the scene")
 		scene = moveit_commander.PlanningSceneInterface()
 		self.add_shelf_to_scene(scene)       
-		#for i in range(10):
-		#	rospy.loginfo("Removing Planning Scene")
-                #        scene.remove_world_object("table")
-                #        scene.remove_world_object("shelf1")
-                #        scene.remove_world_object("shelf")
-                #        scene.remove_world_object("shelf2")
-                #        scene.remove_world_object("shelf3")
 
 		# Convert cluster PointCloud2 to PointCloud
 		rospy.loginfo("Waiting for convert_pcl service")
@@ -282,7 +275,6 @@ class GraspPlanner(smach.State):
 
 		# Save pointcloud
 		self.bag_data.pointcloud2 = self._cluster2.pointcloud
-		#self.bag.write('/head_mount_kinect/depth/points', self.bag_data.pointcloud2 )
 
 
 		self._cluster = userdata.target_cluster
@@ -315,8 +307,6 @@ class GraspPlanner(smach.State):
 		# Saving bounding box
 		self.bag_data.boundingbox = bounding_box
 		self.bag_data.marker_boundingbox = marker_bounding_box
-		#self.bag.write('pr2_pick_visualization', self.bag_data.marker_boundingbox )
-		#self.bag.write('pr2_pick_perception/BoundingBox', self.bag_data.boundingbox )
 		
 		# Adding bouding box to the scene
 		rospy.loginfo("Adding bounding box to the scene")
@@ -423,13 +413,6 @@ class GraspPlanner(smach.State):
 							return outcomes.GRASP_PLAN_SUCCESS
 
 						else:
-
-							#self.bag_data.is_graspable = False
-							#self.bag.write('record',self.bag_data)
-							#self.bag.close()
-							#self.bag_data.is_graspable = False
-							#self.bag.write('record', self.bag_data)
-							#self.bag.close()
 
 							rospy.loginfo("It was not possible to grasp the object.")
 
