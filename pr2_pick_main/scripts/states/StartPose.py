@@ -1,13 +1,14 @@
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
 import outcomes
 import rospy
 import smach
 import tf
 import visualization as viz
 
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 class StartPose(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
@@ -37,6 +38,8 @@ class StartPose(smach.State):
         # The location the robot started at.
         # When the robot relocalizes, it goes back to this start pose.
         self._start_pose = None
+	self._move_torso = kwargs['move_torso']
+	self._set_static_tf = kwargs['set_static_tf']
 
     def _adjust_start_pose_orientation(self):
         # After driving around enough, odom_combined seems to have a lot of
@@ -61,31 +64,44 @@ class StartPose(smach.State):
 
     @handle_service_exceptions(outcomes.START_POSE_FAILURE)
     def execute(self, userdata):
-	pre_grasp_pose = PoseStamped()
-        pre_grasp_pose.header.frame_id = "bin_K"
-        pre_grasp_pose.pose.position.x = -0.20
-        pre_grasp_pose.pose.position.y = 0.0
-        pre_grasp_pose.pose.position.z = 0.10
-        pre_grasp_pose.pose.orientation.x = 0.0
-        pre_grasp_pose.pose.orientation.y = 0.0
-        pre_grasp_pose.pose.orientation.z = 0.0
-        pre_grasp_pose.pose.orientation.w = 0.0
-        
-        
+	
+	# Publish static transform.
+        transform = TransformStamped()
+        transform.header.frame_id = 'base_footprint'
+        transform.header.stamp = rospy.Time.now()
+	odom = PoseStamped()
+	odom.pose.position.x = 0.0
+	odom.pose.position.y = 0.0
+	odom.pose.position.z = 0.0
+	odom.pose.orientation.x = 0.0
+	odom.pose.orientation.y = 0.0
+	odom.pose.orientation.z = 0.0
+	odom.pose.orientation.w = 1.0
+
+        transform.transform.translation = odom.pose.position
+        transform.transform.rotation = odom.pose.orientation
+        transform.child_frame_id = 'odom_combined'
+        self._set_static_tf.wait_for_service()
+        self._set_static_tf(transform)        
+
         #for i in range(0,10):
         #   viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
         rospy.loginfo('Setting start pose.')
         self._tts.publish('Setting start pose.')
-        self._move_head.wait_for_service()
-        move_head_success = self._move_head(1.5, 0, 1.05, 'base_footprint')
-        if not move_head_success:
-            rospy.logerr('StartPose: MoveHead failed')
-            self._tts.publish('Failed to move head.')
-        else:
-            rospy.loginfo('StartPose: MoveHead success')
-
+        #self._move_head.wait_for_service()
+        #move_head_success = self._move_head(1.5, 0, 1.05, 'base_footprint')
+        #if not move_head_success:
+        #    rospy.logerr('StartPose: MoveHead failed')
+        #    self._tts.publish('Failed to move head.')
+        #else:
+        #    rospy.loginfo('StartPose: MoveHead success')
+	#self._move_torso.wait_for_service()
+    #    rospy.loginfo("TESTE2")
+	#self._move_torso(0.058899518946705996, True)
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+        rospy.loginfo("TESTE1")
+        tuck_success = True
         if not tuck_success:
             rospy.logerr('StartPose: TuckArms failed')
             self._tts.publish('Failed to tuck arms.')
@@ -117,7 +133,7 @@ class StartPose(smach.State):
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
-        if tuck_success and move_head_success:
+        if tuck_success:
             return outcomes.START_POSE_SUCCESS
         else:
             self._tts.publish('Start pose failed.')

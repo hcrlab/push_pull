@@ -1,28 +1,112 @@
-## Push/Pull Manipulation for Graspability
+# Amazon Picking Challenge
+This is the main code repository for the UW Amazon Picking Challenge team.
 
-### Introduction
+## Getting started
+```
+sudo pip install mock
+sudo pip install scikit-learn
+sudo apt-get install ros-hydro-cmake-modules
 
-Grasping is one of the most important and well-studied capabilities for robots 
-with manipulators and grippers. It allows a robot to gain full control over an
-object, enabling its transportation, reconfiguration, or modification. Despite the tremendous
-progress in grasping research, driven by new perception and planning algorithms, grasping
-objects in confined and cluttered environments is still difficult. 
+cd ~/catkin_ws_hydro/src
+git clone --recursive git@gitlab.cs.washington.edu:amazon-picking-challenge-2015/pr2_pick.git
+cd ~/catkin_ws
+rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
+catkin_make
+```
 
-One approach explored in the literature in dealing with such challenging environments is to use
-non-prehensile manipulation of objects to reonfigure them in a way that
-facilitates grasping. This can involve pushing the target object before grasping
-it [dogar] or pushing other objects away to enable grasping of the target
-object [dogar, others]. Previous work exploring this approach has focused on the
-use of the robot's gripper or arm to accomplish the non-prehensile manipulation.
-In this work, we propose using a simple tool specifically designed to manipulate
-objects in confined environments. In addition to allowing push actions with point
-and surface contacts, the high friction end-effector of the tool allows pull 
-actions.
+If you have a problem with catkin not finding `pr2_pretouch_optical_dist`, then from the root of the repository, run:
+```
+git submodule init
+git submodule update
+```
 
-We present a method to apply the tool on non-greaspable objects so as to
-make them graspable. Our method is based on predictive models of object-relative
-tool actions. These models are represented with XXX and they are learned from experience. We
-systematically evaluate our approach in the context of the Amazon Picking Challenge
-tasks with a PR2. The task involves picking up target objects from a shelf with 
-small cells (Xcm by Ycm). We demonstrate that the robot is able to use the tool
-appropriately to grasp XX% of N situations in which M different objects are 
+## Running the code
+[Recommended .bashrc](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/recommended_bashrc.md)
+
+
+### On a desktop computer
+```bash
+setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
+roslaunch pr2_pick_main rviz.launch # Run after "robot start"
+```
+
+You must launch MoveIt before running anything on the robot, or else the prerequisites below won't work.
+```bash
+roslaunch pr2_pick_manipulation move_group.launch
+```
+
+### On the robot
+Before running `robot start`, verify that the latest version of pr2_robot from our repository is sourced.
+Try running `roscd pr2_robot`, it should take you to our repository.
+
+```bash
+robot start
+roslaunch pr2_pick_main main_prereqs.launch
+rosrun pr2_pick_main main.py
+```
+
+To see a visualization of the execution, open rviz and use the config file in `pr2_pick/config`
+
+## Packages
+
+- **festival_tts**:
+A text-to-speech node.
+It's useful for debugging purposes to have the robot say stuff aloud as it works.
+
+- **pr2_ethercat_drivers**:
+Contains firmware for the fingertip pressure and optical sensor.
+
+- **pr2_pick**:
+A metapackage for all the other packages.
+Contains the rviz config file.
+
+- **pr2_pick_contest**:
+Contains inventory management services.
+
+- **pr2_pick_main**:
+Contains the main state machine, and implementation for all the states.
+
+- **pr2_pick_manipulation**:
+Contains services and libraries for controlling the robot, planning with the arms, and reading off the end-effector pose.
+
+- **pr2_pick_perception**:
+Contains services and libraries for localizing the shelf, analyzing point clouds, publishing static TFs, and recording data.
+
+- **pr2_pretouch_optical_dist**:
+Contains launch files and visualizers for the fingertip optical sensor.
+
+- *joint_states_listener*:
+Unused.
+A service that gets the most recent joint states message.
+
+- *pr2_pick_msgs*:
+Unused, put messages in the related package instead.
+
+- *trajopt_test*:
+Unused.
+A service that moves the arm using trajopt.
+
+## Backpack computer network configuration
+See [Backpack configuration](https://github.com/hcrlab/wiki/blob/master/pr2/backpack_configuration.md)
+
+## Style guides
+These are just suggested:
+- [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.html)
+- [Python PEP8](https://www.python.org/dev/peps/pep-0008/)
+
+You can read about [auto code formatting](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/auto_code_formatting.md) if you're interested.
+
+## Pressure sensor
+We have installed two pressure sensors on the robot's right hand.
+To upload the firmware, go to `pr2_ethercat_drivers/wg006_fingertip_dev` and run `upload_pressure_firmware.sh`
+
+You should be able to specify the max_effort for the right hand gripper actions and have it work appropriately.
+
+## Fingertip optical sensor
+We have installed an optical sensor on one of the PR2's fingertips.
+[Full documentation for the fingertip sensor](https://bitbucket.org/uwsensors/pr2_pretouch_optical_dist/wiki/Publishing%20Distance%20Data).
+
+- Must use Hydro.
+- Whenever the robot is power-cycled, you must re-upload some firmware to the robot.
+- This launch file starts the optical distance publisher: `roslaunch pr2_pretouch_optical_dist optical_dist.launch`
+- The data can be visualized using `rosrun pr2_pretouch_optical_dist visualizer.py`

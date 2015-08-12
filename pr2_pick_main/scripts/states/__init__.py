@@ -11,4 +11,3 @@ from .VerifyGrasp import VerifyGrasp
 from .CaptureItemDescriptor import CaptureItemDescriptor
 from .GatherData import GatherData
 from .GraspPlanner import GraspPlanner
-from .MoveObject import MoveObject

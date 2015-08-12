@@ -67,11 +67,11 @@ bool ItemSegmentationService::Callback(SegmentItems::Request& request,
   ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
-  if (clusters.size() != request.items.size()) {
+  /*if (clusters.size() != request.items.size()) {
     ROS_INFO("Euclidean clustering yielded %ld items, expected %ld",
              clusters.size(), request.items.size());
     ClusterBinItems(*cell_pc_filtered, request.items.size(), &clusters);
-  }
+  }*/
 
   // Copy the clusters back to the response.
   pr2_pick_perception::ClusterList& clusterlist = response.clusters;
@@ -151,12 +151,13 @@ bool ItemOverSegmentationService::Callback(SegmentItems::Request& request,
   ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
-  if (clusters.size() != request.items.size()) {
+
+ /* if (clusters.size() != request.items.size()) {
     ROS_INFO("Euclidean clustering yielded %ld items, expected %ld",
              clusters.size(), request.items.size());
     ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
     // ClusterBinItems(*cell_pc_filtered, request.items.size(), &clusters);
-  }
+  }*/
 
   // Copy the clusters back to the response.
   pr2_pick_perception::ClusterList& clusterlist = response.clusters;
@@ -236,12 +237,12 @@ bool ItemKMeansSegmentationService::Callback(SegmentItems::Request& request,
   ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
-  if (clusters.size() != request.items.size()) {
+  /*if (clusters.size() != request.items.size()) {
     ROS_INFO("Euclidean clustering yielded %ld items, expected %ld",
              clusters.size(), request.items.size());
     // ClusterBinItems(*cell_pc_filtered, request.items.size(), &clusters);
     ClusterWithKMeans(*cell_pc_filtered, request.items.size(), &clusters);
-  }
+  }*/
 
   // Copy the clusters back to the response.
   pr2_pick_perception::ClusterList& clusterlist = response.clusters;
@@ -321,13 +322,13 @@ bool ItemOverKMeansSegmentationService::Callback(
   ClusterWithEuclidean(*cell_pc_filtered, 0.0254, min_cluster_points_,
                        max_cluster_points_, &clusters);
   // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
-  if (clusters.size() != request.items.size()) {
+ /*if (clusters.size() != request.items.size()) {
     ROS_INFO("Euclidean clustering yielded %ld items, expected %ld",
              clusters.size(), request.items.size());
     // ClusterWithRegionGrowing(*cell_pc_filtered, &clusters);
     ClusterBinItemsWithKMeans(*cell_pc_filtered, request.items.size(),
                               &clusters);
-  }
+  }*/
 
   // Copy the clusters back to the response.
   pr2_pick_perception::ClusterList& clusterlist = response.clusters;

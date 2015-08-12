@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  visualization_msgs
   message_generation
 )
 
@@ -49,6 +50,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   ItemModel.msg
+  Record.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -72,6 +74,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  visualization_msgs
   pr2_pick_perception
 )
 
