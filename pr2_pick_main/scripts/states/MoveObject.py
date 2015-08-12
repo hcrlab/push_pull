@@ -17,6 +17,8 @@ from PullForward import PullForward
 from PushSideways import PushSideways
 from TopSideways import TopSideways
 import time
+from shape_msgs.msg import SolidPrimitive
+from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
 
 class MoveObject(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
@@ -31,10 +33,40 @@ class MoveObject(smach.State):
             outcomes=[outcomes.MOVE_OBJECT_SUCCESS, outcomes.MOVE_OBJECT_FAILURE],
             input_keys=['debug', 'bounding_box'])
 
+	self.arm_side = 'l'
+    	self.tool_name = 'tool'
+	self.waypoint_duration = rospy.Duration(10.0)
+    	# approximate tool dimensions
+    	self.tool_x_size = 0.26
+    	self.tool_y_size = 0.01
+    	self.tool_z_size = 0.03
+	self.joints = [
+        'shoulder_pan_joint',
+        'shoulder_lift_joint',
+        'upper_arm_roll_joint',
+        'elbow_flex_joint',
+        'forearm_roll_joint',
+        'wrist_flex_joint',
+        'wrist_roll_joint',
+    	]
+    	# tool position relative to wrist_roll_link
+   	self.tool_x_pos = 0.29
+   	self.tool_y_pos = 0.0
+        self.tool_z_pos = 0.0
         self._markers = services['markers']
         self._tf_listener = tf_listener
         self.services = services
 	self._moveit_move_arm = services['moveit_move_arm']
+	self._set_grippers = services['set_grippers']
+	self._get_grippers = services['get_grippers']
+	self._interactive_markers = services['interactive_marker_server']
+	self.arm = SimpleActionClient(
+            '{}_arm_controller/joint_trajectory_action'.format(self.arm_side),
+            JointTrajectoryAction,
+        )
+	rospy.loginfo('Waiting for joint trajectory action server')
+        self.arm.wait_for_server()
+    	self._attached_collision_objects = services['attached_collision_objects']
     def _publish(self, marker):
         """Publishes a marker to the given publisher.
 
@@ -50,7 +82,52 @@ class MoveObject(smach.State):
             rate.sleep()
         rospy.logwarn(
             'No subscribers to the marker publisher, did not publish marker.')
+    def add_tool_collision_object(self):
+        '''
+        Add an attached collision object representing the tool to the moveit
+        planning scene so moveit can plan knowing that the tool is solid and
+        moves with the robot's gripper.
+        '''
 
+        box = SolidPrimitive(type=SolidPrimitive.BOX)
+        box.dimensions = [self.tool_x_size, self.tool_y_size, self.tool_z_size]
+        box_pose = Pose()
+        box_pose.position.x = self.tool_x_pos
+        box_pose.position.y = self.tool_y_pos
+        box_pose.position.z = self.tool_z_pos
+
+        collision_object = CollisionObject()
+        collision_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
+        collision_object.id = self.tool_name
+        collision_object.operation = CollisionObject.ADD
+        collision_object.primitives = [box]
+        collision_object.primitive_poses = [box_pose]
+
+        tool = AttachedCollisionObject()
+        tool.link_name = '{}_wrist_roll_link'.format(self.arm_side)
+        joints_below_forearm = [
+            '{}_forearm_link', '{}_wrist_flex_link', '{}_wrist_roll_link',
+            '{}_gripper_palm_link', '{}_gripper_l_finger_link',
+            '{}_gripper_l_finger_tip_link', '{}_gripper_motor_accelerometer_link',
+            '{}_gripper_r_finger_link', '{}_gripper_r_finger_tip_link',
+        ]
+        tool.touch_links = [
+            link.format(self.arm_side)
+            for link in joints_below_forearm
+        ]
+        tool.object = collision_object
+
+        for i in range(10):
+            self._attached_collision_objects.publish(tool)
+
+        pose_stamped = PoseStamped(header=collision_object.header, pose=box_pose)
+
+        viz.publish_bounding_box(
+            self._interactive_markers, pose_stamped,
+            self.tool_x_size, self.tool_y_size, self.tool_z_size,
+            0.5, 0.2, 0.1, 0.9,
+            2,
+        )
     # Pre-move_object position
     def pre_position_tool(self):
           # Hard code pre grasp state
@@ -58,7 +135,7 @@ class MoveObject(smach.State):
           pre_grasp_pose.header.frame_id = "bin_K"
           pre_grasp_pose.pose.position.x = -0.40
           pre_grasp_pose.pose.position.y = 0.0
-          pre_grasp_pose.pose.position.z = 0.20
+          pre_grasp_pose.pose.position.z = 0.23
           pre_grasp_pose.pose.orientation.x = 1.0
           pre_grasp_pose.pose.orientation.y = 0.0
           pre_grasp_pose.pose.orientation.z = 0.0
@@ -68,14 +145,8 @@ class MoveObject(smach.State):
                                                   0.005, 0.005, 12, 'left_arm',
                                                   False).success
 
-          raw_input("Add tool to the robot ")
-          time.sleep(3)
           
-          self._set_grippers.wait_for_service()
-          grippers_open = self._set_grippers(open_left=False, open_right=False, effort=userdata.item_model.grasp_effort)
-          gripper_states = self._get_grippers()
-          if not gripper_states.left_open:
-              self._set_grippers(open_left=False, open_right=False, effort=-1)
+                  
     def get_yaw(self, bounding_box):
         # get euler angles and normalize
         orientation = bounding_box.pose.pose.orientation
@@ -159,15 +230,61 @@ class MoveObject(smach.State):
 
         return ends
 
+    def execute_trajectory(self, waypoints):
+        goal = JointTrajectoryGoal()
+        joint_names = ['{}_{}'.format(self.arm_side, joint) for joint in self.joints]
+        goal.trajectory.joint_names = joint_names
+        for (idx, waypoint) in enumerate(waypoints):
 
+            point = JointTrajectoryPoint()
+            point.positions = waypoint
+            point.time_from_start = self.waypoint_duration * (1 + idx)
+            goal.trajectory.points.append(point)
+
+        return self.arm.send_goal_and_wait(goal)
     @handle_service_exceptions(outcomes.MOVE_OBJECT_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Starting Move Object state")
-
-        bounding_box = userdata.bounding_box
+	remove_object = CollisionObject()
+	
+        remove_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
+        remove_object.id = self.tool_name
+        remove_object.operation = CollisionObject.REMOVE
+	tool = AttachedCollisionObject()
+	tool.object = remove_object
+	self._attached_collision_objects.publish(tool)	
+	 
+	tool_waypoints = [
+        [
+            0.03617848465218309,    # shoulder_pan_joint, 13
+            -0.765112898156303,   # shoulder_lift_joint, 12
+            -0.5227552929694661,   # upper_arm_roll_joint, 14
+            -1.0424689689364501,    # elbow_flex_joint, 10
+            -0.2167002552019189,   # forearm_roll_joint, 11
+            0.7089518194136488,     # wrist_flex_joint, 9
+            -0.15862392791101892      # wrist_roll_joint, 8
+        ]
+    	]
+        
+        	
+	#self.execute_trajectory(tool_waypoints)
+        #self.execute_trajectory(tool_waypoints)
+	bounding_box = userdata.bounding_box
         self.pre_position_tool()
-        ends = self.get_box_ends(bounding_box)
+	grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
+        raw_input("Add tool to the robot ")
+        time.sleep(3)
+        rospy.loginfo("Waiting for set grippers service")
+        self._set_grippers.wait_for_service()
+        grippers_open = self._set_grippers(open_left=False, open_right=False, effort=-1)
+        
+        gripper_states = self._get_grippers()
+        if not gripper_states.left_open:
+            self._set_grippers(open_left=False, open_right=False, effort=-1)
 
+        self.add_tool_collision_object()
+        ends = self.get_box_ends(bounding_box)
+	#self.pre_position_tool()
         centroid = bounding_box.pose.pose.position
         frame = bounding_box.pose.header.frame_id
 

@@ -203,8 +203,8 @@ class GraspPlanner(smach.State):
 			rospy.sleep(1)
 			rate.sleep()
 
-	def save_image(self, image):
-		self.bag_data.image = image
+	#def save_image(self, image):
+		#self.bag_data.image = image
 
 	@handle_service_exceptions(outcomes.GRASP_FAILURE)
 	def execute(self, userdata):
@@ -217,7 +217,7 @@ class GraspPlanner(smach.State):
 		rospy.loginfo("Starting Grasp Planner")
 
 		# Save rgb image
-		rospy.Subscriber("/head_mount_kinect/rgb/image_color", Image, self.save_image)
+		#rospy.Subscriber("/head_mount_kinect/rgb/image_color", Image, self.save_image)
 
 		# Publish cluster
 		points = pc2.read_points(userdata.target_cluster.pointcloud, skip_nans=True)

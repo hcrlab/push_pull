@@ -43,9 +43,9 @@ class RepositionAction(object):
     }
 
     def __init__(self, bounding_box, application_point, userdata, action_name, **services):
-        self.debug = userdata.debug
+        #self.debug = userdata.debug
         self.bin_id = 'K'
-
+	self.debug = False
         self.application_point = application_point
         self.bounding_box = bounding_box
         self.action_name = action_name
