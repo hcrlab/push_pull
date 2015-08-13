@@ -44,64 +44,6 @@ class FindShelf(smach.State):
         with the shelf's pose in the odom_combined frame.
         '''
         rospy.sleep(10)
-        # success = False
-        # shelf_ps = PoseStamped()  # The shelf pose returned by the service.
-        # shelf_odom = PoseStamped()  # Shelf pose in odom_combined frame.
-        # for try_num in range(100):
-        #     self._localize_object.wait_for_service()
-        #     obj_request = ObjectDetectionRequest()
-        #     obj_request.obj_type = 'shelf'
-        #     obj_request.region2d = ROI2d(top_left_x=-1,
-        #                                  top_left_y=-1,
-        #                                  bottom_right_x=-1,
-        #                                  bottom_right_y=-1)
-        #     request = LocalizeShelfRequest()
-        #     request.object = obj_request
-        #     response = self._localize_object(request)
-        #     if len(response.locations.objects) == 0:
-        #         self._tts.publish('Shelf service returned no results.')
-        #         rospy.logwarn('[FindShelf]: Shelf service returned no results.')
-        #         continue
-        #     shelf = response.locations.objects[0]
-        #     rospy.loginfo('Returned shelf pose: {}'.format(shelf))
-        #     shelf_ps.pose = shelf.pose
-
-        #     shelf_ps.header = shelf.header
-        #     shelf_ps.header.stamp = rospy.Time(0)
-
-        #     try:
-        #         shelf_odom = self._tf_listener.transformPose('odom_combined',
-        #                                                      shelf_ps)
-        #     except:
-        #         rospy.logerr(
-        #             'No transform between {} and {} in FindShelf'.format(
-        #                 shelf.header.frame_id, 'odom_combined'))
-        #         self._tts.publish('No odometry transform while finding shelf.')
-        #         continue
-
-        #     roll, pitch, yaw = tf.transformations.euler_from_quaternion(
-        #         [shelf_odom.pose.orientation.x, shelf_odom.pose.orientation.y,
-        #          shelf_odom.pose.orientation.z, shelf_odom.pose.orientation.w])
-        #     pitch_degs = 180 * pitch / math.pi
-        #     yaw_degs = 180 * yaw / math.pi
-        #     rospy.loginfo('roll: {}, pitch: {}, yaw: {}'.format(
-        #         180 * roll / math.pi, pitch_degs, yaw_degs))
-
-        #     # Check that the response is reasonable.
-        #     #if shelf_odom.pose.position.z < -0.30 or shelf_odom.pose.position.z > 0.30:
-        #     #    rospy.logwarn('[FindShelf]: Shelf not on the ground.')
-        #     #    self._tts.publish('Shelf not on the ground for try {}'.format(try_num))
-        #     #    continue
-        #     #if pitch_degs > 4 or pitch_degs < -4:
-        #     #    self._tts.publish('Shelf too tilted for try {}'.format(try_num))
-        #     #    rospy.logwarn('[FindShelf]: Shelf too tilted.')
-        #     #    continue
-
-        #     success = True
-        #     break
-
-        # if not success:
-        #     return False, None
 
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
@@ -130,13 +72,6 @@ class FindShelf(smach.State):
         # Project onto the floor.
         shelf_odom.pose.position.z = 0
 
-        # TODO(jstn): Hack! Hack! Hack! ###############################
-        #shelf_odom.pose.position.x += 0.03
-        #if (userdata.bin_id is None or userdata.bin_id == 'J' or userdata.bin_id
-        #    == 'G' or userdata.bin_id == 'D' or userdata.bin_id == 'A'):
-        #    shelf_odom.pose.position.x += 0.03
-        ###############################################################
-
         self._tts.publish('Found shelf.')
 
         # Publish static transform.
@@ -152,7 +87,7 @@ class FindShelf(smach.State):
     
 
         # Publish marker
-        viz.publish_shelf(self._markers, shelf_odom)
+        #viz.publish_shelf(self._markers, shelf_odom)
     
 
         # Set up static a transform for each bin relative to shelf.
@@ -222,7 +157,7 @@ class FindShelf(smach.State):
             self._set_static_tf.wait_for_service()
             self._set_static_tf(transform)
         
-        self.visualize_dropoff_bin()
+        #self.visualize_dropoff_bin()
         return outcomes.FIND_SHELF_SUCCESS
 
     def visualize_dropoff_bin(self):

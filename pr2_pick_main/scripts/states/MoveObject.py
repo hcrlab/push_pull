@@ -65,6 +65,8 @@ class MoveObject(smach.State):
             '{}_arm_controller/joint_trajectory_action'.format(self.arm_side),
             JointTrajectoryAction,
         )
+	self._tuck_arms = services['tuck_arms']
+        
 	rospy.loginfo('Waiting for joint trajectory action server')
         self.arm.wait_for_server()
     	self._attached_collision_objects = services['attached_collision_objects']
@@ -450,6 +452,8 @@ class MoveObject(smach.State):
             self.pre_position_tool()
 
             if(tool_action == '-1'):
+		self._tuck_arms.wait_for_service()
+        	tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
        		return outcomes.MOVE_OBJECT_FAILURE 
 
         return outcomes.MOVE_OBJECT_SUCCESS
