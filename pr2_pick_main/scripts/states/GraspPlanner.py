@@ -39,12 +39,11 @@ class GraspPlanner(smach.State):
 			outcomes=[
 				outcomes.GRASP_PLAN_SUCCESS,
 				outcomes.GRASP_PLAN_FAILURE,
-				outcomes.GRASP_PLAN_NONE,
-				outcomes.GRASP_MOVE_OBJECT
+				outcomes.GRASP_PLAN_NONE
 			],
 			input_keys=['bin_id', 'debug', 'target_cluster', 'current_target',
 						'item_model', 'target_descriptor', 're_grasp_attempt'],
-			output_keys=['bounding_box']
+			output_keys=['re_sense_attempt', 'previous_item', 'bounding_box_pose']
 		)
 
 		self._set_grippers = services['set_grippers']
@@ -162,7 +161,7 @@ class GraspPlanner(smach.State):
 		return result.grasps
 	
 	def add_shelf_to_scene(self, scene):
-		for i in range(10):
+		for i in range(5):
 			scene.remove_world_object("bbox")
 			scene.remove_world_object("shelf1")
 			scene.remove_world_object("shelf")
@@ -203,19 +202,31 @@ class GraspPlanner(smach.State):
 			rospy.sleep(1)
 			rate.sleep()
 
-	#def save_image(self, image):
-		#self.bag_data.image = image
+	def save_image(self, image):
+		self.bag_data.image = image
 
 	@handle_service_exceptions(outcomes.GRASP_FAILURE)
 	def execute(self, userdata):
 
+		name_file = raw_input("Name of the bag file: ")
+
+        self.bag = rosbag.Bag(name_file , 'w')
+        self.bag_data = Record()
+
 		rospy.loginfo("Starting Grasp Planner")
+
+		# Save rgb image
+		rospy.Subscriber("/head_mount_kinect/rgb/image_color", Image, self.save_image)
 
 		# Publish cluster
 		points = pc2.read_points(userdata.target_cluster.pointcloud, skip_nans=True)
 		point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
 		marker_cluster = viz.publish_cluster(self._markers, point_list,
 								'bin_K','bin_K_items', 0)
+
+		# Save marker
+		self.bag_data.marker_pointcloud = marker_cluster
+		#self.bag.write('pr2_pick_visualization', self.bag_data.marker_pointcloud )
 
 		# Delete any leftover transforms from previous runs
 		bin_ids = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
@@ -247,6 +258,8 @@ class GraspPlanner(smach.State):
 		self.grasp_multiple_heights = userdata.item_model.grasp_multiple_heights
 		self.grasp_wide_end = userdata.item_model.grasp_wide_end
 		self._cluster = userdata.target_cluster
+		userdata.previous_item = userdata.current_target
+	
 
 		# Add shelf to the scene
 		rospy.loginfo("Adding shelf to the scene")
@@ -260,11 +273,15 @@ class GraspPlanner(smach.State):
 		self._cluster2 = Cluster2()
 		self._cluster2.pointcloud = self.convert_pcl(userdata.target_cluster.pointcloud).pointcloud      
 
+		# Save pointcloud
+		self.bag_data.pointcloud2 = self._cluster2.pointcloud
+
+
 		self._cluster = userdata.target_cluster
 		self._cluster2.header = userdata.target_cluster.header
 		self._cluster2.pointcloud.header = userdata.target_cluster.header
 		self._cluster2.id = userdata.target_cluster.id
-		#self.bag_data.pointcloud2 = self._cluster.pointcloud
+		self.bag_data.pointcloud2 = self._cluster.pointcloud
 		tf_broadcaster = tf.TransformBroadcaster()
 		tf_listener = tf.TransformListener()
 
@@ -273,7 +290,7 @@ class GraspPlanner(smach.State):
 
 		# Get the bounding box
 		(box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster2.pointcloud)
-		
+		userdata.bounding_box_pose = box_pose
 		box_pose.header.frame_id = self._cluster.header.frame_id
 		bounding_box = BoundingBox()
 		bounding_box.pose = box_pose
@@ -286,6 +303,125 @@ class GraspPlanner(smach.State):
 					 (box_dims.z),
 					 1.0, 0.0, 0.0, 0.5, 1)
 
-		userdata.bounding_box = bounding_box
+		
+		# Saving bounding box
+		self.bag_data.boundingbox = bounding_box
+		self.bag_data.marker_boundingbox = marker_bounding_box
+		
+		# Adding bouding box to the scene
+		rospy.loginfo("Adding bounding box to the scene")
+		for i in range(10):
+		    scene.add_box("bbox", box_pose, 
+		    (box_dims.x - 0.03, 
+		    box_dims.y - 0.02, 
+		    box_dims.z - 0.03))
+		    rospy.sleep(0.1)
 
-		return outcomes.GRASP_MOVE_OBJECT
+		# Plan Grasp
+		grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
+		rospy.loginfo("Number of grasps: ")
+		rospy.loginfo(len(grasps))
+
+		grasp_poses = [grasp.grasp_pose for grasp in grasps]
+		grasp_not_stamped = []
+		for pose_stamped in grasp_poses:
+			grasp_not_stamped.append(pose_stamped.pose)
+
+		# Grasp planner found possible grasps
+		if(len(grasps) > 0):
+
+			# Hard code pre grasp state
+			pre_grasp_pose = PoseStamped()
+			pre_grasp_pose.header.frame_id = "bin_K"
+			pre_grasp_pose.pose.position.x = -0.30
+			pre_grasp_pose.pose.position.y = 0.0
+			pre_grasp_pose.pose.position.z = 0.20
+			pre_grasp_pose.pose.orientation.x = 1.0
+			pre_grasp_pose.pose.orientation.y = 0.0
+			pre_grasp_pose.pose.orientation.z = 0.0
+			pre_grasp_pose.pose.orientation.w = 0.0
+
+			# Go to pre grasp
+			for i in range (5): 
+				viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target') 
+			if self._debug:
+			   raw_input('(Debug) Press enter to continue >')
+	   
+			
+			success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
+													0.005, 0.005, 12, 'left_arm',
+													False).success
+			grasp_poses = sorted(grasp_poses, key=lambda grasp: grasp.pose.position.x) 
+			
+			option = raw_input("1. Test if object is graspable \n2. Move to MoveObject state")
+
+			for grasp in grasp_poses:
+				
+				if(option == '2'):
+					break
+				# Visualize the gripper in the grasp position
+				rospy.loginfo("\n\nPossible Grasp: \n")
+				rospy.loginfo(grasp)
+				for i in range(10):		
+					viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+				# Test if grasp is going to hit the shelf
+				success_grasp = self._moveit_move_arm(grasp,
+													0.005, 0.005, 12, 'left_arm',
+													True).success
+			
+				if(success_grasp == True):
+					rospy.loginfo("The object is graspable.")
+					self._tts.publish("The object is graspable.")
+					time.sleep(2) 
+					
+					grasp_object = raw_input("Do you want to grasp the object? (y)es or (n)o")
+
+					if(grasp_object == 'y' or grasp_object == 'yes'):
+
+						# Visualize the gripper in the grasp position
+						viz.publish_gripper(self._im_server, grasp, 'grasp_target')
+
+						self._tts.publish("Grasping object.")
+						rospy.loginfo("Grasping object.")
+
+						# Grasp the object
+						possible_grasp = self._moveit_move_arm(grasp,
+														0.005, 0.005, 12, 'left_arm',
+														False).success
+						
+						if(possible_grasp == True):
+							rospy.loginfo("Good grasp!")
+								
+							# Close gripper to grasp object
+							rospy.loginfo('Close Hand')
+							if self._debug:
+								raw_input('(Debug) Press enter to continue >')
+							self._set_grippers.wait_for_service()
+							grippers_open = self._set_grippers(open_left=False, open_right=False, effort=userdata.item_model.grasp_effort)
+							gripper_states = self._get_grippers()
+							if not gripper_states.left_open:
+								self._set_grippers(open_left=False, open_right=False, effort=-1)
+							self.bag_data.is_graspable = True
+							self.bag.write('record', self.bag_data)
+							self.bag.close()
+							return outcomes.GRASP_PLAN_SUCCESS
+
+						else:
+
+							rospy.loginfo("It was not possible to grasp the object.")
+
+
+		# No grasps found
+		rospy.loginfo("The object is not graspable.")
+		self._tts.publish("The object is not graspable.")
+		time.sleep(2)
+		self.bag_data.is_graspable = False
+		self.bag.write('record', self.bag_data)
+		self.bag.close()
+		if(option == '2'):
+			return outcomes.GRASP_MOVE_OBJECT
+
+		move_object = raw_input("1. Move the object.\n2. Test new position ")
+		if(move_object == '1'):
+			return outcomes.GRASP_MOVE_OBJECT
+		return outcomes.GRASP_PLAN_NONE
