@@ -26,4 +26,8 @@
     <remap from="odom" to="base_odometry/odom" />
     <remap from="imu_data" to="torso_lift_imu/data" />
   </node>
+  <node pkg="object_recognition_clusters" name="cluster_bounding_box_finder_server" type="cluster_bounding_box_finder_server.py" />
+    <include file="$(find pr2_gripper_grasp_planner_cluster)/launch/pr2_gripper_grasp_planner_cluster_server.launch"/>
+    <node pkg = "convert_pcl" name = "convert_pcl_server" type = "convert_pcl_server" />
+
 </launch>

@@ -59,7 +59,6 @@ class SenseBin(smach.State):
         target_model = lookup_response.model
         userdata.target_model = target_model
         self._tts.publish('Place item')
-        rospy.sleep(2)
         raw_input("Press enter after placing the item.")
         current_bin_items = userdata.current_target
 

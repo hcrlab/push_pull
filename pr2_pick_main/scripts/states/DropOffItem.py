@@ -54,12 +54,10 @@ class DropOffItem(smach.State):
 
 
     @handle_service_exceptions(outcomes.DROP_OFF_ITEM_FAILURE)
-    def execute(self, userdata):
-        rospy.loginfo('Dropping off item from bin {}'.format(userdata.bin_id))
-        self._tts.publish('Dropping off item from bin {}'.format(userdata.bin_id))
+    def execute(self, userdata):      
 
         # open gripper
-        raw_input("Release item")
+        raw_input("Press enter to release item")
         rospy.loginfo('Open gripper')
         self._set_grippers.wait_for_service()
         time.sleep(5)

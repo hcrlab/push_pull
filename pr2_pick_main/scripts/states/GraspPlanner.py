@@ -351,25 +351,15 @@ class GraspPlanner(smach.State):
 			success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
 													0.005, 0.005, 12, 'left_arm',
 													False).success
-			grasp_poses = sorted(grasp_poses, key=lambda grasp: grasp.pose.position.x)
-			print(grasp_poses) 
-			# Analyze and perform grasps
+			grasp_poses = sorted(grasp_poses, key=lambda grasp: grasp.pose.position.x) 
+			
 			for grasp in grasp_poses:
-
-				#stop = raw_input("Enter '-1' to stop testing grasps")
 				
-				#if(stop == '-1'):
-				#	break
 				# Visualize the gripper in the grasp position
 				rospy.loginfo("\n\nPossible Grasp: \n")
 				rospy.loginfo(grasp)
 				for i in range(10):		
 					viz.publish_gripper(self._im_server, grasp, 'grasp_target')
-				stop = raw_input("-1 : Stop testing grasps\n 0: Skip grasp\n")
-                                if(stop == '-1'):
-                                        break
-				if(stop == '0'):
-					continue
 				# Test if grasp is going to hit the shelf
 				success_grasp = self._moveit_move_arm(grasp,
 													0.005, 0.005, 12, 'left_arm',

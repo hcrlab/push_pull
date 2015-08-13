@@ -82,25 +82,13 @@ class StartPose(smach.State):
         transform.transform.rotation = odom.pose.orientation
         transform.child_frame_id = 'odom_combined'
         self._set_static_tf.wait_for_service()
-        self._set_static_tf(transform)        
-
-        #for i in range(0,10):
-        #   viz.publish_gripper(self._im_server, pre_grasp_pose , 'grasp_target')
+        self._set_static_tf(transform)           
+     
         rospy.loginfo('Setting start pose.')
-        self._tts.publish('Setting start pose.')
-        #self._move_head.wait_for_service()
-        #move_head_success = self._move_head(1.5, 0, 1.05, 'base_footprint')
-        #if not move_head_success:
-        #    rospy.logerr('StartPose: MoveHead failed')
-        #    self._tts.publish('Failed to move head.')
-        #else:
-        #    rospy.loginfo('StartPose: MoveHead success')
-	#self._move_torso.wait_for_service()
-    #    rospy.loginfo("TESTE2")
-	#self._move_torso(0.058899518946705996, True)
+        self._tts.publish('Setting start pose.')   
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
-        rospy.loginfo("TESTE1")
+        
         tuck_success = True
         if not tuck_success:
             rospy.logerr('StartPose: TuckArms failed')

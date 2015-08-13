@@ -1,4 +1,4 @@
-i-- Launches shelf cropper. -->
+
 <launch>
   <arg name="debug" default="false" />
   <param name="/use_sim_time" value="false"/>
