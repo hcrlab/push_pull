@@ -110,7 +110,3 @@ We have installed an optical sensor on one of the PR2's fingertips.
 - Whenever the robot is power-cycled, you must re-upload some firmware to the robot.
 - This launch file starts the optical distance publisher: `roslaunch pr2_pretouch_optical_dist optical_dist.launch`
 - The data can be visualized using `rosrun pr2_pretouch_optical_dist visualizer.py`
-
-## How to run 
-- Same as for Demo1 (no --param)
-- We'd want to record, same stuff but the before and after
