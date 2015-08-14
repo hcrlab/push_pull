@@ -29,7 +29,7 @@ def main(simulation = False,
     elif simulation:
         state_machine_type = StateMachineBuilder.SIMULATION
     else:
-        state_machine_type = StateMachineBuilder.PLAN_GRASP
+        state_machine_type = StateMachineBuilder.SIMULATION
 
     sm = (StateMachineBuilder()
           .set_state_machine(state_machine_type).build())

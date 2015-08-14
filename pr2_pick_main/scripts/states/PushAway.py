@@ -56,8 +56,8 @@ class PushAway(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - self.tool_length,
-                y=self.cap_y(self.application_point.y + 0.02),
+                x=self.application_point.x - self.tool_length + 0.04,
+                y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
             orientation=orientation,

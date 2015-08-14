@@ -39,11 +39,12 @@ class GraspPlanner(smach.State):
 			outcomes=[
 				outcomes.GRASP_PLAN_SUCCESS,
 				outcomes.GRASP_PLAN_FAILURE,
-				outcomes.GRASP_PLAN_NONE
+				outcomes.GRASP_PLAN_NONE,
+				outcomes.GRASP_MOVE_OBJECT
 			],
 			input_keys=['bin_id', 'debug', 'target_cluster', 'current_target',
 						'item_model', 'target_descriptor', 're_grasp_attempt'],
-			output_keys=['re_sense_attempt', 'previous_item', 'bounding_box_pose']
+			output_keys=['re_sense_attempt', 'previous_item', 'bounding_box_pose', 'bounding_box']
 		)
 
 		self._set_grippers = services['set_grippers']
@@ -161,7 +162,7 @@ class GraspPlanner(smach.State):
 		return result.grasps
 	
 	def add_shelf_to_scene(self, scene):
-		for i in range(5):
+		for i in range(10):
 			scene.remove_world_object("bbox")
 			scene.remove_world_object("shelf1")
 			scene.remove_world_object("shelf")
@@ -210,8 +211,8 @@ class GraspPlanner(smach.State):
 
 		name_file = raw_input("Name of the bag file: ")
 
-        self.bag = rosbag.Bag(name_file , 'w')
-        self.bag_data = Record()
+        	self.bag = rosbag.Bag('bagfiles/' + name_file , 'w')
+        	self.bag_data = Record()
 
 		rospy.loginfo("Starting Grasp Planner")
 
@@ -307,15 +308,15 @@ class GraspPlanner(smach.State):
 		# Saving bounding box
 		self.bag_data.boundingbox = bounding_box
 		self.bag_data.marker_boundingbox = marker_bounding_box
-		
+		userdata.bounding_box = bounding_box	
 		# Adding bouding box to the scene
-		rospy.loginfo("Adding bounding box to the scene")
-		for i in range(10):
-		    scene.add_box("bbox", box_pose, 
-		    (box_dims.x - 0.03, 
-		    box_dims.y - 0.02, 
-		    box_dims.z - 0.03))
-		    rospy.sleep(0.1)
+		#rospy.loginfo("Adding bounding box to the scene")
+		#for i in range(10):
+		#    scene.add_box("bbox", box_pose, 
+		#    (box_dims.x - 0.03, 
+		#    box_dims.y - 0.02, 
+		#    box_dims.z - 0.03))
+		#    rospy.sleep(0.1)
 
 		# Plan Grasp
 		grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
@@ -326,11 +327,21 @@ class GraspPlanner(smach.State):
 		grasp_not_stamped = []
 		for pose_stamped in grasp_poses:
 			grasp_not_stamped.append(pose_stamped.pose)
+		option = raw_input("1. Test if object is graspable \n2. Move to MoveObject statei\n")
 
 		# Grasp planner found possible grasps
-		if(len(grasps) > 0):
-
+		if(len(grasps) > 0 and option != '2'):
 			# Hard code pre grasp state
+
+			# Adding bouding box to the scene
+                	rospy.loginfo("Adding bounding box to the scene")
+                	for i in range(10):
+                    		scene.add_box("bbox", box_pose,
+                    		(box_dims.x - 0.03,
+                    		box_dims.y - 0.02,
+                    		box_dims.z - 0.03))
+                    		rospy.sleep(0.1)
+
 			pre_grasp_pose = PoseStamped()
 			pre_grasp_pose.header.frame_id = "bin_K"
 			pre_grasp_pose.pose.position.x = -0.30
@@ -353,12 +364,8 @@ class GraspPlanner(smach.State):
 													False).success
 			grasp_poses = sorted(grasp_poses, key=lambda grasp: grasp.pose.position.x) 
 			
-			option = raw_input("1. Test if object is graspable \n2. Move to MoveObject state")
-
 			for grasp in grasp_poses:
 				
-				if(option == '2'):
-					break
 				# Visualize the gripper in the grasp position
 				rospy.loginfo("\n\nPossible Grasp: \n")
 				rospy.loginfo(grasp)

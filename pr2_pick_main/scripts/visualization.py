@@ -190,7 +190,7 @@ def publish_cluster(publisher, points, frame_id, namespace, cluster_id):
     _publish(publisher, marker)
     _publish(publisher, text_marker)
 
-
+    return marker
 def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
                          marker_id):
     '''Publishes a marker representing a bounding box.
@@ -220,7 +220,7 @@ def publish_bounding_box(publisher, pose_stamped, x, y, z, r, g, b, a,
     marker.color.a = a
     marker.lifetime = rospy.Duration()
     _publish(publisher, marker)
-
+    return marker
 def delete_bounding_box(publisher, marker_id):
     marker = Marker()
     marker.ns = MarkerNamespaces.bounding_box

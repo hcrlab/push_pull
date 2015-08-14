@@ -429,9 +429,9 @@ class MoveObject(smach.State):
             # Top pull
             elif(tool_action == '5'):
                 self.push_down_offset = 0.05
-                self.application_point.x = ends[3].x 
+                self.application_point.x = ends[3].x + 0.05
                 self.application_point.y = centroid.y
-                self.application_point.z = centroid.z + self.push_down_offset
+                self.application_point.z = centroid.z + self.push_down_offset + 0.01
                 action = PullForward(bounding_box, self.application_point,
                                      'top_pull', userdata, **self.services)
             
@@ -441,8 +441,8 @@ class MoveObject(smach.State):
             elif(tool_action == '6'):
 
                 self.push_down_offset = 0.055
-                self.application_point.x = centroid.x 
-                self.application_point.y = centroid.y
+                self.application_point.x = centroid.x + 0.05
+                self.application_point.y = centroid.y 
                 self.application_point.z = centroid.z + self.push_down_offset
                 action = TopSideways(bounding_box, self.application_point,
                                      'top_sideward_pull', userdata, **self.services)
