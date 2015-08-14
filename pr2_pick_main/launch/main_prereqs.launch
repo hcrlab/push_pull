@@ -26,4 +26,8 @@
     <remap from="odom" to="base_odometry/odom" />
     <remap from="imu_data" to="torso_lift_imu/data" />
   </node>
+  
+  
+  <include file="$(find pr2_gripper_grasp_planner_cluster)/launch/demo.launch" />
+  
 </launch>
