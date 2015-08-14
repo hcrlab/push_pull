@@ -1,7 +1,7 @@
 <launch>
   <arg name="mock" default="false" />
-  <include file="$(find pr2_pick_main)/launch/milestone1_prereqs.launch" />
-  <include file="$(find pr2_gripper_grasp_planner_cluster)/launch/demo.launch" />
+  <include file="$(find pr2_pick_main)/launch/main_prereqs.launch" />
+  <!-- <include file="$(find pr2_gripper_grasp_planner_cluster)/launch/demo.launch" /> -->
   <node if="$(arg mock)" name="pr2_pick_state_machine" pkg="pr2_pick_main" type="main.py" args="--mock" required="true" />
   <node unless="$(arg mock)" name="pr2_pick_state_machine" pkg="pr2_pick_main" type="main.py" required="true" />
 </launch>
