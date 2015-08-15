@@ -264,7 +264,7 @@ class StateMachineBuilder(object):
                 	states.InitializeExploration.name,
                 	states.InitializeExploration(**services),
                 	transitions={
-                    	outcomes.INITIALIZE_SUCCESS: states.SenseObjectBefore.name,
+                    	outcomes.INITIALIZE_SUCCESS: states.SenseObject.name,
                     	outcomes.INITIALIZE_FAILURE: outcomes.EXPLORATION_FAILURE
                 	}
             	)
