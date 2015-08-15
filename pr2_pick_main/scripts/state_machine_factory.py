@@ -165,8 +165,8 @@ class StateMachineBuilder(object):
                     }
                 )
                 smach.StateMachine.add(
-                    states.UpdatePlan.name,
-                    states.UpdatePlan(**services),
+                    states.UpdatePlanExperiment.name,
+                    states.UpdatePlanExperiment(**services),
                     transitions={
                         outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBin.name,
                         outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
@@ -285,8 +285,8 @@ class StateMachineBuilder(object):
                     }
                 )
                 smach.StateMachine.add(
-                    states.UpdatePlanExplore.name,
-                    states.UpdatePlanExplore(**services),
+                    states.UpdatePlan.name,
+                    states.UpdatePlan(**services),
                     transitions={
                         outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBin.name,
                         outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
