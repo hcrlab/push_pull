@@ -9,6 +9,7 @@ import smach
 import tf
 import visualization as viz
 from geometry_msgs.msg import Vector3
+from std_msgs.msg import Header
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
@@ -91,8 +92,8 @@ class InitializeExploration(smach.State):
             return outcomes.INITIALIZE_FAILURE
 
         # Find shelf
-        rospy.loginfo('Finding shelf.')
-        self._tts.publish('Finding shelf.')
+        rospy.loginfo('Creating shelf model.')
+        self._tts.publish('Creating shelf model.')
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
         shelf_odom.pose.position.x = 1.14
