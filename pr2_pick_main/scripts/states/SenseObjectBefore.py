@@ -10,6 +10,7 @@ import rospy
 import smach
 from pr2_pick_manipulation.srv import MoveHead
 import visualization as viz
+import rospkg
 
 
 class SenseObjectBefore(smach.State):
