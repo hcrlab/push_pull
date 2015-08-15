@@ -3,7 +3,7 @@ from pr2_pick_perception import DataSaver
 from pr2_pick_perception.srv import CropShelfRequest
 from pr2_pick_perception.srv import SegmentItemsRequest
 from geometry_msgs.msg import Point
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, Image
 import sensor_msgs.point_cloud2 as pc2
 import outcomes
 import rospy
@@ -12,6 +12,8 @@ from pr2_pick_manipulation.srv import MoveHead
 import visualization as viz
 import rospkg
 import rosbag
+from pr2_pick_contest.msg import Record
+
 
 class SenseObjectBefore(smach.State):
     """Performs sensing on a bin.
