@@ -3,12 +3,12 @@ from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import Transform, Quaternion, Vector3
 import outcomes
 import rospy
 import smach
 import tf
 import visualization as viz
-from geometry_msgs.msg import Vector3
 from std_msgs.msg import Header
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
