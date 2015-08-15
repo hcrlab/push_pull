@@ -280,8 +280,8 @@ class StateMachineBuilder(object):
                     ExploreToolActions.name,
                     ExploreToolActions(**services),
                     transitions={
-                        outcomes.TOOL_ACTION_SUCCESS: states.SenseObjectAfter.name,
-                        outcomes.TOOL_ACTION_FAILURE: states.SenseObjectBefore.name,
+                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObjectAfter.name,
+                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObjectBefore.name,
                     }
                 )
                 smach.StateMachine.add(

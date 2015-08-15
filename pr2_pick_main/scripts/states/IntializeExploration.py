@@ -14,7 +14,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 class InitializeExploration(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
     """
-    name = 'START_POSE_EXPLORE'
+    name = 'INITIALIZE_EXPLORATION'
 
     def __init__(self, **services):
 

@@ -23,12 +23,13 @@ import moveit_commander
 from moveit_msgs.msg import PlanningScene, PlanningSceneComponents
 
 class ExploreToolActions(smach.State):
-    name = 'EXECUTE_TOOL_ACTION'
+
+    name = 'EXPLORE_TOOL_ACTIONS'
 
     def __init__(self, **services):
         smach.State.__init__(
             self,
-            outcomes=[outcomes.TOOL_ACTION_SUCCESS, outcomes.TOOL_ACTION_FAILURE],
+            outcomes=[outcomes.TOOL_EXPLORATION_SUCCESS, outcomes.TOOL_EXPLORATION_FAILURE],
             input_keys=['debug', 'bounding_box'])
 
         self.arm_side = 'l'
@@ -277,7 +278,7 @@ class ExploreToolActions(smach.State):
         return self.arm.send_goal_and_wait(goal)
 
 
-    @handle_service_exceptions(outcomes.MOVE_OBJECT_FAILURE)
+    @handle_service_exceptions(outcomes.TOOL_EXPLORATION_FAILURE)
     def execute(self, userdata):
         rospy.loginfo("Starting Move Object state")
         remove_object = CollisionObject()
@@ -438,7 +439,7 @@ class ExploreToolActions(smach.State):
             if(tool_action == '-1'):
                 self._tuck_arms.wait_for_service()
                 tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
-                return outcomes.MOVE_OBJECT_FAILURE
+                return outcomes.TOOL_EXPLORATION_FAILURE
 
-        return outcomes.MOVE_OBJECT_SUCCESS
+        return outcomes.TOOL_EXPLORATION_SUCCESS
 
