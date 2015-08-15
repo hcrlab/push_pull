@@ -49,8 +49,6 @@ class StateMachineBuilder(object):
 
         if self.state_machine_identifier == StateMachineBuilder.TEST_GRASP_TOOL:
             build = self.build_sm_for_grasp_tool
-        elif self.state_machine_identifier == StateMachineBuilder.PLAN_GRASP:
-            build = self.build_sm_grasp_planner
         elif self.state_machine_identifier == StateMachineBuilder.SIMULATION:
             build = self.build_sm_for_simulation
         elif self.state_machine_identifier == StateMachineBuilder.EXPLORE:
@@ -103,13 +101,13 @@ class StateMachineBuilder(object):
                                                        ClassifyTargetItem),
             'count_points_in_box': rospy.ServiceProxy('perception/count_points_in_box',
                                                        CountPointsInBox),
-	    'get_planning_scene': rospy.ServiceProxy('/get_planning_scene', GetPlanningScene),
+            'get_planning_scene': rospy.ServiceProxy('/get_planning_scene', GetPlanningScene),
             # Contest
             #'get_items': rospy.ServiceProxy('inventory/get_items', GetItems),
             #'set_items': rospy.ServiceProxy('inventory/set_items', SetItems),
             'get_target_items': rospy.ServiceProxy('inventory/get_target_items', GetTargetItems),
             'lookup_item': rospy.ServiceProxy('item_database/lookup_item', LookupItem),
-	    'convert_pcl_service': rospy.ServiceProxy('convert_pcl_service', ConvertPCL),
+            'convert_pcl_service': rospy.ServiceProxy('convert_pcl_service', ConvertPCL),
             'planning_scene_publisher': rospy.Publisher('planning_scene', PlanningScene)
 	}
 
@@ -257,82 +255,27 @@ class StateMachineBuilder(object):
             ''' Test state machine for simulation '''
 
             sm = smach.StateMachine(outcomes=[
-                outcomes.CHALLENGE_SUCCESS,
-                outcomes.CHALLENGE_FAILURE
+                outcomes.EXPLORATION_SUCCESS,
+                outcomes.EXPLORATION_FAILURE
             ])
 
             with sm:
             	smach.StateMachine.add(
-                	states.StartPoseExplore.name,
-                	states.StartPoseExplore(**services),
+                	states.InitializeExploration.name,
+                	states.InitializeExploration(**services),
                 	transitions={
-                    	outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    	outcomes.START_POSE_FAILURE: states.StartPoseExplore.name
-                	},
-                	remapping={
-                    	'start_pose': 'start_pose'
+                    	outcomes.INITIALIZE_SUCCESS: states.SenseObjectBefore.name,
+                    	outcomes.INITIALIZE_FAILURE: outcomes.EXPLORATION_FAILURE
                 	}
-            	)                
-                smach.StateMachine.add(
-                    states.FindShelf.name,
-                    states.FindShelf(**services),
-                    transitions={
-                        outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
-                        outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
-                    },
-                    remapping={
-                        'debug': 'debug',
-                        'bin_id': 'current_bin'
-                    }
-                )
-                smach.StateMachine.add(
-                    states.UpdatePlan.name,
-                    states.UpdatePlan(**services),
-                    transitions={
-                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseObjectBefore.name,
-                        outcomes.UPDATE_PLAN_FAILURE: states.StartPoseExplore.name
-                    },
-                    remapping={
-                        'bin_data': 'bin_data',
-                        'output_bin_data': 'bin_data',
-                        'next_bin': 'current_bin',
-                        'next_target' : 'current_target',
-                        'next_bin_items': 'current_bin_items'
-                    }
-                )
+            	)
                 smach.StateMachine.add(
                     states.SenseObjectBefore.name,
                     states.SenseObjectBefore(**services),
                     transitions={
-                        outcomes.SENSE_BIN_SUCCESS: states.ExploreToolActions.name,
-                        outcomes.SENSE_BIN_NO_OBJECTS: states.StartPoseExplore,
-                        outcomes.SENSE_BIN_FAILURE: states.StartPoseExplore,
-                    },
-                    remapping={
-                        'bin_id': 'current_bin',
-                        'current_target': 'current_target',
-                        'current_bin_items': 'current_bin_items',
-                        'clusters': 'clusters',
-                        'target_cluster': 'target_cluster',
-                        'target_descriptor': 'target_descriptor',
-                        'target_model': 'target_model'
+                        outcomes.SENSE_OBJECT_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration,
                     }
                 )
-                # smach.StateMachine.add(
-                #     states.PrepareToolAction.name,
-                #     states.PrepareToolAction(**services),
-                #     transitions={
-                #         outcomes.PREPARE_TOOL_ACTION_SUCCESS: states.ExploreToolActions.name 
-                #         outcomes.PREPARE_TOOL_ACTION_FAILURE: states.SenseObjectBefore.name,
-                #     },
-                #     remapping={
-                #         'bin_id': 'current_bin',
-                #         'target_cluster': 'target_cluster',
-                #         'current_target': 'current_target',
-                #         'item_model': 'target_model',
-                #         'target_descriptor': 'target_descriptor'
-                #     }
-                # )
                 smach.StateMachine.add(
                     ExploreToolActions.name,
                     ExploreToolActions(**services),
@@ -345,8 +288,8 @@ class StateMachineBuilder(object):
                     SenseObjectAfter.name,
                     SenseObjectAfter(**services),
                     transitions={
-                        outcomes.TOOL_ACTION_SUCCESS: states.SenseObjectBefore.name,
-                        outcomes.TOOL_ACTION_FAILURE: states.SenseObjectBefore.name,
+                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_OBJECT_AFTER_FAILURE: states.InitializeExploration,
                     }
                 )
            

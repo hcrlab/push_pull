@@ -49,8 +49,6 @@ class PrepareToolAction(smach.State):
 		)
 
 
-	def save_image(self, image):
-		self.bag_data.image = image
 
 	@handle_service_exceptions(outcomes.PREPARE_TOOL_ACTION_FAILURE)
 	def execute(self, userdata):

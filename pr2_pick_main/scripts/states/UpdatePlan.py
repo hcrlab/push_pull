@@ -16,7 +16,7 @@ class UpdatePlan(smach.State):
     """
     name = 'UPDATE_PLAN'
 
-    def __init__(self, **kwargs):
+    def __init__(self, **services):
         """Constructor for this state.
         """
         smach.State.__init__(
@@ -29,8 +29,8 @@ class UpdatePlan(smach.State):
             output_keys=['output_bin_data', 'next_bin', 'next_target', 'next_bin_items', 'previous_item']
         )
 	
-        self._tts = kwargs['tts']
-        self._lookup_item = kwargs['lookup_item']
+        self._tts = services['tts']
+        self._lookup_item = services['lookup_item']
         self._calls_since_shelf_localization = 0
         self._preferred_order = ["K"]
 

@@ -25,13 +25,12 @@ from moveit_msgs.msg import PlanningScene, PlanningSceneComponents
 class ExploreToolActions(smach.State):
     name = 'EXECUTE_TOOL_ACTION'
 
-    def __init__(self, tts, tf_listener, **services):
-        """Constructor for this state.
-        """
+    def __init__(self, **services):
         smach.State.__init__(
             self,
             outcomes=[outcomes.TOOL_ACTION_SUCCESS, outcomes.TOOL_ACTION_FAILURE],
             input_keys=['debug', 'bounding_box'])
+
         self.arm_side = 'l'
         self.tool_name = 'tool'
         self.waypoint_duration = rospy.Duration(10.0)
