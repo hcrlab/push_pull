@@ -27,8 +27,9 @@ class SenseObject(smach.State):
         """
         smach.State.__init__(
             self,
-            outcomes=[outcomes.SENSE_OBJECT_SUCCESS,
-                      outcomes.SENSE_OBJECT_FAILURE],
+            outcomes=[outcomes.SENSE_OBJECT_BEFORE_SUCCESS,
+                outcomes.SENSE_OBJECT_AFTER_SUCCESS,
+                outcomes.SENSE_OBJECT_FAILURE],
             input_keys=['debug', 'trial_number', 'is_before'],
             output_keys=['bounding_box'])
 
