@@ -17,10 +17,10 @@ from pr2_pick_perception.srv import DeleteStaticTransformRequest
 from pr2_pick_perception.msg import Cluster2, BoundingBox
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 
-class SenseObjectBefore(smach.State):
+class SenseObject(smach.State):
     """Performs sensing on a bin.
     """
-    name = 'SENSE_OBJECT_BEFORE'
+    name = 'SENSE_OBJECT'
 
     def __init__(self, **services):
         """Constructor for this state.
@@ -29,7 +29,7 @@ class SenseObjectBefore(smach.State):
             self,
             outcomes=[outcomes.SENSE_OBJECT_SUCCESS,
                       outcomes.SENSE_OBJECT_FAILURE],
-            input_keys=['debug', 'trial_number'],
+            input_keys=['debug', 'trial_number', 'is_before'],
             output_keys=['bounding_box'])
 
         self._segment_items = services['segment_items']
@@ -69,16 +69,18 @@ class SenseObjectBefore(smach.State):
     def execute(self, userdata):
 
         # Find object cluster
-        rospy.loginfo('Sensing object.')
-        self._tts.publish('Sensing object.')
         self._move_head.wait_for_service()
         move_head_success = self._move_head(0, 0, 0, 'bin_K')
       
-        ########
-        rospy.loginfo('Please prepare object and press ready.')
-        self._tts.publish('Please prepare object and press ready.')
-        raw_input("Press enter after placing the item.")
-        ########
+        if userdata.is_before:
+            ########
+            rospy.loginfo('Please prepare object and press ready.')
+            self._tts.publish('Please prepare object and press ready.')
+            raw_input("Press enter after placing the item.")
+            ########
+        else:
+            rospy.loginfo('Sensing object after tool action.')
+            self._tts.publish('Sensing object after tool action.')            
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID='K')
@@ -115,7 +117,12 @@ class SenseObjectBefore(smach.State):
         # CREATE BEFORE BAG FILE 
         rospack = rospkg.RosPack()
         path = rospack.get_path('pr2_pick_main') + '/data/exploration/'
-        filename = path + 'trial' + str(userdata.trial_number) + '.bag'
+        
+        if userdata.is_before:
+            filename = path + 'trial' + str(userdata.trial_number) + '_before.bag'
+        else:
+            filename = path + 'trial' + str(userdata.trial_number) + '_after.bag'
+
         self.bag = rosbag.Bag(filename, 'w')
         self.bag_data = Record()
         rospy.loginfo("Opened bag file to save information before the tool action.")
@@ -178,6 +185,13 @@ class SenseObjectBefore(smach.State):
         self.bag.write('record', self.bag_data)
         self.bag.close()
 	
+
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
-        return outcomes.SENSE_OBJECT_SUCCESS
+
+        userdata.is_before = not userdata.is_before
+        if userdata.is_before:
+            userdata.trial_number += 1
+            return outcomes.SENSE_OBJECT_AFTER_SUCCESS
+        else:
+            return outcomes.SENSE_OBJECT_BEFORE_SUCCESS

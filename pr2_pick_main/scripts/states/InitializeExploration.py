@@ -156,6 +156,8 @@ class InitializeExploration(smach.State):
             self._set_grippers(open_left=False, open_right=False, effort=-1)
         
         userdata.trial_number = 0
+        userdata.is_before = True
+        
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
         return outcomes.INITIALIZE_SUCCESS

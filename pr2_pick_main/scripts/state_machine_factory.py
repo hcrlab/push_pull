@@ -269,10 +269,11 @@ class StateMachineBuilder(object):
                 	}
             	)
                 smach.StateMachine.add(
-                    states.SenseObjectBefore.name,
-                    states.SenseObjectBefore(**services),
+                    states.SenseObject.name,
+                    states.SenseObject(**services),
                     transitions={
-                        outcomes.SENSE_OBJECT_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.SenseObject.name,
                         outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
                     }
                 )
@@ -280,16 +281,8 @@ class StateMachineBuilder(object):
                     states.ExploreToolActions.name,
                     states.ExploreToolActions(**services),
                     transitions={
-                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObjectAfter.name,
-                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObjectBefore.name,
-                    }
-                )
-                smach.StateMachine.add(
-                    states.SenseObjectAfter.name,
-                    states.SenseObjectAfter(**services),
-                    transitions={
-                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.ExploreToolActions.name,
-                        outcomes.SENSE_OBJECT_AFTER_FAILURE: states.InitializeExploration.name,
+                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObject.name,
+                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObject.name,
                     }
                 )
            

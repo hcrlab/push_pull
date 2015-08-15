@@ -13,6 +13,5 @@ from .GraspPlanner import GraspPlanner
 from .MoveObject import MoveObject
 from .UpdatePlanExperiment import UpdatePlanExperiment
 from .InitializeExploration import InitializeExploration
-from .SenseObjectBefore import SenseObjectBefore
+from .SenseObject import SenseObject
 from .ExploreToolActions import ExploreToolActions
-from .SenseObjectAfter import SenseObjectAfter

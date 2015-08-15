@@ -35,7 +35,7 @@ class ExploreToolActions(smach.State):
         self.arm_side = 'l'
         self.tool_name = 'tool'
         self.waypoint_duration = rospy.Duration(10.0)
-        self.tool_x_size = 0.26
+        self.tool_x_size = 0.16 ########## REAL SIZE OF THE TOOL??? (previously 0.26)
         self.tool_y_size = 0.01
         self.tool_z_size = 0.03
         self.joints = [
@@ -49,7 +49,7 @@ class ExploreToolActions(smach.State):
     	]
 
     	# tool position relative to wrist_roll_link
-        self.tool_x_pos = 0.29
+        self.tool_x_pos = 0.24 #### CENTER OF THE TOOL? (previously 0.29)
         self.tool_y_pos = 0.0
         self.tool_z_pos = 0.0
 
