@@ -25,10 +25,8 @@ class SenseObjectBefore(smach.State):
             self,
             outcomes=[outcomes.SENSE_OBJECT_SUCCESS,
                       outcomes.SENSE_OBJECT_FAILURE],
-            input_keys=['bin_id', 'debug', 'current_target',
-                        'current_bin_items', 're_sense_attempt', 'previous_item'],
-            output_keys=['clusters', 'target_cluster', 'target_descriptor',
-                         'target_model', 're_grasp_attempt', 'current_target'])
+            input_keys=['debug', 'trial_number'],
+            output_keys=['bounding_box'])
 
         self._segment_items = services['segment_items']
         self._move_head = services['move_head']
