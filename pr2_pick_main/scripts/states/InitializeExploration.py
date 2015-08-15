@@ -141,12 +141,12 @@ class InitializeExploration(smach.State):
         self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
 
-        rospy.loginfo('Please hand the tool to the robot and press Take Tool.')
-        self._tts.publish('Please hand the tool to the robot and press Take Tool.')
+        rospy.loginfo('Please hand me the tool to the robot and press Take Tool.')
+        self._tts.publish('Please hand me the tool.')
 
         ################
         raw_input("Add tool to the robot ")
-        time.sleep(3)
+        rospy.sleep(3)
         ################
 
         grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)
