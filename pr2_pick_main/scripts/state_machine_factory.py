@@ -273,7 +273,7 @@ class StateMachineBuilder(object):
                     states.SenseObjectBefore(**services),
                     transitions={
                         outcomes.SENSE_OBJECT_SUCCESS: states.ExploreToolActions.name,
-                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration,
+                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
                     }
                 )
                 smach.StateMachine.add(
@@ -289,7 +289,7 @@ class StateMachineBuilder(object):
                     states.SenseObjectAfter(**services),
                     transitions={
                         outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.ExploreToolActions.name,
-                        outcomes.SENSE_OBJECT_AFTER_FAILURE: states.InitializeExploration,
+                        outcomes.SENSE_OBJECT_AFTER_FAILURE: states.InitializeExploration.name,
                     }
                 )
            
