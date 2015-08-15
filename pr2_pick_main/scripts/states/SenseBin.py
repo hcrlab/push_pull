@@ -97,18 +97,20 @@ class SenseBin(smach.State):
         if len(descriptors) == 0:
             rospy.logerr('[SenseBin]: No descriptors found!')
             return outcomes.SENSE_BIN_FAILURE
+	"""
         self._classify_target_item.wait_for_service()
         response = self._classify_target_item(
             descriptors=descriptors,
             target_item=userdata.current_target,
             all_items=current_bin_items)
-        index = response.target_item_index
+	"""
+        index = 0
         userdata.target_cluster = clusters[index]
         userdata.target_descriptor = descriptors[index]
-        rospy.loginfo(
-            'Classified cluster #{} as target item ({} confidence)'.format(
-                index, response.confidence))
-
+        #rospy.loginfo(
+        #    'Classified cluster #{} as target item ({} confidence)'.format(
+        #        index, response.confidence))
+	
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
         return outcomes.SENSE_BIN_SUCCESS

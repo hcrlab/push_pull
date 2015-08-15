@@ -327,7 +327,7 @@ class GraspPlanner(smach.State):
 		grasp_not_stamped = []
 		for pose_stamped in grasp_poses:
 			grasp_not_stamped.append(pose_stamped.pose)
-		option = raw_input("1. Test if object is graspable \n2. Move to MoveObject statei\n")
+		option = raw_input("1. Test if object is graspable \n2. Move to MoveObject state\n")
 
 		# Grasp planner found possible grasps
 		if(len(grasps) > 0 and option != '2'):
@@ -364,7 +364,7 @@ class GraspPlanner(smach.State):
 													False).success
 			grasp_poses = sorted(grasp_poses, key=lambda grasp: grasp.pose.position.x) 
 			
-			for grasp in grasp_poses:
+			for grasp in grasp_pose:
 				
 				# Visualize the gripper in the grasp position
 				rospy.loginfo("\n\nPossible Grasp: \n")
@@ -419,7 +419,7 @@ class GraspPlanner(smach.State):
 
 
 		# No grasps found
-		rospy.loginfo("The object is not graspable.")
+		# rospy.loginfo("The object is not graspable.")
 		self._tts.publish("The object is not graspable.")
 		time.sleep(2)
 		self.bag_data.is_graspable = False
