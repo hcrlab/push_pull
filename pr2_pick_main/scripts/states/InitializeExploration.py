@@ -24,7 +24,7 @@ class InitializeExploration(smach.State):
             self,
             outcomes=[outcomes.INITIALIZE_SUCCESS, outcomes.INITIALIZE_FAILURE],
             input_keys=['debug'],
-            output_keys=['start_pose', 'trial_number'])
+            output_keys=['start_pose', 'trial_number', 'is_before'])
 
         self._tts = services['tts']
         self._tuck_arms = services['tuck_arms']
@@ -157,7 +157,7 @@ class InitializeExploration(smach.State):
         
         userdata.trial_number = 0
         userdata.is_before = True
-        
+
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
         return outcomes.INITIALIZE_SUCCESS
