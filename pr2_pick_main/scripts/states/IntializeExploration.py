@@ -20,7 +20,7 @@ class InitializeExploration(smach.State):
 
         smach.State.__init__(
             self,
-            outcomes=[outcomes.START_POSE_SUCCESS, outcomes.START_POSE_FAILURE],
+            outcomes=[outcomes.INITIALIZE_SUCCESS, outcomes.INITIALIZE_FAILURE],
             input_keys=['debug'],
             output_keys=['start_pose'])
 
@@ -37,7 +37,7 @@ class InitializeExploration(smach.State):
         self._set_grippers = services['set_grippers']
         self._get_grippers = services['get_grippers']
 
-    @handle_service_exceptions(outcomes.START_POSE_FAILURE)
+    @handle_service_exceptions(outcomes.INITIALIZE_FAILURE)
     def execute(self, userdata):
 	
 	    # Publish static transform.
@@ -156,4 +156,4 @@ class InitializeExploration(smach.State):
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
-        return outcomes.START_POSE_SUCCESS
+        return outcomes.INITIALIZE_SUCCESS
