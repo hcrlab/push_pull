@@ -11,7 +11,7 @@ import smach
 from pr2_pick_manipulation.srv import MoveHead
 import visualization as viz
 import rospkg
-
+import rosbag
 
 class SenseObjectBefore(smach.State):
     """Performs sensing on a bin.
