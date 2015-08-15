@@ -252,6 +252,7 @@ class StateMachineBuilder(object):
                 )
             return sm
 
+
     def build_sm_for_explore(self, **services):
             ''' Test state machine for simulation '''
 
@@ -262,11 +263,11 @@ class StateMachineBuilder(object):
 
             with sm:
             	smach.StateMachine.add(
-                	states.StartPose.name,
-                	states.StartPose(**services),
+                	states.StartPoseExplore.name,
+                	states.StartPoseExplore(**services),
                 	transitions={
                     	outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    	outcomes.START_POSE_FAILURE: states.StartPose.name
+                    	outcomes.START_POSE_FAILURE: states.StartPoseExplore.name
                 	},
                 	remapping={
                     	'start_pose': 'start_pose'
@@ -288,10 +289,8 @@ class StateMachineBuilder(object):
                     states.UpdatePlan.name,
                     states.UpdatePlan(**services),
                     transitions={
-                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBin.name,
-                        outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
-                        outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
-                        outcomes.UPDATE_PLAN_FAILURE: states.StartPose.name
+                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseObjectBefore.name,
+                        outcomes.UPDATE_PLAN_FAILURE: states.StartPoseExplore.name
                     },
                     remapping={
                         'bin_data': 'bin_data',
@@ -302,12 +301,12 @@ class StateMachineBuilder(object):
                     }
                 )
                 smach.StateMachine.add(
-                    states.SenseBin.name,
-                    states.SenseBin(**services),
+                    states.SenseObjectBefore.name,
+                    states.SenseObjectBefore(**services),
                     transitions={
-                        outcomes.SENSE_BIN_SUCCESS: states.GraspPlanner.name,
-                        outcomes.SENSE_BIN_NO_OBJECTS: outcomes.CHALLENGE_FAILURE,
-                        outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                        outcomes.SENSE_BIN_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_BIN_NO_OBJECTS: states.StartPoseExplore,
+                        outcomes.SENSE_BIN_FAILURE: states.StartPoseExplore,
                     },
                     remapping={
                         'bin_id': 'current_bin',
@@ -319,55 +318,36 @@ class StateMachineBuilder(object):
                         'target_model': 'target_model'
                     }
                 )
+                # smach.StateMachine.add(
+                #     states.PrepareToolAction.name,
+                #     states.PrepareToolAction(**services),
+                #     transitions={
+                #         outcomes.PREPARE_TOOL_ACTION_SUCCESS: states.ExploreToolActions.name 
+                #         outcomes.PREPARE_TOOL_ACTION_FAILURE: states.SenseObjectBefore.name,
+                #     },
+                #     remapping={
+                #         'bin_id': 'current_bin',
+                #         'target_cluster': 'target_cluster',
+                #         'current_target': 'current_target',
+                #         'item_model': 'target_model',
+                #         'target_descriptor': 'target_descriptor'
+                #     }
+                # )
                 smach.StateMachine.add(
-                    states.GraspPlanner.name,
-                    states.GraspPlanner(**services),
+                    ExploreToolActions.name,
+                    ExploreToolActions(**services),
                     transitions={
-                        outcomes.GRASP_PLAN_SUCCESS: states.ExtractItem.name,
-                        outcomes.GRASP_PLAN_NONE: states.SenseBin.name,
-                        outcomes.GRASP_PLAN_FAILURE: states.SenseBin.name,
-                        outcomes.GRASP_MOVE_OBJECT: states.MoveObject.name 
-                    },
-                    remapping={
-                        'bin_id': 'current_bin',
-                        'target_cluster': 'target_cluster',
-                        'current_target': 'current_target',
-                        'item_model': 'target_model',
-                        'target_descriptor': 'target_descriptor'
+                        outcomes.TOOL_ACTION_SUCCESS: states.SenseObjectAfter.name,
+                        outcomes.TOOL_ACTION_FAILURE: states.SenseObjectBefore.name,
                     }
                 )
                 smach.StateMachine.add(
-                    MoveObject.name,
-                    MoveObject(**services),
+                    SenseObjectAfter.name,
+                    SenseObjectAfter(**services),
                     transitions={
-                        outcomes.MOVE_OBJECT_SUCCESS: states.SenseBin.name,
-                        outcomes.MOVE_OBJECT_FAILURE: states.SenseBin.name,
+                        outcomes.TOOL_ACTION_SUCCESS: states.SenseObjectBefore.name,
+                        outcomes.TOOL_ACTION_FAILURE: states.SenseObjectBefore.name,
                     }
                 )
            
-	        smach.StateMachine.add(
-                states.ExtractItem.name,
-                states.ExtractItem(**services),
-                transitions={
-                    outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
-                    outcomes.EXTRACT_ITEM_FAILURE: states.SenseBin.name
-                },
-                remapping={
-                    'bin_id': 'current_bin',
-                    'item_model': 'target_model'
-                }
-                )
-                smach.StateMachine.add(
-                states.DropOffItem.name,
-                states.DropOffItem(**services),
-                transitions={
-                    outcomes.DROP_OFF_ITEM_SUCCESS: states.StartPose.name,
-                    outcomes.DROP_OFF_ITEM_FAILURE: states.StartPose.name
-                },
-                remapping={
-                    'bin_id': 'current_bin',
-                    'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data'
-                }
-                )
             return sm
