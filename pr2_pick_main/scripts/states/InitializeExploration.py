@@ -8,6 +8,7 @@ import rospy
 import smach
 import tf
 import visualization as viz
+from geometry_msgs.msg import Vector3
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
