@@ -22,7 +22,7 @@ class SenseObjectBefore(smach.State):
         """
         smach.State.__init__(
             self,
-            outcomes=[outcomes.SENSE_OBJECT_SUCCESS
+            outcomes=[outcomes.SENSE_OBJECT_SUCCESS,
                       outcomes.SENSE_OBJECT_FAILURE],
             input_keys=['bin_id', 'debug', 'current_target',
                         'current_bin_items', 're_sense_attempt', 'previous_item'],

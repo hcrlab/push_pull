@@ -6,7 +6,7 @@ import rospy
 import smach
 
 
-class UpdatePlan(smach.State):
+class UpdatePlanExperiment(smach.State):
     """Decides on the next item to pick.
 
     Its preference is to go from bottom to top, then from left to right.
