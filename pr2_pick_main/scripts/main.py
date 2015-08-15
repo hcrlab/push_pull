@@ -13,7 +13,8 @@ import smach_ros
 from state_machine_factory import StateMachineBuilder
 import states
 
-def main(simulation = False,
+def main(explore = False,
+	 simulation = False,
          plan_grasp = False,
          test_grasp_tool=False,
          debug=False,
@@ -26,8 +27,8 @@ def main(simulation = False,
         state_machine_type = StateMachineBuilder.TEST_GRASP_TOOL
     elif plan_grasp:
         state_machine_type = StateMachineBuilder.PLAN_GRASP
-    elif simulation:
-        state_machine_type = StateMachineBuilder.SIMULATION
+    elif explore:
+        state_machine_type = StateMachineBuilder.EXPLORE
     else:
         state_machine_type = StateMachineBuilder.SIMULATION
 
@@ -104,6 +105,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
+        '--explore',
+        action='store_true',
+        help=('State machine for exploring parameters'))
+    group.add_argument(
         '--test_drop_off_item',
         action='store_true',
         help=('True to create a minimal state machine for testing the'
@@ -146,5 +151,5 @@ if __name__ == '__main__':
                       'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
 
-    main(args.simulation, args.plan_grasp, args.test_grasp_tool,args.debug, args.auto_reset,
+    main(args.explore, args.simulation, args.plan_grasp, args.test_grasp_tool,args.debug, args.auto_reset,
          args.attempts_per_bin)

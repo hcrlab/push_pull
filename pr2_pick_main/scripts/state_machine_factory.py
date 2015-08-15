@@ -32,6 +32,7 @@ class StateMachineBuilder(object):
     PLAN_GRASP = 'plan-grasp'
     DEFAULT = 'default'
     SIMULATION = 'simulation'
+    EXPLORE = 'explore'
 
     def __init__(self):
         self.state_machine_identifier = StateMachineBuilder.DEFAULT
@@ -52,6 +53,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_grasp_planner
         elif self.state_machine_identifier == StateMachineBuilder.SIMULATION:
             build = self.build_sm_for_simulation
+        elif self.state_machine_identifier == StateMachineBuilder.EXPLORE:
+            build = self.build_sm_for_explore
         else:
             build = self.build_sm
 
@@ -164,6 +167,126 @@ class StateMachineBuilder(object):
                 smach.StateMachine.add(
                     states.UpdatePlan.name,
                     states.UpdatePlan(**services),
+                    transitions={
+                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBin.name,
+                        outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
+                        outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
+                        outcomes.UPDATE_PLAN_FAILURE: states.StartPose.name
+                    },
+                    remapping={
+                        'bin_data': 'bin_data',
+                        'output_bin_data': 'bin_data',
+                        'next_bin': 'current_bin',
+                        'next_target' : 'current_target',
+                        'next_bin_items': 'current_bin_items'
+                    }
+                )
+                smach.StateMachine.add(
+                    states.SenseBin.name,
+                    states.SenseBin(**services),
+                    transitions={
+                        outcomes.SENSE_BIN_SUCCESS: states.GraspPlanner.name,
+                        outcomes.SENSE_BIN_NO_OBJECTS: outcomes.CHALLENGE_FAILURE,
+                        outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
+                    },
+                    remapping={
+                        'bin_id': 'current_bin',
+                        'current_target': 'current_target',
+                        'current_bin_items': 'current_bin_items',
+                        'clusters': 'clusters',
+                        'target_cluster': 'target_cluster',
+                        'target_descriptor': 'target_descriptor',
+                        'target_model': 'target_model'
+                    }
+                )
+                smach.StateMachine.add(
+                    states.GraspPlanner.name,
+                    states.GraspPlanner(**services),
+                    transitions={
+                        outcomes.GRASP_PLAN_SUCCESS: states.ExtractItem.name,
+                        outcomes.GRASP_PLAN_NONE: states.SenseBin.name,
+                        outcomes.GRASP_PLAN_FAILURE: states.SenseBin.name,
+                        outcomes.GRASP_MOVE_OBJECT: states.MoveObject.name 
+                    },
+                    remapping={
+                        'bin_id': 'current_bin',
+                        'target_cluster': 'target_cluster',
+                        'current_target': 'current_target',
+                        'item_model': 'target_model',
+                        'target_descriptor': 'target_descriptor'
+                    }
+                )
+                smach.StateMachine.add(
+                    MoveObject.name,
+                    MoveObject(**services),
+                    transitions={
+                        outcomes.MOVE_OBJECT_SUCCESS: states.SenseBin.name,
+                        outcomes.MOVE_OBJECT_FAILURE: states.SenseBin.name,
+                    }
+                )
+           
+	        smach.StateMachine.add(
+                states.ExtractItem.name,
+                states.ExtractItem(**services),
+                transitions={
+                    outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
+                    outcomes.EXTRACT_ITEM_FAILURE: states.SenseBin.name
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'item_model': 'target_model'
+                }
+                )
+                smach.StateMachine.add(
+                states.DropOffItem.name,
+                states.DropOffItem(**services),
+                transitions={
+                    outcomes.DROP_OFF_ITEM_SUCCESS: states.StartPose.name,
+                    outcomes.DROP_OFF_ITEM_FAILURE: states.StartPose.name
+                },
+                remapping={
+                    'bin_id': 'current_bin',
+                    'bin_data': 'bin_data',
+                    'output_bin_data': 'bin_data'
+                }
+                )
+            return sm
+
+    def build_sm_for_explore(self, **services):
+            ''' Test state machine for simulation '''
+
+            sm = smach.StateMachine(outcomes=[
+                outcomes.CHALLENGE_SUCCESS,
+                outcomes.CHALLENGE_FAILURE
+            ])
+
+            with sm:
+            	smach.StateMachine.add(
+                	states.StartPose.name,
+                	states.StartPose(**services),
+                	transitions={
+                    	outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                    	outcomes.START_POSE_FAILURE: states.StartPose.name
+                	},
+                	remapping={
+                    	'start_pose': 'start_pose'
+                	}
+            	)                
+                smach.StateMachine.add(
+                    states.FindShelf.name,
+                    states.FindShelf(**services),
+                    transitions={
+                        outcomes.FIND_SHELF_SUCCESS: states.UpdatePlan.name,
+                        outcomes.FIND_SHELF_FAILURE: outcomes.CHALLENGE_FAILURE
+                    },
+                    remapping={
+                        'debug': 'debug',
+                        'bin_id': 'current_bin'
+                    }
+                )
+                smach.StateMachine.add(
+                    states.UpdatePlanExplore.name,
+                    states.UpdatePlanExplore(**services),
                     transitions={
                         outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBin.name,
                         outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
