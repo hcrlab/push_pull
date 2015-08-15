@@ -14,7 +14,6 @@
   <run_depend>pr2_pick_manipulation</run_depend>
   <run_depend>pr2_pick_msgs</run_depend>
   <run_depend>pr2_pick_perception</run_depend>
-  <run_depend>pr2_pretouch_optical_dist</run_depend>
   <run_depend>trajopt_test</run_depend>
   <export>
     <metapackage/>

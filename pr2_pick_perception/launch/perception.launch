@@ -26,7 +26,7 @@
     args="laser_tilt_controller linear 10 1.02 .31" />
 
   <!-- Pretouch optical sensor -->
-  <include file="$(find pr2_pretouch_optical_dist)/launch/optic_pressure.launch" /> 
+  <!-- <include file="$(find pr2_pretouch_optical_dist)/launch/optic_pressure.launch" /> -->
 
   <!-- Shelf services -->
   <!-- If you want debugging output, run these launch files separately on your local machine. -->
