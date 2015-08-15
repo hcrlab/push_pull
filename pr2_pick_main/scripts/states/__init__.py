@@ -7,7 +7,6 @@ from .MoveToBin import MoveToBin
 from .SenseBin import SenseBin
 from .StartPose import StartPose
 from .UpdatePlan import UpdatePlan
-from .VerifyGrasp import VerifyGrasp
 from .CaptureItemDescriptor import CaptureItemDescriptor
 from .GatherData import GatherData
 from .GraspPlanner import GraspPlanner
