@@ -54,7 +54,7 @@ class ExploreToolActions(smach.State):
         self.tool_z_pos = 0.0
 
         self._markers = services['markers']
-        self._tf_listener = tf_listener
+        self._tf_listener = services['tf_listener']
         self.services = services
         self._moveit_move_arm = services['moveit_move_arm']
         self._interactive_markers = services['interactive_marker_server']
