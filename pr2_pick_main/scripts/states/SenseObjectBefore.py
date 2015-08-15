@@ -148,18 +148,18 @@ class SenseObjectBefore(smach.State):
         rospy.loginfo("Waiting for convert_pcl service")
         self.convert_pcl.wait_for_service()
         rospy.loginfo("PCL service found")
-        self._cluster2 = Cluster2()
-        self._cluster2.pointcloud = self.convert_pcl(target_cluster.pointcloud).pointcloud      
-        self.bag_data.pointcloud2 = self._cluster2.pointcloud
+        target_cluster2 = Cluster2()
+        target_cluster2.pointcloud = self.convert_pcl(target_cluster.pointcloud).pointcloud      
+        self.bag_data.pointcloud2 = target_cluster2.pointcloud
 
-        self._cluster2.header = target_cluster.header
-        self._cluster2.pointcloud.header = target_cluster.header
-        self._cluster2.id = target_cluster.id
+        target_cluster2.header = target_cluster.header
+        target_cluster2.pointcloud.header = target_cluster.header
+        target_cluster2.id = target_cluster.id
         self.bag_data.pointcloud2 = target_cluster.pointcloud
 
         # Get the bounding box
-        (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster2.pointcloud)
-        box_pose.header.frame_id = self._cluster.header.frame_id
+        (box_pose, box_dims) = self.call_find_cluster_bounding_box(target_cluster2.pointcloud)
+        box_pose.header.frame_id = target_cluster.header.frame_id
         bounding_box = BoundingBox()
         bounding_box.pose = box_pose
         bounding_box.dimensions = box_dims
