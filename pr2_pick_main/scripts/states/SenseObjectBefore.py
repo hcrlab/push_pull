@@ -15,6 +15,7 @@ import rosbag
 from pr2_pick_contest.msg import Record
 from pr2_pick_perception.srv import DeleteStaticTransformRequest
 from pr2_pick_perception.msg import Cluster2, BoundingBox
+from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 
 class SenseObjectBefore(smach.State):
     """Performs sensing on a bin.
