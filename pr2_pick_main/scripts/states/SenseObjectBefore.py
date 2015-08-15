@@ -13,6 +13,7 @@ import visualization as viz
 import rospkg
 import rosbag
 from pr2_pick_contest.msg import Record
+from pr2_pick_perception.srv import DeleteStaticTransformRequest
 
 
 class SenseObjectBefore(smach.State):
