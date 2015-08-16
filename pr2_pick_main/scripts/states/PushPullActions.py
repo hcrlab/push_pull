@@ -275,15 +275,15 @@ class PushAway(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        if(self.action_type == RepositionAction.front_center_push: 
+        if self.action_type == RepositionAction.front_center_push: 
             application_point.x = self.centroid.x  
             application_point.y = self.centroid.y
             application_point.z = self.centroid.z / 2
-        elif(self.action_type == RepositionAction.front_side_push_l:
+        elif self.action_type == RepositionAction.front_side_push_l:
             application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
             application_point.y = self.ends[3].y - PushAway.distance_from_end 
             application_point.z = self.centroid.z / 2
-        elif(self.action_type == RepositionAction.front_side_push_r:
+        elif self.action_type == RepositionAction.front_side_push_r:
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
             application_point.y =  self.ends[0].y + PushAway.distance_from_end 
             application_point.z = self.centroid.z / 2
