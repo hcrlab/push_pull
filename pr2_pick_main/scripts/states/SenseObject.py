@@ -31,7 +31,7 @@ class SenseObject(smach.State):
                 outcomes.SENSE_OBJECT_AFTER_SUCCESS,
                 outcomes.SENSE_OBJECT_FAILURE],
             input_keys=['debug', 'trial_number', 'is_before'],
-            output_keys=['bounding_box'])
+            output_keys=['bounding_box', 'trial_number', 'is_before'])
 
         self._segment_items = services['segment_items']
         self._move_head = services['move_head']
@@ -190,9 +190,10 @@ class SenseObject(smach.State):
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
 
-        userdata.is_before = not userdata.is_before
         if userdata.is_before:
+            userdata.is_before = False
+            return outcomes.SENSE_OBJECT_BEFORE_SUCCESS
+        else:
+            userdata.is_before = True
             userdata.trial_number += 1
             return outcomes.SENSE_OBJECT_AFTER_SUCCESS
-        else:
-            return outcomes.SENSE_OBJECT_BEFORE_SUCCESS
