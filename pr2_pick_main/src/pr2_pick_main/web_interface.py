@@ -1,5 +1,5 @@
-from robot_eup.msg import WebInterfaceParams
-from robot_eup.msg import WebInterfaceSubmission
+from pr2_pick_main.msg import WebInterfaceParams
+from pr2_pick_main.msg import WebInterfaceSubmission
 import json
 import random
 import rospy
