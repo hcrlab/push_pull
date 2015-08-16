@@ -13,8 +13,8 @@ ros.on('close', function() {
 
 var view_publisher = new ROSLIB.Topic({
   ros: ros,
-  name: 'robot_eup/interface/interface_submission',
-  messageType: 'robot_eup/InterfaceSubmission'
+  name: 'web_interface/interface_submission',
+  messageType: 'web_interface/WebInterfaceSubmission'
 });
 
 if (Meteor.isClient) {
@@ -36,8 +36,8 @@ if (Meteor.isClient) {
 
     this.view_listener = new ROSLIB.Topic({
       ros: ros,
-      name: 'robot_eup/interface/interface_params',
-      messageType: 'robot_eup/InterfaceParams'
+      name: 'web_interface/interface_params',
+      messageType: 'web_interface/WebInterfaceParams'
     });
 
     this.view_listener.subscribe(function(message) {

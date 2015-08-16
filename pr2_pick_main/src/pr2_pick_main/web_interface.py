@@ -1,5 +1,5 @@
-from robot_eup.msg import InterfaceParams
-from robot_eup.msg import InterfaceSubmission
+from robot_eup.msg import WebInterfaceParams
+from robot_eup.msg import WebInterfaceSubmission
 import json
 import random
 import rospy
@@ -9,7 +9,7 @@ interface = WebInterface()
 
 class WebInterface(object):
     def __init__(self):
-        self._interface_publisher = rospy.Publisher('robot_eup/interface/interface_params', InterfaceParams)
+        self._interface_publisher = rospy.Publisher('web_interface/interface_params', WebInterfaceParams)
 
     def _publish_params(self, msg):
         rate = rospy.Rate(5)
@@ -20,7 +20,7 @@ class WebInterface(object):
     def display_default(self):
         """Displays the default screen.
         """
-        msg = InterfaceParams()
+        msg = WebInterfaceParams()
         msg.interface_name = 'generic interface'
         msg.interface_type = 'default'
         self._publish_params(msg)
@@ -41,7 +41,7 @@ class WebInterface(object):
 
         Returns: string. The choice that was selected.
         """
-        msg = InterfaceParams()
+        msg = WebInterfaceParams()
         msg.interface_type = 'ask_choice'
         msg.interface_name = 'generic interface'
         prompt_id = str(random.randint(0, 1000000))
@@ -60,8 +60,8 @@ class WebInterface(object):
         while response_prompt_id != prompt_id:
             start_time = rospy.Time().now()
             submission = rospy.wait_for_message(
-                'robot_eup/interface/interface_submission',
-                InterfaceSubmission, timeout_remaining)
+                'web_interface/interface_submission',
+                WebInterfaceSubmission, timeout_remaining)
 
             # If a timeout is set, then possibly break out of the loop.
             wait_duration = (rospy.Time().now() - start_time).to_sec()
@@ -106,7 +106,7 @@ class WebInterface(object):
           duration: float. The time, in seconds, to show the message, or None to 
             show the message indefinitely.
         """
-        msg = InterfaceParams()
+        msg = WebInterfaceParams()
         msg.interface_type = 'display_message'
         msg.interface_name = 'generic interface'
         msg.keys = ['message']
