@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   visualization_msgs
   message_generation
+  manipulation_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -51,6 +52,7 @@ add_message_files(
   FILES
   ItemModel.msg
   Record.msg
+  Trial.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -76,6 +78,7 @@ generate_messages(
   std_msgs
   visualization_msgs
   pr2_pick_perception
+  manipulation_msgs
 )
 
 ###################################
