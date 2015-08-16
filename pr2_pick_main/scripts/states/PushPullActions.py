@@ -78,6 +78,7 @@ class RepositionAction(object):
         application_point.x = self.centroid.x  
         application_point.y = self.centroid.y
         application_point.z = self.centroid.z
+        return application_point
 
     def cap_y(self, value):
         ''' Cap the given y value so it's safely inside the bin. '''
@@ -286,6 +287,7 @@ class PushAway(RepositionAction):
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
             application_point.y =  self.ends[0].y + PushAway.distance_from_end 
             application_point.z = self.centroid.z / 2
+        return application_point
 
     def build_trajectory(self):
         '''
@@ -456,6 +458,7 @@ class PullForward(RepositionAction):
         application_point.x = self.ends[3].x + 0.05
         application_point.y = self.centroid.y
         application_point.z = self.centroid.z + PullForward.push_down_offset + 0.01
+        return application_point
 
     def build_trajectory(self):
         '''
@@ -551,6 +554,7 @@ class TopSideways(RepositionAction):
         application_point.x = self.centroid.x + 0.05
         application_point.y = self.centroid.y 
         application_point.z = self.centroid.z + TopSideways.push_down_offset
+        return application_point
 
     def build_trajectory(self):
         '''
