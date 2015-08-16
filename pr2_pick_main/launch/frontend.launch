@@ -1,0 +1,10 @@
+<launch>
+  
+  <include file="$(find pr2_pick_manipulation)/launch/move_group.launch" />
+
+  <node name="$(anon rviz-1)" pkg="rviz" type="rviz" respawn="false"
+      args="-d $(find pr2_pick_main)/config/pr2_pick.rviz"
+      output="screen">
+  </node>
+
+</launch>
