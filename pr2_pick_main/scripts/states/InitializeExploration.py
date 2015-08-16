@@ -1,6 +1,6 @@
 
 from pr2_pick_main import handle_service_exceptions
-from pr2_pick_main import web_interface
+from pr2_pick_main import web_interface.WebInterface
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from geometry_msgs.msg import PoseStamped, TransformStamped
@@ -39,6 +39,8 @@ class InitializeExploration(smach.State):
         self._set_static_tf = services['set_static_tf']
         self._set_grippers = services['set_grippers']
         self._get_grippers = services['get_grippers']
+
+        self._interface = WebInterface()
 
     @handle_service_exceptions(outcomes.INITIALIZE_FAILURE)
     def execute(self, userdata):
@@ -146,7 +148,7 @@ class InitializeExploration(smach.State):
         self._tts.publish('Please hand me the tool.')
 
         ################
-        web_interface.interface.ask_choice('Press OK when ready to take', ['OK'])
+        self._interface.ask_choice('Press OK when ready to take', ['OK'])
         #raw_input("Add tool to the robot ")
         rospy.sleep(1)
         ################

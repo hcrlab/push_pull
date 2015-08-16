@@ -5,7 +5,6 @@ import random
 import rospy
 import time
 
-interface = WebInterface()
 
 class WebInterface(object):
     def __init__(self):
