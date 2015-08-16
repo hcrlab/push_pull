@@ -12,11 +12,9 @@ from geometry_msgs.msg import Point, PointStamped, Pose, PoseStamped
 import visualization as viz
 from visualization import IdTable
 from std_msgs.msg import Header
-from PushPullActions import RepositionAction
-from PushPullActions import PushAway
-from PushPullActions import PullForward
-from PushPullActions import PushSideways
-from PushPullActions import TopSideways
+from PushPullActions import RepositionAction, Tool
+from PushPullActions import PushAway, PullForward
+from PushPullActions import PushSideways, TopSideways
 import time
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
@@ -34,11 +32,7 @@ class ExploreToolActions(smach.State):
             input_keys=['debug', 'bounding_box'])
 
         self.arm_side = 'l'
-        self.tool_name = 'tool'
-        self.waypoint_duration = rospy.Duration(10.0)
-        self.tool_x_size = 0.16 ########## REAL SIZE OF THE TOOL??? (previously 0.26)
-        self.tool_y_size = 0.01
-        self.tool_z_size = 0.03
+
         self.joints = [
         'shoulder_pan_joint',
         'shoulder_lift_joint',
@@ -48,11 +42,6 @@ class ExploreToolActions(smach.State):
         'wrist_flex_joint',
         'wrist_roll_joint',
     	]
-
-    	# tool position relative to wrist_roll_link
-        self.tool_x_pos = 0.24 #### CENTER OF THE TOOL? (previously 0.29)
-        self.tool_y_pos = 0.0
-        self.tool_z_pos = 0.0
 
         self._markers = services['markers']
         self._tf_listener = services['tf_listener']
@@ -113,15 +102,15 @@ class ExploreToolActions(smach.State):
         '''
 
         box = SolidPrimitive(type=SolidPrimitive.BOX)
-        box.dimensions = [self.tool_x_size, self.tool_y_size, self.tool_z_size]
+        box.dimensions = [Tool.tool_x_size, Tool.tool_y_size, Tool.tool_z_size]
         box_pose = Pose()
-        box_pose.position.x = self.tool_x_pos
-        box_pose.position.y = self.tool_y_pos
-        box_pose.position.z = self.tool_z_pos
+        box_pose.position.x = Tool.tool_x_pos
+        box_pose.position.y = Tool.tool_y_pos
+        box_pose.position.z = Tool.tool_z_pos
 
         collision_object = CollisionObject()
         collision_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
-        collision_object.id = self.tool_name
+        collision_object.id = Tool.tool_name
         collision_object.operation = CollisionObject.ADD
         collision_object.primitives = [box]
         collision_object.primitive_poses = [box_pose]
@@ -173,7 +162,7 @@ class ExploreToolActions(smach.State):
         rospy.loginfo("Starting Move Object state")
         remove_object = CollisionObject()
         remove_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
-        remove_object.id = self.tool_name
+        remove_object.id = Tool.tool_name
         remove_object.operation = CollisionObject.REMOVE
         tool = AttachedCollisionObject()
         tool.object = remove_object

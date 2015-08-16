@@ -16,6 +16,26 @@ import math
 from math import fabs
 
 
+class Tool(object):
+
+    tool_x_size = 0.12
+    tool_y_size = 0.01
+    tool_z_size = 0.03
+
+    # distance from wrist roll link to the tool grip side end
+    tool_start_distance = 0.16
+
+    # distance from wrist roll link to the tool tip
+    tool_length = tool_start_distance + tool_x_size
+
+    # tool position relative to wrist_roll_link
+    tool_x_pos = tool_start_distance + tool_x_size/2
+    tool_y_pos = 0.0
+    tool_z_pos = 0.0
+
+    tool_name = 'tool'
+
+
 class RepositionAction(object):
     '''
     Parent class for actions that reposition objects using the tool. We take care
@@ -23,9 +43,6 @@ class RepositionAction(object):
     a trajectory that does the right thing.
     '''
     pose_id = 5340
-
-    # distance from tip of tool to wrist roll link
-    tool_length = 0.31 #### DEFINED IN MULTIPLE PLACES??????????? (previously 0.41)
 
     # identifier for publishing points in the visualization
     bin_width = 0.27
@@ -40,7 +57,10 @@ class RepositionAction(object):
     # how close to the edge of the shelf to pull the tip of the object
     distance_from_edge = 0.05
 
+    ###############
     ## ACTION TYPES
+    ###############
+
     front_center_push = 'front_center_push'
     front_side_push_r = 'front_side_push_r'
     front_side_push_l = 'front_side_push_l'
@@ -313,7 +333,7 @@ class PushAway(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + pre_application_delta.x - RepositionAction.tool_length - PushAway.pushing_distance/2,
+                x=self.application_point.x + pre_application_delta.x - Tool.tool_length - PushAway.pushing_distance/2,
                 y=self.cap_y(self.application_point.y + pre_application_delta.y),
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -321,7 +341,7 @@ class PushAway(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length + PushAway.pushing_distance/2,
+                x=self.application_point.x - Tool.tool_length + PushAway.pushing_distance/2,
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -329,7 +349,7 @@ class PushAway(RepositionAction):
         )
         post_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + post_application_delta.x - RepositionAction.tool_length,
+                x=self.application_point.x + post_application_delta.x - Tool.tool_length,
                 y=self.cap_y(self.application_point.y + post_application_delta.y),
                 z=self.application_point.z + post_application_delta.z,
             ),
@@ -397,12 +417,12 @@ class PushSideways(RepositionAction):
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
         pre_application_delta.y = 0.02
 
-        distance_x = back_end.x - RepositionAction.tool_length
+        distance_x = back_end.x - Tool.tool_length
 
         if(self.action_type == RepositionAction.side_push_point_contact_r or 
             self.action_type == RepositionAction.side_push_point_contact_l):
             distance_x =  front_end.x + float(raw_input("Distance from front end of object to apply tool: ")) \
-                        - RepositionAction.tool_length
+                        - Tool.tool_length
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
@@ -487,7 +507,7 @@ class PullForward(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + pre_application_delta.x - RepositionAction.tool_length,
+                x=self.application_point.x + pre_application_delta.x - Tool.tool_length,
                 y=self.application_point.y,
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -495,7 +515,7 @@ class PullForward(RepositionAction):
         )
         above_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length,
+                x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y,
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -503,7 +523,7 @@ class PullForward(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length - 0.05,
+                x=self.application_point.x - Tool.tool_length - 0.05,
                 y=self.application_point.y,
                 z=self.application_point.z ,
             ),
@@ -511,7 +531,7 @@ class PullForward(RepositionAction):
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length - 0.08,
+                x=self.application_point.x - Tool.tool_length - 0.08,
                 y=self.application_point.y,
                 z=self.application_point.z,
             ),
@@ -519,7 +539,7 @@ class PullForward(RepositionAction):
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length - 0.08,
+                x=self.application_point.x - Tool.tool_length - 0.08,
                 y=self.application_point.y,
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -583,7 +603,7 @@ class TopSideways(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - 0.015 - RepositionAction.tool_length,
+                x=self.application_point.x - 0.015 - Tool.tool_length,
                 y=self.application_point.y,
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -591,7 +611,7 @@ class TopSideways(RepositionAction):
         )
         above_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length - 0.01,
+                x=self.application_point.x - Tool.tool_length - 0.01,
                 y=self.application_point.y,
                 z=self.application_point.z,
             ),
@@ -599,7 +619,7 @@ class TopSideways(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length - 0.01,
+                x=self.application_point.x - Tool.tool_length - 0.01,
                 y=self.application_point.y,
                 z=self.application_point.z - 0.005,
             ),
@@ -607,7 +627,7 @@ class TopSideways(RepositionAction):
         )
         pre_pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length,
+                x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y - 0.01,
                 z=self.application_point.z - 0.005,
             ),
@@ -615,7 +635,7 @@ class TopSideways(RepositionAction):
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length,
+                x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y - 0.025,
                 z=self.application_point.z - 0.005,
             ),
@@ -623,7 +643,7 @@ class TopSideways(RepositionAction):
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - RepositionAction.tool_length,
+                x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y - 0.025,
                 z=self.application_point.z + pre_application_delta.z,
             ),
