@@ -20,7 +20,7 @@ class WebInterface(object):
         """Displays the default screen.
         """
         msg = WebInterfaceParams()
-        msg.interface_name = 'generic interface'
+        msg.interface_name = 'generic_interface'
         msg.interface_type = 'default'
         self._publish_params(msg)
 
@@ -42,7 +42,7 @@ class WebInterface(object):
         """
         msg = WebInterfaceParams()
         msg.interface_type = 'ask_choice'
-        msg.interface_name = 'generic interface'
+        msg.interface_name = 'generic_interface'
         prompt_id = str(random.randint(0, 1000000))
         msg.keys = ['message', 'choices', 'prompt_id']
         msg.values = [message, json.dumps(choices), prompt_id]
@@ -107,7 +107,7 @@ class WebInterface(object):
         """
         msg = WebInterfaceParams()
         msg.interface_type = 'display_message'
-        msg.interface_name = 'generic interface'
+        msg.interface_name = 'generic_interface'
         msg.keys = ['message']
 
         if has_countdown:
