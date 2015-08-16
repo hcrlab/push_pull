@@ -212,42 +212,42 @@ class ExploreToolActions(smach.State):
             if(tool_action == '1'):
 
                 action = PushAway(bounding_box,
-                    RepositionAction.front_center_push
+                    RepositionAction.front_center_push,
                     **self.services)
 
             # Front side push
             elif(tool_action == '2'):
 
                 action = PushAway(bounding_box,
-                    RepositionAction.front_side_push_r
+                    RepositionAction.front_side_push_r,
                     **self.services)
 
             # Side push with full surface contact
             elif(tool_action == '3'):
 
                 action = PushSideways(bounding_box,
-                    RepositionAction.side_push_full_contact_r
+                    RepositionAction.side_push_full_contact_r,
                     **self.services)
 
             # Side push with point contact
             elif(tool_action == '4'):
 
                 action = PushSideways(bounding_box,
-                    RepositionAction.side_push_point_contact_r
+                    RepositionAction.side_push_point_contact_r,
                     **self.services)
 
             # Top pull
             elif(tool_action == '5'):
 
                 action = PullForward(bounding_box,
-                    RepositionAction.top_pull
+                    RepositionAction.top_pull,
                     **self.services)
 
             # Top sideward pull
             elif(tool_action == '6'):
 
                 action = TopSideways(bounding_box,
-                    RepositionAction.top_sideward_pull_r
+                    RepositionAction.top_sideward_pull_r,
                     **self.services)
             
             elif(tool_action == '-1'):
