@@ -8,14 +8,15 @@ from pr2_controllers_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 from actionlib import SimpleActionClient
 import tf
 import math
-from geometry_msgs.msg import Point,PointStamped, Pose, PoseStamped
+from geometry_msgs.msg import Point, PointStamped, Pose, PoseStamped
 import visualization as viz
 from visualization import IdTable
 from std_msgs.msg import Header
-from PushAway import PushAway
-from PullForward import PullForward
-from PushSideways import PushSideways
-from TopSideways import TopSideways
+from PushPullActions import RepositionAction
+from PushPullActions import PushAway
+from PushPullActions import PullForward
+from PushPullActions import PushSideways
+from PushPullActions import TopSideways
 import time
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
@@ -103,21 +104,6 @@ class ExploreToolActions(smach.State):
         )
         self._planning_scene_publisher.publish(planning_scene_diff)
 
-    def _publish(self, marker):
-        """Publishes a marker to the given publisher.
-
-        We need to wait for rviz to subscribe. If there are no subscribers to the
-        topic within 5 seconds, we give up.
-        """
-
-        rate = rospy.Rate(1)
-        for i in range(5):
-            if self._markers.get_num_connections() > 0:
-                self._markers.publish(marker)
-                return
-            rate.sleep()
-        rospy.logwarn(
-            'No subscribers to the marker publisher, did not publish marker.')
 
     def add_tool_collision_object(self):
         '''
@@ -180,102 +166,6 @@ class ExploreToolActions(smach.State):
           success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
                                                   0.005, 0.005, 12, 'left_arm',
                                                   False).success
-                  
-    def get_yaw(self, bounding_box):
-        # get euler angles and normalize
-        orientation = bounding_box.pose.pose.orientation
-        (yaw, pitch, roll) = tf.transformations.euler_from_quaternion(
-            [orientation.w, orientation.x, orientation.y, orientation.z]
-        )
-        yaw = -yaw  # euler_from_quaternion gives it to us backwards
-        # make sure it's in the range (-pi, pi]
-        while yaw > math.pi:
-            yaw -= 2 * math.pi
-        while yaw <= -math.pi:
-            yaw += 2 * math.pi
-
-        return yaw
-
-
-    def get_box_ends(self, bounding_box):
-        '''
-        Get the corners of the bounding box from the given descriptor.
-        return list of corners
-           ends[0]: front corner of first end
-           ends[1]: front corner of second end
-           ends[2]: rear corner of first end
-           ends[3]: rear corner of second end
-        '''
-
-        # First, figure out whether the y-axis points roughly along or opposite
-        # the cluster's y-axis
-        yaw = self.get_yaw(bounding_box)
-
-        # get yaw sign
-        y_sign = 1.0
-        if yaw < 0:
-            y_sign = -1.0
-
-        # relative to the bounding box's pose
-        ends_in_item_frame = [
-            Point(
-                x=x_sign * bounding_box.dimensions.x / 2.0,
-                y=y_sign * bounding_box.dimensions.y / 2.0,
-                z=bounding_box.dimensions.z / 2.0,
-            )
-            for y_sign in [y_sign, -y_sign]
-            for x_sign in [1.0, -1.0]
-        ]
-
-        # transform to the cluster's pose
-        position = bounding_box.pose.pose.position
-        sin_yaw = math.sin(yaw)
-        cos_yaw = math.cos(yaw)
-        ends = [
-            Point(
-                x=point.x * cos_yaw - point.y * sin_yaw + position.x,
-                y=point.x * sin_yaw + point.y * cos_yaw + position.y,
-                z=point.z + position.z,
-            )
-            for point in ends_in_item_frame
-        ]
-
-        # visualize bounding box, pose, and ends
-        viz.publish_bounding_box(
-            self._markers,
-            bounding_box.pose,
-            bounding_box.dimensions.x,
-            bounding_box.dimensions.y,
-            bounding_box.dimensions.z,
-            0.7, 0, 0, 0.25,
-            IdTable.get_id('push_item_bounding_box')
-        )
-        for idx, end in enumerate(ends):
-            red = 0.0 if idx < 2 else 0.5
-            green = 0.0 if idx < 2 else 0.5
-            blue = 0.7 if idx < 2 else 0.0
-            viz.publish_point(
-                self._markers,
-                bounding_box.pose.header.frame_id,
-                end,
-                red, green, blue, 0.5,
-                IdTable.get_id('push_item_end_{}'.format(idx))
-            )
-
-        return ends
-
-    def execute_trajectory(self, waypoints):
-        goal = JointTrajectoryGoal()
-        joint_names = ['{}_{}'.format(self.arm_side, joint) for joint in self.joints]
-        goal.trajectory.joint_names = joint_names
-        for (idx, waypoint) in enumerate(waypoints):
-
-            point = JointTrajectoryPoint()
-            point.positions = waypoint
-            point.time_from_start = self.waypoint_duration * (1 + idx)
-            goal.trajectory.points.append(point)
-
-        return self.arm.send_goal_and_wait(goal)
 
 
     @handle_service_exceptions(outcomes.TOOL_EXPLORATION_FAILURE)
@@ -303,17 +193,10 @@ class ExploreToolActions(smach.State):
 
         bounding_box = userdata.bounding_box
         self.pre_position_tool()
-
         self.add_tool_collision_object()
-        ends = self.get_box_ends(bounding_box)
-        centroid = bounding_box.pose.pose.position
-        frame = bounding_box.pose.header.frame_id
-
         # add the object we're pushing to the allowable collision matrix
         self.add_allowable_collision_box(bounding_box)
         # position at which tip of tool makes contact with object, in cluster frame
-        self.application_point = Point(0, 0, 0)
-
 
         while(True):
 
@@ -328,118 +211,52 @@ class ExploreToolActions(smach.State):
             # Front center push
             if(tool_action == '1'):
 
-                target_end = ends[0]
-                self.application_point.x = centroid.x  
-                self.application_point.y = centroid.y 
-
-                self.application_point.z = centroid.z / 2
-
-                application_point = PointStamped(
-                    header=Header(frame_id=frame),
-                    point=self.application_point,
-                )
-
-                action = PushAway(
-                    bounding_box,
-                    application_point,
-                    userdata,
-                    'front_center_push',
-                    **self.services
-                )
-
-                success = action.execute()
+                action = PushAway(bounding_box,
+                    RepositionAction.front_center_push
+                    **self.services)
 
             # Front side push
             elif(tool_action == '2'):
 
-            	side = raw_input("1. Left \n2. Right \n")
-                distance_from_end = float(raw_input("Distance for application from the end of the object: "))
+                action = PushAway(bounding_box,
+                    RepositionAction.front_side_push_r
+                    **self.services)
 
-                if(side == '1'):
-                    target_end = ends[3]
-                else:
-                    distance_from_end = -distance_from_end
-                    target_end = ends[0]
-
-                self.application_point.x = ((centroid.x + target_end.x) / 2.0) + 0.02
-                self.application_point.y =  target_end.y - distance_from_end 
-                self.application_point.z = centroid.z / 2
-
-                application_point = PointStamped(
-                    header=Header(frame_id=frame),
-                    point=self.application_point,
-                )
-
-                action = PushAway(
-                    bounding_box,
-                    application_point,
-                    userdata,
-                    'front_side_push',
-                    **self.services
-                )
-
-                success = action.execute()
-
-    
             # Side push with full surface contact
             elif(tool_action == '3'):
 
-                # position at which tip of tool makes contact with object, in cluster frame
-                self.application_point = Point(0, 0, 0)
-
-                # Apply tool between target end and edge of bin
-                self.application_point.x = 0
-                self.application_point.y = 0 
-                self.application_point.z = 0
-                action = PushSideways(bounding_box, self.application_point,
-                                      userdata, 'push_full_contact', **self.services)
-
-                success = action.execute()
+                action = PushSideways(bounding_box,
+                    RepositionAction.side_push_full_contact_r
+                    **self.services)
 
             # Side push with point contact
             elif(tool_action == '4'):
-                # position at which tip of tool makes contact with object, in cluster frame
-                self.application_point = Point(0, 0, 0)
 
-                # Apply tool between target end and edge of bin
-                self.application_point.x = 0
-                self.application_point.y = 0 
-                self.application_point.z = 0
-                
-                action = PushSideways(bounding_box, self.application_point,
-                                      userdata, 'push_point_contact', **self.services)
-
-                success = action.execute()
+                action = PushSideways(bounding_box,
+                    RepositionAction.side_push_point_contact_r
+                    **self.services)
 
             # Top pull
             elif(tool_action == '5'):
-                self.push_down_offset = 0.05
-                self.application_point.x = ends[3].x + 0.05
-                self.application_point.y = centroid.y
-                self.application_point.z = centroid.z + self.push_down_offset + 0.01
-                action = PullForward(bounding_box, self.application_point,
-                                     'top_pull', userdata, **self.services)
-            
-                success = action.execute()
+
+                action = PullForward(bounding_box,
+                    RepositionAction.top_pull
+                    **self.services)
 
             # Top sideward pull
             elif(tool_action == '6'):
 
-                self.push_down_offset = 0.055
-                self.application_point.x = centroid.x + 0.05
-                self.application_point.y = centroid.y 
-                self.application_point.z = centroid.z + self.push_down_offset
-                action = TopSideways(bounding_box, self.application_point,
-                                     'top_sideward_pull', userdata, **self.services)
+                action = TopSideways(bounding_box,
+                    RepositionAction.top_sideward_pull_r
+                    **self.services)
             
-                success = action.execute()
-
-                self.pre_position_tool()
-
-            if(tool_action == '-1'):
+            elif(tool_action == '-1'):
                 self._tuck_arms.wait_for_service()
                 tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
                 return outcomes.TOOL_EXPLORATION_FAILURE
+
+            success = action.execute()
+            self.pre_position_tool()
 
         return outcomes.TOOL_EXPLORATION_SUCCESS
 

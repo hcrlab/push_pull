@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -548,6 +547,15 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/InteractiveMarkers
+      Enable Transparency: true
+      Enabled: true
+      Name: InteractiveMarkers
+      Show Axes: false
+      Show Descriptions: true
+      Show Visual Aids: false
+      Update Topic: /pr2_pick_interactive_markers/update
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -572,7 +580,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.5541
+      Distance: 2.7523
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -584,10 +592,10 @@ Visualization Manager:
         Z: 0.546723
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.395398
+      Pitch: 0.355398
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.64538
+      Yaw: 1.60538
     Saved: ~
 Window Geometry:
   Displays:
@@ -605,5 +613,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1458
-  X: 299
+  X: 216
   Y: 24

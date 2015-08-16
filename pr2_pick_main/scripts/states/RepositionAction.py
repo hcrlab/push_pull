@@ -22,30 +22,21 @@ class RepositionAction(object):
     of visualizing and executing the trajectory. It is up to each child to build
     a trajectory that does the right thing.
     '''
-    # distance from tip of tool to wrist roll link
-    tool_length = 0.41
-
-    # identifier for publishing points in the visualization
     pose_id = 5340
 
-    center_bin_width = 0.30
-    side_bin_width = 0.27
+    # distance from tip of tool to wrist roll link
+    tool_length = 0.31 #### DEFINED IN MULTIPLE PLACES??????????? (previously 0.41)
+
+    # identifier for publishing points in the visualization
+    bin_width = 0.27
     # keep tool this far away from the bin wall
     bin_wall_tolerance = 0.03
-
     closest_base_distance_to_shelf = 1.05
-
-    bin_widths = {
-        'A': side_bin_width, 'B': center_bin_width, 'C': side_bin_width,
-        'D': side_bin_width, 'E': center_bin_width, 'F': side_bin_width,
-        'G': side_bin_width, 'H': center_bin_width, 'I': side_bin_width,
-        'J': side_bin_width, 'K': center_bin_width, 'L': side_bin_width,
-    }
 
     def __init__(self, bounding_box, application_point, userdata, action_name, **services):
         #self.debug = userdata.debug
         self.bin_id = 'K'
-	self.debug = False
+        self.debug = False
         self.application_point = application_point
         self.bounding_box = bounding_box
         self.action_name = action_name
@@ -59,15 +50,14 @@ class RepositionAction(object):
         self._tf_listener = tf.TransformListener()
 
         self.steps = []
-
         self.trajectory = []
-
         self.ends = self.get_box_ends(self.bounding_box)
 
     def cap_y(self, value):
         ''' Cap the given y value so it's safely inside the bin. '''
-        width = self.bin_widths[self.bin_id]
-        max_y = (width / 2.0) - self.bin_wall_tolerance
+        
+        max_y = (bin_width / 2.0) - self.bin_wall_tolerance
+
         if value > max_y:
             return max_y
         elif value < -max_y:
