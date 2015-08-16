@@ -1,6 +1,6 @@
 
 from pr2_pick_main import handle_service_exceptions
-from pr2_pick_main import web_interface.WebInterface
+from pr2_pick_main.web_interface import WebInterface
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from geometry_msgs.msg import PoseStamped, TransformStamped
