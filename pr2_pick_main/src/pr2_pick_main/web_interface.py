@@ -8,7 +8,7 @@ import time
 
 class WebInterface(object):
     def __init__(self):
-        self._interface_publisher = rospy.Publisher('web_interface/interface_params', WebInterfaceParams)
+        self._interface_publisher = rospy.Publisher('pr2_pick_main/web_interface/interface_params', WebInterfaceParams)
 
     def _publish_params(self, msg):
         rate = rospy.Rate(5)
@@ -59,7 +59,7 @@ class WebInterface(object):
         while response_prompt_id != prompt_id:
             start_time = rospy.Time().now()
             submission = rospy.wait_for_message(
-                'web_interface/interface_submission',
+                'pr2_pick_main/web_interface/interface_submission',
                 WebInterfaceSubmission, timeout_remaining)
 
             # If a timeout is set, then possibly break out of the loop.
