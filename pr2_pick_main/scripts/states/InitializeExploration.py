@@ -1,5 +1,6 @@
 
 from pr2_pick_main import handle_service_exceptions
+from pr2_pick_main import web_interface
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from geometry_msgs.msg import PoseStamped, TransformStamped
@@ -145,8 +146,9 @@ class InitializeExploration(smach.State):
         self._tts.publish('Please hand me the tool.')
 
         ################
-        raw_input("Add tool to the robot ")
-        rospy.sleep(3)
+        web_interface.interface.ask_choice('Press OK when ready to take', ['OK'])
+        #raw_input("Add tool to the robot ")
+        rospy.sleep(1)
         ################
 
         grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)

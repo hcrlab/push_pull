@@ -1,0 +1,39 @@
+<head>
+  <title>Robot web interface</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <div class="container">
+    {{> Template.dynamic template=interface_type data=interface_params}}
+  </div>
+</body>
+
+<template name="default">
+<div class="default_container">
+  <div class="jumbotron">
+    <h1>{{interface_name}}</h1>
+  </div>
+</div>
+</template>
+
+<template name="display_message">
+<div class="display_message_container">
+  <div class="jumbotron">
+    <p class="message">{{message}}</p>
+  </div>
+</div>
+</template>
+
+<template name="ask_choice">
+<div class="ask_choice_container">
+  <div class="jumbotron">
+    <p class="message">{{message}}</p>
+    <form class="select-choice">
+      {{#each choices}}
+      <button class="btn btn-default btn-lg btn-block" value="{{.}}">{{.}}</button>
+      {{/each}}
+    </form>
+  </div>
+</div>
+</template>

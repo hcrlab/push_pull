@@ -7,4 +7,7 @@
       output="screen">
   </node>
 
+  <!-- Websocket -->
+  <!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" /> -->
+
 </launch>
