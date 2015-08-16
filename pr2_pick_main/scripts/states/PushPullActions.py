@@ -1,6 +1,7 @@
 from copy import deepcopy
-from geometry_msgs.msg import Pose, PoseStamped, Vector3
-from geometry_msgs.msg import Point,PointStamped, Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Point, PointStamped
+from geometry_msgs.msg import Quaternion, Vector3
 from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, \
     GetPositionIKRequest, GetPlanningScene
 import rospy
@@ -8,13 +9,11 @@ from std_msgs.msg import Header
 from pr2_pick_manipulation.srv import MoveArmIkRequest
 import visualization as viz
 import tf
-from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, \
-    GetPositionIKRequest, GetPlanningScene
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
     TuckArms, GetGrippers, MoveArmIk
 import math
-from visualization import IdTable
+from math import fabs
 
 
 class RepositionAction(object):
