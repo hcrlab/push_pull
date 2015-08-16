@@ -149,7 +149,7 @@ class InitializeExploration(smach.State):
 
         ################
         #self._interface.ask_choice('Press OK when ready to take', ['OK'])
-        self._interface.display_message('Press OK when ready to take')
+        #self._interface.display_message('Press OK when ready to take')
         raw_input("Add tool to the robot ")
         rospy.sleep(1)
         ################
