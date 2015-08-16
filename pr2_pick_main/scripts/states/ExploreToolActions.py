@@ -136,7 +136,7 @@ class ExploreToolActions(smach.State):
 
         viz.publish_bounding_box(
             self._interactive_markers, pose_stamped,
-            self.tool_x_size, self.tool_y_size, self.tool_z_size,
+            Tool.tool_x_size, Tool.tool_y_size, Tool.tool_z_size,
             0.5, 0.2, 0.1, 0.9,
             2,
         )
