@@ -20,6 +20,8 @@ from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
 import moveit_commander
 from moveit_msgs.msg import PlanningScene, PlanningSceneComponents
+from pr2_pick_main.web_interface import WebInterface
+
 
 class ExploreToolActions(smach.State):
 
@@ -60,6 +62,8 @@ class ExploreToolActions(smach.State):
         self._get_planning_scene = services['get_planning_scene']
         self.moveit_object_name = 'push_item_target_bbox'
         self._planning_scene_publisher = services['planning_scene_publisher']
+        
+        self._interface = WebInterface()
 
 
     def add_allowable_collision_box(self, bounding_box):

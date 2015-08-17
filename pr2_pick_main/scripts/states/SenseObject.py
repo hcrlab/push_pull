@@ -16,6 +16,7 @@ from pr2_pick_contest.msg import Record
 from pr2_pick_perception.srv import DeleteStaticTransformRequest
 from pr2_pick_perception.msg import Cluster2, BoundingBox
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
+from pr2_pick_main.web_interface import WebInterface
 
 class SenseObject(smach.State):
     """Performs sensing on a bin.
@@ -41,6 +42,8 @@ class SenseObject(smach.State):
         self._delete_static_tf = services['delete_static_tf']
         self._markers = services['markers']
         self.convert_pcl = services['convert_pcl_service']
+
+        self._interface = WebInterface()
 
 
     #call find_cluster_bounding_box to get the bounding box for a cluster
@@ -75,9 +78,10 @@ class SenseObject(smach.State):
       
         if userdata.is_before:
             ########
-            rospy.loginfo('Please prepare object and press ready.')
+            self._interface.ask_choice('Please prepare object and press ready', ['Ready'])
+            #rospy.loginfo('Please prepare object and press ready.')
             self._tts.publish('Please prepare object and press ready.')
-            raw_input("Press enter after placing the item.")
+            #raw_input("Press enter after placing the item.")
             ########
         else:
             rospy.loginfo('Sensing object after tool action.')
