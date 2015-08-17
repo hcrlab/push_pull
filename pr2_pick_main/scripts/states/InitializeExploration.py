@@ -44,6 +44,8 @@ class InitializeExploration(smach.State):
 
     @handle_service_exceptions(outcomes.INITIALIZE_FAILURE)
     def execute(self, userdata):
+
+        self._interface.display_message('Starting new session', duration=2)
 	
 	    # Publish static transform.
         transform = TransformStamped()
@@ -64,8 +66,11 @@ class InitializeExploration(smach.State):
         self._set_static_tf(transform)
 
         # Tuck arms
-        rospy.loginfo('Setting start pose.')
-        self._tts.publish('Setting start pose.')
+        message = 'Setting start pose.'
+        rospy.loginfo(message)
+        self._tts.publish(message)
+        self._interface.display_message(message)
+
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
         tuck_success = True
@@ -95,8 +100,11 @@ class InitializeExploration(smach.State):
             return outcomes.INITIALIZE_FAILURE
 
         # Find shelf
-        rospy.loginfo('Creating shelf model.')
-        self._tts.publish('Creating shelf model.')
+        message = 'Creating shelf model.'
+        rospy.loginfo(message)
+        self._tts.publish(message)
+        self._interface.display_message(message)
+
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
         shelf_odom.pose.position.x = 1.14
@@ -144,14 +152,12 @@ class InitializeExploration(smach.State):
         self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
 
-        rospy.loginfo('Please hand me the tool to the robot and press Take Tool.')
-        self._tts.publish('Please hand me the tool.')
-
         ################
+        message = 'Please hand me the tool and press OK.'
+        rospy.loginfo(message)
+        self._tts.publish(message)
         self._interface.ask_choice('Press OK when ready to take', ['OK'])
         self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
-        #raw_input("Add tool to the robot ")
-        #rospy.sleep(3)
         ################
 
         grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)

@@ -47,6 +47,7 @@ if (Meteor.isClient) {
       for (var i=0; i<message.keys.length; i+=1) {
         var key = message.keys[i];
         var value = message.values[i];
+
         if (message.interface_type === 'ask_choice') {
           if (key === 'choices') {
             value = JSON.parse(value);
@@ -55,11 +56,55 @@ if (Meteor.isClient) {
             Session.set('prompt_id', value);
           }
         }
+
+        if (message.interface_type === 'get_floats') {
+          if (key === 'sliders') {
+            value = JSON.parse(value);
+            Session.set('slider_params', value);
+          }
+          if (key === 'prompt_id') {
+            Session.set('prompt_id', value);
+          }
+        }
+
         params[key] = value;
       }
+
       Session.set('interface_params', params);
     });
 
+  });
+
+  Template.get_floats.events({
+    'click .submit-values': function(event) {
+      if (event.target.value === 'submit_values')
+      {
+        var sliders = Session.get('slider_params');
+        var values = {};
+        for (var i=0; i<sliders.length; i+=1) {
+          var slider = sliders[i];
+          var slider_name = slider['slider_name'];
+          values[slider_name] = document.getElementById(slider_name).value;
+        }
+
+        var submission = new ROSLIB.Message({
+          interface_type: 'get_floats',
+          keys: ['values', 'prompt_id'],
+          values: [JSON.stringify(values), Session.get('prompt_id')]
+        });
+        view_publisher.publish(submission);
+      }
+      return false;
+    }
+  });
+
+  Template.get_floats.events({
+    'change .submit-values': function(event) {
+      var slider_name = event.target.id;
+      var new_value = event.target.value;
+      document.getElementById(slider_name + "_value").innerHTML=new_value;
+      return false;
+    }
   });
 
   Template.ask_choice.events({
@@ -70,7 +115,6 @@ if (Meteor.isClient) {
         values: [event.target.value, Session.get('prompt_id')]
       });
       view_publisher.publish(submission);
-    
       return false;
     }
   });

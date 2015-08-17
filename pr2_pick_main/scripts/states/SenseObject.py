@@ -43,7 +43,7 @@ class SenseObject(smach.State):
         self._markers = services['markers']
         self.convert_pcl = services['convert_pcl_service']
 
-        #self._interface = WebInterface()
+        self._interface = WebInterface()
 
 
     #call find_cluster_bounding_box to get the bounding box for a cluster
@@ -78,14 +78,20 @@ class SenseObject(smach.State):
       
         if userdata.is_before:
             ########
-            #self._interface.ask_choice('Please prepare object and press ready', ['Ready'])
-            rospy.loginfo('Please prepare object and press ready.')
-            self._tts.publish('Please prepare object and press ready.')
-            raw_input("Press enter after placing the item.")
+            message = 'Please prepare object and press ready.'
+            self._interface.ask_choice(message, ['Ready'])
+            rospy.loginfo(message)
+            self._tts.publish(message)
+            message = 'Sensing object before tool action.'
+            self._tts.publish(message)
+            rospy.loginfo(message)
+            self._interface.display_message(message)
             ########
         else:
-            rospy.loginfo('Sensing object after tool action.')
-            self._tts.publish('Sensing object after tool action.')            
+            message = 'Sensing object after tool action.'
+            self._tts.publish(message)
+            rospy.loginfo(message)
+            self._interface.display_message(message)
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID='K')

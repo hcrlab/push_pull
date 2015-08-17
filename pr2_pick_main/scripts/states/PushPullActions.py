@@ -51,11 +51,6 @@ class RepositionAction(object):
     # keep tool this far away from the bin wall
     bin_wall_tolerance = 0.03
     closest_base_distance_to_shelf = 1.05
-    # how far in front of item to position tool tip before attempting to touch object
-    pre_application_dist = 0.05
-
-    # how close to the edge of the shelf to pull the tip of the object
-    distance_from_edge = 0.05
 
     ###############
     ## ACTION TYPES
@@ -301,8 +296,19 @@ class PushAway(RepositionAction):
     '''
 
     #### ACTION PARAMETERS
-    pushing_distance = 0.08
-    distance_from_end = 0.02 ## float(raw_input("Distance for application from the end of the object: "))
+    param_names = ['pushing_distance', 'distance_from_side', 'pre_application_dist']
+    param_values = [0.08, 0.02, 0.05]
+    param_mins = [m-0.02 for m in param_values]
+    param_maxs = [m+0.02 for m in param_values]
+    params = dict(zip(param_names, param_values))
+
+    @staticmethod
+    def load_params():
+        pass
+
+    @staticmethod
+    def save_params():
+        pass
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -312,11 +318,11 @@ class PushAway(RepositionAction):
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_l:
             application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
-            application_point.y = self.ends[3].y - PushAway.distance_from_end 
+            application_point.y = self.ends[3].y - PushAway.params['distance_from_side']
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_r:
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
-            application_point.y =  self.ends[0].y + PushAway.distance_from_end 
+            application_point.y =  self.ends[0].y + PushAway.params['distance_from_side']
             application_point.z = self.centroid.z / 2
         return application_point
 
@@ -325,34 +331,24 @@ class PushAway(RepositionAction):
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
 
-        # where to be before moving to application point, relative to application point
-        pre_application_delta = Vector3(0, 0, 0)
-        # where to move after application point, relative to application point
-        post_application_delta = Vector3(0, 0, 0)
         # orientation of gripper when repositioning, relative to current orientation
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
-
-        pre_application_delta.x = -RepositionAction.pre_application_dist
-
-        post_application_delta.x = min(
-            (3.0 / 4.0) * self.bounding_box.dimensions.x,
-            RepositionAction.bin_depth - self.application_point.x - self.bounding_box.dimensions.y
-        )
 
         # construct pre_application pose, application pose, and final pose
         ## TODO: be extra careful on edge bins
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + pre_application_delta.x - Tool.tool_length - PushAway.pushing_distance/2,
-                y=self.cap_y(self.application_point.y + pre_application_delta.y),
-                z=self.application_point.z + pre_application_delta.z,
+                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'],
+                y=self.cap_y(self.application_point.y),
+                z=self.application_point.z,
             ),
             orientation=orientation,
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length + PushAway.pushing_distance/2,
+                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'] + 
+                PushAway.params['pushing_distance'],
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -360,9 +356,9 @@ class PushAway(RepositionAction):
         )
         post_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + post_application_delta.x - Tool.tool_length,
-                y=self.cap_y(self.application_point.y + post_application_delta.y),
-                z=self.application_point.z + post_application_delta.z,
+                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'],
+                y=self.cap_y(self.application_point.y),
+                z=self.application_point.z,
             ),
             orientation=orientation,
         )
@@ -388,8 +384,9 @@ class PushSideways(RepositionAction):
     '''
 
     ### ACTION PARAMETERS
-    distance_from_end = 0.02 ## float(raw_input("Distance to push the object: "))
-    application_height = 0.09  
+    distance_from_side = 0.02 ## float(raw_input("Distance to push the object: "))
+    application_height = 0.09
+    distance_from_front = 0.02 #float(raw_input("Distance from front end of object to apply tool: "))
 
     def build_trajectory(self):
         '''
@@ -432,8 +429,7 @@ class PushSideways(RepositionAction):
 
         if(self.action_type == RepositionAction.side_push_point_contact_r or 
             self.action_type == RepositionAction.side_push_point_contact_l):
-            distance_x =  front_end.x + float(raw_input("Distance from front end of object to apply tool: ")) \
-                        - Tool.tool_length
+            distance_x =  front_end.x + PushSideways.distance_from_front - Tool.tool_length
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
@@ -459,7 +455,7 @@ class PushSideways(RepositionAction):
         push_application_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=target_end.y - (PushSideways.distance_from_end * push_direction_sign),  # halfway between centroid and bin center
+                y=target_end.y - (PushSideways.distance_from_side * push_direction_sign),  # halfway between centroid and bin center
                 z=PushSideways.application_height
             ),
             orientation=orientation,
@@ -483,6 +479,9 @@ class PullForward(RepositionAction):
     ## ACTION PARAMETERS
     # dist to push down on object when pulling forward
     push_down_offset = 0.05 ### Defined as 0.02 somewhere else
+    # how close to the edge of the shelf to pull the tip of the object
+    distance_from_edge = 0.05
+    pre_application_dist = 0.05
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -505,11 +504,11 @@ class PullForward(RepositionAction):
         #type(pose) = geometry_msgs.msg.Pose
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
 
-        pre_application_delta.x = -RepositionAction.pre_application_dist
+        pre_application_delta.x = -PullForward.pre_application_dist
         pre_application_delta.z = PullForward.push_down_offset 
 
         post_application_delta.x = - self.centroid.x + (self.bounding_box.dimensions.x / 2.0) \
-            + RepositionAction.distance_from_edge
+            + PullForward.distance_from_edge
 
 
         # construct pre_application pose, application pose, and final pose
@@ -579,6 +578,9 @@ class TopSideways(RepositionAction):
     ## ACTION PARAMETERS
     # dist to push down on object when pulling forward
     push_down_offset = 0.055
+    # how close to the edge of the shelf to pull the tip of the object
+    distance_from_edge = 0.05
+    pre_application_dist = 0.05
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -601,11 +603,11 @@ class TopSideways(RepositionAction):
         #type(pose) = geometry_msgs.msg.Pose
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
 
-        pre_application_delta.x = -RepositionAction.pre_application_dist
+        pre_application_delta.x = -TopSideways.pre_application_dist
         pre_application_delta.z = TopSideways.push_down_offset 
 
         post_application_delta.x = - self.centroid.x + (self.bounding_box.dimensions.x / 2.0) \
-            + RepositionAction.distance_from_edge
+            + TopSideways.distance_from_edge
 
 
         # construct pre_application pose, application pose, and final pose
