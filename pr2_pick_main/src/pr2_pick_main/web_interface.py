@@ -94,7 +94,7 @@ class WebInterface(object):
         return choice
 
 
-    def get_floats(self, message, param_names, param_mins, param_maxs, param_values):
+    def get_floats(self, message, param_names, param_mins, param_maxs, param_values, timeout=None):
         msg = WebInterfaceParams()
         msg.interface_type = 'get_floats'
         msg.interface_name = 'generic_interface'
@@ -119,7 +119,7 @@ class WebInterface(object):
         # with the request and response messages and check if the IDs match.
         submission = None
         response_prompt_id = None  # The prompt_id returned in the response.
-        timeout_remaining = None
+        timeout_remaining = timeout
         choice = None
         while response_prompt_id != prompt_id:
             start_time = rospy.Time().now()
