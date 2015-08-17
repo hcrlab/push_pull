@@ -302,7 +302,7 @@ class PushAway(RepositionAction):
     param_values = [0.08, 0.02]
     param_mins = [m-0.02 for m in param_values]
     param_maxs = [m+0.02 for m in param_values]
-    params = {k:v for k,v in param_names, param_values}
+    params = dict(zip(param_names, param_values))
 
     @staticmethod
     def load_params():
