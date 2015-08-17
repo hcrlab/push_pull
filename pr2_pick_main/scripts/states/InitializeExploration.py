@@ -44,6 +44,8 @@ class InitializeExploration(smach.State):
 
     @handle_service_exceptions(outcomes.INITIALIZE_FAILURE)
     def execute(self, userdata):
+
+        self._interface.display_message('Starting new session', duration=2)
 	
 	    # Publish static transform.
         transform = TransformStamped()
