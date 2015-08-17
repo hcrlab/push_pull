@@ -31,6 +31,7 @@ class SenseBinExperiment(smach.State):
             output_keys=['clusters', 'target_cluster', 'target_descriptor',
                          'target_model', 're_grasp_attempt', 'current_target'])
         self._tts = tts
+        self._tuck_arms = kwargs['tuck_arms']
         self._crop_shelf = crop_shelf
         self._segment_items = kwargs['segment_items']
         self._markers = markers
@@ -48,6 +49,8 @@ class SenseBinExperiment(smach.State):
             userdata.re_grasp_attempt = True
         else:
             userdata.re_grasp_attempt = False
+        self._tuck_arms.wait_for_service()
+        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
 
         rospy.loginfo('Sensing bin {}'.format(userdata.bin_id))
         self._tts.publish('Sensing bin {}'.format(userdata.bin_id))

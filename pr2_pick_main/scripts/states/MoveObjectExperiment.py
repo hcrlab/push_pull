@@ -1,4 +1,5 @@
 import outcomes
+from pr2_pick_perception.msg import Box, Cluster2, BoundingBox
 import rospy
 import smach
 from pr2_pick_main import handle_service_exceptions
@@ -11,8 +12,9 @@ import math
 from geometry_msgs.msg import Point,PointStamped, Pose, PoseStamped
 import visualization as viz
 from visualization import IdTable
-from std_msgs.msg import Header
-from PushAway import PushAway
+import sensor_msgs.point_cloud2 as pc2
+from std_msgs.msg import Header, String, Int32, Float32
+from PushAwayExperiment import PushAwayExperiment
 from PullForward import PullForward
 from PushSidewaysExperiment import PushSidewaysExperiment
 from TopSidewaysExperiment import TopSidewaysExperiment
@@ -24,6 +26,14 @@ from moveit_msgs.msg import PlanningScene, PlanningSceneComponents
 import rospkg
 from pr2_pick_contest.msg import Record, Trial, MoveObjectParams 
 from sensor_msgs.msg import PointCloud2, Image
+from pr2_pick_perception.msg import Box, Cluster2, BoundingBox
+from pr2_pick_contest.msg import Record
+from pr2_pick_perception.srv import BoxPoints, BoxPointsRequest, PlanarPrincipalComponentsRequest, \
+	DeleteStaticTransformRequest, BoxPointsResponse #, Cluster
+from manipulation_msgs.srv import GraspPlanning, GraspPlanningRequest
+from manipulation_msgs.msg import GraspPlanningAction, GraspPlanningGoal
+from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
+from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 
 class MoveObjectExperiment(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
@@ -76,7 +86,30 @@ class MoveObjectExperiment(smach.State):
         self._attached_collision_objects = services['attached_collision_objects']
         self._get_planning_scene = services['get_planning_scene']
         self.moveit_object_name = 'push_item_target_bbox'
-        self._planning_scene_publisher = services['planning_scene_publisher']
+        self._planning_scene_publisher = services['planning_scene_publisher']	
+        self.convert_pcl = services['convert_pcl_service']
+
+
+    def call_find_cluster_bounding_box(self, cluster):
+
+		req = FindClusterBoundingBoxRequest()
+		req.cluster = cluster
+		service_name = "find_cluster_bounding_box"
+		rospy.loginfo("waiting for find_cluster_bounding_box service")
+		rospy.wait_for_service(service_name)
+		rospy.loginfo("service found")
+		serv = rospy.ServiceProxy(service_name, FindClusterBoundingBox)
+		try:
+			res = serv(req)
+		except rospy.ServiceException, e:
+			rospy.logerr("error when calling find_cluster_bounding_box: %s"%e)  
+			return 0
+		if not res.error_code:
+			return (res.pose, res.box_dims)
+		else:
+			return (None, None)
+
+
     def add_allowable_collision_box(self, bounding_box):
         ''' Add the argument to moveit's allowable collision matrix. '''
 
@@ -368,9 +401,9 @@ class MoveObjectExperiment(smach.State):
                 point=self.application_point,
             )
 
-            action = PushAway(
+            action = PushAwayExperiment(
                 bounding_box,
-                application_point,
+                self.application_point,
                 userdata,
                 'front_center_push',
                 **self.services
@@ -399,7 +432,7 @@ class MoveObjectExperiment(smach.State):
                 distance_from_end = -distance_from_end
                 target_end = ends[0]
 
-            move_object_params.distance_from_end = distance_from_end
+            move_object_params.distance_from_end = Float32(distance_from_end)
 
             self.application_point.x = ((centroid.x + target_end.x) / 2.0) + 0.02
             self.application_point.y =  target_end.y - distance_from_end 
@@ -411,9 +444,9 @@ class MoveObjectExperiment(smach.State):
                 point=self.application_point,
             )
 
-            action = PushAway(
+            action = PushAwayExperiment(
                 bounding_box,
-                application_point,
+                self.application_point,
                 userdata,
                 'front_side_push',
                 **self.services
@@ -445,8 +478,8 @@ class MoveObjectExperiment(smach.State):
             action.set_params(side, distance_to_push, distance_from_front_to_apply_tool)
 
             param_suffix = side + "_distance_to_push_" + str(distance_to_push) + "_distance_from_front_to_apply_tool_" + str(distance_from_front_to_apply_tool)
-            move_object_params.distance_to_push_forward = distance_to_push
-            move_object_params.distance_from_front_to_apply_tool =  distance_from_front_to_apply_tool
+            move_object_params.distance_to_push_forward = Float32(distance_to_push)
+            move_object_params.distance_from_front_to_apply_tool =  Float32(distance_from_front_to_apply_tool)
 
             success = action.execute()
 
@@ -473,7 +506,7 @@ class MoveObjectExperiment(smach.State):
             action.set_params(side, distance_to_push)
 
             param_suffix = side + "_distance_to_push_" + str(distance_to_push)
-            move_object_params.distance_to_push_forward = distance_to_push
+            move_object_params.distance_to_push_forward = Float32(distance_to_push)
 
             success = action.execute()
 
@@ -503,7 +536,7 @@ class MoveObjectExperiment(smach.State):
                 side = 'right'
 
             distance_to_push = userdata.current_trial["action_params"]["top_sideways_pull"]["distance_to_push_forward"]
-            move_object_params.distance_to_push_forward = distance_to_push
+            move_object_params.distance_to_push_forward = Float32(distance_to_push)
             # distance_from_front_to_apply_tool = userdata.current_trial["action_params"]["push_full_contact"]["distance_from_front_to_apply_tool"]
             action.set_params(side, distance_to_push)
 
@@ -574,15 +607,15 @@ class MoveObjectExperiment(smach.State):
             + param_suffix + ".bag" 
 
         
-        move_object_params.item_name = userdata.current_trial["item_name"]
-        move_object_params.orientation = userdata.current_trial["orientation"]
-        move_object_params.position = userdata.current_trial["position"]
-        move_object_params.action = userdata.current_trial["action"]
-         
+        move_object_params.item_name = String(userdata.current_trial["item_name"])
+        move_object_params.orientation = Int32(userdata.current_trial["orientation"])
+        move_object_params.position = Int32(userdata.current_trial["position"])
+        move_object_params.action = Int32(userdata.current_trial["action"])
+        
 
         self.bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
-        trial.before_record = userdata.before_record
-        trial.after_record = self.after_record
+        trial.before = userdata.before_record
+        trial.after = self.after_record
         trial.params = move_object_params
         self.bag.write('trial', trial)
         self.bag.close()

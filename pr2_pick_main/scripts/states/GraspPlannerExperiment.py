@@ -284,7 +284,7 @@ class GraspPlannerExperiment(smach.State):
         tf_listener = tf.TransformListener()
 
         # Set params for grasp planner
-        self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
+        #self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
 
         # Get the bounding box
         (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster2.pointcloud)
@@ -316,14 +316,14 @@ class GraspPlannerExperiment(smach.State):
         #    rospy.sleep(0.1)
 
         # Plan Grasp
-        grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
-        rospy.loginfo("Number of grasps: ")
-        rospy.loginfo(len(grasps))
+        #grasps = self.call_plan_point_cluster_grasp_action(self._cluster2.pointcloud,self._cluster.header.frame_id )
+        #rospy.loginfo("Number of grasps: ")
+        #rospy.loginfo(len(grasps))
 
-        grasp_poses = [grasp.grasp_pose for grasp in grasps]
-        grasp_not_stamped = []
-        for pose_stamped in grasp_poses:
-            grasp_not_stamped.append(pose_stamped.pose)
+        #grasp_poses = [grasp.grasp_pose for grasp in grasps]
+        #grasp_not_stamped = []
+        #for pose_stamped in grasp_poses:
+        #    grasp_not_stamped.append(pose_stamped.pose)
         userdata.before_record = self.bag_data
 
         # No grasps found

@@ -56,7 +56,7 @@ class RepositionAction(object):
     def cap_y(self, value):
         ''' Cap the given y value so it's safely inside the bin. '''
         
-        max_y = (bin_width / 2.0) - self.bin_wall_tolerance
+        max_y = (self.bin_width / 2.0) - self.bin_wall_tolerance
 
         if value > max_y:
             return max_y
