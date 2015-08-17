@@ -54,9 +54,6 @@ class RepositionAction(object):
     # how far in front of item to position tool tip before attempting to touch object
     pre_application_dist = 0.05
 
-    # how close to the edge of the shelf to pull the tip of the object
-    distance_from_edge = 0.05
-
     ###############
     ## ACTION TYPES
     ###############
@@ -302,7 +299,7 @@ class PushAway(RepositionAction):
 
     #### ACTION PARAMETERS
     pushing_distance = 0.08
-    distance_from_end = 0.02 ## float(raw_input("Distance for application from the end of the object: "))
+    distance_from_side = 0.02 ## float(raw_input("Distance for application from the end of the object: "))
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -312,11 +309,11 @@ class PushAway(RepositionAction):
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_l:
             application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
-            application_point.y = self.ends[3].y - PushAway.distance_from_end 
+            application_point.y = self.ends[3].y - PushAway.distance_from_side 
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_r:
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
-            application_point.y =  self.ends[0].y + PushAway.distance_from_end 
+            application_point.y =  self.ends[0].y + PushAway.distance_from_side 
             application_point.z = self.centroid.z / 2
         return application_point
 
@@ -388,8 +385,9 @@ class PushSideways(RepositionAction):
     '''
 
     ### ACTION PARAMETERS
-    distance_from_end = 0.02 ## float(raw_input("Distance to push the object: "))
-    application_height = 0.09  
+    distance_from_side = 0.02 ## float(raw_input("Distance to push the object: "))
+    application_height = 0.09
+    distance_from_front = 0.02 #float(raw_input("Distance from front end of object to apply tool: "))
 
     def build_trajectory(self):
         '''
@@ -432,8 +430,7 @@ class PushSideways(RepositionAction):
 
         if(self.action_type == RepositionAction.side_push_point_contact_r or 
             self.action_type == RepositionAction.side_push_point_contact_l):
-            distance_x =  front_end.x + float(raw_input("Distance from front end of object to apply tool: ")) \
-                        - Tool.tool_length
+            distance_x =  front_end.x + PushSideways.distance_from_front - Tool.tool_length
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
@@ -459,7 +456,7 @@ class PushSideways(RepositionAction):
         push_application_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=target_end.y - (PushSideways.distance_from_end * push_direction_sign),  # halfway between centroid and bin center
+                y=target_end.y - (PushSideways.distance_from_side * push_direction_sign),  # halfway between centroid and bin center
                 z=PushSideways.application_height
             ),
             orientation=orientation,
@@ -483,6 +480,8 @@ class PullForward(RepositionAction):
     ## ACTION PARAMETERS
     # dist to push down on object when pulling forward
     push_down_offset = 0.05 ### Defined as 0.02 somewhere else
+    # how close to the edge of the shelf to pull the tip of the object
+    distance_from_edge = 0.05
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -509,7 +508,7 @@ class PullForward(RepositionAction):
         pre_application_delta.z = PullForward.push_down_offset 
 
         post_application_delta.x = - self.centroid.x + (self.bounding_box.dimensions.x / 2.0) \
-            + RepositionAction.distance_from_edge
+            + PullForward.distance_from_edge
 
 
         # construct pre_application pose, application pose, and final pose
@@ -579,6 +578,8 @@ class TopSideways(RepositionAction):
     ## ACTION PARAMETERS
     # dist to push down on object when pulling forward
     push_down_offset = 0.055
+    # how close to the edge of the shelf to pull the tip of the object
+    distance_from_edge = 0.05
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -605,7 +606,7 @@ class TopSideways(RepositionAction):
         pre_application_delta.z = TopSideways.push_down_offset 
 
         post_application_delta.x = - self.centroid.x + (self.bounding_box.dimensions.x / 2.0) \
-            + RepositionAction.distance_from_edge
+            + TopSideways.distance_from_edge
 
 
         # construct pre_application pose, application pose, and final pose

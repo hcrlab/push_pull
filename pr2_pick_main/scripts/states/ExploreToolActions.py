@@ -62,7 +62,7 @@ class ExploreToolActions(smach.State):
         self._get_planning_scene = services['get_planning_scene']
         self.moveit_object_name = 'push_item_target_bbox'
         self._planning_scene_publisher = services['planning_scene_publisher']
-        
+
         self._interface = WebInterface()
 
 
@@ -196,8 +196,7 @@ class ExploreToolActions(smach.State):
             #############
 
             #tool_action = raw_input("enter the number of the tool action:")
-            options = RepositionAction.all_actions
-            options.append('change_object')
+            options = RepositionAction.all_actions + ['change_object']
             tool_action = self._interface.ask_choice('Which action should I try?', options)
             #self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
             
@@ -207,6 +206,10 @@ class ExploreToolActions(smach.State):
             if(tool_action == RepositionAction.front_center_push or 
                 tool_action == RepositionAction.front_side_push_r or 
                 tool_action == RepositionAction.front_side_push_l):
+
+
+                PushAway.pushing_distance = 0.08
+                PushAway.distance_from_side = 0.02
 
                 action = PushAway(bounding_box,
                     tool_action,
@@ -240,10 +243,14 @@ class ExploreToolActions(smach.State):
             elif(tool_action == 'change_object'):
                 self._tuck_arms.wait_for_service()
                 tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
-                return outcomes.TOOL_EXPLORATION_FAILURE
+                return outcomes.TOOL_EXPLORATION_SUCCESS
 
             success = action.execute()
-            self.pre_position_tool()
+            if not success:
+                message = "Could not execute this action."
+                rospy.loginfo(message)
+                self._tts.publish(message)
+                self._interface.display_message(message)
 
-        return outcomes.TOOL_EXPLORATION_SUCCESS
+            self.pre_position_tool()
 

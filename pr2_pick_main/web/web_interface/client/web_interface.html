@@ -37,3 +37,17 @@
   </div>
 </div>
 </template>
+
+<template name="get_floats">
+<div class="get_float_container">
+  <div class="jumbotron">
+    <p class="message">{{message}}</p>    
+    <form class="submit-values">
+      {{#each sliders}}
+        <input id={{slider_name}} type="range" min={{slider_min}} max={{slider_max}} step={{slider_step}} value={{slider_value}}/>
+      {{/each}}
+      <button class="btn btn-default btn-lg btn-block" value="Submit">Submit</button>
+    </form>
+  </div>
+</div>
+</template>
