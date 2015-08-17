@@ -227,7 +227,8 @@ class StateMachineBuilder(object):
                         'item_model': 'target_model',
                         'target_descriptor': 'target_descriptor',
                         'current_trial' : 'current_trial',
-                        'before_record' : 'before_record'
+                        'before_record' : 'before_record',
+                        'current_trial_num' : 'current_trial_num'
                     }
                 )
 

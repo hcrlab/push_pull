@@ -8,7 +8,6 @@ import json
 import copy
 import rospkg
 
-
 class UpdatePlanExperiment(smach.State):
     """Decides on the next item to pick.
 
@@ -29,7 +28,7 @@ class UpdatePlanExperiment(smach.State):
                 outcomes.UPDATE_PLAN_FAILURE
             ],
             input_keys=['bin_data'],
-            output_keys=['output_bin_data', 'next_bin', 'next_target', 'next_bin_items', 'previous_item', 'current_trial']
+            output_keys=['output_bin_data', 'next_bin', 'next_target', 'next_bin_items', 'previous_item', 'current_trial', 'current_trial_num']
         )
 	
         self._tts = services['tts']
@@ -43,7 +42,8 @@ class UpdatePlanExperiment(smach.State):
         with open(params_file) as data_file:    
             self._experiment_params = json.load(data_file)
         self._trials = self.generate_trials()
-        self._trial_num = -1
+        trial_num = raw_input("Enter the number of the last trial performed. Or enter -1 if this is the first trial:")
+        self._trial_num = int(trial_num)
         self._total_trials = len(self._trials)
 
     def generate_trials(self):
@@ -89,9 +89,11 @@ class UpdatePlanExperiment(smach.State):
     @handle_service_exceptions(outcomes.UPDATE_PLAN_FAILURE)
     def execute(self, userdata):
         self._trial_num+=1
+        userdata.current_trial_num = self._trial_num
         print "Trial number " + str(self._trial_num) + " out of " + str(self._total_trials)
         userdata.current_trial = self._trials[self._trial_num]
         rospy.loginfo('Updating plan.')
+        rospy.loginfo('Next trial is: {}'.format(userdata.current_trial))
         self._tts.publish('Updating plan.')
         rospy.loginfo("Calls since : " + str(self._calls_since_shelf_localization))
         items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 

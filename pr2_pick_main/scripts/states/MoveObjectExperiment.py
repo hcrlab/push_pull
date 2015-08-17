@@ -46,7 +46,7 @@ class MoveObjectExperiment(smach.State):
         smach.State.__init__(
             self,
             outcomes=[outcomes.MOVE_OBJECT_SUCCESS, outcomes.MOVE_OBJECT_FAILURE],
-            input_keys=['debug', 'bounding_box', 'before_record', 'current_trial', 'target_cluster'])
+            input_keys=['debug', 'bounding_box', 'before_record', 'current_trial', 'target_cluster', 'current_trial_num'])
 
         self.arm_side = 'l'
         self.tool_name = 'tool'
@@ -603,7 +603,7 @@ class MoveObjectExperiment(smach.State):
 
         rospack = rospkg.RosPack()
         bag_file_path = str(rospack.get_path('pr2_pick_main')) + '/data/experiments'
-        bag_file_name = "/" + str(item_name) + "_position_" + str(position) + "_orientation_" + str(orientation) + "_action_" + str(tool_action) \
+        bag_file_name = "/TRIAL_" + str(userdata.current_trial_num) + "_" + str(item_name) + "_position_" + str(position) + "_orientation_" + str(orientation) + "_action_" + str(tool_action) \
             + param_suffix + ".bag" 
 
         
