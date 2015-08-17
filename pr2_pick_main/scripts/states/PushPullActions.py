@@ -72,6 +72,17 @@ class RepositionAction(object):
     top_sideward_pull_r = 'top_sideward_pull_r'
     top_sideward_pull_l = 'top_sideward_pull_l'
 
+    all_actions = [front_center_push,
+    front_side_push_r,
+    front_side_push_l,
+    side_push_full_contact_r,
+    side_push_full_contact_l,
+    side_push_point_contact_r,
+    side_push_point_contact_l,
+    top_pull,
+    top_sideward_pull_r,
+    top_sideward_pull_l]
+
     def __init__(self, bounding_box, action_type, **services):
         #self.debug = userdata.debug
         self.bin_id = 'K'

@@ -161,7 +161,7 @@ class ExploreToolActions(smach.State):
     def execute(self, userdata):
         rospy.loginfo("Starting Move Object state")
         remove_object = CollisionObject()
-        remove_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
+           remove_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
         remove_object.id = Tool.tool_name
         remove_object.operation = CollisionObject.REMOVE
         tool = AttachedCollisionObject()
@@ -190,56 +190,50 @@ class ExploreToolActions(smach.State):
         while(True):
 
             #############
-            print("1. Front center push \n2. Front side push")
-            print("3. Side push with full surface contact\n4. Side push with point contact")
-            print("5. Top pull \n6. Top sideward pull \n")
 
-            tool_action = raw_input("enter the number of the tool action:")
+            #tool_action = raw_input("enter the number of the tool action:")
+            options = RepositionAction.all_actions
+            options.append('change_object')
+            tool_action = self._interface.ask_choice('Which action should I try?', options)
+            #self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
+            
             #############
 
             # Front center push
-            if(tool_action == '1'):
+            if(tool_action == RepositionAction.front_center_push or 
+                tool_action == RepositionAction.front_side_push_r or 
+                tool_action == RepositionAction.front_side_push_l):
 
                 action = PushAway(bounding_box,
-                    RepositionAction.front_center_push,
-                    **self.services)
-
-            # Front side push
-            elif(tool_action == '2'):
-
-                action = PushAway(bounding_box,
-                    RepositionAction.front_side_push_r,
+                    tool_action,
                     **self.services)
 
             # Side push with full surface contact
-            elif(tool_action == '3'):
+            elif(tool_action == RepositionAction.side_push_full_contact_r or 
+                tool_action == RepositionAction.side_push_full_contact_l or 
+                tool_action == RepositionAction.side_push_point_contact_r or 
+                tool_action == RepositionAction.side_push_point_contact_l):
 
                 action = PushSideways(bounding_box,
-                    RepositionAction.side_push_full_contact_r,
-                    **self.services)
-
-            # Side push with point contact
-            elif(tool_action == '4'):
-
-                action = PushSideways(bounding_box,
-                    RepositionAction.side_push_point_contact_r,
+                    tool_action,
                     **self.services)
 
             # Top pull
-            elif(tool_action == '5'):
+            elif(tool_action == RepositionAction.top_pull):
 
                 action = PullForward(bounding_box,
-                    RepositionAction.top_pull,
+                    tool_action,
                     **self.services)
 
             # Top sideward pull
-            elif(tool_action == '6'):
+            elif(tool_action == RepositionAction.top_sideward_pull_r or 
+                tool_action == RepositionAction.top_sideward_pull_l):
 
                 action = TopSideways(bounding_box,
-                    RepositionAction.top_sideward_pull_r,
+                    tool_action,
                     **self.services)
             
-            elif(tool_action == '-1'):
+            elif(tool_action == 'change_object'):
                 self._tuck_arms.wait_for_service()
                 tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
                 return outcomes.TOOL_EXPLORATION_FAILURE
