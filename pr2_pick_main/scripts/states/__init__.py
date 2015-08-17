@@ -5,12 +5,15 @@ from .Grasp import Grasp
 from .GraspTool import GraspTool
 from .MoveToBin import MoveToBin
 from .SenseBin import SenseBin
+from .SenseBinExperiment import SenseBinExperiment
 from .StartPose import StartPose
 from .UpdatePlan import UpdatePlan
 from .CaptureItemDescriptor import CaptureItemDescriptor
 from .GatherData import GatherData
 from .GraspPlanner import GraspPlanner
+from .GraspPlannerExperiment import GraspPlannerExperiment
 from .MoveObject import MoveObject
+from .MoveObjectExperiment import MoveObjectExperiment
 from .UpdatePlanExperiment import UpdatePlanExperiment
 from .InitializeExploration import InitializeExploration
 from .SenseObject import SenseObject

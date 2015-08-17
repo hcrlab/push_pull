@@ -21,7 +21,7 @@ from pr2_pick_contest.srv import LookupItem
 import states
 from states.GraspTool import GraspTool, ReleaseTool
 #from states.Simulation import Simulation
-from states.MoveObject import MoveObject
+from states.MoveObjectExperiment import MoveObjectExperiment
 from convert_pcl.srv import ConvertPCL
 from moveit_msgs.srv import GetPlanningScene, GetPositionFK, GetPositionIK
 
@@ -53,8 +53,8 @@ class StateMachineBuilder(object):
             build = self.build_sm_for_simulation
         elif self.state_machine_identifier == StateMachineBuilder.EXPLORE:
             build = self.build_sm_for_explore
-        else:
-            build = self.build_sm
+        # else:
+        #     build = self.build_sm
 
         return build(**services)
 
@@ -166,9 +166,7 @@ class StateMachineBuilder(object):
                     states.UpdatePlanExperiment.name,
                     states.UpdatePlanExperiment(**services),
                     transitions={
-                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBin.name,
-                        outcomes.UPDATE_PLAN_RELOCALIZE_SHELF: states.StartPose.name,
-                        outcomes.UPDATE_PLAN_NO_MORE_OBJECTS: outcomes.CHALLENGE_SUCCESS,
+                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBinExperiment.name,
                         outcomes.UPDATE_PLAN_FAILURE: states.StartPose.name
                     },
                     remapping={
@@ -176,14 +174,15 @@ class StateMachineBuilder(object):
                         'output_bin_data': 'bin_data',
                         'next_bin': 'current_bin',
                         'next_target' : 'current_target',
-                        'next_bin_items': 'current_bin_items'
+                        'next_bin_items': 'current_bin_items',
+                        'current_trial' : 'current_trial'
                     }
                 )
                 smach.StateMachine.add(
-                    states.SenseBin.name,
-                    states.SenseBin(**services),
+                    states.SenseBinExperiment.name,
+                    states.SenseBinExperiment(**services),
                     transitions={
-                        outcomes.SENSE_BIN_SUCCESS: states.GraspPlanner.name,
+                        outcomes.SENSE_BIN_SUCCESS: states.GraspPlannerExperiment.name,
                         outcomes.SENSE_BIN_NO_OBJECTS: outcomes.CHALLENGE_FAILURE,
                         outcomes.SENSE_BIN_FAILURE: outcomes.CHALLENGE_FAILURE
                     },
@@ -198,28 +197,38 @@ class StateMachineBuilder(object):
                     }
                 )
                 smach.StateMachine.add(
-                    states.GraspPlanner.name,
-                    states.GraspPlanner(**services),
+                    states.GraspPlannerExperiment.name,
+                    states.GraspPlannerExperiment(**services),
                     transitions={
                         outcomes.GRASP_PLAN_SUCCESS: states.ExtractItem.name,
-                        outcomes.GRASP_PLAN_NONE: states.SenseBin.name,
-                        outcomes.GRASP_PLAN_FAILURE: states.SenseBin.name,
-                        outcomes.GRASP_MOVE_OBJECT: states.MoveObject.name 
+                        outcomes.GRASP_PLAN_NONE: states.SenseBinExperiment.name,
+                        outcomes.GRASP_PLAN_FAILURE: states.SenseBinExperiment.name,
+                        outcomes.GRASP_MOVE_OBJECT: states.MoveObjectExperiment.name 
                     },
                     remapping={
                         'bin_id': 'current_bin',
                         'target_cluster': 'target_cluster',
                         'current_target': 'current_target',
                         'item_model': 'target_model',
-                        'target_descriptor': 'target_descriptor'
+                        'target_descriptor': 'target_descriptor',
+                        'before_record' : 'before_record'
                     }
                 )
                 smach.StateMachine.add(
-                    MoveObject.name,
-                    MoveObject(**services),
+                    MoveObjectExperiment.name,
+                    MoveObjectExperiment(**services),
                     transitions={
-                        outcomes.MOVE_OBJECT_SUCCESS: states.SenseBin.name,
-                        outcomes.MOVE_OBJECT_FAILURE: states.SenseBin.name,
+                        outcomes.MOVE_OBJECT_SUCCESS: states.UpdatePlanExperiment.name,
+                        outcomes.MOVE_OBJECT_FAILURE: states.UpdatePlanExperiment.name,
+                    },
+                    remapping={
+                        'bin_id': 'current_bin',
+                        'target_cluster': 'target_cluster',
+                        'current_target': 'current_target',
+                        'item_model': 'target_model',
+                        'target_descriptor': 'target_descriptor',
+                        'current_trial' : 'current_trial',
+                        'before_record' : 'before_record'
                     }
                 )
            

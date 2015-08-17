@@ -1,0 +1,32 @@
+{ "items" :
+  [
+    {
+    "item_name": "crayola_64_ct",
+    "positions": [0, 1, 2, 3],
+    "orientations" : [0, 1, 2],
+    "actions" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "action_params" : 
+      {
+        "front_center_push": {},
+        "front_side_push":
+          {
+            "distance_from_end" : [0.03]
+          },
+        "push_full_contact" : 
+          {
+            "distance_to_push_forward" : [0.05]
+          },
+        "push_point_contact" :
+          {
+            "distance_to_push_forward" : [0.05],
+            "distance_from_front_to_apply_tool" : [0.01]
+          },
+        "top_pull" : {},
+        "top_sideways_pull" :
+          {
+            "distance_to_push_forward" : [0.05]
+          }
+      }
+    }
+  ] 
+}
