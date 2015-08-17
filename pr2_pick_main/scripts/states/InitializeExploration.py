@@ -61,10 +61,7 @@ class InitializeExploration(smach.State):
         transform.transform.rotation = odom.pose.orientation
         transform.child_frame_id = 'odom_combined'
         self._set_static_tf.wait_for_service()
-        self._set_static_tf(transform)        
-
-        self._interface.ask_choice('Press OK when ready to take', ['OK'])
-        self._interface.display_message('Press OK when ready to take')
+        self._set_static_tf(transform)
 
         # Tuck arms
         rospy.loginfo('Setting start pose.')
@@ -151,8 +148,10 @@ class InitializeExploration(smach.State):
         self._tts.publish('Please hand me the tool.')
 
         ################
-        raw_input("Add tool to the robot ")
-        rospy.sleep(1)
+        self._interface.ask_choice('Press OK when ready to take', ['OK'])
+        self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
+        # raw_input("Add tool to the robot ")
+        rospy.sleep(3)
         ################
 
         grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)
