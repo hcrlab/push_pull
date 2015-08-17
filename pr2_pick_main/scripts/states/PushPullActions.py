@@ -51,8 +51,6 @@ class RepositionAction(object):
     # keep tool this far away from the bin wall
     bin_wall_tolerance = 0.03
     closest_base_distance_to_shelf = 1.05
-    # how far in front of item to position tool tip before attempting to touch object
-    pre_application_dist = 0.05
 
     ###############
     ## ACTION TYPES
@@ -298,8 +296,8 @@ class PushAway(RepositionAction):
     '''
 
     #### ACTION PARAMETERS
-    param_names = ['pushing_distance', 'distance_from_side']
-    param_values = [0.08, 0.02]
+    param_names = ['pushing_distance', 'distance_from_side', 'pre_application_dist']
+    param_values = [0.08, 0.02, 0.05]
     param_mins = [m-0.02 for m in param_values]
     param_maxs = [m+0.02 for m in param_values]
     params = dict(zip(param_names, param_values))
@@ -333,36 +331,24 @@ class PushAway(RepositionAction):
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
 
-        # where to be before moving to application point, relative to application point
-        pre_application_delta = Vector3(0, 0, 0)
-        # where to move after application point, relative to application point
-        post_application_delta = Vector3(0, 0, 0)
         # orientation of gripper when repositioning, relative to current orientation
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
-
-        pre_application_delta.x = -RepositionAction.pre_application_dist
-
-        post_application_delta.x = min(
-            (3.0 / 4.0) * self.bounding_box.dimensions.x,
-            RepositionAction.bin_depth - self.application_point.x - self.bounding_box.dimensions.y
-        )
 
         # construct pre_application pose, application pose, and final pose
         ## TODO: be extra careful on edge bins
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + pre_application_delta.x - Tool.tool_length - 
-                PushAway.params['pushing_distance']/2,
-                y=self.cap_y(self.application_point.y + pre_application_delta.y),
-                z=self.application_point.z + pre_application_delta.z,
+                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'],
+                y=self.cap_y(self.application_point.y),
+                z=self.application_point.z,
             ),
             orientation=orientation,
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length + 
-                PushAway.params['pushing_distance']/2,
+                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'] + 
+                PushAway.params['pushing_distance'],
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -370,9 +356,9 @@ class PushAway(RepositionAction):
         )
         post_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + post_application_delta.x - Tool.tool_length,
-                y=self.cap_y(self.application_point.y + post_application_delta.y),
-                z=self.application_point.z + post_application_delta.z,
+                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'],
+                y=self.cap_y(self.application_point.y),
+                z=self.application_point.z,
             ),
             orientation=orientation,
         )
@@ -495,6 +481,7 @@ class PullForward(RepositionAction):
     push_down_offset = 0.05 ### Defined as 0.02 somewhere else
     # how close to the edge of the shelf to pull the tip of the object
     distance_from_edge = 0.05
+    pre_application_dist = 0.05
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -517,7 +504,7 @@ class PullForward(RepositionAction):
         #type(pose) = geometry_msgs.msg.Pose
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
 
-        pre_application_delta.x = -RepositionAction.pre_application_dist
+        pre_application_delta.x = -PullForward.pre_application_dist
         pre_application_delta.z = PullForward.push_down_offset 
 
         post_application_delta.x = - self.centroid.x + (self.bounding_box.dimensions.x / 2.0) \
@@ -593,6 +580,7 @@ class TopSideways(RepositionAction):
     push_down_offset = 0.055
     # how close to the edge of the shelf to pull the tip of the object
     distance_from_edge = 0.05
+    pre_application_dist = 0.05
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -615,7 +603,7 @@ class TopSideways(RepositionAction):
         #type(pose) = geometry_msgs.msg.Pose
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
 
-        pre_application_delta.x = -RepositionAction.pre_application_dist
+        pre_application_delta.x = -TopSideways.pre_application_dist
         pre_application_delta.z = TopSideways.push_down_offset 
 
         post_application_delta.x = - self.centroid.x + (self.bounding_box.dimensions.x / 2.0) \
