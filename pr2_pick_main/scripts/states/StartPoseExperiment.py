@@ -189,7 +189,7 @@ class StartPoseExperiment(smach.State):
         else:
             rospy.loginfo('StartPose: TuckArms success')
 
-        self.pre_position_tool()
+        #self.pre_position_tool()
         grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
         raw_input("Press Enter and add tool to the robot ")
         rospy.sleep(4)
@@ -203,8 +203,8 @@ class StartPoseExperiment(smach.State):
 
         self.add_tool_collision_object()
 
-        self._tuck_arms.wait_for_service()
-        tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+        #self._tuck_arms.wait_for_service()
+        #tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
         
 
         if self._start_pose is None:
@@ -228,7 +228,7 @@ class StartPoseExperiment(smach.State):
         else:
             self._adjust_start_pose_orientation()
             self._drive_to_start_pose()
-        grippers_open = self._set_grippers(True, True, -1)
+        #grippers_open = self._set_grippers(True, True, -1)
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
 
