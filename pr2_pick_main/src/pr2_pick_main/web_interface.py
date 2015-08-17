@@ -106,7 +106,7 @@ class WebInterface(object):
                                     'slider_min':param_mins[i],
                                     'slider_max':param_maxs[i],
                                     'slider_step':0.01,
-                                    'slider_values':param_values[i]}])
+                                    'slider_value':param_values[i]}])
 
         msg.keys = ['message', 'sliders', 'prompt_id']
         msg.values = [message, json.dumps(sliders), prompt_id]

@@ -98,6 +98,15 @@ if (Meteor.isClient) {
     }
   });
 
+  Template.get_floats.events({
+    'change .submit-values': function(event) {
+      var slider_name = event.target.id;
+      var new_value = event.target.value;
+      document.getElementById(slider_name + "_value").innerHTML=new_value;
+      return false;
+    }
+  });
+
   Template.ask_choice.events({
     'click .select-choice': function(event) {
       var submission = new ROSLIB.Message({

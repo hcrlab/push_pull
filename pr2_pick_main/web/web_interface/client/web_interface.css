@@ -11,3 +11,8 @@ body {
     text-align: center;
     font-size: 2.5em;
 }
+
+.container .values {
+    text-align: left;
+    font-size: 2.0em;
+}
