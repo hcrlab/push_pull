@@ -212,8 +212,8 @@ class ExploreToolActions(smach.State):
                     param_names=PushAway.param_names,
                     param_mins=PushAway.param_mins,
                     param_maxs=PushAway.param_maxs,
-                    param_values=PushAway.param_values)
-                PushAway.param_values = new_values
+                    param_values=PushAway.params.values())
+                PushAway.params = dict(zip(PushAway.param_names, new_values))
                 PushAway.save_params()
 
                 action = PushAway(bounding_box,
