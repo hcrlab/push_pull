@@ -1,2 +1,3 @@
+pr2_pick_contest/MoveObjectParams params
 pr2_pick_contest/Record before
 pr2_pick_contest/Record after
