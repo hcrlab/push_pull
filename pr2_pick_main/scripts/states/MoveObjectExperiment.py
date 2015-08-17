@@ -550,11 +550,10 @@ class MoveObjectExperiment(smach.State):
 
         # Get the bounding box
         (box_pose, box_dims) = self.call_find_cluster_bounding_box(self._cluster2.pointcloud)
-        userdata.bounding_box_pose = box_pose
         box_pose.header.frame_id = self._cluster.header.frame_id
-        bounding_box = BoundingBox()
-        bounding_box.pose = box_pose
-        bounding_box.dimensions = box_dims
+        b_box = BoundingBox()
+        b_box.pose = box_pose
+        b_box.dimensions = box_dims
 
         # Publish Bounding Box
         marker_bounding_box = viz.publish_bounding_box(self._markers, box_pose, 
@@ -565,7 +564,7 @@ class MoveObjectExperiment(smach.State):
 
         
         # Saving bounding box
-        self.after_record.boundingbox = bounding_box
+        self.after_record.boundingbox = b_box
         self.after_record.marker_boundingbox = marker_bounding_box
         # userdata.bounding_box = bounding_box
 
