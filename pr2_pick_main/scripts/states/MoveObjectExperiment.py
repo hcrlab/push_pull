@@ -15,7 +15,7 @@ from visualization import IdTable
 import sensor_msgs.point_cloud2 as pc2
 from std_msgs.msg import Header, String, Int32, Float32
 from PushAwayExperiment import PushAwayExperiment
-from PullForward import PullForward
+from PullForwardExperiment import PullForwardExperiment
 from PushSidewaysExperiment import PushSidewaysExperiment
 from TopSidewaysExperiment import TopSidewaysExperiment
 import time
@@ -382,9 +382,9 @@ class MoveObjectExperiment(smach.State):
 
         
             
-        print("1. Front center push \n2. Front side push")
-        print("3. Side push with full surface contact\n4. Side push with point contact")
-        print("5. Top pull \n6. Top sideward pull \n")
+        #print("1. Front center push \n2. Front side push")
+        #print("3. Side push with full surface contact\n4. Side push with point contact")
+        #print("5. Top pull \n6. Top sideward pull \n")
         tool_action = userdata.current_trial["action"]
 
         # Front center push
@@ -484,12 +484,10 @@ class MoveObjectExperiment(smach.State):
                 side = 'right'
 
             distance_to_push = userdata.current_trial["action_params"]["push_full_contact"]["distance_to_push"]
-            distance_from_front_to_apply_tool = userdata.current_trial["action_params"]["push_full_contact"]["distance_from_front_to_apply_tool"]
-            action.set_params(side, distance_to_push, distance_from_front_to_apply_tool)
+            action.set_params(side, distance_to_push)
 
-            param_suffix = side + "_distance_to_push_" + str(distance_to_push) + "_distance_from_front_to_apply_tool_" + str(distance_from_front_to_apply_tool)
+            param_suffix = side + "_distance_to_push_" + str(distance_to_push)
             move_object_params.distance_to_push = Float32(distance_to_push)
-            move_object_params.distance_from_front_to_apply_tool =  Float32(distance_from_front_to_apply_tool)
 
             success = action.execute()
 
@@ -512,11 +510,13 @@ class MoveObjectExperiment(smach.State):
                 side = 'right'
 
             distance_to_push = userdata.current_trial["action_params"]["push_point_contact"]["distance_to_push"]
+            distance_from_front_to_apply_tool = userdata.current_trial["action_params"]["push_point_contact"]["distance_from_front_to_apply_tool"]
             # distance_from_front_to_apply_tool = userdata.current_trial["action_params"]["push_full_contact"]["distance_from_front_to_apply_tool"]
-            action.set_params(side, distance_to_push)
 
-            param_suffix = side + "_distance_to_push_" + str(distance_to_push)
+            action.set_params(side, distance_to_push, distance_from_front_to_apply_tool)
+            param_suffix = side + "_distance_to_push_" + str(distance_to_push) + "_distance_from_front_to_apply_tool_" + str(distance_from_front_to_apply_tool)
             move_object_params.distance_to_push = Float32(distance_to_push)
+            move_object_params.distance_from_front_to_apply_tool =  Float32(distance_from_front_to_apply_tool)
 
             success = action.execute()
 
@@ -528,7 +528,7 @@ class MoveObjectExperiment(smach.State):
             self.application_point.z = centroid.z + self.push_down_offset + 0.01
             action = PullForwardExperiment(bounding_box, self.application_point,
                                  'top_pull', userdata, **self.services)
-            distance_from_edge = userdata.current_trial["action_params"]["top_sideways_pull"]["distance_from_edge"]
+            distance_from_edge = userdata.current_trial["action_params"]["top_pull"]["distance_from_edge"]
             param_suffix = side + "_distance_from_edge_" + str(distance_from_edge)
             move_object_params.distance_from_edge = Float32(distance_from_edge)
             action.set_params(distance_from_edge)

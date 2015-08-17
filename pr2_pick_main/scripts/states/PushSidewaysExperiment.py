@@ -27,7 +27,7 @@ class PushSidewaysExperiment(RepositionAction):
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
         # side = raw_input("1. Left \n2. Right \n")
-        if(side == 'left'):
+        if(self._side == 'left'):
             back_end = self.ends[3]
             front_end = self.ends[1]
             if(self.ends[3].y < self.ends[1].y):
@@ -41,7 +41,7 @@ class PushSidewaysExperiment(RepositionAction):
             back_end = self.ends[2]
             front_end = self.ends[0]
             if(self.ends[2].y < self.ends[0].y):
-                rospy.loginf("2 < 0")
+                rospy.loginfo("2 < 0")
                 target_end = self.ends[2]
             else:
                 target_end = self.ends[0]  

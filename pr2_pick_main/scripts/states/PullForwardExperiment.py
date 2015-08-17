@@ -5,7 +5,7 @@ import math
 from RepositionAction import RepositionAction
 from RepositionAction import MoveArmStep, MoveBaseStep, RepositionAction
 
-class PullForward(RepositionAction):
+class PullForwardExperiment(RepositionAction):
     '''
     Parent class for actions that push away on some point of the object.
     Child classes are parameterized by where on the object they're pushing.
