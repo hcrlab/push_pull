@@ -7,6 +7,7 @@ import smach
 import json
 import copy
 import rospkg
+import itertools
 
 class UpdatePlanExperiment(smach.State):
     """Decides on the next item to pick.
@@ -57,17 +58,24 @@ class UpdatePlanExperiment(smach.State):
                     for action in item["actions"]:
                         param_dict = item["action_params"][actions[action]]
                         if param_dict.keys():
+                            param_lists = []
                             for key in param_dict:
-                                for param in param_dict[key]:
-                                    trial = {}
-                                    trial["position"] = position
-                                    trial["orientation"] = orientation
-                                    trial["action"] = action
-                                    trial["item_name"] = item["item_name"]
-                                    trial["action_params"] = {}
-                                    trial["action_params"][actions[action]] = {} 
-                                    trial["action_params"][actions[action]][key] = param
-                                    trials.append(copy.copy(trial))
+                                param_lists.append(param_dict[key])
+                                param_permutations = []
+
+                            for params in itertools.product(*param_lists):
+
+                                #for param in param_dict[key]:
+                                trial = {}
+                                trial["position"] = position
+                                trial["orientation"] = orientation
+                                trial["action"] = action
+                                trial["item_name"] = item["item_name"]
+                                trial["action_params"] = {}
+                                trial["action_params"][actions[action]] = {}
+                                for i in range(len(params)): 
+                                    trial["action_params"][actions[action]][param_dict.keys()[i]] = params[i]
+                                trials.append(copy.copy(trial))
                         else:
                             trial = {}
                             trial["position"] = position
