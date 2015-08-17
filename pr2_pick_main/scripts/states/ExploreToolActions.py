@@ -161,7 +161,7 @@ class ExploreToolActions(smach.State):
     def execute(self, userdata):
         rospy.loginfo("Starting Move Object state")
         remove_object = CollisionObject()
-           remove_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
+        remove_object.header.frame_id = '{}_wrist_roll_link'.format(self.arm_side)
         remove_object.id = Tool.tool_name
         remove_object.operation = CollisionObject.REMOVE
         tool = AttachedCollisionObject()
