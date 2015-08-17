@@ -301,6 +301,19 @@ class PushAway(RepositionAction):
     pushing_distance = 0.08
     distance_from_side = 0.02 ## float(raw_input("Distance for application from the end of the object: "))
 
+    param_names = ['pushing_distance', 'distance_from_side']
+    param_values = [0.08, 0.02]
+    param_mins = [m-0.02 for m in param_values]
+    param_maxs = [m+0.02 for m in param_values]
+
+    @staticmethod
+    def load_params():
+        pass
+
+    @staticmethod
+    def save_params():
+        pass
+
     def get_application_point(self):
         application_point = Point(0, 0, 0)
         if self.action_type == RepositionAction.front_center_push: 

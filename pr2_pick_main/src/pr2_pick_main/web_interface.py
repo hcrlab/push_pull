@@ -154,9 +154,12 @@ class WebInterface(object):
                 break
 
             values = json.loads(params['values'])
+            float_values = []
+            for param_name in param_names:
+                float_values.append(float(values[param_name]))
 
         self.display_default()
-        return values
+        return float_values
 
     def display_message(self, message, duration=None, has_countdown=False):
         """Displays the given message on the screen.

@@ -207,9 +207,14 @@ class ExploreToolActions(smach.State):
                 tool_action == RepositionAction.front_side_push_r or 
                 tool_action == RepositionAction.front_side_push_l):
 
-
-                PushAway.pushing_distance = 0.08
-                PushAway.distance_from_side = 0.02
+                PushAway.load_params()
+                new_values = self._interface.get_floats(message='PushAway Parameters',
+                    param_names=PushAway.param_names,
+                    param_mins=PushAway.param_mins,
+                    param_maxs=PushAway.param_maxs,
+                    param_values=PushAway.param_values)
+                PushAway.param_values = new_values
+                PushAway.save_params()
 
                 action = PushAway(bounding_box,
                     tool_action,
