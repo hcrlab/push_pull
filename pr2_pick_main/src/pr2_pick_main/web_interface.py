@@ -101,7 +101,7 @@ class WebInterface(object):
         prompt_id = str(random.randint(0, 1000000))
 
         sliders = []
-        if i in range(len(param_names)):
+        for i in range(len(param_names)):
             sliders = (sliders + [{'slider_name':param_names[i],
                                     'slider_min':param_mins[i],
                                     'slider_max':param_maxs[i],
