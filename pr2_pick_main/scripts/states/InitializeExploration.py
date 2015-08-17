@@ -65,11 +65,13 @@ class InitializeExploration(smach.State):
         self._set_static_tf.wait_for_service()
         self._set_static_tf(transform)
 
-        self._interface.get_floats(message='set values',
+        values = self._interface.get_floats(message='set values',
             param_names=['a', 'b'],
             param_mins=[0.0, 0.0],
             param_maxs=[1.0, 2.5],
             param_values=[0.1, 1.5])
+
+        print values
 
         # Tuck arms
         message = 'Setting start pose.'
