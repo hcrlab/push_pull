@@ -105,7 +105,7 @@ class WebInterface(object):
             sliders = (sliders + [{'slider_name':param_names[i],
                                     'slider_min':param_mins[i],
                                     'slider_max':param_maxs[i],
-                                    'slider_step':0.01,
+                                    'slider_step':0.005,
                                     'slider_value':param_values[i]}])
 
         msg.keys = ['message', 'sliders', 'prompt_id']

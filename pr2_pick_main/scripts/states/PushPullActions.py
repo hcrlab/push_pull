@@ -298,8 +298,8 @@ class PushAway(RepositionAction):
     #### ACTION PARAMETERS
     param_names = ['pushing_distance', 'distance_from_side', 'pre_application_dist']
     param_values = [0.08, 0.02, 0.05]
-    param_mins = [m-0.02 for m in param_values]
-    param_maxs = [m+0.02 for m in param_values]
+    param_mins = [m-0.04 for m in param_values]
+    param_maxs = [m+0.04 for m in param_values]
     params = dict(zip(param_names, param_values))
 
     @staticmethod
@@ -347,8 +347,7 @@ class PushAway(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'] + 
-                PushAway.params['pushing_distance'],
+                x=self.application_point.x - Tool.tool_length + PushAway.params['pushing_distance'],
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -384,9 +383,15 @@ class PushSideways(RepositionAction):
     '''
 
     ### ACTION PARAMETERS
-    distance_from_side = 0.02 ## float(raw_input("Distance to push the object: "))
-    application_height = 0.09
-    distance_from_front = 0.02 #float(raw_input("Distance from front end of object to apply tool: "))
+    param_names = ['pushing_distance',
+    'distance_from_side',
+    'distance_from_front',
+    'distance_from_back',
+    'application_height_from_center']
+    param_values = [0.04, 0.02, 0.00, 0.00, 0.00]
+    param_mins = [m-0.04 for m in param_values]
+    param_maxs = [m+0.04 for m in param_values]
+    params = dict(zip(param_names, param_values))
 
     def build_trajectory(self):
         '''
@@ -404,7 +409,6 @@ class PushSideways(RepositionAction):
                 target_end = self.ends[3]
             else:
                 target_end = self.ends[1]    
-
             push_direction_sign = 1
         else:
             ## Right push
@@ -417,56 +421,49 @@ class PushSideways(RepositionAction):
                 target_end = self.ends[0]  
             push_direction_sign = -1
 
-        # where to be before moving to application point, relative to application point
-        pre_application_delta = Vector3(0, 0, 0)
-        # where to move after application point, relative to application point
-        post_application_delta = Vector3(0, 0, 0)
-        # orientation of gripper when repositioning, relative to current orientation
-        orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
-        pre_application_delta.y = 0.02
-
-        distance_x = back_end.x - Tool.tool_length
-
         if(self.action_type == RepositionAction.side_push_point_contact_r or 
             self.action_type == RepositionAction.side_push_point_contact_l):
-            distance_x =  front_end.x + PushSideways.distance_from_front - Tool.tool_length
+            distance_x =  front_end.x - Tool.tool_length + PushSideways.params['distance_from_front']
+        else:
+            distance_x = back_end.x - Tool.tool_length + PushSideways.params['distance_from_back']
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
         self.frame = self.bounding_box.pose.header.frame_id
-        pre_application_pose = Pose(
+        start_pose = Pose(
             position=Point(
                 x=distance_x - 0.10,
-                y=self.cap_y(target_end.y  + (pre_application_delta.y * push_direction_sign)),
-                z=PushSideways.application_height
+                y=self.cap_y(target_end.y + (PushSideways.params['distance_from_side'] * push_direction_sign)),
+                z=self.centroid.z / 2 + PushSideways.params['application_height_from_center']
             ),
             orientation=orientation,
         )
 
-        application_pose = Pose(
+        side_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=self.cap_y(target_end.y  + (pre_application_delta.y * push_direction_sign)),
-                z=PushSideways.application_height
+                y=self.cap_y(target_end.y + (PushSideways.params['distance_from_side'] * push_direction_sign)),
+                z=self.centroid.z / 2 + PushSideways.params['application_height_from_center']
             ),
             orientation=orientation,
         )
 
-        push_application_pose = Pose(
+        push_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=target_end.y - (PushSideways.distance_from_side * push_direction_sign),  # halfway between centroid and bin center
-                z=PushSideways.application_height
+                y=target_end.y - (PushSideways.params['pushing_distance'] * push_direction_sign),
+                z=self.centroid.z / 2 + PushSideways.params['application_height_from_center']
             ),
             orientation=orientation,
         )
 
         # for movement
         self.steps = [
-            MoveArmStep(pre_application_pose, self.frame, False),
-            MoveArmStep(application_pose, self.frame, False),
-            MoveArmStep(push_application_pose, self.frame, False),
-            MoveArmStep(pre_application_pose, self.frame, False)
+            MoveArmStep(start_pose, self.frame, False),
+            MoveArmStep(side_pose, self.frame, False),
+            MoveArmStep(push_pose, self.frame, False),
+            MoveArmStep(side_pose, self.frame, False),
+            MoveArmStep(start_pose, self.frame, False)
         ]
 
 

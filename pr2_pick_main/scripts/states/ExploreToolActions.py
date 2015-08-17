@@ -196,7 +196,7 @@ class ExploreToolActions(smach.State):
             #############
 
             #tool_action = raw_input("enter the number of the tool action:")
-            options = RepositionAction.all_actions + ['change_object']
+            options = RepositionAction.all_actions + ['change object configuration']
             tool_action = self._interface.ask_choice('Which action should I try?', options)
             #self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
             
@@ -245,7 +245,7 @@ class ExploreToolActions(smach.State):
                     tool_action,
                     **self.services)
             
-            elif(tool_action == 'change_object'):
+            else:
                 self._tuck_arms.wait_for_service()
                 tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
                 return outcomes.TOOL_EXPLORATION_SUCCESS
