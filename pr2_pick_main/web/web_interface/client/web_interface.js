@@ -77,20 +77,23 @@ if (Meteor.isClient) {
 
   Template.get_floats.events({
     'click .submit-values': function(event) {
-      var sliders = Session.get('slider_params')
-      var values = {}
-      for (var i=0; i<sliders.length; i+=1) {
-        var slider = sliders[i]
-        var slider_name = slider['slider_name']
-        values[slider_name] = document.getElementById(slider_name).value
-      }
+      if (event.target.value === 'submit_values')
+      {
+        var sliders = Session.get('slider_params');
+        var values = {};
+        for (var i=0; i<sliders.length; i+=1) {
+          var slider = sliders[i];
+          var slider_name = slider['slider_name'];
+          values[slider_name] = document.getElementById(slider_name).value;
+        }
 
-      var submission = new ROSLIB.Message({
-        interface_type: 'get_floats',
-        keys: ['values', 'prompt_id'],
-        values: [values, Session.get('prompt_id')]
-      });
-      view_publisher.publish(submission);
+        var submission = new ROSLIB.Message({
+          interface_type: 'get_floats',
+          keys: ['values', 'prompt_id'],
+          values: [JSON.stringify(values), Session.get('prompt_id')]
+        });
+        view_publisher.publish(submission);
+      }
       return false;
     }
   });

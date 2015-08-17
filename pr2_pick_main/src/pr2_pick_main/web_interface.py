@@ -154,7 +154,8 @@ class WebInterface(object):
                 rospy.logerr('[Interface]: no choice given.')
                 break
 
-            values = params['values']
+            values = json.loads(params['values'])
+            
         self.display_default()
         return values
 
