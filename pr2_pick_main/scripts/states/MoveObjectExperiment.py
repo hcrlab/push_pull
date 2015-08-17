@@ -52,7 +52,7 @@ class MoveObjectExperiment(smach.State):
         self.tool_name = 'tool'
         self.waypoint_duration = rospy.Duration(10.0)
         # approximate tool dimensions
-        self.tool_x_size = 0.26
+        self.tool_x_size = 0.16 #took 10cm off
         self.tool_y_size = 0.01
         self.tool_z_size = 0.03
         self.joints = [
