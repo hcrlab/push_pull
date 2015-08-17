@@ -71,7 +71,8 @@ class InitializeExploration(smach.State):
             param_maxs=[1.0, 2.5],
             param_values=[0.1, 1.5])
 
-        print values
+        print float(values['a'])
+        print float(values['b'])
 
         # Tuck arms
         message = 'Setting start pose.'
