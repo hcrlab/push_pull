@@ -3,5 +3,7 @@ std_msgs/Int32 position
 std_msgs/Int32 orientation
 std_msgs/Int32 action
 std_msgs/Float32 distance_from_end
-std_msgs/Float32 distance_to_push_forward
+std_msgs/Float32 distance_to_push
 std_msgs/Float32 distance_from_front_to_apply_tool
+std_msgs/Float32 distance_from_edge
+

@@ -25,6 +25,9 @@ class PushAwayExperiment(RepositionAction):
     #### ACTION PARAMETERS
     pushing_distance = 0.08
 
+    def set_params(self, distance_to_push):
+        self.pushing_distance = distance_to_push
+
     def build_trajectory(self):
         '''
         Construct waypoints for wrist_roll_link from pre/application/post points
