@@ -298,13 +298,11 @@ class PushAway(RepositionAction):
     '''
 
     #### ACTION PARAMETERS
-    pushing_distance = 0.08
-    distance_from_side = 0.02 ## float(raw_input("Distance for application from the end of the object: "))
-
     param_names = ['pushing_distance', 'distance_from_side']
     param_values = [0.08, 0.02]
     param_mins = [m-0.02 for m in param_values]
     param_maxs = [m+0.02 for m in param_values]
+    params = {k:v for k,v in param_names, param_values}
 
     @staticmethod
     def load_params():
@@ -322,11 +320,11 @@ class PushAway(RepositionAction):
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_l:
             application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
-            application_point.y = self.ends[3].y - PushAway.distance_from_side 
+            application_point.y = self.ends[3].y - PushAway.params['distance_from_side']
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_r:
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
-            application_point.y =  self.ends[0].y + PushAway.distance_from_side 
+            application_point.y =  self.ends[0].y + PushAway.params['distance_from_side']
             application_point.z = self.centroid.z / 2
         return application_point
 
@@ -354,7 +352,8 @@ class PushAway(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x + pre_application_delta.x - Tool.tool_length - PushAway.pushing_distance/2,
+                x=self.application_point.x + pre_application_delta.x - Tool.tool_length - 
+                PushAway.params['pushing_distance']/2,
                 y=self.cap_y(self.application_point.y + pre_application_delta.y),
                 z=self.application_point.z + pre_application_delta.z,
             ),
@@ -362,7 +361,8 @@ class PushAway(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length + PushAway.pushing_distance/2,
+                x=self.application_point.x - Tool.tool_length + 
+                PushAway.params['pushing_distance']/2,
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),

@@ -82,6 +82,10 @@ class SenseObject(smach.State):
             self._interface.ask_choice(message, ['Ready'])
             rospy.loginfo(message)
             self._tts.publish(message)
+            message = 'Sensing object before tool action.'
+            self._tts.publish(message)
+            rospy.loginfo(message)
+            self._interface.display_message(message)
             ########
         else:
             message = 'Sensing object after tool action.'
