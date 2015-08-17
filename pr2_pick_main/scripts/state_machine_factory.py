@@ -140,11 +140,11 @@ class StateMachineBuilder(object):
 
             with sm:
             	smach.StateMachine.add(
-                	states.StartPose.name,
-                	states.StartPose(**services),
+                	states.StartPoseExperiment.name,
+                	states.StartPoseExperiment(**services),
                 	transitions={
                     	outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    	outcomes.START_POSE_FAILURE: states.StartPose.name
+                    	outcomes.START_POSE_FAILURE: states.StartPoseExperiment.name
                 	},
                 	remapping={
                     	'start_pose': 'start_pose'
@@ -167,7 +167,7 @@ class StateMachineBuilder(object):
                     states.UpdatePlanExperiment(**services),
                     transitions={
                         outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseBinExperiment.name,
-                        outcomes.UPDATE_PLAN_FAILURE: states.StartPose.name
+                        outcomes.UPDATE_PLAN_FAILURE: states.StartPoseExperiment.name
                     },
                     remapping={
                         'bin_data': 'bin_data',
@@ -231,32 +231,7 @@ class StateMachineBuilder(object):
                         'before_record' : 'before_record'
                     }
                 )
-           
-	        smach.StateMachine.add(
-                states.ExtractItem.name,
-                states.ExtractItem(**services),
-                transitions={
-                    outcomes.EXTRACT_ITEM_SUCCESS: states.DropOffItem.name,
-                    outcomes.EXTRACT_ITEM_FAILURE: states.SenseBin.name
-                },
-                remapping={
-                    'bin_id': 'current_bin',
-                    'item_model': 'target_model'
-                }
-                )
-                smach.StateMachine.add(
-                states.DropOffItem.name,
-                states.DropOffItem(**services),
-                transitions={
-                    outcomes.DROP_OFF_ITEM_SUCCESS: states.StartPose.name,
-                    outcomes.DROP_OFF_ITEM_FAILURE: states.StartPose.name
-                },
-                remapping={
-                    'bin_id': 'current_bin',
-                    'bin_data': 'bin_data',
-                    'output_bin_data': 'bin_data'
-                }
-                )
+
             return sm
 
 

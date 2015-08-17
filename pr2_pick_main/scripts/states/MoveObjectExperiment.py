@@ -322,18 +322,18 @@ class MoveObjectExperiment(smach.State):
         #self.execute_trajectory(tool_waypoints)
         bounding_box = userdata.bounding_box
         self.pre_position_tool()
-        grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
-        raw_input("Add tool to the robot ")
-        time.sleep(3)
-        rospy.loginfo("Waiting for set grippers service")
-        self._set_grippers.wait_for_service()
-        grippers_open = self._set_grippers(open_left=False, open_right=False, effort=-1)
+        # grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
+        # raw_input("Add tool to the robot ")
+        # time.sleep(3)
+        # rospy.loginfo("Waiting for set grippers service")
+        # self._set_grippers.wait_for_service()
+        # grippers_open = self._set_grippers(open_left=False, open_right=False, effort=-1)
         
-        gripper_states = self._get_grippers()
-        if not gripper_states.left_open:
-            self._set_grippers(open_left=False, open_right=False, effort=-1)
+        # gripper_states = self._get_grippers()
+        # if not gripper_states.left_open:
+        #     self._set_grippers(open_left=False, open_right=False, effort=-1)
 
-        self.add_tool_collision_object()
+        # self.add_tool_collision_object()
         ends = self.get_box_ends(bounding_box)
         #self.pre_position_tool()
         centroid = bounding_box.pose.pose.position

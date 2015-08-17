@@ -7,6 +7,7 @@ from .MoveToBin import MoveToBin
 from .SenseBin import SenseBin
 from .SenseBinExperiment import SenseBinExperiment
 from .StartPose import StartPose
+from .StartPoseExperiment import StartPoseExperiment
 from .UpdatePlan import UpdatePlan
 from .CaptureItemDescriptor import CaptureItemDescriptor
 from .GatherData import GatherData
