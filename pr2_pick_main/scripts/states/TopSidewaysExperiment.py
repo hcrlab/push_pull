@@ -44,7 +44,7 @@ class TopSidewaysExperiment(RepositionAction):
         post_application_delta.x = - self.centroid.x + (self.bounding_box.dimensions.x / 2.0) \
             + self.distance_from_edge
 
-        if side == "right":
+        if self._side == "right":
             self._distance_to_push = -self._distance_to_push
 
 
