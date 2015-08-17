@@ -119,7 +119,7 @@ class WebInterface(object):
         # with the request and response messages and check if the IDs match.
         submission = None
         response_prompt_id = None  # The prompt_id returned in the response.
-        timeout_remaining = timeout
+        timeout_remaining = None
         choice = None
         while response_prompt_id != prompt_id:
             start_time = rospy.Time().now()
@@ -155,7 +155,7 @@ class WebInterface(object):
                 break
 
             values = json.loads(params['values'])
-            
+
         self.display_default()
         return values
 
