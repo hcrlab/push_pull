@@ -37,7 +37,6 @@ class GraspPlannerExperiment(smach.State):
         smach.State.__init__(
             self,
             outcomes=[
-                outcomes.GRASP_PLAN_SUCCESS,
                 outcomes.GRASP_PLAN_FAILURE,
                 outcomes.GRASP_PLAN_NONE,
                 outcomes.GRASP_MOVE_OBJECT

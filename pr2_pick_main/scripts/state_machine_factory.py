@@ -200,7 +200,6 @@ class StateMachineBuilder(object):
                     states.GraspPlannerExperiment.name,
                     states.GraspPlannerExperiment(**services),
                     transitions={
-                        outcomes.GRASP_PLAN_SUCCESS: states.ExtractItem.name,
                         outcomes.GRASP_PLAN_NONE: states.SenseBinExperiment.name,
                         outcomes.GRASP_PLAN_FAILURE: states.SenseBinExperiment.name,
                         outcomes.GRASP_MOVE_OBJECT: states.MoveObjectExperiment.name 

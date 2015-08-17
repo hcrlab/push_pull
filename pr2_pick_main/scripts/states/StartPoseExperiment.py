@@ -1,8 +1,9 @@
 
+from actionlib import SimpleActionClient
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, Pose
 import outcomes
 import rospy
 import smach
@@ -10,8 +11,10 @@ import tf
 import visualization as viz
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
 import moveit_commander
+from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import PlanningScene, PlanningSceneComponents
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from pr2_controllers_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal
 
 class StartPoseExperiment(smach.State):
     """Sets the robot's starting pose at the beginning of the challenge.
@@ -30,6 +33,19 @@ class StartPoseExperiment(smach.State):
             outcomes=[outcomes.START_POSE_SUCCESS, outcomes.START_POSE_FAILURE],
             input_keys=['debug'],
             output_keys=['start_pose'])
+        # approximate tool dimensions
+        self.tool_x_size = 0.26
+        self.tool_y_size = 0.01
+        self.tool_z_size = 0.03
+        # tool position relative to wrist_roll_link
+        self.tool_x_pos = 0.29
+        self.tool_y_pos = 0.0
+        self.tool_z_pos = 0.0
+        self.arm_side = 'l'
+        self.tool_name = 'tool'
+        self.waypoint_duration = rospy.Duration(10.0)
+
+
         self._tts = tts
         self._tuck_arms = tuck_arms
         self._move_head = move_head
@@ -37,12 +53,23 @@ class StartPoseExperiment(smach.State):
         self._markers = kwargs['markers']
         self._drive_to_pose = kwargs['drive_to_pose']
         self._im_server = kwargs['interactive_marker_server']
+        self._moveit_move_arm = kwargs['moveit_move_arm']
         # The location the robot started at.
         # When the robot relocalizes, it goes back to this start pose.
         self._start_pose = None
         self._move_torso = kwargs['move_torso']
         self._set_static_tf = kwargs['set_static_tf']
         self._set_grippers = kwargs['set_grippers']
+        self._get_grippers = kwargs['get_grippers']
+        self._attached_collision_objects = kwargs['attached_collision_objects']
+        self._get_planning_scene = kwargs['get_planning_scene']
+        self.moveit_object_name = 'push_item_target_bbox'
+        self._planning_scene_publisher = kwargs['planning_scene_publisher']
+        self._interactive_markers = kwargs['interactive_marker_server']
+        self.arm = SimpleActionClient(
+            '{}_arm_controller/joint_trajectory_action'.format(self.arm_side),
+            JointTrajectoryAction,
+        )
     def _adjust_start_pose_orientation(self):
         # After driving around enough, odom_combined seems to have a lot of
         # rotation error. Orient ourselves so we're facing the shelf.
@@ -165,7 +192,7 @@ class StartPoseExperiment(smach.State):
         self.pre_position_tool()
         grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
         raw_input("Press Enter and add tool to the robot ")
-        time.sleep(4)
+        rospy.sleep(4)
         rospy.loginfo("Waiting for set grippers service")
         self._set_grippers.wait_for_service()
         grippers_open = self._set_grippers(open_left=False, open_right=False, effort=-1)
