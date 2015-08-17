@@ -63,6 +63,9 @@ class InitializeExploration(smach.State):
         self._set_static_tf.wait_for_service()
         self._set_static_tf(transform)        
 
+        self._interface.ask_choice('Press OK when ready to take', ['OK'])
+        self._interface.display_message('Press OK when ready to take')
+
         # Tuck arms
         rospy.loginfo('Setting start pose.')
         self._tts.publish('Setting start pose.')
@@ -148,8 +151,6 @@ class InitializeExploration(smach.State):
         self._tts.publish('Please hand me the tool.')
 
         ################
-        #self._interface.ask_choice('Press OK when ready to take', ['OK'])
-        #self._interface.display_message('Press OK when ready to take')
         raw_input("Add tool to the robot ")
         rospy.sleep(1)
         ################
