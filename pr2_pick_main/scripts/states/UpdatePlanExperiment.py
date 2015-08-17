@@ -93,7 +93,7 @@ class UpdatePlanExperiment(smach.State):
         print "Trial number " + str(self._trial_num) + " out of " + str(self._total_trials)
         userdata.current_trial = self._trials[self._trial_num]
         rospy.loginfo('Updating plan.')
-        rospy.loginfo('Next trial is: {}'.format(userdata.current_trial))
+        rospy.loginfo('Next trial is: {}'.format(self._trials[self._trial_num]))
         self._tts.publish('Updating plan.')
         rospy.loginfo("Calls since : " + str(self._calls_since_shelf_localization))
         items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
