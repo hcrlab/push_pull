@@ -397,7 +397,8 @@ class PushSideways(RepositionAction):
         '''
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
-        ##side = raw_input("1. Left \n2. Right \n")
+
+        orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
         
         if(self.action_type == RepositionAction.side_push_point_contact_l or 
             self.action_type == RepositionAction.side_push_full_contact_l):
