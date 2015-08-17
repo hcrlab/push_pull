@@ -40,7 +40,7 @@ class InitializeExploration(smach.State):
         self._set_grippers = services['set_grippers']
         self._get_grippers = services['get_grippers']
 
-        #self._interface = WebInterface()
+        self._interface = WebInterface()
 
     @handle_service_exceptions(outcomes.INITIALIZE_FAILURE)
     def execute(self, userdata):
@@ -148,10 +148,10 @@ class InitializeExploration(smach.State):
         self._tts.publish('Please hand me the tool.')
 
         ################
-        #self._interface.ask_choice('Press OK when ready to take', ['OK'])
-        #self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
-        raw_input("Add tool to the robot ")
-        rospy.sleep(3)
+        self._interface.ask_choice('Press OK when ready to take', ['OK'])
+        self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
+        #raw_input("Add tool to the robot ")
+        #rospy.sleep(3)
         ################
 
         grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)
