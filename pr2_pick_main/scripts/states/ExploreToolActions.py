@@ -213,7 +213,7 @@ class ExploreToolActions(smach.State):
                     param_names=PushAway.param_names,
                     param_mins=PushAway.param_mins,
                     param_maxs=PushAway.param_maxs,
-                    param_values=PushAway.params.values())
+                    param_values=PushAway.param_values)
                 PushAway.param_values = new_values
                 PushAway.save_params()
 
@@ -232,7 +232,7 @@ class ExploreToolActions(smach.State):
                     param_names=PushSideways.param_names,
                     param_mins=PushSideways.param_mins,
                     param_maxs=PushSideways.param_maxs,
-                    param_values=PushSideways.params.values())
+                    param_values=PushSideways.param_values)
                 PushSideways.param_values = new_values
                 PushSideways.save_params()
 
@@ -249,7 +249,7 @@ class ExploreToolActions(smach.State):
                     param_names=PullForward.param_names,
                     param_mins=PullForward.param_mins,
                     param_maxs=PullForward.param_maxs,
-                    param_values=PullForward.params.values())
+                    param_values=PullForward.param_values)
                 PullForward.param_values = new_values
                 PullForward.save_params()
 
@@ -266,7 +266,7 @@ class ExploreToolActions(smach.State):
                     param_names=TopSideways.param_names,
                     param_mins=TopSideways.param_mins,
                     param_maxs=TopSideways.param_maxs,
-                    param_values=TopSideways.params.values())
+                    param_values=TopSideways.param_values)
                 TopSideways.param_values = new_values
                 TopSideways.save_params()
 
