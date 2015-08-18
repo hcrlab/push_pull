@@ -32,7 +32,7 @@ class StateMachineBuilder(object):
     EXPERIMENT = 'experiment'
 
     def __init__(self):
-        self.state_machine_identifier = StateMachineBuilder.DEFAULT
+        self.state_machine_identifier = StateMachineBuilder.EXPLORE
 
     def set_state_machine(self, state_machine_identifier):
         ''' Sets which state machine to use. '''
