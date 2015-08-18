@@ -214,7 +214,7 @@ class ExploreToolActions(smach.State):
                     param_mins=PushAway.param_mins,
                     param_maxs=PushAway.param_maxs,
                     param_values=PushAway.params.values())
-                PushAway.params = dict(zip(PushAway.param_names, new_values))
+                PushAway.param_values = new_values
                 PushAway.save_params()
 
                 action = PushAway(bounding_box,
@@ -233,7 +233,7 @@ class ExploreToolActions(smach.State):
                     param_mins=PushSideways.param_mins,
                     param_maxs=PushSideways.param_maxs,
                     param_values=PushSideways.params.values())
-                PushSideways.params = dict(zip(PushSideways.param_names, new_values))
+                PushSideways.param_values = new_values
                 PushSideways.save_params()
 
                 action = PushSideways(bounding_box,
@@ -253,7 +253,7 @@ class ExploreToolActions(smach.State):
                     param_mins=PullForward.param_mins,
                     param_maxs=PullForward.param_maxs,
                     param_values=PullForward.params.values())
-                PullForward.params = dict(zip(PullForward.param_names, new_values))
+                PullForward.param_values = new_values
                 PullForward.save_params()
 
                 action = PullForward(bounding_box,
@@ -270,7 +270,7 @@ class ExploreToolActions(smach.State):
                     param_mins=TopSideways.param_mins,
                     param_maxs=TopSideways.param_maxs,
                     param_values=TopSideways.params.values())
-                TopSideways.params = dict(zip(TopSideways.param_names, new_values))
+                TopSideways.param_values = new_values
                 TopSideways.save_params()
 
                 action = TopSideways(bounding_box,

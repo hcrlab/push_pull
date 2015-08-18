@@ -308,7 +308,11 @@ class PushAway(RepositionAction):
     param_values = [0.08, 0.02, 0.05]
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
-    params = dict(zip(param_names, param_values))
+
+    @staticmethod
+    def get_param(param_name):
+        index = param_names.index(param_name)
+        return param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -318,11 +322,11 @@ class PushAway(RepositionAction):
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_l:
             application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
-            application_point.y = self.ends[3].y - PushAway.params['distance_from_side']
+            application_point.y = self.ends[3].y - PushAway.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         elif self.action_type == RepositionAction.front_side_push_r:
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
-            application_point.y =  self.ends[0].y + PushAway.params['distance_from_side']
+            application_point.y =  self.ends[0].y + PushAway.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         return application_point
 
@@ -339,7 +343,7 @@ class PushAway(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'],
+                x=self.application_point.x - Tool.tool_length - PushAway.get_param('pre_application_dist'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -347,7 +351,7 @@ class PushAway(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length + PushAway.params['pushing_distance'],
+                x=self.application_point.x - Tool.tool_length + PushAway.get_param('pushing_distance'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -355,7 +359,7 @@ class PushAway(RepositionAction):
         )
         post_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PushAway.params['pre_application_dist'],
+                x=self.application_point.x - Tool.tool_length - PushAway.get_param('pre_application_dist'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -391,7 +395,11 @@ class PushSideways(RepositionAction):
     param_values = [0.04, 0.02, 0.00, 0.00, 0.00]
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
-    params = dict(zip(param_names, param_values))
+
+    @staticmethod
+    def get_param(param_name):
+        index = param_names.index(param_name)
+        return param_values[index]
 
     def build_trajectory(self):
         '''
@@ -424,9 +432,9 @@ class PushSideways(RepositionAction):
 
         if(self.action_type == RepositionAction.side_push_point_contact_r or 
             self.action_type == RepositionAction.side_push_point_contact_l):
-            distance_x =  front_end.x - Tool.tool_length + PushSideways.params['distance_from_front']
+            distance_x =  front_end.x - Tool.tool_length + PushSideways.get_param('distance_from_front')
         else:
-            distance_x = back_end.x - Tool.tool_length + PushSideways.params['distance_from_back']
+            distance_x = back_end.x - Tool.tool_length + PushSideways.get_param('distance_from_back')
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
@@ -434,8 +442,8 @@ class PushSideways(RepositionAction):
         start_pose = Pose(
             position=Point(
                 x=distance_x - 0.10,
-                y=self.cap_y(target_end.y + (PushSideways.params['distance_from_side'] * push_direction_sign)),
-                z=self.centroid.z + PushSideways.params['application_height_from_center']
+                y=self.cap_y(target_end.y + (PushSideways.get_param('distance_from_side') * push_direction_sign)),
+                z=self.centroid.z + PushSideways.get_param('application_height_from_center')
             ),
             orientation=orientation,
         )
@@ -443,8 +451,8 @@ class PushSideways(RepositionAction):
         side_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=self.cap_y(target_end.y + (PushSideways.params['distance_from_side'] * push_direction_sign)),
-                z=self.centroid.z + PushSideways.params['application_height_from_center']
+                y=self.cap_y(target_end.y + (PushSideways.get_param('distance_from_side') * push_direction_sign)),
+                z=self.centroid.z + PushSideways.get_param('application_height_from_center')
             ),
             orientation=orientation,
         )
@@ -452,8 +460,8 @@ class PushSideways(RepositionAction):
         push_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=target_end.y - (PushSideways.params['pushing_distance'] * push_direction_sign),
-                z=self.centroid.z + PushSideways.params['application_height_from_center']
+                y=target_end.y - (PushSideways.get_param('pushing_distance') * push_direction_sign),
+                z=self.centroid.z + PushSideways.get_param('application_height_from_center')
             ),
             orientation=orientation,
         )
@@ -484,7 +492,11 @@ class PullForward(RepositionAction):
     param_values = [0.05, 0.02, 0.01, 0.08]
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
-    params = dict(zip(param_names, param_values))
+
+    @staticmethod
+    def get_param(param_name):
+        index = param_names.index(param_name)
+        return param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -504,9 +516,9 @@ class PullForward(RepositionAction):
 
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.params['pre_application_distance'],
+                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pre_application_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.params['distance_from_top'],
+                z=self.application_point.z + PullForward.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
@@ -514,7 +526,7 @@ class PullForward(RepositionAction):
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.params['distance_from_top'],
+                z=self.application_point.z + PullForward.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
@@ -522,23 +534,23 @@ class PullForward(RepositionAction):
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z - PullForward.params['push_down_offset'],
+                z=self.application_point.z - PullForward.get_param('push_down_offset'),
             ),
             orientation=orientation,
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.params['pulling_distance'],
+                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'],
                 y=self.application_point.y,
-                z=self.application_point.z - PullForward.params['push_down_offset'],
+                z=self.application_point.z - PullForward.get_param('push_down_offset'),
             ),
             orientation=orientation,
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.params['pulling_distance'],
+                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'],
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.params['distance_from_top'],
+                z=self.application_point.z + PullForward.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
