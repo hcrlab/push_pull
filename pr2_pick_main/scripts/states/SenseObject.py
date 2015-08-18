@@ -81,11 +81,10 @@ class SenseObject(smach.State):
         if userdata.is_before:
             ########
 
-            item_name = userdata.current_trial["item_name"]
-            position = userdata.current_trial["position"]
-            orientation = userdata.current_trial["orientation"]
-
             if not userdata.is_explore:
+                item_name = userdata.current_trial["item_name"]
+                position = userdata.current_trial["position"]
+                orientation = userdata.current_trial["orientation"]
                 print "_______________________________"
                 print "Place item: " + str(item_name)
                 print "In " + str(self._positions[position])
