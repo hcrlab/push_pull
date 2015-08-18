@@ -47,6 +47,7 @@ class ExploreToolActions(smach.State):
 
         self._markers = services['markers']
         self._tf_listener = services['tf_listener']
+        self._tts = services['tts']
         self.services = services
         self._moveit_move_arm = services['moveit_move_arm']
         self._interactive_markers = services['interactive_marker_server']
@@ -226,6 +227,15 @@ class ExploreToolActions(smach.State):
                 tool_action == RepositionAction.side_push_point_contact_r or 
                 tool_action == RepositionAction.side_push_point_contact_l):
 
+                PushSideways.load_params()
+                new_values = self._interface.get_floats(message='PushAway Parameters',
+                    param_names=PushSideways.param_names,
+                    param_mins=PushSideways.param_mins,
+                    param_maxs=PushSideways.param_maxs,
+                    param_values=PushSideways.params.values())
+                PushSideways.params = dict(zip(PushSideways.param_names, new_values))
+                PushSideways.save_params()
+
                 action = PushSideways(bounding_box,
                     tool_action,
                     **self.services)
@@ -255,7 +265,7 @@ class ExploreToolActions(smach.State):
                 message = "Could not execute this action."
                 rospy.loginfo(message)
                 self._tts.publish(message)
-                self._interface.display_message(message)
+                self._interface.display_message(message, duration=2)
 
             self.pre_position_tool()
 

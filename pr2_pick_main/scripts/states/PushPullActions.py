@@ -78,6 +78,14 @@ class RepositionAction(object):
     top_sideward_pull_r,
     top_sideward_pull_l]
 
+    @staticmethod
+    def load_params():
+        pass
+
+    @staticmethod
+    def save_params():
+        pass
+
     def __init__(self, bounding_box, action_type, **services):
         #self.debug = userdata.debug
         self.bin_id = 'K'
@@ -301,14 +309,6 @@ class PushAway(RepositionAction):
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
     params = dict(zip(param_names, param_values))
-
-    @staticmethod
-    def load_params():
-        pass
-
-    @staticmethod
-    def save_params():
-        pass
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
