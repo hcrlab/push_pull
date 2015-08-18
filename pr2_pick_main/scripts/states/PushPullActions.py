@@ -311,8 +311,8 @@ class PushAway(RepositionAction):
 
     @staticmethod
     def get_param(param_name):
-        index = param_names.index(param_name)
-        return param_values[index]
+        index = PushAway.param_names.index(param_name)
+        return PushAway.param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -398,8 +398,8 @@ class PushSideways(RepositionAction):
 
     @staticmethod
     def get_param(param_name):
-        index = param_names.index(param_name)
-        return param_values[index]
+        index = PushSideways.param_names.index(param_name)
+        return PushSideways.param_values[index]
 
     def build_trajectory(self):
         '''
@@ -495,8 +495,8 @@ class PullForward(RepositionAction):
 
     @staticmethod
     def get_param(param_name):
-        index = param_names.index(param_name)
-        return param_values[index]
+        index = PullForward.param_names.index(param_name)
+        return PullForward.param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -581,6 +581,19 @@ class TopSideways(RepositionAction):
     # how close to the edge of the shelf to pull the tip of the object
     distance_from_edge = 0.05
     pre_application_dist = 0.05
+
+    param_names = ['pre_application_distance',
+    'distance_from_top',
+    'push_down_offset',
+    'pulling_distance']
+    param_values = [0.05, 0.02, 0.01, 0.08]
+    param_mins = [m-0.04 for m in param_values]
+    param_maxs = [m+0.04 for m in param_values]
+
+    @staticmethod
+    def get_param(param_name):
+        index = TopSideways.param_names.index(param_name)
+        return TopSideways.param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
