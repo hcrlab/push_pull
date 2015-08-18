@@ -78,12 +78,12 @@ class RepositionAction(object):
     top_sideward_pull_r,
     top_sideward_pull_l]
 
-    @staticmethod
-    def load_params():
+    @classmethod
+    def load_params(cls):
         pass
 
-    @staticmethod
-    def save_params():
+    @classmethod
+    def save_params(cls):
         pass
 
     @classmethod

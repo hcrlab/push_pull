@@ -28,11 +28,8 @@ from moveit_msgs.srv import GetPlanningScene, GetPositionFK, GetPositionIK
 class StateMachineBuilder(object):
 
     # slugs to represent different state machines
-    TEST_GRASP_TOOL = 'test-grasp-tool'
-    PLAN_GRASP = 'plan-grasp'
-    DEFAULT = 'default'
-    SIMULATION = 'simulation'
     EXPLORE = 'explore'
+    EXPERIMENT = 'experiment'
 
     def __init__(self):
         self.state_machine_identifier = StateMachineBuilder.DEFAULT
@@ -47,14 +44,13 @@ class StateMachineBuilder(object):
         state machine type. '''
         services = self.real_robot_services()
 
-        if self.state_machine_identifier == StateMachineBuilder.TEST_GRASP_TOOL:
-            build = self.build_sm_for_grasp_tool
-        elif self.state_machine_identifier == StateMachineBuilder.SIMULATION:
-            build = self.build_sm_for_simulation
-        elif self.state_machine_identifier == StateMachineBuilder.EXPLORE:
+        if self.state_machine_identifier == StateMachineBuilder.EXPLORE:
             build = self.build_sm_for_explore
-        # else:
-        #     build = self.build_sm
+        elif self.state_machine_identifier == StateMachineBuilder.EXPERIMENT:
+            build = self.build_sm_for_experiment
+        else:
+            build = self.build_sm_for_simulation
+
 
         return build(**services)
 
@@ -236,7 +232,7 @@ class StateMachineBuilder(object):
 
 
     def build_sm_for_explore(self, **services):
-            ''' Test state machine for simulation '''
+            ''' Test state machine for exploring the different parameters '''
 
             sm = smach.StateMachine(outcomes=[
                 outcomes.EXPLORATION_SUCCESS,
@@ -267,6 +263,52 @@ class StateMachineBuilder(object):
                     transitions={
                         outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObject.name,
                         outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObject.name,
+                    }
+                )
+           
+            return sm
+
+
+    def build_sm_for_experiment(self, **services):
+            ''' Test state machine for collecting data '''
+
+            sm = smach.StateMachine(outcomes=[
+                outcomes.EXPERIMENT_SUCCESS,
+                outcomes.EXPERIMENT_FAILURE
+            ])
+
+            with sm:
+                smach.StateMachine.add(
+                    states.InitializeExploration.name,
+                    states.InitializeExploration(**services),
+                    transitions={
+                        outcomes.INITIALIZE_SUCCESS: states.UpdatePlan.name,
+                        outcomes.INITIALIZE_FAILURE: outcomes.EXPERIMENT_FAILURE
+                    }
+                )
+                smach.UpdatePlan.add(
+                    states.UpdatePlan.name,
+                    states.UpdatePlan(**services),
+                    transitions={
+                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseObject.name,
+                        outcomes.UPDATE_PLAN_FAILURE: outcomes.EXPERIMENT_FAILURE
+                    }
+                )
+                smach.StateMachine.add(
+                    states.SenseObject.name,
+                    states.SenseObject(**services),
+                    transitions={
+                        outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.SenseObject.name,
+                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
+                    }
+                )
+                smach.StateMachine.add(
+                    states.ExploreToolActions.name,
+                    states.ExploreToolActions(**services),
+                    transitions={
+                        outcomes.TOOL_EXPLORATION_SUCCESS: states.UpdatePlan.name,
+                        outcomes.TOOL_EXPLORATION_FAILURE: states.UpdatePlan.name,
                     }
                 )
            

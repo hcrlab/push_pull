@@ -4,16 +4,11 @@ from pr2_pick_main import handle_service_exceptions
 import outcomes
 import rospy
 import smach
+from pr2_pick_main.web_interface import WebInterface
+from PushPullActions import RepositionAction
 
 
 class UpdatePlan(smach.State):
-    """Decides on the next item to pick.
-
-    Its preference is to go from bottom to top, then from left to right.
-    It prefers trying bins that haven't been attempted before. If all the bins
-    have been attempted, then it will try going to bins for which the attempt
-    failed. It will do this until there are no more items to pick.
-    """
     name = 'UPDATE_PLAN'
 
     def __init__(self, **services):
@@ -25,42 +20,66 @@ class UpdatePlan(smach.State):
                 outcomes.UPDATE_PLAN_NEXT_OBJECT,
                 outcomes.UPDATE_PLAN_FAILURE
             ],
-            input_keys=['bin_data'],
-            output_keys=['output_bin_data', 'next_bin', 'next_target', 'next_bin_items', 'previous_item']
+            input_keys=['debug', 'current_trial_num'],
+            output_keys=['current_trial', 'current_trial_num']
         )
 	
         self._tts = services['tts']
-        self._lookup_item = services['lookup_item']
-        self._calls_since_shelf_localization = 0
-        self._preferred_order = ["K"]
+        self._interface = WebInterface()
 
-    def check_all_visited(self, bin_data):
-        all_visited = True
-        for bin_id in self._preferred_order:
-            if not bin_data[bin_id].visited:
-                all_visited = False
-                break 
-        return all_visited
+        rospack = rospkg.RosPack()
+        params_file = str(rospack.get_path('pr2_pick_contest')) + '/config/experiment_params.json' 
+
+        with open(params_file) as data_file:    
+            self._experiment_params = json.load(data_file)
+        self._trials = self.generate_trials()
+        #trial_num = raw_input("Enter the number of the last trial performed. Or enter -1 if this is the first trial:")
+        self._trial_num = -1
+        self._total_trials = len(self._trials)
+
+    def generate_trials(self):
+        trials = []
+        actions = RepositionAction.all_actions
+
+        for item in self._experiment_params["items"]:
+            for position in item["positions"]:
+                for orientation in item["orientations"]:
+                    for action in item["actions"]:
+                        param_dict = item["action_params"][actions[action]]
+                        if param_dict.keys():
+                            param_lists = []
+                            for key in param_dict:
+                                param_lists.append(param_dict[key])
+                                param_permutations = []
+
+                            for params in itertools.product(*param_lists):
+
+                                #for param in param_dict[key]:
+                                trial = {}
+                                trial["position"] = position
+                                trial["orientation"] = orientation
+                                trial["action"] = action
+                                trial["item_name"] = item["item_name"]
+                                trial["action_params"] = {}
+                                trial["action_params"][actions[action]] = {}
+                                for i in range(len(params)): 
+                                    trial["action_params"][actions[action]][param_dict.keys()[i]] = params[i]
+                                trials.append(copy.copy(trial))
+                        else:
+                            trial = {}
+                            trial["position"] = position
+                            trial["orientation"] = orientation
+                            trial["action"] = action
+                            trial["item_name"] = item["item_name"]
+                            trials.append(copy.copy(trial))
+        return trials  
 
     @handle_service_exceptions(outcomes.UPDATE_PLAN_FAILURE)
     def execute(self, userdata):
-        rospy.loginfo('Updating plan.')
-        self._tts.publish('Updating plan.')
-        rospy.loginfo("Calls since : " + str(self._calls_since_shelf_localization))
-        items = ["highland_6539_self_stick_notes", "crayola_64_ct"] 
-        userdata.previous_item = ""
 
-        if(self._calls_since_shelf_localization == len(items)):
-            self._calls_since_shelf_localization = 0
-            bin_id = "K"
-            userdata.next_bin = bin_id
-            bin_data = userdata.bin_data.copy()
-            bin_data[bin_id] = bin_data[bin_id]._replace(visited=True)
-            userdata.output_bin_data = bin_data
-            userdata.next_target = items[self._calls_since_shelf_localization ]
-            userdata.next_bin_items = items[self._calls_since_shelf_localization]
-            self._calls_since_shelf_localization += 1
-
+        self._trial_num += 1
+        userdata.current_trial_num = self._trial_num
+        rospy.loginfo('Trial number ' + str(self._trial_num) + ' out of ' + str(self._total_trials))
+        userdata.current_trial = self._trials[self._trial_num]
         return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
-     

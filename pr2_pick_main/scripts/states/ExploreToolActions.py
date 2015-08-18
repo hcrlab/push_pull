@@ -31,7 +31,7 @@ class ExploreToolActions(smach.State):
         smach.State.__init__(
             self,
             outcomes=[outcomes.TOOL_EXPLORATION_SUCCESS, outcomes.TOOL_EXPLORATION_FAILURE],
-            input_keys=['debug', 'bounding_box'])
+            input_keys=['debug', 'bounding_box', 'is_explore'])
 
         self.arm_side = 'l'
 

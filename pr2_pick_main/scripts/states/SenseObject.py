@@ -12,7 +12,7 @@ from pr2_pick_manipulation.srv import MoveHead
 import visualization as viz
 import rospkg
 import rosbag
-from pr2_pick_contest.msg import Record
+from pr2_pick_contest.msg import Record, Trial, MoveObjectParams 
 from pr2_pick_perception.srv import DeleteStaticTransformRequest
 from pr2_pick_perception.msg import Cluster2, BoundingBox
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
@@ -31,8 +31,8 @@ class SenseObject(smach.State):
             outcomes=[outcomes.SENSE_OBJECT_BEFORE_SUCCESS,
                 outcomes.SENSE_OBJECT_AFTER_SUCCESS,
                 outcomes.SENSE_OBJECT_FAILURE],
-            input_keys=['debug', 'trial_number', 'is_before'],
-            output_keys=['bounding_box', 'trial_number', 'is_before'])
+            input_keys=['debug', 'is_before', 'current_trial_num', 'current_trial', 'is_explore'],
+            output_keys=['bounding_box', 'is_before', 'before_data'])
 
         self._segment_items = services['segment_items']
         self._move_head = services['move_head']
@@ -44,6 +44,8 @@ class SenseObject(smach.State):
         self.convert_pcl = services['convert_pcl_service']
 
         self._interface = WebInterface()
+        self._positions = ["Position 1: Front Centre", "Position 2: Front Left", "Position 3: Front Right", "Position 4: Back"]
+        self._orientations = ["Orientation 1: Facing Side", "Orientation 2: Facing Front", "Orientation 3: Angled"]
 
 
     #call find_cluster_bounding_box to get the bounding box for a cluster
@@ -78,6 +80,18 @@ class SenseObject(smach.State):
       
         if userdata.is_before:
             ########
+
+            item_name = userdata.current_trial["item_name"]
+            position = userdata.current_trial["position"]
+            orientation = userdata.current_trial["orientation"]
+
+            if not userdata.is_explore:
+                print "_______________________________"
+                print "Place item: " + str(item_name)
+                print "In " + str(self._positions[position])
+                print "With " + str(self._orientations[orientation])
+                print "_______________________________"
+
             message = 'Please prepare object and press ready.'
             self._interface.ask_choice(message, ['Ready'])
             rospy.loginfo(message)
@@ -124,17 +138,6 @@ class SenseObject(smach.State):
                                 'bin_K', 'bin_K_items', i)
             cluster_markers.append(m)
 
-
-        # CREATE BEFORE BAG FILE 
-        rospack = rospkg.RosPack()
-        path = rospack.get_path('pr2_pick_main') + '/data/exploration/'
-        
-        if userdata.is_before:
-            filename = path + 'trial' + str(userdata.trial_number) + '_before.bag'
-        else:
-            filename = path + 'trial' + str(userdata.trial_number) + '_after.bag'
-
-        self.bag = rosbag.Bag(filename, 'w')
         self.bag_data = Record()
         rospy.loginfo("Opened bag file to save information before the tool action.")
         rospy.Subscriber("/head_mount_kinect/rgb/image_color", Image, self.save_image)
@@ -193,8 +196,38 @@ class SenseObject(smach.State):
         userdata.bounding_box = bounding_box
 
         self.bag_data.is_graspable = False
-        self.bag.write('record', self.bag_data)
-        self.bag.close()
+        
+
+        if userdata.is_before:
+            userdata.before_record = self.bag_data
+            #filename = path + 'trial' + str(userdata.current_trial_num) + '_before.bag'
+        else:
+
+            rospack = rospkg.RosPack()
+            item_name = userdata.current_trial["item_name"]
+            orientation = userdata.current_trial["orientation"]
+            position = userdata.current_trial["position"]
+            action = userdata.current_trial["action"]
+
+            path = rospack.get_path('pr2_pick_main') + '/data/experiments/'
+            bag_file_name = ("TRIAL_" + str(userdata.current_trial_num) + "_" +
+                str(item_name) +
+                "_position_" + str(position) +
+                "_orientation_" + str(orientation) +
+                "_action_" + str(action) + ".bag"
+
+            move_object_params = MoveObjectParams()
+            move_object_params.item_name = String(item_name)
+            move_object_params.orientation = Int32(orientation)
+            move_object_params.position = Int32(position)
+            move_object_params.action = String(action)
+
+            bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
+            trial.before = userdata.before_record
+            trial.after = self.after_record
+            trial.params = move_object_params
+            bag.write('trial', trial)
+            bag.close()
 	
 
         if userdata.debug:
