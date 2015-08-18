@@ -215,7 +215,7 @@ class SenseObject(smach.State):
                     str(item_name) +
                     "_position_" + str(position) +
                     "_orientation_" + str(orientation) +
-                    "_action_" + str(action) + ".bag"
+                    "_action_" + str(action) + ".bag")
 
                 move_object_params = MoveObjectParams()
                 move_object_params.item_name = String(item_name)
