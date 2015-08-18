@@ -14,7 +14,7 @@ from visualization import IdTable
 from std_msgs.msg import Header
 from PushPullActions import RepositionAction, Tool
 from PushPullActions import PushAway, PullForward
-from PushPullActions import PushSideways, TopSideways
+from PushPullActions import PushSideways, PullSideways
 import time
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
@@ -261,16 +261,16 @@ class ExploreToolActions(smach.State):
             elif(tool_action == RepositionAction.top_sideward_pull_r or 
                 tool_action == RepositionAction.top_sideward_pull_l):
 
-                TopSideways.load_params()
-                new_values = self._interface.get_floats(message='TopSideways Parameters',
-                    param_names=TopSideways.param_names,
-                    param_mins=TopSideways.param_mins,
-                    param_maxs=TopSideways.param_maxs,
-                    param_values=TopSideways.param_values)
-                TopSideways.param_values = new_values
-                TopSideways.save_params()
+                PullSideways.load_params()
+                new_values = self._interface.get_floats(message='PullSideways Parameters',
+                    param_names=PullSideways.param_names,
+                    param_mins=PullSideways.param_mins,
+                    param_maxs=PullSideways.param_maxs,
+                    param_values=PullSideways.param_values)
+                PullSideways.param_values = new_values
+                PullSideways.save_params()
 
-                action = TopSideways(bounding_box,
+                action = PullSideways(bounding_box,
                     tool_action,
                     **self.services)
             
