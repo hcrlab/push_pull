@@ -228,7 +228,7 @@ class ExploreToolActions(smach.State):
                 tool_action == RepositionAction.side_push_point_contact_l):
 
                 PushSideways.load_params()
-                new_values = self._interface.get_floats(message='PushAway Parameters',
+                new_values = self._interface.get_floats(message='PushSideways Parameters',
                     param_names=PushSideways.param_names,
                     param_mins=PushSideways.param_mins,
                     param_maxs=PushSideways.param_maxs,
@@ -243,6 +243,15 @@ class ExploreToolActions(smach.State):
             # Top pull
             elif(tool_action == RepositionAction.top_pull):
 
+                PullForward.load_params()
+                new_values = self._interface.get_floats(message='PullForward Parameters',
+                    param_names=PullForward.param_names,
+                    param_mins=PullForward.param_mins,
+                    param_maxs=PullForward.param_maxs,
+                    param_values=PullForward.params.values())
+                PullForward.params = dict(zip(PullForward.param_names, new_values))
+                PullForward.save_params()
+
                 action = PullForward(bounding_box,
                     tool_action,
                     **self.services)
@@ -250,6 +259,15 @@ class ExploreToolActions(smach.State):
             # Top sideward pull
             elif(tool_action == RepositionAction.top_sideward_pull_r or 
                 tool_action == RepositionAction.top_sideward_pull_l):
+
+                TopSideways.load_params()
+                new_values = self._interface.get_floats(message='TopSideways Parameters',
+                    param_names=TopSideways.param_names,
+                    param_mins=TopSideways.param_mins,
+                    param_maxs=TopSideways.param_maxs,
+                    param_values=TopSideways.params.values())
+                TopSideways.params = dict(zip(TopSideways.param_names, new_values))
+                TopSideways.save_params()
 
                 action = TopSideways(bounding_box,
                     tool_action,
