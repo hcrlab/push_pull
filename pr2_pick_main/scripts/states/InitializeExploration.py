@@ -150,7 +150,7 @@ class InitializeExploration(smach.State):
         # Take the tool
         rospy.loginfo("Waiting for set grippers service")
         self._set_grippers.wait_for_service()
-        grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
+        grippers_open = self._set_grippers(open_left=True, open_right=False, effort =-1)
 
         ################
         message = 'Please hand me the tool and press OK.'
