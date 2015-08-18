@@ -46,7 +46,8 @@ class MoveObjectExperiment(smach.State):
         smach.State.__init__(
             self,
             outcomes=[outcomes.MOVE_OBJECT_SUCCESS, outcomes.MOVE_OBJECT_FAILURE],
-            input_keys=['debug', 'bounding_box', 'before_record', 'current_trial', 'target_cluster', 'current_trial_num'])
+            input_keys=['debug', 'bounding_box', 'before_record', 'current_trial',
+            'target_cluster', 'current_trial_num'])
 
         self.arm_side = 'l'
         self.tool_name = 'tool'

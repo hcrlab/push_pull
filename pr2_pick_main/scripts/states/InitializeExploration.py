@@ -25,7 +25,7 @@ class InitializeExploration(smach.State):
             self,
             outcomes=[outcomes.INITIALIZE_SUCCESS, outcomes.INITIALIZE_FAILURE],
             input_keys=['debug'],
-            output_keys=['start_pose', 'trial_number', 'is_before'])
+            output_keys=['start_pose', 'is_before', 'current_trial_num'])
 
         self._tts = services['tts']
         self._tuck_arms = services['tuck_arms']
@@ -150,7 +150,7 @@ class InitializeExploration(smach.State):
         # Take the tool
         rospy.loginfo("Waiting for set grippers service")
         self._set_grippers.wait_for_service()
-        grippers_open = self._set_grippers(open_left=True, open_right=True, effort =-1)
+        grippers_open = self._set_grippers(open_left=True, open_right=False, effort =-1)
 
         ################
         message = 'Please hand me the tool and press OK.'
@@ -166,8 +166,8 @@ class InitializeExploration(smach.State):
             rospy.logwarn('Grippers did not close properly, will try closing again.')
             self._set_grippers(open_left=False, open_right=False, effort=-1)
         
-        userdata.trial_number = 0
         userdata.is_before = True
+        userdata.current_trial_num = -1
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')

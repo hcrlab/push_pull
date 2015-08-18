@@ -31,7 +31,7 @@ class ExploreToolActions(smach.State):
         smach.State.__init__(
             self,
             outcomes=[outcomes.TOOL_EXPLORATION_SUCCESS, outcomes.TOOL_EXPLORATION_FAILURE],
-            input_keys=['debug', 'bounding_box'])
+            input_keys=['debug', 'is_explore', 'bounding_box'])
 
         self.arm_side = 'l'
 
@@ -47,6 +47,7 @@ class ExploreToolActions(smach.State):
 
         self._markers = services['markers']
         self._tf_listener = services['tf_listener']
+        self._tts = services['tts']
         self.services = services
         self._moveit_move_arm = services['moveit_move_arm']
         self._interactive_markers = services['interactive_marker_server']
@@ -196,7 +197,7 @@ class ExploreToolActions(smach.State):
             #############
 
             #tool_action = raw_input("enter the number of the tool action:")
-            options = RepositionAction.all_actions + ['change_object']
+            options = RepositionAction.all_actions + ['change object configuration']
             tool_action = self._interface.ask_choice('Which action should I try?', options)
             #self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
             
@@ -212,8 +213,8 @@ class ExploreToolActions(smach.State):
                     param_names=PushAway.param_names,
                     param_mins=PushAway.param_mins,
                     param_maxs=PushAway.param_maxs,
-                    param_values=PushAway.params.values())
-                PushAway.params = dict(zip(PushAway.param_names, new_values))
+                    param_values=PushAway.param_values)
+                PushAway.param_values = new_values
                 PushAway.save_params()
 
                 action = PushAway(bounding_box,
@@ -226,12 +227,31 @@ class ExploreToolActions(smach.State):
                 tool_action == RepositionAction.side_push_point_contact_r or 
                 tool_action == RepositionAction.side_push_point_contact_l):
 
+                PushSideways.load_params()
+                new_values = self._interface.get_floats(message='PushSideways Parameters',
+                    param_names=PushSideways.param_names,
+                    param_mins=PushSideways.param_mins,
+                    param_maxs=PushSideways.param_maxs,
+                    param_values=PushSideways.param_values)
+                PushSideways.param_values = new_values
+                PushSideways.save_params()
+
                 action = PushSideways(bounding_box,
                     tool_action,
                     **self.services)
 
             # Top pull
             elif(tool_action == RepositionAction.top_pull):
+
+                PullForward.load_params()
+                
+                new_values = self._interface.get_floats(message='PullForward Parameters',
+                    param_names=PullForward.param_names,
+                    param_mins=PullForward.param_mins,
+                    param_maxs=PullForward.param_maxs,
+                    param_values=PullForward.param_values)
+                PullForward.param_values = new_values
+                PullForward.save_params()
 
                 action = PullForward(bounding_box,
                     tool_action,
@@ -241,11 +261,20 @@ class ExploreToolActions(smach.State):
             elif(tool_action == RepositionAction.top_sideward_pull_r or 
                 tool_action == RepositionAction.top_sideward_pull_l):
 
+                TopSideways.load_params()
+                new_values = self._interface.get_floats(message='TopSideways Parameters',
+                    param_names=TopSideways.param_names,
+                    param_mins=TopSideways.param_mins,
+                    param_maxs=TopSideways.param_maxs,
+                    param_values=TopSideways.param_values)
+                TopSideways.param_values = new_values
+                TopSideways.save_params()
+
                 action = TopSideways(bounding_box,
                     tool_action,
                     **self.services)
             
-            elif(tool_action == 'change_object'):
+            else:
                 self._tuck_arms.wait_for_service()
                 tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
                 return outcomes.TOOL_EXPLORATION_SUCCESS
@@ -255,7 +284,7 @@ class ExploreToolActions(smach.State):
                 message = "Could not execute this action."
                 rospy.loginfo(message)
                 self._tts.publish(message)
-                self._interface.display_message(message)
+                self._interface.display_message(message, duration=2)
 
             self.pre_position_tool()
 

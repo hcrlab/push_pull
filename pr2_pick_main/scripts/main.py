@@ -14,7 +14,7 @@ from state_machine_factory import StateMachineBuilder
 import states
 
 def main(explore = False,
-	 simulation = False,
+	     simulation = False,
          plan_grasp = False,
          test_grasp_tool=False,
          debug=False,
@@ -23,17 +23,17 @@ def main(explore = False,
 
     rospy.init_node('pr2_pick_state_machine')
 
-    if test_grasp_tool:
-        state_machine_type = StateMachineBuilder.TEST_GRASP_TOOL
-    elif plan_grasp:
-        state_machine_type = StateMachineBuilder.PLAN_GRASP
-    elif explore:
+    if explore:
         state_machine_type = StateMachineBuilder.EXPLORE
     else:
-        state_machine_type = StateMachineBuilder.SIMULATION
+        state_machine_type = StateMachineBuilder.EXPERIMENT
+        #state_machine_type = StateMachineBuilder.SIMULATION
 
     sm = (StateMachineBuilder()
           .set_state_machine(state_machine_type).build())
+
+    if explore:
+        sm.userdata.is_explore = True
 
     # Whether to step through checkpoints.
     sm.userdata.debug = debug
