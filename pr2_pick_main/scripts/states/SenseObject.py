@@ -12,7 +12,7 @@ from pr2_pick_manipulation.srv import MoveHead
 import visualization as viz
 import rospkg
 import rosbag
-from pr2_pick_contest.msg import Record, Trial, MoveObjectParams 
+from pr2_pick_contest.msg import Record, Trial, TrialParams 
 from pr2_pick_perception.srv import DeleteStaticTransformRequest
 from pr2_pick_perception.msg import Cluster2, BoundingBox
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
@@ -31,7 +31,8 @@ class SenseObject(smach.State):
             outcomes=[outcomes.SENSE_OBJECT_BEFORE_SUCCESS,
                 outcomes.SENSE_OBJECT_AFTER_SUCCESS,
                 outcomes.SENSE_OBJECT_FAILURE],
-            input_keys=['debug', 'is_explore', 'is_before', 'current_trial_num', 'current_trial', 'before_record'],
+            input_keys=['debug', 'is_explore', 'is_before', 'current_trial_num',
+            'current_trial', 'before_record', 'action_params'],
             output_keys=['bounding_box', 'is_before', 'before_record'])
 
         self._segment_items = services['segment_items']
@@ -44,8 +45,13 @@ class SenseObject(smach.State):
         self.convert_pcl = services['convert_pcl_service']
 
         self._interface = WebInterface()
-        self._positions = ["Position 1: Front Centre", "Position 2: Front Left", "Position 3: Front Right", "Position 4: Back"]
-        self._orientations = ["Orientation 1: Facing Side", "Orientation 2: Facing Front", "Orientation 3: Angled"]
+        self._positions = ["Position 1: Front Centre",
+        "Position 2: Front Left",
+        "Position 3: Front Right",
+        "Position 4: Back"]
+        self._orientations = ["Orientation 1: Facing Side",
+        "Orientation 2: Facing Front",
+        "Orientation 3: Angled"]
 
 
     #call find_cluster_bounding_box to get the bounding box for a cluster
@@ -91,7 +97,7 @@ class SenseObject(smach.State):
                 print "With " + str(self._orientations[orientation])
                 print "_______________________________"
 
-            message = 'Please prepare object and press ready.'
+            message = 'Please prepare object and press Ready.'
             self._interface.ask_choice(message, ['Ready'])
             rospy.loginfo(message)
             self._tts.publish(message)
@@ -193,15 +199,12 @@ class SenseObject(smach.State):
         self.bag_data.boundingbox = bounding_box
         self.bag_data.marker_boundingbox = marker_bounding_box
         userdata.bounding_box = bounding_box
-
         self.bag_data.is_graspable = False
-        
 
         if userdata.is_before:
             userdata.before_record = self.bag_data
             #filename = path + 'trial' + str(userdata.current_trial_num) + '_before.bag'
         else:
-            ## TODO: should save anyways once the following is fixed
             if not userdata.is_explore:
                 rospack = rospkg.RosPack()
                 item_name = userdata.current_trial["item_name"]
@@ -216,16 +219,17 @@ class SenseObject(smach.State):
                     "_orientation_" + str(orientation) +
                     "_action_" + str(action) + ".bag")
 
-                move_object_params = MoveObjectParams()
-                move_object_params.item_name = String(item_name)
-                move_object_params.orientation = Int32(orientation)
-                move_object_params.position = Int32(position)
-                move_object_params.action = String(action)
+                trial_params = TrialParams()
+                trial_params.item_name = String(item_name)
+                trial_params.orientation = Int32(orientation)
+                trial_params.position = Int32(position)
+                trial_params.action = String(action)
+                trial_params.action_params = userdata.action_params
 
                 bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
                 trial.before = userdata.before_record
                 trial.after = self.after_record
-                trial.params = move_object_params
+                trial.params = trial_params
                 bag.write('trial', trial)
                 bag.close()
 

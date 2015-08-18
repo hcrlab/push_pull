@@ -14,7 +14,7 @@ from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     TuckArms, GetGrippers, MoveArmIk
 import math
 from math import fabs
-
+from pr2_pick_contest.msg import ActionParams 
 
 class Tool(object):
 
@@ -99,7 +99,37 @@ class RepositionAction(object):
                 'distance_from_top':0.02,
             }
         }
-        all_actions = all_action_parameters.keys()
+
+    all_action_param_mins = None
+    all_action_param_maxs = None
+
+    @staticmethod
+    def compute_param_min_max():
+        RepositionAction.all_action_param_mins = dict{}
+        RepositionAction.all_action_param_maxs = dict{}
+        for a in RepositionAction.all_action_parameters.keys():
+            action_params = RepositionAction.all_action_parameters[a]
+            action_param_mins = dict()
+            action_param_maxs = dict()
+            for p in action_params.keys():
+                default_value = action_params[p]
+                action_param_mins[p] = default_value-0.04
+                action_param_maxs[p] = default_value+0.04
+            RepositionAction.all_action_param_mins[a] = action_param_mins
+            RepositionAction.all_action_param_maxs[a] = action_param_maxs
+
+    @staticmethod
+    def get_all_actions():
+        all_keys = RepositionAction.all_action_parameters.keys()
+        all_actions = []
+        for k in all_keys:
+            suffix = action_type[-1]
+            if (suffix == '_'):
+                all_actions = all_actions + [k + 'r']
+                all_actions = all_actions + [k + 'l']
+            else:
+                all_actions = all_actions + [k]
+        return all_actions
 
     @classmethod
     def load_params(cls):
@@ -110,17 +140,89 @@ class RepositionAction(object):
         pass
 
     @staticmethod
-    def get_action_params(action_type):
-        key = action_type
+    def get_key_for_action(action_type):
+        key = str(action_type)
         suffix = action_type[-2:]
         if suffix == '_r' or suffix == '_l':
             key = action_type[0:len(action_type)-1]
-        action_params = all_action_parameters[key]
-        return action_params
+        return key
+
+    @staticmethod
+    def get_action_params(action_type):
+        key = RepositionAction.get_key_for_action(action_type)
+        names = all_action_parameters[key].keys()
+        values = all_action_parameters[key].values()
+        mins = RepositionAction.all_action_param_mins[key].values()
+        maxs = RepositionAction.all_action_param_maxs[key].values()
+        return names, values, mins, maxs
+
+    @staticmethod
+    def set_action_params(action_type, param_names, param_values):
+        key = RepositionAction.get_key_for_action(action_type)
+        params = all_action_parameters[key]
+        for i in range(param_names):
+            params[param_names(i)] = param_values(i)
+
+    @staticmethod
+    def create_action(action_type, bounding_box, services):
+
+        # Front center push
+        if(action_type == 'front_center_push' or 
+            action_type == 'front_side_push_r' or 
+            action_type == 'front_side_push_l'):
+
+            action = PushAway(bounding_box, action_type, services)
+
+        # Side push with full surface contact
+        elif(action_type == 'side_push_full_contact_r' or 
+            action_type == 'side_push_full_contact_l' or 
+            action_type == 'side_push_point_contact_r' or 
+            action_type == 'side_push_point_contact_l'):
+
+            action = PushSideways(bounding_box, action_type, services)
+
+        # Top pull
+        elif(action_type == 'top_pull'):
+
+            action = PullForward(bounding_box, action_type, services)
+
+        # Top sideward pull
+        elif(action_type == 'top_sideward_pull_r' or 
+            action_type == 'top_sideward_pull_l'):
+
+            action = PullSideways(bounding_box, action_type, services)
+
+        else:
+            rospy.logerr('Unknwon action type: ' + action_type)
+            action = None
+
+        return action
 
     def get_param(self, param_name):
-        action_params = RepositionAction.get_action_params(this.action_type)
-        return action_params[param_name]
+        action_params = all_action_parameters[this.action_type]
+        if param_name is in action_params.keys():
+            return action_params[param_name]
+        else:
+            rospy.logwarn('Parameter ' + param_name +
+                ' not valiud for action ' + this.action_type)
+            return None
+
+    def get_action_param_log(self):
+        key = RepositionAction.get_key_for_action(action_type)
+        names = all_action_parameters[key].keys()
+        params = all_action_parameters[key]
+        param_log = ActionParams()
+        param_log.pushing_distance = this.get_param('pushing_distance')
+        param_log.pre_application_dist = this.get_param('pre_application_dist')
+        param_log.distance_from_side = this.get_param('distance_from_side')
+        param_log.application_height_from_center = this.get_param('application_height_from_center')
+        param_log.distance_from_back = this.get_param('distance_from_back')
+        param_log.distance_from_front = this.get_param('distance_from_front')
+        param_log.pulling_distance = this.get_param('pulling_distance')
+        param_log.contact_point_depth_offset = this.get_param('contact_point_depth_offset')
+        param_log.contact_point_down_offset = this.get_param('contact_point_down_offset')
+        param_log.distance_from_top = this.get_param('distance_from_top')
+        return param_log
 
     def __init__(self, bounding_box, action_type, **services):
 
