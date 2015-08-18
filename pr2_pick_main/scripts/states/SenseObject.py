@@ -76,7 +76,6 @@ class SenseObject(smach.State):
     def save_image(self, image):
         self.bag_data.image = image
 
-
     @handle_service_exceptions(outcomes.SENSE_OBJECT_FAILURE)
     def execute(self, userdata):
 
