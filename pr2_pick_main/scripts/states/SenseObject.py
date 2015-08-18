@@ -239,5 +239,5 @@ class SenseObject(smach.State):
             return outcomes.SENSE_OBJECT_BEFORE_SUCCESS
         else:
             userdata.is_before = True
-            userdata.trial_number += 1
+            #userdata.current_trial_num += 1
             return outcomes.SENSE_OBJECT_AFTER_SUCCESS
