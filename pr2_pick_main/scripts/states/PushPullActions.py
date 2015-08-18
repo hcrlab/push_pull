@@ -15,6 +15,8 @@ from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
 import math
 from math import fabs
 from pr2_pick_contest.msg import ActionParams 
+import json
+import rospack
 
 class Tool(object):
 
@@ -131,13 +133,19 @@ class RepositionAction(object):
                 all_actions = all_actions + [k]
         return all_actions
 
-    @classmethod
-    def load_params(cls):
-        pass
+    @staticmethod
+    def save_params():
+        rospack = rospkg.RosPack()
+        params_file = str(rospack.get_path('pr2_pick_contest')) + '/config/action_params.json' 
+        with open(params_file, 'w') as data_file:
+            json.dump(RepositionAction.all_action_parameters, data_file)
 
-    @classmethod
-    def save_params(cls):
-        pass
+    @staticmethod
+    def load_params():
+        rospack = rospkg.RosPack()
+        params_file = str(rospack.get_path('pr2_pick_contest')) + '/config/action_params.json' 
+        with open(params_file) as data_file:    
+            RepositionAction.all_action_parameters = json.load(data_file)
 
     @staticmethod
     def get_key_for_action(action_type):
