@@ -86,6 +86,11 @@ class RepositionAction(object):
     def save_params():
         pass
 
+    @classmethod
+    def get_param(cls, param_name):
+        index = cls.param_names.index(param_name)
+        return cls.param_values[index]
+
     def __init__(self, bounding_box, action_type, **services):
         #self.debug = userdata.debug
         self.bin_id = 'K'
@@ -309,10 +314,10 @@ class PushAway(RepositionAction):
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
 
-    @staticmethod
-    def get_param(param_name):
-        index = PushAway.param_names.index(param_name)
-        return PushAway.param_values[index]
+    # @staticmethod
+    # def get_param(param_name):
+    #     index = PushAway.param_names.index(param_name)
+    #     return PushAway.param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -396,10 +401,10 @@ class PushSideways(RepositionAction):
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
 
-    @staticmethod
-    def get_param(param_name):
-        index = PushSideways.param_names.index(param_name)
-        return PushSideways.param_values[index]
+    # @staticmethod
+    # def get_param(param_name):
+    #     index = PushSideways.param_names.index(param_name)
+    #     return PushSideways.param_values[index]
 
     def build_trajectory(self):
         '''
@@ -490,14 +495,14 @@ class PullForward(RepositionAction):
     'contact_point_down_offset',
     'pulling_distance',
     'contact_point_depth_offset']
-    param_values = [0.05, 0.02, 0.01, 0.08, 0.00]
+    param_values = [0.05, 0.02, 0.01, 0.08, 0.02]
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
 
-    @staticmethod
-    def get_param(param_name):
-        index = PullForward.param_names.index(param_name)
-        return PullForward.param_values[index]
+    # @staticmethod
+    # def get_param(param_name):
+    #     index = PullForward.param_names.index(param_name)
+    #     return PullForward.param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
@@ -589,14 +594,9 @@ class TopSideways(RepositionAction):
     'contact_point_down_offset',
     'pulling_distance',
     'contact_point_depth_offset']
-    param_values = [0.05, 0.02, 0.01, 0.08, 0.00]
+    param_values = [0.05, 0.02, 0.01, 0.08, 0.02]
     param_mins = [m-0.04 for m in param_values]
     param_maxs = [m+0.04 for m in param_values]
-
-    @staticmethod
-    def get_param(param_name):
-        index = TopSideways.param_names.index(param_name)
-        return TopSideways.param_values[index]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
