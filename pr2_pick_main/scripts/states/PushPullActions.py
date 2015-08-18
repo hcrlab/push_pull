@@ -673,6 +673,6 @@ class TopSideways(RepositionAction):
             MoveArmStep(above_application_pose, self.frame, False),
             MoveArmStep(application_pose, self.frame, False),
             MoveArmStep(pull_pose, self.frame, False),
-            MoveArmStep(lift_pose, self.frame, False)
+            MoveArmStep(lift_pose, self.frame, False),
             MoveArmStep(pre_application_pose, self.frame, False),
         ]
