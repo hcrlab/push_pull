@@ -188,7 +188,7 @@ class WebInterface(object):
 
                     if displayed_time_remaining != int(time_remaining):
                         displayed_time_remaining = int(time_remaining)
-                        displayed_message = (message + '\n Time remaing:' +
+                        displayed_message = (message + '\nTime remaing:' +
                             str(displayed_time_remaining) + ' seconds')
                         msg.values = [displayed_message]
                         self._publish_params(msg)

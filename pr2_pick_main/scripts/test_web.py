@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     while (True):
         new_values = _interface.get_floats(
-            message="Choose parameters \r\n in list below",
+            message="Choose parameters \n in the list below",
             param_names=['param_a', 'param_b'],
             param_mins=[0.00, -0.10],
             param_maxs=[0.50, 0.10],

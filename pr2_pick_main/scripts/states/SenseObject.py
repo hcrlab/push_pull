@@ -76,6 +76,11 @@ class SenseObject(smach.State):
     def save_image(self, image):
         self.bag_data.image = image
 
+    def log_message(self, message):
+        rospy.loginfo(message)
+        self._tts.publish(message)
+        self._interface.display_message(message)
+
     @handle_service_exceptions(outcomes.SENSE_OBJECT_FAILURE)
     def execute(self, userdata):
 
@@ -84,32 +89,27 @@ class SenseObject(smach.State):
         move_head_success = self._move_head(0, 0, 0, 'bin_K')
       
         if userdata.is_before:
-            ########
-
             if not userdata.is_explore:
+                self.log_message('Starting trial ' + str(userdata.current_trial_num) 
+                    + '. Please prepare object and press Ready.')
                 item_name = userdata.current_trial["item_name"]
                 position = userdata.current_trial["position"]
                 orientation = userdata.current_trial["orientation"]
-                print "_______________________________"
-                print "Place item: " + str(item_name)
-                print "In " + str(self._positions[position])
-                print "With " + str(self._orientations[orientation])
-                print "_______________________________"
-
-            message = 'Please prepare object and press Ready.'
+                message = (
+                    "_______________________________\n" +
+                    "Place item: " + str(item_name) + "\n" +
+                    "In " + str(self._positions[position]) + "\n" +
+                    "With " + str(self._orientations[orientation]) + "\n" +
+                    "_______________________________\n" +
+                    "Then press Ready")
+            else:
+                self.log_message('Starting new trial.' +
+                    '. Please prepare object and press Ready.')
+            
             self._interface.ask_choice(message, ['Ready'])
-            rospy.loginfo(message)
-            self._tts.publish(message)
-            message = 'Sensing object before tool action.'
-            self._tts.publish(message)
-            rospy.loginfo(message)
-            self._interface.display_message(message)
-            ########
+            self.log_message('Sensing object before tool action.')
         else:
-            message = 'Sensing object after tool action.'
-            self._tts.publish(message)
-            rospy.loginfo(message)
-            self._interface.display_message(message)
+            self.log_message('Sensing object after tool action.')
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID='K')
@@ -124,6 +124,7 @@ class SenseObject(smach.State):
         rospy.loginfo('[SenseBin] Found {} clusters.'.format(len(clusters)))
         if len(clusters) == 0:
             rospy.logerr('[SenseBin]: No clusters found!')
+            self.log_message('Failed to sense object.')
             return outcomes.SENSE_OBJECT_FAILURE
         elif len(clusters) > 1:
             rospy.logwarn('[SenseBin]: There are more than 1 clusters! Will use cluster 0.')
@@ -237,10 +238,13 @@ class SenseObject(smach.State):
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
 
+        self.log_message('Sensing complete.')
+
         if userdata.is_before:
             userdata.is_before = False
             return outcomes.SENSE_OBJECT_BEFORE_SUCCESS
         else:
             userdata.is_before = True
-            #userdata.current_trial_num += 1
+            self.log_message('Trial ' + str(userdata.current_trial_num) + ' complete.')
+            rospy.sleep(2)
             return outcomes.SENSE_OBJECT_AFTER_SUCCESS
