@@ -1,3 +1,8 @@
+desktop:
+
+roslaunch pr2_main_manipulation move_group.launch
+
+
 c1:
 
 roslaunch pr2_pick_main main_prereqs.launch
