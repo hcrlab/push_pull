@@ -31,8 +31,8 @@ class SenseObject(smach.State):
             outcomes=[outcomes.SENSE_OBJECT_BEFORE_SUCCESS,
                 outcomes.SENSE_OBJECT_AFTER_SUCCESS,
                 outcomes.SENSE_OBJECT_FAILURE],
-            input_keys=['debug', 'is_before', 'current_trial_num', 'current_trial', 'is_explore'],
-            output_keys=['bounding_box', 'is_before', 'before_data'])
+            input_keys=['debug', 'is_explore', 'is_before', 'current_trial_num', 'current_trial', 'before_record'],
+            output_keys=['bounding_box', 'is_before', 'before_record'])
 
         self._segment_items = services['segment_items']
         self._move_head = services['move_head']
@@ -202,33 +202,35 @@ class SenseObject(smach.State):
             userdata.before_record = self.bag_data
             #filename = path + 'trial' + str(userdata.current_trial_num) + '_before.bag'
         else:
+            ## TODO: should save anyways once the following is fixed
+            if not userdata.is_explore:
+                rospack = rospkg.RosPack()
+                item_name = userdata.current_trial["item_name"]
+                orientation = userdata.current_trial["orientation"]
+                position = userdata.current_trial["position"]
+                action = userdata.current_trial["action"]
 
-            rospack = rospkg.RosPack()
-            item_name = userdata.current_trial["item_name"]
-            orientation = userdata.current_trial["orientation"]
-            position = userdata.current_trial["position"]
-            action = userdata.current_trial["action"]
+                path = rospack.get_path('pr2_pick_main') + '/data/experiments/'
+                bag_file_name = ("TRIAL_" + str(userdata.current_trial_num) + "_" +
+                    str(item_name) +
+                    "_position_" + str(position) +
+                    "_orientation_" + str(orientation) +
+                    "_action_" + str(action) + ".bag"
 
-            path = rospack.get_path('pr2_pick_main') + '/data/experiments/'
-            bag_file_name = ("TRIAL_" + str(userdata.current_trial_num) + "_" +
-                str(item_name) +
-                "_position_" + str(position) +
-                "_orientation_" + str(orientation) +
-                "_action_" + str(action) + ".bag"
+                move_object_params = MoveObjectParams()
+                move_object_params.item_name = String(item_name)
+                move_object_params.orientation = Int32(orientation)
+                move_object_params.position = Int32(position)
+                move_object_params.action = String(action)
 
-            move_object_params = MoveObjectParams()
-            move_object_params.item_name = String(item_name)
-            move_object_params.orientation = Int32(orientation)
-            move_object_params.position = Int32(position)
-            move_object_params.action = String(action)
+                bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
+                trial.before = userdata.before_record
+                trial.after = self.after_record
+                trial.params = move_object_params
+                bag.write('trial', trial)
+                bag.close()
 
-            bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
-            trial.before = userdata.before_record
-            trial.after = self.after_record
-            trial.params = move_object_params
-            bag.write('trial', trial)
-            bag.close()
-	
+            userdata.before_record = None
 
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
