@@ -1,6 +1,6 @@
 desktop:
 
-roslaunch pr2_main_manipulation move_group.launch
+roslaunch pr2_pick_manipulation move_group.launch
 
 
 c1:
