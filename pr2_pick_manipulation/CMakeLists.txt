@@ -108,7 +108,6 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES
-    arm_navigator
     driver
     gripper
     torso
@@ -131,9 +130,6 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp library
-add_library(arm_navigator
-  src/arm_navigator.cpp
-)
 add_library(driver
   src/driver.cpp
 )
@@ -188,9 +184,6 @@ add_dependencies(moveit_service_node pr2_pick_manipulation_generate_messages_cpp
 add_dependencies(move_arm_service pr2_pick_manipulation_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(arm_navigator
-  ${catkin_LIBRARIES}
-)
 target_link_libraries(driver
   ${catkin_LIBRARIES}
 )
