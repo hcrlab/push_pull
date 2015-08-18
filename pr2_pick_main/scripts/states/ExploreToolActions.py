@@ -245,9 +245,6 @@ class ExploreToolActions(smach.State):
 
                 PullForward.load_params()
                 
-                print PullForward.param_names
-                print PullForward.params
-
                 new_values = self._interface.get_floats(message='PullForward Parameters',
                     param_names=PullForward.param_names,
                     param_mins=PullForward.param_mins,
