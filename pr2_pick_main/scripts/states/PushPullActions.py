@@ -540,7 +540,7 @@ class PullForward(RepositionAction):
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'],
+                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'),
                 y=self.application_point.y,
                 z=self.application_point.z - PullForward.get_param('push_down_offset'),
             ),
@@ -548,7 +548,7 @@ class PullForward(RepositionAction):
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'],
+                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'),
                 y=self.application_point.y,
                 z=self.application_point.z + PullForward.get_param('distance_from_top'),
             ),
