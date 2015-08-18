@@ -1,18 +1,20 @@
 # Terminal Windows
 
-desktop:
+## Desktop:
 
 roslaunch pr2_pick_manipulation move_group.launch
 
-c1:
+## c1:
 
 roslaunch pr2_pick_main main_prereqs.launch
 
 rosrun pr2_pick_main main.py --explore
 
-desktop:
+## Desktop:
 
-roslaunch pr2_pick_main frontend.launch
+(optional) roslaunch pr2_pick_main frontend.launch
+
+### (If you want to run the website from the laptop do these on the laptop:)
 
 roslaunch rosbridge_server rosbridge_websocket.launch
 
