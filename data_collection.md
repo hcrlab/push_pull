@@ -7,44 +7,62 @@ First open three terminals on your desktop.
 ### In Terminal 1:
 Type:
 
-> ssh username@c1
+```
+ssh username@c1
+```
 
 You are now logged into the computer on the robot.
 Then type:
 
-> robot users 
+```
+robot users 
+```
 
 If no one else is using the robot you can then do:
 
-> robot claim
+```
+robot claim
+```
 
 and then:
 
-> robot start
+```
+robot start
+```
 
 After waiting about 30 seconds:
 
-> roslaunch pr2_pick_main main_prereqs.launch
+```
+roslaunch pr2_pick_main main_prereqs.launch
+```
 
 ### In Terminal 2:
 Type:
 
-> setrobot c1
+```
+setrobot c1
 
-> roslaunch pr2_pick_main frontend.launch
+roslaunch pr2_pick_main frontend.launch
+```
 
 ### In Terminal 3:
 Type:
 
-> ssh username@c1
+```
+ssh username@c1
+```
 
 If you are __exploring action parameters__:
 
-> rosrun pr2_pick_main main.py --explore
+```
+rosrun pr2_pick_main main.py --explore
+```
 
-Otherwise, if you are actually collecting data:
+Otherwise, if you are actually __collecting data__:
 
-> rosrun pr2_pick_main main.py
+```
+rosrun pr2_pick_main main.py
+```
 
 ## Laptop computer for UI
 
@@ -52,17 +70,21 @@ Open two terminals.
 
 ### On Terminal 4:
 
-> setrobot c1
+```
+setrobot c1
 
-> roslaunch rosbridge_server rosbridge_websocket.launch
+roslaunch rosbridge_server rosbridge_websocket.launch
+```
 
 ### On Terminal 5:
 
-> setrobot c1
+```
+setrobot c1
 
-> roscd push_pull/pr2_pick_main/web/web_interface
+roscd push_pull/pr2_pick_main/web/web_interface
 
-> meteor
+meteor
+```
 
 Open a browser and point to http://localhost:3000.
 
