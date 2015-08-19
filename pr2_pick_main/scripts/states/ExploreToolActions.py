@@ -205,8 +205,8 @@ class ExploreToolActions(smach.State):
 
                     RepositionAction.set_action_params(tool_action, names, new_values)
                     RepositionAction.save_params()
-                    action = RepositionAction.create_action(bounding_box,
-                        tool_action, self.services)
+                    action = RepositionAction.create_action(tool_action,
+                        bounding_box, self.services)
                     self.log_message("Starting action.")
                     success = action.execute()
                     if not success:
@@ -223,8 +223,8 @@ class ExploreToolActions(smach.State):
         else:
 
             tool_action = userdata.current_trial["action"]
-            action = RepositionAction.create_action(bounding_box,
-                tool_action, self.services)
+            action = RepositionAction.create_action(tool_action,
+                bounding_box, self.services)
             userdata.action_params = action.get_action_param_log()
             self.log_message("Starting action.")
             success = action.execute()
