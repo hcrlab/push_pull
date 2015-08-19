@@ -81,7 +81,7 @@ roslaunch rosbridge_server rosbridge_websocket.launch
 ```
 setrobot c1
 
-roscd push_pull/pr2_pick_main/web/web_interface
+roscd pr2_pick_main/web/web_interface
 
 meteor
 ```
