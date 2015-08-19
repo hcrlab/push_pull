@@ -207,12 +207,13 @@ class RepositionAction(object):
         return action
 
     def get_param(self, param_name):
-        action_params = RepositionAction.all_action_parameters[self.action_type]
+        key = RepositionAction.get_key_for_action(self.action_type)
+        action_params = RepositionAction.all_action_parameters[key]
         if param_name in action_params.keys():
             return action_params[param_name]
         else:
             rospy.logwarn('Parameter ' + param_name +
-                ' not valiud for action ' + self.action_type)
+                ' not valid for action ' + self.action_type)
             return None
 
     def get_action_param_log(self):
