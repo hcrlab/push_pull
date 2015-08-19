@@ -179,7 +179,7 @@ class RepositionAction(object):
             action_type == 'front_side_push_r' or 
             action_type == 'front_side_push_l'):
 
-            action = PushAway(bounding_box, action_type, services)
+            action = PushAway(bounding_box, action_type, **services)
 
         # Side push with full surface contact
         elif(action_type == 'side_push_full_contact_r' or 
@@ -187,18 +187,18 @@ class RepositionAction(object):
             action_type == 'side_push_point_contact_r' or 
             action_type == 'side_push_point_contact_l'):
 
-            action = PushSideways(bounding_box, action_type, services)
+            action = PushSideways(bounding_box, action_type, **services)
 
         # Top pull
         elif(action_type == 'top_pull'):
 
-            action = PullForward(bounding_box, action_type, services)
+            action = PullForward(bounding_box, action_type, **services)
 
         # Top sideward pull
         elif(action_type == 'top_sideward_pull_r' or 
             action_type == 'top_sideward_pull_l'):
 
-            action = PullSideways(bounding_box, action_type, services)
+            action = PullSideways(bounding_box, action_type, **services)
 
         else:
             rospy.logerr('Unknwon action type: ' + action_type)

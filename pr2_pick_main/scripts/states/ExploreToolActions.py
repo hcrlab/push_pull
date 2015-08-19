@@ -191,7 +191,7 @@ class ExploreToolActions(smach.State):
                 tool_action = self._interface.ask_choice(
                     'Which action should I try?', options)
 
-                if (tool_action in all_actions):
+                if (tool_action     in all_actions):
     
                     names, values, mins, maxs = RepositionAction.get_action_params(tool_action)
 
@@ -206,7 +206,7 @@ class ExploreToolActions(smach.State):
                     RepositionAction.set_action_params(tool_action, names, new_values)
                     RepositionAction.save_params()
                     action = RepositionAction.create_action(bounding_box,
-                        tool_action, **self.services)
+                        tool_action, self.services)
                     self.log_message("Starting action.")
                     success = action.execute()
                     if not success:
@@ -224,7 +224,7 @@ class ExploreToolActions(smach.State):
 
             tool_action = userdata.current_trial["action"]
             action = RepositionAction.create_action(bounding_box,
-                tool_action, **self.services)
+                tool_action, self.services)
             userdata.action_params = action.get_action_param_log()
             self.log_message("Starting action.")
             success = action.execute()
