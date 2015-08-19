@@ -1,112 +1,133 @@
-# Amazon Picking Challenge
-This is the main code repository for the UW Amazon Picking Challenge team.
+# How to run PR2 Push/Pull Data Collection
 
-## Getting started
+## Desktop computer
+
+First open 4 terminals on your desktop.
+
+### In Terminal 1:
+Type:
+
 ```
-sudo pip install mock
-sudo pip install scikit-learn
-sudo apt-get install ros-hydro-cmake-modules
-
-cd ~/catkin_ws_hydro/src
-git clone --recursive git@gitlab.cs.washington.edu:amazon-picking-challenge-2015/pr2_pick.git
-cd ~/catkin_ws
-rosdep install --from-paths src --ignore-src --rosdistro=hydro -y
-catkin_make
+ssh username@c1
 ```
 
-If you have a problem with catkin not finding `pr2_pretouch_optical_dist`, then from the root of the repository, run:
+You are now logged into the computer on the robot.
+Then type:
+
 ```
-git submodule init
-git submodule update
-```
-
-## Running the code
-[Recommended .bashrc](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/recommended_bashrc.md)
-
-
-### On a desktop computer
-```bash
-setrobot c1 # Set ROS_MASTER_URI, see recommended .bashrc
-roslaunch pr2_pick_main rviz.launch # Run after "robot start"
+robot users 
 ```
 
-You must launch MoveIt before running anything on the robot, or else the prerequisites below won't work.
-```bash
+If no one else is using the robot you can then do:
+
+```
+robot claim
+```
+
+and then:
+
+```
+robot start
+```
+
+### In Terminal 2:
+Type:
+
+```
+setrobot c1 
 roslaunch pr2_pick_manipulation move_group.launch
 ```
 
-### On the robot
-Before running `robot start`, verify that the latest version of pr2_robot from our repository is sourced.
-Try running `roscd pr2_robot`, it should take you to our repository.
+### Back In Terminal 1:
+Type:
 
-```bash
-robot start
+```
 roslaunch pr2_pick_main main_prereqs.launch
+```
+
+### In Terminal 3:
+Type:
+
+```
+setrobot c1
+roslaunch pr2_pick_main frontend.launch
+```
+
+### In Terminal 4:
+Type:
+
+```
+ssh username@c1
+```
+
+If you are __exploring action parameters__:
+
+```
+rosrun pr2_pick_main main.py --explore
+```
+
+Otherwise, if you are actually __collecting data__:
+
+```
 rosrun pr2_pick_main main.py
 ```
 
-To see a visualization of the execution, open rviz and use the config file in `pr2_pick/config`
+If you would like to start at an arbitrary trial number (e.g. trial 14) to continue a previously started data collection:
 
-## Packages
+```
+rosrun pr2_pick_main main.py --trial_number 14
+```
 
-- **festival_tts**:
-A text-to-speech node.
-It's useful for debugging purposes to have the robot say stuff aloud as it works.
+## Laptop computer for UI
 
-- **pr2_ethercat_drivers**:
-Contains firmware for the fingertip pressure and optical sensor.
+Open two terminals.
 
-- **pr2_pick**:
-A metapackage for all the other packages.
-Contains the rviz config file.
+### On Terminal 4:
 
-- **pr2_pick_contest**:
-Contains inventory management services.
+```
+setrobot c1
+roslaunch rosbridge_server rosbridge_websocket.launch
+```
 
-- **pr2_pick_main**:
-Contains the main state machine, and implementation for all the states.
+### On Terminal 5:
 
-- **pr2_pick_manipulation**:
-Contains services and libraries for controlling the robot, planning with the arms, and reading off the end-effector pose.
+```
+setrobot c1
+roscd pr2_pick_main/web/web_interface
+meteor
+```
 
-- **pr2_pick_perception**:
-Contains services and libraries for localizing the shelf, analyzing point clouds, publishing static TFs, and recording data.
+Open a browser and point to http://localhost:3000.
 
-- **pr2_pretouch_optical_dist**:
-Contains launch files and visualizers for the fingertip optical sensor.
 
-- *joint_states_listener*:
-Unused.
-A service that gets the most recent joint states message.
+## Backing up collected data
 
-- *pr2_pick_msgs*:
-Unused, put messages in the related package instead.
+Open a terminal and do the following.
 
-- *trajopt_test*:
-Unused.
-A service that moves the arm using trajopt.
+```
+ssh username@c1
+roscd pr2_pick_main/data/experiments/
+git add *.bag
+git commit -am "adding next batch of collected data"
+git push
+```
 
-## Backpack computer network configuration
-See [Backpack configuration](https://github.com/hcrlab/wiki/blob/master/pr2/backpack_configuration.md)
+## Updating software after changes
 
-## Style guides
-These are just suggested:
-- [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.html)
-- [Python PEP8](https://www.python.org/dev/peps/pep-0008/)
+On every computer you are using (c1, desktop, laptop) do:
 
-You can read about [auto code formatting](https://github.com/hcrlab/wiki/blob/master/development_environment_setup/auto_code_formatting.md) if you're interested.
+```
+roscd push_pull
+git pull
+cd ../../../
+catkin_make
+```
 
-## Pressure sensor
-We have installed two pressure sensors on the robot's right hand.
-To upload the firmware, go to `pr2_ethercat_drivers/wg006_fingertip_dev` and run `upload_pressure_firmware.sh`
+## When you are done
 
-You should be able to specify the max_effort for the right hand gripper actions and have it work appropriately.
+Ctrl + C all terminal windows. On one of the terminals that was ssh'ed to c1 do:
 
-## Fingertip optical sensor
-We have installed an optical sensor on one of the PR2's fingertips.
-[Full documentation for the fingertip sensor](https://bitbucket.org/uwsensors/pr2_pretouch_optical_dist/wiki/Publishing%20Distance%20Data).
-
-- Must use Hydro.
-- Whenever the robot is power-cycled, you must re-upload some firmware to the robot.
-- This launch file starts the optical distance publisher: `roslaunch pr2_pretouch_optical_dist optical_dist.launch`
-- The data can be visualized using `rosrun pr2_pretouch_optical_dist visualizer.py`
+```
+robot stop
+robot release
+```
