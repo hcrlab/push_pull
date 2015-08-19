@@ -41,7 +41,6 @@ Type:
 
 ```
 setrobot c1
-
 roslaunch pr2_pick_main frontend.launch
 ```
 
@@ -78,7 +77,6 @@ Open two terminals.
 
 ```
 setrobot c1
-
 roslaunch rosbridge_server rosbridge_websocket.launch
 ```
 
@@ -86,9 +84,7 @@ roslaunch rosbridge_server rosbridge_websocket.launch
 
 ```
 setrobot c1
-
 roscd pr2_pick_main/web/web_interface
-
 meteor
 ```
 
@@ -101,13 +97,9 @@ Open a terminal and do the following.
 
 ```
 ssh username@c1
-
 roscd pr2_pick_main/data/experiments/
-
 git add *.bag
-
 git commit -am "adding next batch of collected data"
-
 git push
 ```
 
@@ -117,11 +109,8 @@ On every computer you are using (c1, desktop, laptop) do:
 
 ```
 roscd push_pull
-
 git pull
-
 cd ../../../
-
 catkin_make
 ```
 
@@ -131,7 +120,6 @@ Ctrl + C all terminal windows. On one of the terminals that was ssh'ed to c1 do:
 
 ```
 robot stop
-
 robot release
 ```
 
