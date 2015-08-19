@@ -450,15 +450,15 @@ class PushAway(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        if self.action_type == RepositionAction.front_center_push: 
+        if self.action_type == "front_center_push": 
             application_point.x = self.centroid.x  
             application_point.y = self.centroid.y
             application_point.z = self.centroid.z / 2
-        elif self.action_type == RepositionAction.front_side_push_l:
+        elif self.action_type == "front_side_push_l":
             application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
             application_point.y = self.ends[3].y - self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
-        elif self.action_type == RepositionAction.front_side_push_r:
+        elif self.action_type == "front_side_push_r":
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
             application_point.y =  self.ends[0].y + self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
@@ -526,8 +526,8 @@ class PushSideways(RepositionAction):
 
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
         
-        if(self.action_type == RepositionAction.side_push_point_contact_l or 
-            self.action_type == RepositionAction.side_push_full_contact_l):
+        if(self.action_type == "side_push_point_contact_l" or 
+            self.action_type == "side_push_full_contact_l"):
             ## Left push
             back_end = self.ends[3]
             front_end = self.ends[1]
@@ -548,8 +548,8 @@ class PushSideways(RepositionAction):
                 target_end = self.ends[0]  
             push_direction_sign = -1
 
-        if(self.action_type == RepositionAction.side_push_point_contact_r or 
-            self.action_type == RepositionAction.side_push_point_contact_l):
+        if(self.action_type == "side_push_point_contact_r" or 
+            self.action_type == "side_push_point_contact_l"):
             distance_x =  front_end.x - Tool.tool_length + self.get_param('distance_from_front')
         else:
             distance_x = back_end.x - Tool.tool_length + self.get_param('distance_from_back')
@@ -703,7 +703,7 @@ class PullSideways(RepositionAction):
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
         self.frame = self.bounding_box.pose.header.frame_id
 
-        if(self.action_type == RepositionAction.top_sideward_pull_l):
+        if(self.action_type == "top_sideward_pull_l"):
             ## Left pull
             pull_direction_sign = 1
         else:
