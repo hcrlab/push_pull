@@ -227,9 +227,6 @@ class RepositionAction(object):
             return None
 
     def get_action_param_log(self):
-        key = RepositionAction.get_key_for_action(action_type)
-        names = RepositionAction.all_action_parameters[key].keys()
-        params = RepositionAction.all_action_parameters[key]
         param_log = ActionParams()
         param_log.pushing_distance = self.get_param('pushing_distance')
         param_log.pre_application_dist = self.get_param('pre_application_dist')
