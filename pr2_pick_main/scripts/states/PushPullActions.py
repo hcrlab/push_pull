@@ -158,8 +158,8 @@ class RepositionAction(object):
     @staticmethod
     def get_action_params(action_type):
         key = RepositionAction.get_key_for_action(action_type)
-        names = all_action_parameters[key].keys()
-        values = all_action_parameters[key].values()
+        names = RepositionAction.all_action_parameters[key].keys()
+        values = RepositionAction.all_action_parameters[key].values()
         mins = RepositionAction.all_action_param_mins[key].values()
         maxs = RepositionAction.all_action_param_maxs[key].values()
         return names, values, mins, maxs
@@ -167,7 +167,7 @@ class RepositionAction(object):
     @staticmethod
     def set_action_params(action_type, param_names, param_values):
         key = RepositionAction.get_key_for_action(action_type)
-        params = all_action_parameters[key]
+        params = RepositionAction.all_action_parameters[key]
         for i in range(param_names):
             params[param_names(i)] = param_values(i)
 
@@ -207,7 +207,7 @@ class RepositionAction(object):
         return action
 
     def get_param(self, param_name):
-        action_params = all_action_parameters[this.action_type]
+        action_params = RepositionAction.all_action_parameters[this.action_type]
         if param_name in action_params.keys():
             return action_params[param_name]
         else:
@@ -217,8 +217,8 @@ class RepositionAction(object):
 
     def get_action_param_log(self):
         key = RepositionAction.get_key_for_action(action_type)
-        names = all_action_parameters[key].keys()
-        params = all_action_parameters[key]
+        names = RepositionAction.all_action_parameters[key].keys()
+        params = RepositionAction.all_action_parameters[key]
         param_log = ActionParams()
         param_log.pushing_distance = this.get_param('pushing_distance')
         param_log.pre_application_dist = this.get_param('pre_application_dist')
