@@ -107,8 +107,8 @@ class RepositionAction(object):
 
     @staticmethod
     def compute_param_min_max():
-        RepositionAction.all_action_param_mins = dict{}
-        RepositionAction.all_action_param_maxs = dict{}
+        RepositionAction.all_action_param_mins = dict()
+        RepositionAction.all_action_param_maxs = dict()
         for a in RepositionAction.all_action_parameters.keys():
             action_params = RepositionAction.all_action_parameters[a]
             action_param_mins = dict()
