@@ -102,7 +102,7 @@ class RepositionAction(object):
     #         }
     #     }
 
-    all_action_parameters = RepositionAction.load_params()
+    all_action_parameters = load_params()
     all_action_param_mins = None
     all_action_param_maxs = None
 
