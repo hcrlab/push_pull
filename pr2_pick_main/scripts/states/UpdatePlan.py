@@ -6,6 +6,7 @@ import rospy
 import smach
 from pr2_pick_main.web_interface import WebInterface
 from PushPullActions import RepositionAction
+import rospkg
 
 
 class UpdatePlan(smach.State):

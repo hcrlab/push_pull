@@ -16,7 +16,7 @@ import math
 from math import fabs
 from pr2_pick_contest.msg import ActionParams 
 import json
-import rospack
+import rospkg
 
 class Tool(object):
 
