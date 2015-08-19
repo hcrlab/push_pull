@@ -168,7 +168,7 @@ class RepositionAction(object):
     def set_action_params(action_type, param_names, param_values):
         key = RepositionAction.get_key_for_action(action_type)
         params = RepositionAction.all_action_parameters[key]
-        for i in range(param_names):
+        for i in range(len(param_names)):
             params[param_names(i)] = param_values(i)
 
     @staticmethod
