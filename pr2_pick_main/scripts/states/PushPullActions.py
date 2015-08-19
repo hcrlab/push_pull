@@ -1,4 +1,3 @@
-from copy import deepcopy
 from geometry_msgs.msg import Pose, PoseStamped
 from geometry_msgs.msg import Point, PointStamped
 from geometry_msgs.msg import Quaternion, Vector3
@@ -17,6 +16,8 @@ from math import fabs
 from pr2_pick_contest.msg import ActionParams 
 import json
 import rospkg
+import copy
+from copy import deepcopy
 
 class Tool(object):
 
