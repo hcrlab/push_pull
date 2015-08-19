@@ -208,7 +208,7 @@ class RepositionAction(object):
 
     def get_param(self, param_name):
         action_params = all_action_parameters[this.action_type]
-        if param_name is in action_params.keys():
+        if param_name in action_params.keys():
             return action_params[param_name]
         else:
             rospy.logwarn('Parameter ' + param_name +
