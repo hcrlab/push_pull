@@ -17,6 +17,8 @@ from pr2_pick_perception.srv import DeleteStaticTransformRequest
 from pr2_pick_perception.msg import Cluster2, BoundingBox
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 from pr2_pick_main.web_interface import WebInterface
+from std_msgs.msg import String, Int32
+
 
 class SenseObject(smach.State):
     """Performs sensing on a bin.

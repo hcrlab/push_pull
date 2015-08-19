@@ -227,12 +227,13 @@ class ExploreToolActions(smach.State):
             action = RepositionAction.create_action(tool_action,
                 bounding_box, self.services)
             userdata.action_params = action.get_action_param_log()
-            self.log_message("Starting action.")
+            self.log_message("Starting action " + tool_action)
             success = action.execute()
             if not success:
                 self.log_message("Could not execute action.")
             else:
                 self.log_message("Action complete.")
-
             self.pre_position_tool()
+            self._tuck_arms.wait_for_service()
+            tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
             return outcomes.TOOL_EXPLORATION_SUCCESS
