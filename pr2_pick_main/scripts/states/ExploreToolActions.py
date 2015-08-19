@@ -233,6 +233,7 @@ class ExploreToolActions(smach.State):
                 self.log_message("Could not execute action.")
             else:
                 self.log_message("Action complete.")
+                
             self.pre_position_tool()
             self._tuck_arms.wait_for_service()
             tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)

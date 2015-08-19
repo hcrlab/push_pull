@@ -553,7 +553,7 @@ class PushSideways(RepositionAction):
             back_end = self.ends[2]
             front_end = self.ends[0]
             if(self.ends[2].y < self.ends[0].y):
-                rospy.loginf("2 < 0")
+                rospy.loginfo("2 < 0")
                 target_end = self.ends[2]
             else:
                 target_end = self.ends[0]  

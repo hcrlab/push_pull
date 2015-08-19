@@ -175,7 +175,7 @@ class StateMachineBuilder(object):
                     states.SenseObject(**services),
                     transitions={
                         outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
-                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.SenseObject.name,
+                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.UpdatePlan.name,
                         outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
                     }
                 )
@@ -183,8 +183,8 @@ class StateMachineBuilder(object):
                     states.ExploreToolActions.name,
                     states.ExploreToolActions(**services),
                     transitions={
-                        outcomes.TOOL_EXPLORATION_SUCCESS: states.UpdatePlan.name,
-                        outcomes.TOOL_EXPLORATION_FAILURE: states.UpdatePlan.name,
+                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObject.name,
+                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObject.name,
                     }
                 )
            
