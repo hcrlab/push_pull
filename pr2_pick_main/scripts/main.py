@@ -34,6 +34,8 @@ def main(explore = False,
 
     if explore:
         sm.userdata.is_explore = True
+    else:
+        sm.userdata.is_explore = False
 
     # Whether to step through checkpoints.
     sm.userdata.debug = debug
