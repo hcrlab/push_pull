@@ -235,6 +235,4 @@ class ExploreToolActions(smach.State):
                 self.log_message("Action complete.")
 
             self.pre_position_tool()
-
-
-
+            return outcomes.TOOL_EXPLORATION_SUCCESS

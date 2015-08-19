@@ -96,8 +96,8 @@ class SenseObject(smach.State):
                 position = userdata.current_trial["position"]
                 orientation = userdata.current_trial["orientation"]
                 message = (
-                    "Please prepare following configuration\n\n" +
-                    "_______________________________\n" +
+                    "Please prepare following configuration\n" +
+                    "_______________________________\n\n" +
                     "Item: " + str(item_name) + "\n" +
                     str(self._positions[position]) + "\n" +
                     str(self._orientations[orientation]) + "\n" +
