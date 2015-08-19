@@ -1,4 +1,0 @@
-geometry_msgs/PoseStamped goal
-bool new_cloud
----
-bool success

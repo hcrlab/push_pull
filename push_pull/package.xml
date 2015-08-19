@@ -15,7 +15,6 @@
   <run_depend>pr2_pick_msgs</run_depend>
   <run_depend>pr2_pick_perception</run_depend>
   <run_depend>pr2_grasp_evaluator</run_depend>
-  <run_depend>trajopt_test</run_depend>
   <export>
     <metapackage/>
   </export>
