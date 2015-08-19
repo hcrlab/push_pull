@@ -7,6 +7,8 @@ import smach
 from pr2_pick_main.web_interface import WebInterface
 from PushPullActions import RepositionAction
 import rospkg
+import json
+import copy
 
 
 class UpdatePlan(smach.State):
