@@ -207,12 +207,12 @@ class RepositionAction(object):
         return action
 
     def get_param(self, param_name):
-        action_params = RepositionAction.all_action_parameters[this.action_type]
+        action_params = RepositionAction.all_action_parameters[self.action_type]
         if param_name in action_params.keys():
             return action_params[param_name]
         else:
             rospy.logwarn('Parameter ' + param_name +
-                ' not valiud for action ' + this.action_type)
+                ' not valiud for action ' + self.action_type)
             return None
 
     def get_action_param_log(self):
@@ -220,16 +220,16 @@ class RepositionAction(object):
         names = RepositionAction.all_action_parameters[key].keys()
         params = RepositionAction.all_action_parameters[key]
         param_log = ActionParams()
-        param_log.pushing_distance = this.get_param('pushing_distance')
-        param_log.pre_application_dist = this.get_param('pre_application_dist')
-        param_log.distance_from_side = this.get_param('distance_from_side')
-        param_log.application_height_from_center = this.get_param('application_height_from_center')
-        param_log.distance_from_back = this.get_param('distance_from_back')
-        param_log.distance_from_front = this.get_param('distance_from_front')
-        param_log.pulling_distance = this.get_param('pulling_distance')
-        param_log.contact_point_depth_offset = this.get_param('contact_point_depth_offset')
-        param_log.contact_point_down_offset = this.get_param('contact_point_down_offset')
-        param_log.distance_from_top = this.get_param('distance_from_top')
+        param_log.pushing_distance = self.get_param('pushing_distance')
+        param_log.pre_application_dist = self.get_param('pre_application_dist')
+        param_log.distance_from_side = self.get_param('distance_from_side')
+        param_log.application_height_from_center = self.get_param('application_height_from_center')
+        param_log.distance_from_back = self.get_param('distance_from_back')
+        param_log.distance_from_front = self.get_param('distance_from_front')
+        param_log.pulling_distance = self.get_param('pulling_distance')
+        param_log.contact_point_depth_offset = self.get_param('contact_point_depth_offset')
+        param_log.contact_point_down_offset = self.get_param('contact_point_down_offset')
+        param_log.distance_from_top = self.get_param('distance_from_top')
         return param_log
 
     def __init__(self, bounding_box, action_type, **services):
