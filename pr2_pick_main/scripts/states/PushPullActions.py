@@ -4,7 +4,7 @@ from geometry_msgs.msg import Quaternion, Vector3
 from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, \
     GetPositionIKRequest, GetPlanningScene
 import rospy
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Float32
 from pr2_pick_manipulation.srv import MoveArmIkRequest
 import visualization as viz
 import tf
@@ -228,16 +228,16 @@ class RepositionAction(object):
 
     def get_action_param_log(self):
         param_log = ActionParams()
-        param_log.pushing_distance = self.get_param('pushing_distance')
-        param_log.pre_application_dist = self.get_param('pre_application_dist')
-        param_log.distance_from_side = self.get_param('distance_from_side')
-        param_log.application_height_from_center = self.get_param('application_height_from_center')
-        param_log.distance_from_back = self.get_param('distance_from_back')
-        param_log.distance_from_front = self.get_param('distance_from_front')
-        param_log.pulling_distance = self.get_param('pulling_distance')
-        param_log.contact_point_depth_offset = self.get_param('contact_point_depth_offset')
-        param_log.contact_point_down_offset = self.get_param('contact_point_down_offset')
-        param_log.distance_from_top = self.get_param('distance_from_top')
+        param_log.pushing_distance = Float32(self.get_param('pushing_distance'))
+        param_log.pre_application_dist = Float32(self.get_param('pre_application_dist'))
+        param_log.distance_from_side = Float32(self.get_param('distance_from_side'))
+        param_log.application_height_from_center = Float32(self.get_param('application_height_from_center'))
+        param_log.distance_from_back = Float32(self.get_param('distance_from_back'))
+        param_log.distance_from_front = Float32(self.get_param('distance_from_front'))
+        param_log.pulling_distance = Float32(self.get_param('pulling_distance'))
+        param_log.contact_point_depth_offset = Float32(self.get_param('contact_point_depth_offset'))
+        param_log.contact_point_down_offset = Float32(self.get_param('contact_point_down_offset'))
+        param_log.distance_from_top = Float32(self.get_param('distance_from_top'))
         return param_log
 
     def __init__(self, bounding_box, action_type, **services):
