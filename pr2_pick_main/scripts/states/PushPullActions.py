@@ -67,38 +67,38 @@ class RepositionAction(object):
         'front_side_push_':
             {
                 'pushing_distance': 0.08,
-                'pre_application_dist': 0.05
-                'distance_from_side': 0.02,
+                'pre_application_dist': 0.05,
+                'distance_from_side': 0.02
             },
         'side_push_full_contact_':
             {
                 'pushing_distance': 0.04,
                 'distance_from_side': 0.02,
-                'application_height_from_center':0.00
-                'distance_from_back': 0.00,
+                'application_height_from_center':0.00,
+                'distance_from_back': 0.00
             },
         'side_push_point_contact_':
             {
                 'pushing_distance': 0.04,
                 'distance_from_side': 0.02,
-                'application_height_from_center':0.00
-                'distance_from_front': 0.00,
+                'application_height_from_center':0.00,
+                'distance_from_front': 0.00
             },
         'top_pull':
             {
                 'pulling_distance': 0.08,
                 'pre_application_distance': 0.05,
-                'contact_point_depth_offset': 0.02
+                'contact_point_depth_offset': 0.02,
                 'contact_point_down_offset': 0.01,
-                'distance_from_top': 0.02,
+                'distance_from_top': 0.02
             },
         'top_sideward_pull_':
             {
                 'pulling_distance':0.08,
                 'pre_application_distance':0.05,
-                'contact_point_depth_offset':0.02
+                'contact_point_depth_offset':0.02,
                 'contact_point_down_offset':0.01,
-                'distance_from_top':0.02,
+                'distance_from_top':0.02
             }
         }
 
