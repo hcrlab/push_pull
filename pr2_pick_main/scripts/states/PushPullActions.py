@@ -169,7 +169,7 @@ class RepositionAction(object):
         key = RepositionAction.get_key_for_action(action_type)
         params = RepositionAction.all_action_parameters[key]
         for i in range(len(param_names)):
-            params[param_names[i] = param_values[i]
+            params[param_names[i]] = param_values[i]
 
     @staticmethod
     def create_action(action_type, bounding_box, services):
