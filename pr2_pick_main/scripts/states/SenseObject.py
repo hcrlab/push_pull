@@ -209,7 +209,6 @@ class SenseObject(smach.State):
 
         if userdata.is_before:
             userdata.before_record = self.bag_data
-            #filename = path + 'trial' + str(userdata.current_trial_num) + '_before.bag'
         else:
             if not userdata.is_explore:
                 rospack = rospkg.RosPack()
@@ -218,7 +217,7 @@ class SenseObject(smach.State):
                 position = userdata.current_trial["position"]
                 action = userdata.current_trial["action"]
 
-                path = rospack.get_path('pr2_pick_main') + '/data/experiments/'
+                bag_file_path = rospack.get_path('pr2_pick_main') + '/data/experiments/'
                 bag_file_name = ("TRIAL_" + str(userdata.current_trial_num) + "_" +
                     str(item_name) +
                     "_position_" + str(position) +
