@@ -41,7 +41,6 @@ Type:
 
 ```
 setrobot c1
-
 roslaunch pr2_pick_main frontend.launch
 ```
 
@@ -64,6 +63,12 @@ Otherwise, if you are actually __collecting data__:
 rosrun pr2_pick_main main.py
 ```
 
+If you would like to start at an arbitrary trial number (e.g. trial 14) to continue a previously started data collection:
+
+```
+rosrun pr2_pick_main main.py --trial_number 14
+```
+
 ## Laptop computer for UI
 
 Open two terminals.
@@ -72,7 +77,6 @@ Open two terminals.
 
 ```
 setrobot c1
-
 roslaunch rosbridge_server rosbridge_websocket.launch
 ```
 
@@ -80,11 +84,45 @@ roslaunch rosbridge_server rosbridge_websocket.launch
 
 ```
 setrobot c1
-
 roscd pr2_pick_main/web/web_interface
-
 meteor
 ```
 
 Open a browser and point to http://localhost:3000.
+
+
+## Backing up collected data
+
+Open a terminal and do the following.
+
+```
+ssh username@c1
+roscd pr2_pick_main/data/experiments/
+git add *.bag
+git commit -am "adding next batch of collected data"
+git push
+```
+
+## Updating software after changes
+
+On every computer you are using (c1, desktop, laptop) do:
+
+```
+roscd push_pull
+git pull
+cd ../../../
+catkin_make
+```
+
+## When you are done
+
+Ctrl + C all terminal windows. On one of the terminals that was ssh'ed to c1 do:
+
+```
+robot stop
+robot release
+```
+
+
+
 
