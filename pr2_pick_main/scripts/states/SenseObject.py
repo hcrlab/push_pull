@@ -232,6 +232,7 @@ class SenseObject(smach.State):
                 trial_params.action_params = userdata.action_params
 
                 bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
+                trial = Trial()
                 trial.before = userdata.before_record
                 trial.after = self.after_record
                 trial.params = trial_params
