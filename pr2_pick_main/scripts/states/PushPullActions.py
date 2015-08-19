@@ -124,7 +124,7 @@ class RepositionAction(object):
     def get_all_actions():
         all_keys = RepositionAction.all_action_parameters.keys()
         all_actions = []
-        for k in all_keys:
+        for action_type in all_keys:
             suffix = action_type[-1]
             if (suffix == '_'):
                 all_actions = all_actions + [k + 'r']
