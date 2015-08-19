@@ -208,7 +208,7 @@ class SenseObject(smach.State):
         self.bag_data.is_graspable = False
 
         if userdata.is_before:
-            userdata.before_record = self.bag_data
+            userdata.before_record = copy.copy(self.bag_data)
         else:
             if not userdata.is_explore:
                 rospack = rospkg.RosPack()
@@ -234,7 +234,7 @@ class SenseObject(smach.State):
                 bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
                 trial = Trial()
                 trial.before = userdata.before_record
-                trial.after = self.after_record
+                trial.after = self.bag_data
                 trial.params = trial_params
                 bag.write('trial', trial)
                 bag.close()
