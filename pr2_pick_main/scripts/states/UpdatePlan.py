@@ -42,7 +42,7 @@ class UpdatePlan(smach.State):
 
     def generate_trials(self):
         trials = []
-        actions = RepositionAction.all_actions
+        actions = RepositionAction.get_all_actions()
 
         for item in self._experiment_params["items"]:
             for position in item["positions"]:
