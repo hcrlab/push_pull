@@ -11,7 +11,6 @@ import smach
 import tf
 import visualization as viz
 from std_msgs.msg import Header
-
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 class InitializeExploration(smach.State):
@@ -25,7 +24,7 @@ class InitializeExploration(smach.State):
             self,
             outcomes=[outcomes.INITIALIZE_SUCCESS, outcomes.INITIALIZE_FAILURE],
             input_keys=['debug'],
-            output_keys=['start_pose', 'is_before', 'current_trial_num'])
+            output_keys=['start_pose', 'is_before'])
 
         self._tts = services['tts']
         self._tuck_arms = services['tuck_arms']
@@ -41,6 +40,11 @@ class InitializeExploration(smach.State):
         self._get_grippers = services['get_grippers']
 
         self._interface = WebInterface()
+
+    def log_message(self, message):
+        rospy.loginfo(message)
+        self._tts.publish(message)
+        self._interface.display_message(message)
 
     @handle_service_exceptions(outcomes.INITIALIZE_FAILURE)
     def execute(self, userdata):
@@ -66,17 +70,13 @@ class InitializeExploration(smach.State):
         self._set_static_tf(transform)
 
         # Tuck arms
-        message = 'Setting start pose.'
-        rospy.loginfo(message)
-        self._tts.publish(message)
-        self._interface.display_message(message)
+        self.log_message('Setting start pose.')
 
         self._tuck_arms.wait_for_service()
         tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
         tuck_success = True
         if not tuck_success:
-            rospy.logerr('StartPose: TuckArms failed')
-            self._tts.publish('Failed to tuck arms.')
+            self.log_message('Failed to set start pose')
             return outcomes.INITIALIZE_FAILURE
         else:
             rospy.loginfo('StartPose: TuckArms success')
@@ -100,10 +100,8 @@ class InitializeExploration(smach.State):
             return outcomes.INITIALIZE_FAILURE
 
         # Find shelf
-        message = 'Creating shelf model.'
-        rospy.loginfo(message)
-        self._tts.publish(message)
-        self._interface.display_message(message)
+        self.log_message('Creating shelf model.')
+        rospy.sleep(3)
 
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
@@ -153,11 +151,10 @@ class InitializeExploration(smach.State):
         grippers_open = self._set_grippers(open_left=True, open_right=False, effort =-1)
 
         ################
-        message = 'Please hand me the tool and press OK.'
-        rospy.loginfo(message)
-        self._tts.publish(message)
-        self._interface.ask_choice('Press OK when ready to take', ['OK'])
-        self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
+        self.log_message('Please hand me the tool.')
+        self._interface.ask_choice('Press OK when ready to hand tool.', ['OK'])
+        self._interface.display_message('Hand the tool now', duration=3, has_countdown=True)
+        self.log_message('Taking tool.')
         ################
 
         grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)
@@ -167,7 +164,6 @@ class InitializeExploration(smach.State):
             self._set_grippers(open_left=False, open_right=False, effort=-1)
         
         userdata.is_before = True
-        userdata.current_trial_num = -1
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')

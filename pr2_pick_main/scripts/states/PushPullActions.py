@@ -1,11 +1,10 @@
-from copy import deepcopy
 from geometry_msgs.msg import Pose, PoseStamped
 from geometry_msgs.msg import Point, PointStamped
 from geometry_msgs.msg import Quaternion, Vector3
 from moveit_msgs.srv import GetPositionFK, GetPositionFKRequest, GetPositionIK, \
     GetPositionIKRequest, GetPlanningScene
 import rospy
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Float32
 from pr2_pick_manipulation.srv import MoveArmIkRequest
 import visualization as viz
 import tf
@@ -14,7 +13,11 @@ from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     TuckArms, GetGrippers, MoveArmIk
 import math
 from math import fabs
-
+from pr2_pick_contest.msg import ActionParams 
+import json
+import rospkg
+import copy
+from copy import deepcopy
 
 class Tool(object):
 
@@ -56,44 +59,189 @@ class RepositionAction(object):
     ## ACTION TYPES
     ###############
 
-    front_center_push = 'front_center_push'
-    front_side_push_r = 'front_side_push_r'
-    front_side_push_l = 'front_side_push_l'
-    side_push_full_contact_r = 'side_push_full_contact_r'
-    side_push_full_contact_l = 'side_push_full_contact_l'
-    side_push_point_contact_r = 'side_push_point_contact_r'
-    side_push_point_contact_l = 'side_push_point_contact_l'
-    top_pull = 'top_pull'
-    top_sideward_pull_r = 'top_sideward_pull_r'
-    top_sideward_pull_l = 'top_sideward_pull_l'
+    # all_action_parameters = {
+    #     'front_center_push':
+    #         {
+    #             'pushing_distance': 0.08,
+    #             'pre_application_dist': 0.05
+    #         },
+    #     'front_side_push_':
+    #         {
+    #             'pushing_distance': 0.08,
+    #             'pre_application_dist': 0.05,
+    #             'distance_from_side': 0.02
+    #         },
+    #     'side_push_full_contact_':
+    #         {
+    #             'pushing_distance': 0.04,
+    #             'distance_from_side': 0.02,
+    #             'application_height_from_center':0.00,
+    #             'distance_from_back': 0.00
+    #         },
+    #     'side_push_point_contact_':
+    #         {
+    #             'pushing_distance': 0.04,
+    #             'distance_from_side': 0.02,
+    #             'application_height_from_center':0.00,
+    #             'distance_from_front': 0.00
+    #         },
+    #     'top_pull':
+    #         {
+    #             'pulling_distance': 0.08,
+    #             'pre_application_distance': 0.05,
+    #             'contact_point_depth_offset': 0.02,
+    #             'contact_point_down_offset': 0.01,
+    #             'distance_from_top': 0.02
+    #         },
+    #     'top_sideward_pull_':
+    #         {
+    #             'pulling_distance':0.08,
+    #             'pre_application_distance':0.05,
+    #             'contact_point_depth_offset':0.02,
+    #             'contact_point_down_offset':0.01,
+    #             'distance_from_top':0.02
+    #         }
+    #     }
 
-    all_actions = [front_center_push,
-    front_side_push_r,
-    front_side_push_l,
-    side_push_full_contact_r,
-    side_push_full_contact_l,
-    side_push_point_contact_r,
-    side_push_point_contact_l,
-    top_pull,
-    top_sideward_pull_r,
-    top_sideward_pull_l]
+    all_action_parameters = None
+    all_action_param_mins = None
+    all_action_param_maxs = None
 
-    @classmethod
-    def load_params(cls):
-        pass
+    @staticmethod
+    def compute_param_min_max():
+        if RepositionAction.all_action_parameters is None:
+            RepositionAction.load_params()
+        RepositionAction.all_action_param_mins = dict()
+        RepositionAction.all_action_param_maxs = dict()
+        for a in RepositionAction.all_action_parameters.keys():
+            action_params = RepositionAction.all_action_parameters[a]
+            action_param_mins = dict()
+            action_param_maxs = dict()
+            for p in action_params.keys():
+                default_value = action_params[p]
+                action_param_mins[p] = default_value-0.04
+                action_param_maxs[p] = default_value+0.04
+            RepositionAction.all_action_param_mins[a] = copy.copy(action_param_mins)
+            RepositionAction.all_action_param_maxs[a] = copy.copy(action_param_maxs)
 
-    @classmethod
-    def save_params(cls):
-        pass
+    @staticmethod
+    def get_all_actions():
+        if RepositionAction.all_action_parameters is None:
+            RepositionAction.load_params()
+        all_keys = RepositionAction.all_action_parameters.keys()
+        all_actions = []
+        for action_type in all_keys:
+            suffix = action_type[-1]
+            if (suffix == '_'):
+                all_actions = all_actions + [action_type + 'r']
+                all_actions = all_actions + [action_type + 'l']
+            else:
+                all_actions = all_actions + [action_type]
+        return all_actions
 
-    @classmethod
-    def get_param(cls, param_name):
-        index = cls.param_names.index(param_name)
-        return cls.param_values[index]
+    @staticmethod
+    def save_params():
+        rospack = rospkg.RosPack()
+        params_file = str(rospack.get_path('pr2_pick_contest')) + '/config/action_params.json' 
+        with open(params_file, 'w') as data_file:
+            json.dump(RepositionAction.all_action_parameters, data_file)
+
+    @staticmethod
+    def load_params():
+        rospack = rospkg.RosPack()
+        params_file = str(rospack.get_path('pr2_pick_contest')) + '/config/action_params.json' 
+        with open(params_file) as data_file:    
+            RepositionAction.all_action_parameters = json.load(data_file)
+
+    @staticmethod
+    def get_key_for_action(action_type):
+        key = str(action_type)
+        suffix = action_type[-2:]
+        if suffix == '_r' or suffix == '_l':
+            key = action_type[0:len(action_type)-1]
+        return key
+
+    @staticmethod
+    def get_action_params(action_type):
+        if RepositionAction.all_action_parameters is None:
+            RepositionAction.load_params()
+        key = RepositionAction.get_key_for_action(action_type)
+        names = RepositionAction.all_action_parameters[key].keys()
+        values = RepositionAction.all_action_parameters[key].values()
+        mins = RepositionAction.all_action_param_mins[key].values()
+        maxs = RepositionAction.all_action_param_maxs[key].values()
+        return names, values, mins, maxs
+
+    @staticmethod
+    def set_action_params(action_type, param_names, param_values):
+        if RepositionAction.all_action_parameters is None:
+            RepositionAction.load_params()
+        key = RepositionAction.get_key_for_action(action_type)
+        params = RepositionAction.all_action_parameters[key]
+        for i in range(len(param_names)):
+            params[param_names[i]] = param_values[i]
+
+    @staticmethod
+    def create_action(action_type, bounding_box, services):
+
+        # Front center push
+        if(action_type == 'front_center_push' or 
+            action_type == 'front_side_push_r' or 
+            action_type == 'front_side_push_l'):
+
+            action = PushAway(bounding_box, action_type, **services)
+
+        # Side push with full surface contact
+        elif(action_type == 'side_push_full_contact_r' or 
+            action_type == 'side_push_full_contact_l' or 
+            action_type == 'side_push_point_contact_r' or 
+            action_type == 'side_push_point_contact_l'):
+
+            action = PushSideways(bounding_box, action_type, **services)
+
+        # Top pull
+        elif(action_type == 'top_pull'):
+
+            action = PullForward(bounding_box, action_type, **services)
+
+        # Top sideward pull
+        elif(action_type == 'top_sideward_pull_r' or 
+            action_type == 'top_sideward_pull_l'):
+
+            action = PullSideways(bounding_box, action_type, **services)
+
+        else:
+            rospy.logerr('Unknwon action type: ' + action_type)
+            action = None
+
+        return action
+
+    def get_param(self, param_name):
+        key = RepositionAction.get_key_for_action(self.action_type)
+        action_params = RepositionAction.all_action_parameters[key]
+        if param_name in action_params.keys():
+            return action_params[param_name]
+        else:
+            rospy.logwarn('Parameter ' + param_name +
+                ' not valid for action ' + self.action_type)
+            return None
+
+    def get_action_param_log(self):
+        param_log = ActionParams()
+        param_log.pushing_distance = Float32(self.get_param('pushing_distance'))
+        param_log.pre_application_dist = Float32(self.get_param('pre_application_dist'))
+        param_log.distance_from_side = Float32(self.get_param('distance_from_side'))
+        param_log.application_height_from_center = Float32(self.get_param('application_height_from_center'))
+        param_log.distance_from_back = Float32(self.get_param('distance_from_back'))
+        param_log.distance_from_front = Float32(self.get_param('distance_from_front'))
+        param_log.pulling_distance = Float32(self.get_param('pulling_distance'))
+        param_log.contact_point_depth_offset = Float32(self.get_param('contact_point_depth_offset'))
+        param_log.contact_point_down_offset = Float32(self.get_param('contact_point_down_offset'))
+        param_log.distance_from_top = Float32(self.get_param('distance_from_top'))
+        return param_log
 
     def __init__(self, bounding_box, action_type, **services):
-        #self.debug = userdata.debug
-        self.bin_id = 'K'
+
         self.debug = False
         self.bounding_box = bounding_box
         self.action_type = action_type
@@ -110,6 +258,9 @@ class RepositionAction(object):
         self.trajectory = []
         self.ends = self.get_box_ends(self.bounding_box)
         self.application_point = self.get_application_point()
+
+        if RepositionAction.all_action_parameters is None:
+            RepositionAction.load_params()
 
     def get_application_point(self):
         rospy.logwarn('Calling default get_application_point')
@@ -308,30 +459,19 @@ class PushAway(RepositionAction):
     target object so we can grasp it.
     '''
 
-    #### ACTION PARAMETERS
-    param_names = ['pushing_distance', 'distance_from_side', 'pre_application_dist']
-    param_values = [0.08, 0.02, 0.05]
-    param_mins = [m-0.04 for m in param_values]
-    param_maxs = [m+0.04 for m in param_values]
-
-    # @staticmethod
-    # def get_param(param_name):
-    #     index = PushAway.param_names.index(param_name)
-    #     return PushAway.param_values[index]
-
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        if self.action_type == RepositionAction.front_center_push: 
+        if self.action_type == "front_center_push": 
             application_point.x = self.centroid.x  
             application_point.y = self.centroid.y
             application_point.z = self.centroid.z / 2
-        elif self.action_type == RepositionAction.front_side_push_l:
+        elif self.action_type == "front_side_push_l":
             application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
-            application_point.y = self.ends[3].y - PushAway.get_param('distance_from_side')
+            application_point.y = self.ends[3].y - self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
-        elif self.action_type == RepositionAction.front_side_push_r:
+        elif self.action_type == "front_side_push_r":
             application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
-            application_point.y =  self.ends[0].y + PushAway.get_param('distance_from_side')
+            application_point.y =  self.ends[0].y + self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         return application_point
 
@@ -348,7 +488,7 @@ class PushAway(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PushAway.get_param('pre_application_dist'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_dist'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -356,7 +496,7 @@ class PushAway(RepositionAction):
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length + PushAway.get_param('pushing_distance'),
+                x=self.application_point.x - Tool.tool_length + self.get_param('pushing_distance'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -364,7 +504,7 @@ class PushAway(RepositionAction):
         )
         post_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PushAway.get_param('pre_application_dist'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_dist'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -390,22 +530,6 @@ class PushSideways(RepositionAction):
     1. When target object is rotated <45 degrees from a graspable position,
     push sideways on the near end to rotate the object.
     '''
-
-    ### ACTION PARAMETERS
-    param_names = ['pushing_distance',
-    'distance_from_side',
-    'distance_from_front',
-    'distance_from_back',
-    'application_height_from_center']
-    param_values = [0.04, 0.02, 0.00, 0.00, 0.00]
-    param_mins = [m-0.04 for m in param_values]
-    param_maxs = [m+0.04 for m in param_values]
-
-    # @staticmethod
-    # def get_param(param_name):
-    #     index = PushSideways.param_names.index(param_name)
-    #     return PushSideways.param_values[index]
-
     def build_trajectory(self):
         '''
         Construct waypoints for wrist_roll_link from pre/application/post points
@@ -413,8 +537,8 @@ class PushSideways(RepositionAction):
 
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
         
-        if(self.action_type == RepositionAction.side_push_point_contact_l or 
-            self.action_type == RepositionAction.side_push_full_contact_l):
+        if(self.action_type == "side_push_point_contact_l" or 
+            self.action_type == "side_push_full_contact_l"):
             ## Left push
             back_end = self.ends[3]
             front_end = self.ends[1]
@@ -429,17 +553,17 @@ class PushSideways(RepositionAction):
             back_end = self.ends[2]
             front_end = self.ends[0]
             if(self.ends[2].y < self.ends[0].y):
-                rospy.loginf("2 < 0")
+                rospy.loginfo("2 < 0")
                 target_end = self.ends[2]
             else:
                 target_end = self.ends[0]  
             push_direction_sign = -1
 
-        if(self.action_type == RepositionAction.side_push_point_contact_r or 
-            self.action_type == RepositionAction.side_push_point_contact_l):
-            distance_x =  front_end.x - Tool.tool_length + PushSideways.get_param('distance_from_front')
+        if(self.action_type == "side_push_point_contact_r" or 
+            self.action_type == "side_push_point_contact_l"):
+            distance_x =  front_end.x - Tool.tool_length + self.get_param('distance_from_front')
         else:
-            distance_x = back_end.x - Tool.tool_length + PushSideways.get_param('distance_from_back')
+            distance_x = back_end.x - Tool.tool_length + self.get_param('distance_from_back')
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
@@ -447,8 +571,8 @@ class PushSideways(RepositionAction):
         start_pose = Pose(
             position=Point(
                 x=distance_x - 0.10,
-                y=self.cap_y(target_end.y + (PushSideways.get_param('distance_from_side') * push_direction_sign)),
-                z=self.centroid.z + PushSideways.get_param('application_height_from_center')
+                y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
+                z=self.centroid.z + self.get_param('application_height_from_center')
             ),
             orientation=orientation,
         )
@@ -456,8 +580,8 @@ class PushSideways(RepositionAction):
         side_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=self.cap_y(target_end.y + (PushSideways.get_param('distance_from_side') * push_direction_sign)),
-                z=self.centroid.z + PushSideways.get_param('application_height_from_center')
+                y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
+                z=self.centroid.z + self.get_param('application_height_from_center')
             ),
             orientation=orientation,
         )
@@ -465,8 +589,8 @@ class PushSideways(RepositionAction):
         push_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=target_end.y - (PushSideways.get_param('pushing_distance') * push_direction_sign),
-                z=self.centroid.z + PushSideways.get_param('application_height_from_center')
+                y=target_end.y - (self.get_param('pushing_distance') * push_direction_sign),
+                z=self.centroid.z + self.get_param('application_height_from_center')
             ),
             orientation=orientation,
         )
@@ -487,26 +611,9 @@ class PullForward(RepositionAction):
     Child classes are parameterized by where on the object they're pushing.
     '''
 
-    ## ACTION PARAMETERS
-    # dist to push down on object when pulling forward
-
-    param_names = ['pre_application_distance',
-    'distance_from_top',
-    'contact_point_down_offset',
-    'pulling_distance',
-    'contact_point_depth_offset']
-    param_values = [0.05, 0.02, 0.01, 0.08, 0.02]
-    param_mins = [m-0.04 for m in param_values]
-    param_maxs = [m+0.04 for m in param_values]
-
-    # @staticmethod
-    # def get_param(param_name):
-    #     index = PullForward.param_names.index(param_name)
-    #     return PullForward.param_values[index]
-
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        application_point.x = self.centroid.x - PullForward.get_param('contact_point_depth_offset')
+        application_point.x = self.centroid.x - self.get_param('contact_point_depth_offset')
         application_point.y = self.centroid.y
         application_point.z = self.centroid.z + self.bounding_box.dimensions.z / 2.0
         return application_point
@@ -522,9 +629,9 @@ class PullForward(RepositionAction):
 
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pre_application_distance'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
@@ -532,7 +639,7 @@ class PullForward(RepositionAction):
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
@@ -540,23 +647,23 @@ class PullForward(RepositionAction):
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z - PullForward.get_param('contact_point_down_offset'),
+                z=self.application_point.z - self.get_param('contact_point_down_offset'),
             ),
             orientation=orientation,
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pulling_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z - PullForward.get_param('contact_point_down_offset'),
+                z=self.application_point.z - self.get_param('contact_point_down_offset'),
             ),
             orientation=orientation,
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pulling_distance'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pulling_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
@@ -576,19 +683,13 @@ class PullForward(RepositionAction):
         ]
 
 
-class TopSideways(RepositionAction):
+class PullSideways(RepositionAction):
     '''
     Parent class for actions that push away on some point of the object.
     Child classes are parameterized by where on the object they're pushing.
     '''
 
     ## ACTION PARAMETERS
-    # dist to push down on object when pulling forward
-    push_down_offset = 0.055
-    # how close to the edge of the shelf to pull the tip of the object
-    distance_from_edge = 0.05
-    pre_application_dist = 0.05
-
     param_names = ['pre_application_distance',
     'distance_from_top',
     'contact_point_down_offset',
@@ -600,7 +701,7 @@ class TopSideways(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        application_point.x = self.centroid.x - TopSideways.get_param('contact_point_depth_offset')
+        application_point.x = self.centroid.x - self.get_param('contact_point_depth_offset')
         application_point.y = self.centroid.y
         application_point.z = self.centroid.z + self.bounding_box.dimensions.z / 2.0
         return application_point
@@ -613,7 +714,7 @@ class TopSideways(RepositionAction):
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
         self.frame = self.bounding_box.pose.header.frame_id
 
-        if(self.action_type == RepositionAction.top_sideward_pull_l):
+        if(self.action_type == "top_sideward_pull_l"):
             ## Left pull
             pull_direction_sign = 1
         else:
@@ -622,9 +723,9 @@ class TopSideways(RepositionAction):
 
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - PullForward.get_param('pre_application_distance'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
@@ -632,7 +733,7 @@ class TopSideways(RepositionAction):
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z + PullForward.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )
@@ -640,23 +741,23 @@ class TopSideways(RepositionAction):
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
                 y=self.application_point.y,
-                z=self.application_point.z - PullForward.get_param('contact_point_down_offset'),
+                z=self.application_point.z - self.get_param('contact_point_down_offset'),
             ),
             orientation=orientation,
         )
         pull_pose = Pose(
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
-                y=self.application_point.y + (pull_direction_sign * PullForward.get_param('pulling_distance')),
-                z=self.application_point.z - PullForward.get_param('contact_point_down_offset'),
+                y=self.application_point.y + (pull_direction_sign * self.get_param('pulling_distance')),
+                z=self.application_point.z - self.get_param('contact_point_down_offset'),
             ),
             orientation=orientation,
         )
         lift_pose = Pose(
             position=Point(
                 x=self.application_point.x - Tool.tool_length,
-                y=self.application_point.y + (pull_direction_sign * PullForward.get_param('pulling_distance')),
-                z=self.application_point.z + PullForward.get_param('distance_from_top'),
+                y=self.application_point.y + (pull_direction_sign * self.get_param('pulling_distance')),
+                z=self.application_point.z + self.get_param('distance_from_top'),
             ),
             orientation=orientation,
         )

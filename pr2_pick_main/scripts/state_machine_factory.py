@@ -107,6 +107,90 @@ class StateMachineBuilder(object):
             'planning_scene_publisher': rospy.Publisher('planning_scene', PlanningScene)
 	}
 
+    def build_sm_for_explore(self, **services):
+            ''' Test state machine for exploring the different parameters '''
+
+            sm = smach.StateMachine(outcomes=[
+                outcomes.EXPLORATION_SUCCESS,
+                outcomes.EXPLORATION_FAILURE
+            ])
+
+            with sm:
+            	smach.StateMachine.add(
+                	states.InitializeExploration.name,
+                	states.InitializeExploration(**services),
+                	transitions={
+                    	outcomes.INITIALIZE_SUCCESS: states.SenseObject.name,
+                    	outcomes.INITIALIZE_FAILURE: outcomes.EXPLORATION_FAILURE
+                	}
+            	)
+                smach.StateMachine.add(
+                    states.SenseObject.name,
+                    states.SenseObject(**services),
+                    transitions={
+                        outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.SenseObject.name,
+                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
+                    }
+                )
+                smach.StateMachine.add(
+                    states.ExploreToolActions.name,
+                    states.ExploreToolActions(**services),
+                    transitions={
+                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObject.name,
+                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObject.name,
+                    }
+                )
+           
+            return sm
+
+
+    def build_sm_for_experiment(self, **services):
+            ''' Test state machine for collecting data '''
+
+            sm = smach.StateMachine(outcomes=[
+                outcomes.EXPERIMENT_SUCCESS,
+                outcomes.EXPERIMENT_FAILURE
+            ])
+
+            with sm:
+                smach.StateMachine.add(
+                    states.InitializeExploration.name,
+                    states.InitializeExploration(**services),
+                    transitions={
+                        outcomes.INITIALIZE_SUCCESS: states.UpdatePlan.name,
+                        outcomes.INITIALIZE_FAILURE: outcomes.EXPERIMENT_FAILURE
+                    }
+                )
+                smach.StateMachine.add(
+                    states.UpdatePlan.name,
+                    states.UpdatePlan(**services),
+                    transitions={
+                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseObject.name,
+                        outcomes.UPDATE_PLAN_FAILURE: outcomes.EXPERIMENT_FAILURE
+                    }
+                )
+                smach.StateMachine.add(
+                    states.SenseObject.name,
+                    states.SenseObject(**services),
+                    transitions={
+                        outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
+                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.UpdatePlan.name,
+                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
+                    }
+                )
+                smach.StateMachine.add(
+                    states.ExploreToolActions.name,
+                    states.ExploreToolActions(**services),
+                    transitions={
+                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObject.name,
+                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObject.name,
+                    }
+                )
+           
+            return sm
+
+
     def build_sm_for_grasp_tool(self, **services):
         ''' Test state machine for grasping tool '''
         rospy.loginfo("\n in state machine! \n")
@@ -135,17 +219,17 @@ class StateMachineBuilder(object):
             ])
 
             with sm:
-            	smach.StateMachine.add(
-                	states.StartPoseExperiment.name,
-                	states.StartPoseExperiment(**services),
-                	transitions={
-                    	outcomes.START_POSE_SUCCESS: states.FindShelf.name,
-                    	outcomes.START_POSE_FAILURE: states.StartPoseExperiment.name
-                	},
-                	remapping={
-                    	'start_pose': 'start_pose'
-                	}
-            	)                
+                smach.StateMachine.add(
+                    states.StartPoseExperiment.name,
+                    states.StartPoseExperiment(**services),
+                    transitions={
+                        outcomes.START_POSE_SUCCESS: states.FindShelf.name,
+                        outcomes.START_POSE_FAILURE: states.StartPoseExperiment.name
+                    },
+                    remapping={
+                        'start_pose': 'start_pose'
+                    }
+                )                
                 smach.StateMachine.add(
                     states.FindShelf.name,
                     states.FindShelf(**services),
@@ -230,86 +314,3 @@ class StateMachineBuilder(object):
 
             return sm
 
-
-    def build_sm_for_explore(self, **services):
-            ''' Test state machine for exploring the different parameters '''
-
-            sm = smach.StateMachine(outcomes=[
-                outcomes.EXPLORATION_SUCCESS,
-                outcomes.EXPLORATION_FAILURE
-            ])
-
-            with sm:
-            	smach.StateMachine.add(
-                	states.InitializeExploration.name,
-                	states.InitializeExploration(**services),
-                	transitions={
-                    	outcomes.INITIALIZE_SUCCESS: states.SenseObject.name,
-                    	outcomes.INITIALIZE_FAILURE: outcomes.EXPLORATION_FAILURE
-                	}
-            	)
-                smach.StateMachine.add(
-                    states.SenseObject.name,
-                    states.SenseObject(**services),
-                    transitions={
-                        outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
-                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.SenseObject.name,
-                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
-                    }
-                )
-                smach.StateMachine.add(
-                    states.ExploreToolActions.name,
-                    states.ExploreToolActions(**services),
-                    transitions={
-                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObject.name,
-                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObject.name,
-                    }
-                )
-           
-            return sm
-
-
-    def build_sm_for_experiment(self, **services):
-            ''' Test state machine for collecting data '''
-
-            sm = smach.StateMachine(outcomes=[
-                outcomes.EXPERIMENT_SUCCESS,
-                outcomes.EXPERIMENT_FAILURE
-            ])
-
-            with sm:
-                smach.StateMachine.add(
-                    states.InitializeExploration.name,
-                    states.InitializeExploration(**services),
-                    transitions={
-                        outcomes.INITIALIZE_SUCCESS: states.UpdatePlan.name,
-                        outcomes.INITIALIZE_FAILURE: outcomes.EXPERIMENT_FAILURE
-                    }
-                )
-                smach.UpdatePlan.add(
-                    states.UpdatePlan.name,
-                    states.UpdatePlan(**services),
-                    transitions={
-                        outcomes.UPDATE_PLAN_NEXT_OBJECT: states.SenseObject.name,
-                        outcomes.UPDATE_PLAN_FAILURE: outcomes.EXPERIMENT_FAILURE
-                    }
-                )
-                smach.StateMachine.add(
-                    states.SenseObject.name,
-                    states.SenseObject(**services),
-                    transitions={
-                        outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
-                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.SenseObject.name,
-                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
-                    }
-                )
-                smach.StateMachine.add(
-                    states.ExploreToolActions.name,
-                    states.ExploreToolActions(**services),
-                    transitions={
-                        outcomes.TOOL_EXPLORATION_SUCCESS: states.UpdatePlan.name,
-                        outcomes.TOOL_EXPLORATION_FAILURE: states.UpdatePlan.name,
-                    }
-                )
-           
-            return sm

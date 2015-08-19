@@ -14,7 +14,7 @@ from visualization import IdTable
 from std_msgs.msg import Header
 from PushPullActions import RepositionAction, Tool
 from PushPullActions import PushAway, PullForward
-from PushPullActions import PushSideways, TopSideways
+from PushPullActions import PushSideways, PullSideways
 import time
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
@@ -31,7 +31,8 @@ class ExploreToolActions(smach.State):
         smach.State.__init__(
             self,
             outcomes=[outcomes.TOOL_EXPLORATION_SUCCESS, outcomes.TOOL_EXPLORATION_FAILURE],
-            input_keys=['debug', 'is_explore', 'bounding_box'])
+            input_keys=['debug', 'is_explore', 'bounding_box', 'current_trial'],
+            output_keys=['action_params'])
 
         self.arm_side = 'l'
 
@@ -65,7 +66,12 @@ class ExploreToolActions(smach.State):
         self._planning_scene_publisher = services['planning_scene_publisher']
 
         self._interface = WebInterface()
+        RepositionAction.compute_param_min_max()
 
+    def log_message(self, message):
+        rospy.loginfo(message)
+        self._tts.publish(message)
+        self._interface.display_message(message)
 
     def add_allowable_collision_box(self, bounding_box):
         ''' Add the argument to moveit's allowable collision matrix. '''
@@ -172,119 +178,63 @@ class ExploreToolActions(smach.State):
         tool = AttachedCollisionObject()
         tool.object = remove_object
         self._attached_collision_objects.publish(tool)
-
-        tool_waypoints = [
-        [
-            0.03617848465218309,    # shoulder_pan_joint, 13
-            -0.765112898156303,   # shoulder_lift_joint, 12
-            -0.5227552929694661,   # upper_arm_roll_joint, 14
-            -1.0424689689364501,    # elbow_flex_joint, 10
-            -0.2167002552019189,   # forearm_roll_joint, 11
-            0.7089518194136488,     # wrist_flex_joint, 9
-            -0.15862392791101892      # wrist_roll_joint, 8
-        ]
-    	]
-
         bounding_box = userdata.bounding_box
         self.pre_position_tool()
         self.add_tool_collision_object()
-        # add the object we're pushing to the allowable collision matrix
         self.add_allowable_collision_box(bounding_box)
-        # position at which tip of tool makes contact with object, in cluster frame
 
-        while(True):
+        if userdata.is_explore:
+            while(True):
+                all_actions = RepositionAction.get_all_actions()
+                options = all_actions + ['change object configuration']
+                self.log_message('Select action.')
+                tool_action = self._interface.ask_choice(
+                    'Which action should I try?', options)
 
-            #############
+                if (tool_action in all_actions):
+    
+                    RepositionAction.load_params()
+                    names, values, mins, maxs = RepositionAction.get_action_params(tool_action)
 
-            #tool_action = raw_input("enter the number of the tool action:")
-            options = RepositionAction.all_actions + ['change object configuration']
-            tool_action = self._interface.ask_choice('Which action should I try?', options)
-            #self._interface.display_message('Hand the tool to the robot now', duration=3, has_countdown=True)
-            
-            #############
+                    self.log_message('Select parameters.')
+                    new_values = self._interface.get_floats(
+                        message='Choose parameters for ' + tool_action,
+                        param_names=names,
+                        param_mins=mins,
+                        param_maxs=maxs,
+                        param_values=values)
 
-            # Front center push
-            if(tool_action == RepositionAction.front_center_push or 
-                tool_action == RepositionAction.front_side_push_r or 
-                tool_action == RepositionAction.front_side_push_l):
+                    RepositionAction.set_action_params(tool_action, names, new_values)
+                    RepositionAction.save_params()
+                    action = RepositionAction.create_action(tool_action,
+                        bounding_box, self.services)
+                    self.log_message("Starting action.")
+                    success = action.execute()
+                    if not success:
+                        self.log_message("Could not execute action.")
 
-                PushAway.load_params()
-                new_values = self._interface.get_floats(message='PushAway Parameters',
-                    param_names=PushAway.param_names,
-                    param_mins=PushAway.param_mins,
-                    param_maxs=PushAway.param_maxs,
-                    param_values=PushAway.param_values)
-                PushAway.param_values = new_values
-                PushAway.save_params()
+                    self.pre_position_tool()
 
-                action = PushAway(bounding_box,
-                    tool_action,
-                    **self.services)
+                else:
+                    self.log_message("Ending trial.")
+                    self._tuck_arms.wait_for_service()
+                    tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+                    return outcomes.TOOL_EXPLORATION_SUCCESS
+        
+        else:
 
-            # Side push with full surface contact
-            elif(tool_action == RepositionAction.side_push_full_contact_r or 
-                tool_action == RepositionAction.side_push_full_contact_l or 
-                tool_action == RepositionAction.side_push_point_contact_r or 
-                tool_action == RepositionAction.side_push_point_contact_l):
-
-                PushSideways.load_params()
-                new_values = self._interface.get_floats(message='PushSideways Parameters',
-                    param_names=PushSideways.param_names,
-                    param_mins=PushSideways.param_mins,
-                    param_maxs=PushSideways.param_maxs,
-                    param_values=PushSideways.param_values)
-                PushSideways.param_values = new_values
-                PushSideways.save_params()
-
-                action = PushSideways(bounding_box,
-                    tool_action,
-                    **self.services)
-
-            # Top pull
-            elif(tool_action == RepositionAction.top_pull):
-
-                PullForward.load_params()
-                
-                new_values = self._interface.get_floats(message='PullForward Parameters',
-                    param_names=PullForward.param_names,
-                    param_mins=PullForward.param_mins,
-                    param_maxs=PullForward.param_maxs,
-                    param_values=PullForward.param_values)
-                PullForward.param_values = new_values
-                PullForward.save_params()
-
-                action = PullForward(bounding_box,
-                    tool_action,
-                    **self.services)
-
-            # Top sideward pull
-            elif(tool_action == RepositionAction.top_sideward_pull_r or 
-                tool_action == RepositionAction.top_sideward_pull_l):
-
-                TopSideways.load_params()
-                new_values = self._interface.get_floats(message='TopSideways Parameters',
-                    param_names=TopSideways.param_names,
-                    param_mins=TopSideways.param_mins,
-                    param_maxs=TopSideways.param_maxs,
-                    param_values=TopSideways.param_values)
-                TopSideways.param_values = new_values
-                TopSideways.save_params()
-
-                action = TopSideways(bounding_box,
-                    tool_action,
-                    **self.services)
-            
-            else:
-                self._tuck_arms.wait_for_service()
-                tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
-                return outcomes.TOOL_EXPLORATION_SUCCESS
-
+            tool_action = userdata.current_trial["action"]
+            action = RepositionAction.create_action(tool_action,
+                bounding_box, self.services)
+            userdata.action_params = action.get_action_param_log()
+            self.log_message("Starting action " + tool_action)
             success = action.execute()
             if not success:
-                message = "Could not execute this action."
-                rospy.loginfo(message)
-                self._tts.publish(message)
-                self._interface.display_message(message, duration=2)
-
+                self.log_message("Could not execute action.")
+            else:
+                self.log_message("Action complete.")
+                
             self.pre_position_tool()
-
+            self._tuck_arms.wait_for_service()
+            tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+            return outcomes.TOOL_EXPLORATION_SUCCESS

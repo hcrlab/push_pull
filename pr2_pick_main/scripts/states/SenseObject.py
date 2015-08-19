@@ -12,11 +12,14 @@ from pr2_pick_manipulation.srv import MoveHead
 import visualization as viz
 import rospkg
 import rosbag
-from pr2_pick_contest.msg import Record, Trial, MoveObjectParams 
+from pr2_pick_contest.msg import Record, Trial, TrialParams 
 from pr2_pick_perception.srv import DeleteStaticTransformRequest
 from pr2_pick_perception.msg import Cluster2, BoundingBox
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 from pr2_pick_main.web_interface import WebInterface
+from std_msgs.msg import String, Int32
+import copy
+
 
 class SenseObject(smach.State):
     """Performs sensing on a bin.
@@ -31,7 +34,8 @@ class SenseObject(smach.State):
             outcomes=[outcomes.SENSE_OBJECT_BEFORE_SUCCESS,
                 outcomes.SENSE_OBJECT_AFTER_SUCCESS,
                 outcomes.SENSE_OBJECT_FAILURE],
-            input_keys=['debug', 'is_explore', 'is_before', 'current_trial_num', 'current_trial', 'before_record'],
+            input_keys=['debug', 'is_explore', 'is_before', 'current_trial_num',
+            'current_trial', 'before_record', 'action_params'],
             output_keys=['bounding_box', 'is_before', 'before_record'])
 
         self._segment_items = services['segment_items']
@@ -44,8 +48,13 @@ class SenseObject(smach.State):
         self.convert_pcl = services['convert_pcl_service']
 
         self._interface = WebInterface()
-        self._positions = ["Position 1: Front Centre", "Position 2: Front Left", "Position 3: Front Right", "Position 4: Back"]
-        self._orientations = ["Orientation 1: Facing Side", "Orientation 2: Facing Front", "Orientation 3: Angled"]
+        self._positions = ["Position 1: Front Centre",
+        "Position 2: Front Left",
+        "Position 3: Front Right",
+        "Position 4: Back"]
+        self._orientations = ["Orientation 1: Facing Side",
+        "Orientation 2: Facing Front",
+        "Orientation 3: Angled"]
 
 
     #call find_cluster_bounding_box to get the bounding box for a cluster
@@ -70,6 +79,10 @@ class SenseObject(smach.State):
     def save_image(self, image):
         self.bag_data.image = image
 
+    def log_message(self, message):
+        rospy.loginfo(message)
+        self._tts.publish(message)
+        self._interface.display_message(message)
 
     @handle_service_exceptions(outcomes.SENSE_OBJECT_FAILURE)
     def execute(self, userdata):
@@ -79,32 +92,31 @@ class SenseObject(smach.State):
         move_head_success = self._move_head(0, 0, 0, 'bin_K')
       
         if userdata.is_before:
-            ########
-
             if not userdata.is_explore:
+                self.log_message('Starting trial ' + str(userdata.current_trial_num) 
+                    + '. Please prepare object and press Ready.')
                 item_name = userdata.current_trial["item_name"]
                 position = userdata.current_trial["position"]
                 orientation = userdata.current_trial["orientation"]
-                print "_______________________________"
-                print "Place item: " + str(item_name)
-                print "In " + str(self._positions[position])
-                print "With " + str(self._orientations[orientation])
-                print "_______________________________"
-
-            message = 'Please prepare object and press ready.'
-            self._interface.ask_choice(message, ['Ready'])
-            rospy.loginfo(message)
-            self._tts.publish(message)
-            message = 'Sensing object before tool action.'
-            self._tts.publish(message)
-            rospy.loginfo(message)
-            self._interface.display_message(message)
-            ########
+                message = (
+                    "Please prepare following configuration\n" +
+                    "_______________________________\n\n" +
+                    "Item: " + str(item_name) + "\n" +
+                    str(self._positions[position]) + "\n" +
+                    str(self._orientations[orientation]) + "\n" +
+                    "_______________________________\n" +
+                    "Then press Ready")
+                self._interface.ask_choice(message, ['Ready'])
+            else:
+                self.log_message('Starting new trial.' +
+                    '. Please prepare object and press Ready.')
+                self._interface.ask_choice(
+                    'Please prepare object and press Ready.',
+                    ['Ready'])
+            
+            self.log_message('Sensing object before tool action.')
         else:
-            message = 'Sensing object after tool action.'
-            self._tts.publish(message)
-            rospy.loginfo(message)
-            self._interface.display_message(message)
+            self.log_message('Sensing object after tool action.')
 
         # Crop shelf.
         crop_request = CropShelfRequest(cellID='K')
@@ -119,6 +131,7 @@ class SenseObject(smach.State):
         rospy.loginfo('[SenseBin] Found {} clusters.'.format(len(clusters)))
         if len(clusters) == 0:
             rospy.logerr('[SenseBin]: No clusters found!')
+            self.log_message('Failed to sense object.')
             return outcomes.SENSE_OBJECT_FAILURE
         elif len(clusters) > 1:
             rospy.logwarn('[SenseBin]: There are more than 1 clusters! Will use cluster 0.')
@@ -193,15 +206,11 @@ class SenseObject(smach.State):
         self.bag_data.boundingbox = bounding_box
         self.bag_data.marker_boundingbox = marker_bounding_box
         userdata.bounding_box = bounding_box
-
         self.bag_data.is_graspable = False
-        
 
         if userdata.is_before:
-            userdata.before_record = self.bag_data
-            #filename = path + 'trial' + str(userdata.current_trial_num) + '_before.bag'
+            userdata.before_record = copy.copy(self.bag_data)
         else:
-            ## TODO: should save anyways once the following is fixed
             if not userdata.is_explore:
                 rospack = rospkg.RosPack()
                 item_name = userdata.current_trial["item_name"]
@@ -209,23 +218,25 @@ class SenseObject(smach.State):
                 position = userdata.current_trial["position"]
                 action = userdata.current_trial["action"]
 
-                path = rospack.get_path('pr2_pick_main') + '/data/experiments/'
+                bag_file_path = rospack.get_path('pr2_pick_main') + '/data/experiments/'
                 bag_file_name = ("TRIAL_" + str(userdata.current_trial_num) + "_" +
                     str(item_name) +
                     "_position_" + str(position) +
                     "_orientation_" + str(orientation) +
                     "_action_" + str(action) + ".bag")
 
-                move_object_params = MoveObjectParams()
-                move_object_params.item_name = String(item_name)
-                move_object_params.orientation = Int32(orientation)
-                move_object_params.position = Int32(position)
-                move_object_params.action = String(action)
+                trial_params = TrialParams()
+                trial_params.item_name = String(item_name)
+                trial_params.orientation = Int32(orientation)
+                trial_params.position = Int32(position)
+                trial_params.action = String(action)
+                trial_params.action_params = userdata.action_params
 
                 bag = rosbag.Bag(bag_file_path + bag_file_name , 'w')
+                trial = Trial()
                 trial.before = userdata.before_record
-                trial.after = self.after_record
-                trial.params = move_object_params
+                trial.after = self.bag_data
+                trial.params = trial_params
                 bag.write('trial', trial)
                 bag.close()
 
@@ -234,10 +245,13 @@ class SenseObject(smach.State):
         if userdata.debug:
             raw_input('[SenseBin] Press enter to continue: ')
 
+        self.log_message('Sensing complete.')
+
         if userdata.is_before:
             userdata.is_before = False
             return outcomes.SENSE_OBJECT_BEFORE_SUCCESS
         else:
             userdata.is_before = True
-            #userdata.current_trial_num += 1
+            self.log_message('Trial ' + str(userdata.current_trial_num) + ' complete.')
+            rospy.sleep(2)
             return outcomes.SENSE_OBJECT_AFTER_SUCCESS

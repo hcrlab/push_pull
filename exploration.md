@@ -1,23 +1,90 @@
-# Terminal Windows
+# How to run PR2 push_pull Data Collection Demo
 
-desktop:
+## Desktop computer
 
-roslaunch pr2_pick_manipulation move_group.launch
+First open three terminals on your desktop.
 
-c1:
+### In Terminal 1:
+Type:
 
+```
+ssh username@c1
+```
+
+You are now logged into the computer on the robot.
+Then type:
+
+```
+robot users 
+```
+
+If no one else is using the robot you can then do:
+
+```
+robot claim
+```
+
+and then:
+
+```
+robot start
+```
+
+After waiting about 30 seconds:
+
+```
 roslaunch pr2_pick_main main_prereqs.launch
+```
 
-rosrun pr2_pick_main main.py --explore
+### In Terminal 2:
+Type:
 
-desktop:
+```
+setrobot c1
 
 roslaunch pr2_pick_main frontend.launch
+```
+
+### In Terminal 3:
+Type:
+
+```
+ssh username@c1
+```
+
+If you are __exploring action parameters__:
+
+```
+rosrun pr2_pick_main main.py --explore
+```
+
+Otherwise, if you are actually __collecting data__:
+
+```
+rosrun pr2_pick_main main.py
+```
+
+## Laptop computer for UI
+
+Open two terminals.
+
+### On Terminal 4:
+
+```
+setrobot c1
 
 roslaunch rosbridge_server rosbridge_websocket.launch
+```
 
-roscd push_pull/pr2_pick_main/web/web_interface;meteor
+### On Terminal 5:
 
-# Chrome
+```
+setrobot c1
 
-Open a window and go to localhost:3000
+roscd pr2_pick_main/web/web_interface
+
+meteor
+```
+
+Open a browser and point to http://localhost:3000.
+

@@ -53,7 +53,8 @@ add_message_files(
   ItemModel.msg
   Record.msg
   Trial.msg
-  MoveObjectParams.msg
+  TrialParams.msg
+  ActionParams.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -24,7 +24,7 @@ from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
 import moveit_commander
 from moveit_msgs.msg import PlanningScene, PlanningSceneComponents
 import rospkg
-from pr2_pick_contest.msg import Record, Trial, MoveObjectParams 
+from pr2_pick_contest.msg import Record, Trial, TrialParams 
 from sensor_msgs.msg import PointCloud2, Image
 from pr2_pick_perception.msg import Box, Cluster2, BoundingBox
 from pr2_pick_contest.msg import Record
@@ -327,7 +327,7 @@ class MoveObjectExperiment(smach.State):
         item_name = userdata.current_trial["item_name"]
         position = userdata.current_trial["position"]
         orientation = userdata.current_trial["orientation"]
-        move_object_params = MoveObjectParams()
+        move_object_params = TrialParams()
 
         rospy.loginfo("Starting Move Object state")
         remove_object = CollisionObject()
