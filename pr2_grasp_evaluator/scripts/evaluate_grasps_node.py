@@ -372,9 +372,9 @@ class GraspEvaluator:
         filtered_before = []
         for grasp in self.grasps_before:
 
-            grasp.grasp_pose.header.stamp = rospy.Time.now()
+            grasp.grasp_pose.header.stamp = rospy.Time(0)
 
-            self.tf_listener.waitForTransform('base_footprint', grasp.grasp_pose.header.frame_id, rospy.Time.now(), rospy.Duration(4.0))
+            self.tf_listener.waitForTransform('base_footprint', grasp.grasp_pose.header.frame_id, rospy.Time(0), rospy.Duration(15.0))
 
             grasp_pose = self.tf_listener.transformPose('base_footprint',
                                                                 grasp.grasp_pose)
@@ -400,9 +400,9 @@ class GraspEvaluator:
 
         filtered_after = []
         for grasp in self.grasps_after:
-            grasp.grasp_pose.header.stamp = rospy.Time.now()
+            grasp.grasp_pose.header.stamp = rospy.Time(0)
 
-            self.tf_listener.waitForTransform('base_footprint', grasp.grasp_pose.header.frame_id, rospy.Time.now(), rospy.Duration(4.0))
+            self.tf_listener.waitForTransform('base_footprint', grasp.grasp_pose.header.frame_id, rospy.Time(0), rospy.Duration(15.0))
 
             grasp_pose = self.tf_listener.transformPose('base_footprint',
                                                                 grasp.grasp_pose)
