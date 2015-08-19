@@ -127,10 +127,10 @@ class RepositionAction(object):
         for action_type in all_keys:
             suffix = action_type[-1]
             if (suffix == '_'):
-                all_actions = all_actions + [k + 'r']
-                all_actions = all_actions + [k + 'l']
+                all_actions = all_actions + [action_type + 'r']
+                all_actions = all_actions + [action_type + 'l']
             else:
-                all_actions = all_actions + [k]
+                all_actions = all_actions + [action_type]
         return all_actions
 
     @staticmethod
