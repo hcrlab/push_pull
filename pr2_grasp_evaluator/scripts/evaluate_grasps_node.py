@@ -154,6 +154,7 @@ class GraspEvaluator:
         client.send_goal(goal)
         client.wait_for_result()
         result = client.get_result()
+        #rospy.loginfo("Result: {}".format(result))
         if not result or result.error_code.value != 0:
             return []
         return result.grasps
@@ -194,6 +195,7 @@ class GraspEvaluator:
         publish_cluster(self.markers, point_list, frame_id, 'experiment', 0)
 
         pc_before = self.convert_pcl_service(pc2_before).pointcloud
+        pc_before.header.frame_id = frame_id
         
         # Set params for grasp planner
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
@@ -210,6 +212,7 @@ class GraspEvaluator:
         publish_cluster(self.markers, point_list, frame_id, 'experiment', 1)
 
         pc_after = self.convert_pcl_service(pc2_after).pointcloud
+        pc_after.header.frame_id = frame_id
         
         # Set params for grasp planner
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
@@ -309,6 +312,7 @@ class GraspEvaluator:
         center_column_y = 0.0
         right_column_y = -.2921
 
+        #TODO: Get rid of extra bin stuff
         bin_translations = {
             'A': Vector3(x=-shelf_depth / 2.,
                          y=left_column_y,
@@ -368,6 +372,10 @@ class GraspEvaluator:
         filtered_before = []
         for grasp in self.grasps_before:
 
+            grasp.grasp_pose.header.stamp = rospy.Time.now()
+
+            self.tf_listener.waitForTransform('base_footprint', grasp.grasp_pose.header.frame_id, rospy.Time.now(), rospy.Duration(4.0))
+
             grasp_pose = self.tf_listener.transformPose('base_footprint',
                                                                 grasp.grasp_pose)
             if grasp_pose.pose.position.x > self.max_x_grasp_threshold:
@@ -392,6 +400,9 @@ class GraspEvaluator:
 
         filtered_after = []
         for grasp in self.grasps_after:
+            grasp.grasp_pose.header.stamp = rospy.Time.now()
+
+            self.tf_listener.waitForTransform('base_footprint', grasp.grasp_pose.header.frame_id, rospy.Time.now(), rospy.Duration(4.0))
 
             grasp_pose = self.tf_listener.transformPose('base_footprint',
                                                                 grasp.grasp_pose)
@@ -607,6 +618,7 @@ if __name__ == '__main__':
             ge.remove_shelf_intersections()
             # Remove non-reachable
             ge.remove_unreachable()
+
             evaluated_bag = rosbag.Bag(file_name[:-4] + '_evaluated.bag' , 'w')
             trial_msg.before.grasps = ge.grasps_before
             if len(ge.grasps_before) > 0:
