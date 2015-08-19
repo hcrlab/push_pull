@@ -191,7 +191,7 @@ class ExploreToolActions(smach.State):
                 tool_action = self._interface.ask_choice(
                     'Which action should I try?', options)
 
-                if (tool_action is in all_actions):
+                if (tool_action in all_actions):
     
                     names, values, mins, maxs = RepositionAction.get_action_params(tool_action)
 
