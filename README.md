@@ -2,7 +2,7 @@
 
 ## Desktop computer
 
-First open 4 terminals on your desktop.
+First open three terminals on your desktop.
 
 ### In Terminal 1:
 Type:
@@ -30,22 +30,13 @@ and then:
 robot start
 ```
 
-### In Terminal 2:
-Type:
-
-```
-setrobot c1 
-roslaunch pr2_pick_manipulation move_group.launch
-```
-
-### Back In Terminal 1:
-Type:
+After waiting about 30 mseconds for the robot to start type:
 
 ```
 roslaunch pr2_pick_main main_prereqs.launch
 ```
 
-### In Terminal 3:
+### In Terminal 2:
 Type:
 
 ```
@@ -53,7 +44,12 @@ setrobot c1
 roslaunch pr2_pick_main frontend.launch
 ```
 
-### In Terminal 4:
+Alternatively, if you do not want the RViz visualization, use the following launch instead:
+```
+roslaunch pr2_pick_manipulation move_group.launch
+```
+
+### In Terminal 3:
 Type:
 
 ```
