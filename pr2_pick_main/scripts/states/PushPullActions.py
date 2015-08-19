@@ -102,12 +102,14 @@ class RepositionAction(object):
     #         }
     #     }
 
-    all_action_parameters = load_params()
+    all_action_parameters = None
     all_action_param_mins = None
     all_action_param_maxs = None
 
     @staticmethod
     def compute_param_min_max():
+        if all_action_parameters is None:
+            all_action_parameters = RepositionAction.load_params()
         RepositionAction.all_action_param_mins = dict()
         RepositionAction.all_action_param_maxs = dict()
         for a in RepositionAction.all_action_parameters.keys():
@@ -123,6 +125,8 @@ class RepositionAction(object):
 
     @staticmethod
     def get_all_actions():
+        if all_action_parameters is None:
+            all_action_parameters = RepositionAction.load_params()
         all_keys = RepositionAction.all_action_parameters.keys()
         all_actions = []
         for action_type in all_keys:
@@ -158,6 +162,8 @@ class RepositionAction(object):
 
     @staticmethod
     def get_action_params(action_type):
+        if all_action_parameters is None:
+            all_action_parameters = RepositionAction.load_params()
         key = RepositionAction.get_key_for_action(action_type)
         names = RepositionAction.all_action_parameters[key].keys()
         values = RepositionAction.all_action_parameters[key].values()
@@ -167,6 +173,8 @@ class RepositionAction(object):
 
     @staticmethod
     def set_action_params(action_type, param_names, param_values):
+        if all_action_parameters is None:
+            all_action_parameters = RepositionAction.load_params()
         key = RepositionAction.get_key_for_action(action_type)
         params = RepositionAction.all_action_parameters[key]
         for i in range(len(param_names)):
@@ -252,6 +260,9 @@ class RepositionAction(object):
         self.trajectory = []
         self.ends = self.get_box_ends(self.bounding_box)
         self.application_point = self.get_application_point()
+
+        if all_action_parameters is None:
+            all_action_parameters = RepositionAction.load_params()
 
     def get_application_point(self):
         rospy.logwarn('Calling default get_application_point')
