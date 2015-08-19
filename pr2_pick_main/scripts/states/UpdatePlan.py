@@ -36,8 +36,6 @@ class UpdatePlan(smach.State):
         with open(params_file) as data_file:    
             self._experiment_params = json.load(data_file)
         self._trials = self.generate_trials()
-        #trial_num = raw_input("Enter the number of the last trial performed. Or enter -1 if this is the first trial:")
-        self._trial_num = -1
         self._total_trials = len(self._trials)
 
     def generate_trials(self):
@@ -59,9 +57,9 @@ class UpdatePlan(smach.State):
     @handle_service_exceptions(outcomes.UPDATE_PLAN_FAILURE)
     def execute(self, userdata):
 
-        self._trial_num += 1
-        userdata.current_trial_num = self._trial_num
-        rospy.loginfo('Trial number ' + str(self._trial_num) + ' out of ' + str(self._total_trials))
-        userdata.current_trial = self._trials[self._trial_num]
+        next_trial_num = userdata.current_trial_num + 1
+        userdata.current_trial_num = next_trial_num
+        rospy.loginfo('Trial number ' + str(next_trial_num) + ' out of ' + str(self._total_trials))
+        userdata.current_trial = self._trials[next_trial_num]
         return outcomes.UPDATE_PLAN_NEXT_OBJECT
 
