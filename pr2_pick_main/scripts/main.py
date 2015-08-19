@@ -14,7 +14,8 @@ from state_machine_factory import StateMachineBuilder
 import states
 
 def main(explore = False,
-	     simulation = False,
+	     trial_number = 0,
+         simulation = False,
          plan_grasp = False,
          test_grasp_tool=False,
          debug=False,
@@ -39,6 +40,7 @@ def main(explore = False,
 
     # Whether to step through checkpoints.
     sm.userdata.debug = debug
+    sm.userdata.current_trial_num = trial_number - 1 
 
     # The current bin being attempted.
     sm.userdata.current_bin = None
@@ -110,6 +112,11 @@ if __name__ == '__main__':
         '--explore',
         action='store_true',
         help=('State machine for exploring parameters'))
+    parser.add_argument(
+        '--trial_number',
+        default='0',
+        type=int,
+        help=('Starting trial for data collection.'))
     group.add_argument(
         '--test_drop_off_item',
         action='store_true',
@@ -153,5 +160,5 @@ if __name__ == '__main__':
                       'false. Verify your launch files.')
         rospy.set_param('use_sim_time', False)
 
-    main(args.explore, args.simulation, args.plan_grasp, args.test_grasp_tool,args.debug, args.auto_reset,
+    main(args.explore, args.trial_number, args.simulation, args.plan_grasp, args.test_grasp_tool,args.debug, args.auto_reset,
          args.attempts_per_bin)

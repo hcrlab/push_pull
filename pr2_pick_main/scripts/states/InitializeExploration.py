@@ -24,7 +24,7 @@ class InitializeExploration(smach.State):
             self,
             outcomes=[outcomes.INITIALIZE_SUCCESS, outcomes.INITIALIZE_FAILURE],
             input_keys=['debug'],
-            output_keys=['start_pose', 'is_before', 'current_trial_num'])
+            output_keys=['start_pose', 'is_before'])
 
         self._tts = services['tts']
         self._tuck_arms = services['tuck_arms']
@@ -164,7 +164,6 @@ class InitializeExploration(smach.State):
             self._set_grippers(open_left=False, open_right=False, effort=-1)
         
         userdata.is_before = True
-        userdata.current_trial_num = -1
 
         if userdata.debug:
             raw_input('(Debug) Press enter to continue: ')
