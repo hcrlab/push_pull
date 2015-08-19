@@ -99,8 +99,8 @@ class SenseObject(smach.State):
                     "Please prepare following configuration\n\n" +
                     "_______________________________\n" +
                     "Item: " + str(item_name) + "\n" +
-                    + str(self._positions[position]) + "\n" +
-                    + str(self._orientations[orientation]) + "\n" +
+                    str(self._positions[position]) + "\n" +
+                    str(self._orientations[orientation]) + "\n" +
                     "_______________________________\n" +
                     "Then press Ready")
                 self._interface.ask_choice(message, ['Ready'])
