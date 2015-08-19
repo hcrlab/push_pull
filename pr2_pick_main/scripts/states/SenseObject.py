@@ -102,11 +102,14 @@ class SenseObject(smach.State):
                     "With " + str(self._orientations[orientation]) + "\n" +
                     "_______________________________\n" +
                     "Then press Ready")
+                self._interface.ask_choice(message, ['Ready'])
             else:
                 self.log_message('Starting new trial.' +
                     '. Please prepare object and press Ready.')
+                self._interface.ask_choice(
+                    'Please prepare object and press Ready.',
+                    ['Ready'])
             
-            self._interface.ask_choice(message, ['Ready'])
             self.log_message('Sensing object before tool action.')
         else:
             self.log_message('Sensing object after tool action.')
