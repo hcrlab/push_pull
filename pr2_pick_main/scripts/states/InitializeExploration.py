@@ -11,7 +11,6 @@ import smach
 import tf
 import visualization as viz
 from std_msgs.msg import Header
-
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 class InitializeExploration(smach.State):
