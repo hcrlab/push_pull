@@ -162,7 +162,7 @@ class StateMachineBuilder(object):
                         outcomes.INITIALIZE_FAILURE: outcomes.EXPERIMENT_FAILURE
                     }
                 )
-                smach.UpdatePlan.add(
+                smach.StateMachine.add(
                     states.UpdatePlan.name,
                     states.UpdatePlan(**services),
                     transitions={
