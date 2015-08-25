@@ -463,7 +463,7 @@ class PushAway(RepositionAction):
         application_point = Point(0, 0, 0)
 
         if self.action_type == "front_center_push":
-            application_point.x = self.centroid.x - self.bounding_box.dimensions.x/2.0
+            application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.centroid.y
             application_point.z = self.centroid.z / 2 ## TODO - self.get_param('height_from_center')
         elif self.action_type == "front_side_push_l":
