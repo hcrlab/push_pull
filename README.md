@@ -95,6 +95,17 @@ meteor
 
 Open a browser and point to http://localhost:3000.
 
+## Backing up saved parameters
+
+Open a terminal and do the following.
+
+```
+ssh username@c1
+roscd pr2_pick_contest/
+git commit -am "committing new parameters"
+git push
+```
+
 
 ## Backing up collected data
 
