@@ -105,7 +105,7 @@ class InitializeExploration(smach.State):
 
         shelf_odom = PoseStamped()
         shelf_odom.header.frame_id = 'odom_combined'
-        shelf_odom.pose.position.x = 1.14
+        shelf_odom.pose.position.x = 1.16
         shelf_odom.pose.position.y = 0.0 #0.20
         shelf_odom.pose.position.z = 0.0
         shelf_odom.pose.orientation.x = 0.0
@@ -144,6 +144,9 @@ class InitializeExploration(smach.State):
             child_frame_id='bin_K', )
         self._set_static_tf.wait_for_service()
         self._set_static_tf(transform)
+
+        self._move_torso.wait_for_service()
+        self._move_torso(0.0)
 
         # Take the tool
         rospy.loginfo("Waiting for set grippers service")
