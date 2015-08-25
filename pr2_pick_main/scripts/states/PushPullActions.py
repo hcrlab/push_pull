@@ -442,19 +442,16 @@ class MoveArmStep(RepositionStep):
             success = False
             rospy.loginfo("Ik says it's impossible")
 
-        if self.collision_checking:
-            rospy.loginfo('Collision checking on, using moveit')
-            success = (moveit_move_arm(
-                pose_stamped, 0.001, 0.01, 5, 'left_arm', False,) and success)
-        else:
+        success = (moveit_move_arm(
+            pose_stamped, 0.001, 0.01, 5, 'left_arm', False,) and success)
+
+        if not self.collision_checking:
             rospy.loginfo('Collision checking off, using IK')
-            #success = (move_arm_ik(
-            #    goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM).success and success)
-            success = (moveit_move_arm(
-                pose_stamped, 0.001, 0.01, 5, 'left_arm', False,) and success)
-	    if(success == False):
-		success = (move_arm_ik(
-                	goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM).success and success)
+
+            if(success == False):
+                success = (move_arm_ik(
+                    	goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM).success and success)
+
         return success
 
 

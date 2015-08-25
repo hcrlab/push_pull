@@ -156,16 +156,17 @@ class ExploreToolActions(smach.State):
     def pre_position_tool(self):
           pre_grasp_pose = PoseStamped()
           pre_grasp_pose.header.frame_id = "bin_K"
-          pre_grasp_pose.pose.position.x = -0.40
+          pre_grasp_pose.pose.position.x = -0.35
           pre_grasp_pose.pose.position.y = 0.0
-          pre_grasp_pose.pose.position.z = 0.23
+          pre_grasp_pose.pose.position.z = 0.15
           pre_grasp_pose.pose.orientation.x = 1.0
           pre_grasp_pose.pose.orientation.y = 0.0
           pre_grasp_pose.pose.orientation.z = 0.0
           pre_grasp_pose.pose.orientation.w = 0.0
-          success_pre_grasp = self._moveit_move_arm(pre_grasp_pose, 
+          success_pre_postition = self._moveit_move_arm(pre_grasp_pose,
                                                   0.005, 0.005, 12, 'left_arm',
                                                   False).success
+          return success_pre_postition
 
 
     @handle_service_exceptions(outcomes.TOOL_EXPLORATION_FAILURE)
@@ -178,10 +179,14 @@ class ExploreToolActions(smach.State):
         tool = AttachedCollisionObject()
         tool.object = remove_object
         self._attached_collision_objects.publish(tool)
-        bounding_box = userdata.bounding_box
-        self.pre_position_tool()
         self.add_tool_collision_object()
         self.add_allowable_collision_box(bounding_box)
+
+        bounding_box = userdata.bounding_box
+        success_pre_position = self.pre_position_tool()
+
+        if not success_pre_position:
+            rospy.logwarn("Could not preposition arm for tool use!")
 
         if userdata.is_explore:
             while(True):
