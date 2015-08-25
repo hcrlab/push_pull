@@ -21,7 +21,7 @@ from copy import deepcopy
 
 class Tool(object):
 
-    tool_x_size = 0.15
+    tool_x_size = 0.16
     tool_y_size = 0.01
     tool_z_size = 0.03
 
