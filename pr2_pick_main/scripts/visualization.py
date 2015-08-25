@@ -246,7 +246,7 @@ def publish_point(publisher, frame_id, point, r, g, b, a, marker_id, text=None):
 
     if text is not None:
         marker = Marker()
-        marker.header.frame_id = pose_stamped.header.frame_id
+        marker.header.frame_id = frame_id
         marker.header.stamp = rospy.Time().now()
         marker.ns = MarkerNamespaces.bounding_box
         marker.id = marker_id*2
@@ -265,7 +265,7 @@ def publish_point(publisher, frame_id, point, r, g, b, a, marker_id, text=None):
         marker.text = text
         _publish(publisher, marker)
 
-        
+
 def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
     '''Publishes a marker representing a bounding box.
 
