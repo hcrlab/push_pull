@@ -53,55 +53,6 @@ class RepositionAction(object):
 
     # keep tool this far away from the bin wall
     bin_wall_tolerance = 0.03
-    closest_base_distance_to_shelf = 1.05
-
-    ###############
-    ## ACTION TYPES
-    ###############
-
-    # all_action_parameters = {
-    #     'front_center_push':
-    #         {
-    #             'pushing_distance': 0.08,
-    #             'pre_application_dist': 0.05
-    #         },
-    #     'front_side_push_':
-    #         {
-    #             'pushing_distance': 0.08,
-    #             'pre_application_dist': 0.05,
-    #             'distance_from_side': 0.02
-    #         },
-    #     'side_push_full_contact_':
-    #         {
-    #             'pushing_distance': 0.04,
-    #             'distance_from_side': 0.02,
-    #             'application_height_from_center':0.00,
-    #             'distance_from_back': 0.00
-    #         },
-    #     'side_push_point_contact_':
-    #         {
-    #             'pushing_distance': 0.04,
-    #             'distance_from_side': 0.02,
-    #             'application_height_from_center':0.00,
-    #             'distance_from_front': 0.00
-    #         },
-    #     'top_pull':
-    #         {
-    #             'pulling_distance': 0.08,
-    #             'pre_application_distance': 0.05,
-    #             'contact_point_depth_offset': 0.02,
-    #             'contact_point_down_offset': 0.01,
-    #             'distance_from_top': 0.02
-    #         },
-    #     'top_sideward_pull_':
-    #         {
-    #             'pulling_distance':0.08,
-    #             'pre_application_distance':0.05,
-    #             'contact_point_depth_offset':0.02,
-    #             'contact_point_down_offset':0.01,
-    #             'distance_from_top':0.02
-    #         }
-    #     }
 
     all_action_parameters = None
     all_action_param_mins = None
@@ -229,11 +180,12 @@ class RepositionAction(object):
     def get_action_param_log(self):
         param_log = ActionParams()
         param_log.pushing_distance = Float32(self.get_param('pushing_distance'))
-        param_log.pre_application_dist = Float32(self.get_param('pre_application_dist'))
+        param_log.pre_application_distance = Float32(self.get_param('pre_application_distance'))
         param_log.distance_from_side = Float32(self.get_param('distance_from_side'))
+        param_log.percent_distance_from_side = Float32(self.get_param('percent_distance_from_side'))
         param_log.application_height_from_center = Float32(self.get_param('application_height_from_center'))
-        param_log.distance_from_back = Float32(self.get_param('distance_from_back'))
-        param_log.distance_from_front = Float32(self.get_param('distance_from_front'))
+        param_log.percent_distance_from_back = Float32(self.get_param('percent_distance_from_back'))
+        param_log.percent_distance_from_front = Float32(self.get_param('percent_distance_from_front'))
         param_log.pulling_distance = Float32(self.get_param('pulling_distance'))
         param_log.contact_point_depth_offset = Float32(self.get_param('contact_point_depth_offset'))
         param_log.contact_point_down_offset = Float32(self.get_param('contact_point_down_offset'))
@@ -351,28 +303,23 @@ class RepositionAction(object):
         miny_index2 = ys.index(min(ys_nomin))
         maxy_index2 = ys.index(max(ys_nomax))
 
-        ## Now, maxy_index, maxy_index2 are on the left
-        ## and miny_index, miny_index2 are on the right
-        print 'maxy_index', maxy_index
-        print 'maxy_index2', maxy_index2
-        print 'miny_index', miny_index
-        print 'miny_index2', miny_index2
-
+        ## Now, maxy_index, maxy_index2 are on the right
+        ## and miny_index, miny_index2 are on the left
         ends = [None, None, None, None]
 
         if (xs[maxy_index] < xs[maxy_index2]):
-            ends[0] = corners[maxy_index]
-            ends[2] = corners[maxy_index2]
+            ends[1] = corners[maxy_index]
+            ends[3] = corners[maxy_index2]
         else:
-            ends[2] = corners[maxy_index]
-            ends[0] = corners[maxy_index2]
+            ends[3] = corners[maxy_index]
+            ends[1] = corners[maxy_index2]
 
         if (xs[miny_index] < xs[miny_index2]):
-            ends[1] = corners[miny_index]
-            ends[3] = corners[miny_index2]
+            ends[0] = corners[miny_index]
+            ends[2] = corners[miny_index2]
         else:
-            ends[3] = corners[miny_index]
-            ends[1] = corners[miny_index2]
+            ends[2] = corners[miny_index]
+            ends[0] = corners[miny_index2]
 
         for i in range(4):
             viz.publish_point(
@@ -503,19 +450,20 @@ class PushAway(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
+        front_length = self.ends[0].y - self.ends[1].y
 
         if self.action_type == "front_center_push":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.centroid.y
-            application_point.z = self.centroid.z / 2 ## TODO - self.get_param('application_height_from_center')
+            application_point.z = self.centroid.z / 2 - self.get_param('application_height_from_center')
         elif self.action_type == "front_side_push_l":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
-            application_point.y = self.ends[1].y - self.get_param('distance_from_side')
-            application_point.z = self.centroid.z / 2
+            application_point.y = self.ends[1].y - self.get_param('percent_distance_from_side')*front_length
+            application_point.z = self.centroid.z / 2 - self.get_param('application_height_from_center')
         elif self.action_type == "front_side_push_r":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
-            application_point.y =  self.ends[0].y + self.get_param('distance_from_side')
-            application_point.z = self.centroid.z / 2
+            application_point.y =  self.ends[0].y + self.get_param('percent_distance_from_side')*front_length
+            application_point.z = self.centroid.z / 2 - self.get_param('application_height_from_center')
         return application_point
 
     def build_trajectory(self):
@@ -531,7 +479,7 @@ class PushAway(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_dist'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_distance'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -547,7 +495,7 @@ class PushAway(RepositionAction):
         )
         post_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_dist'),
+                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_distance'),
                 y=self.cap_y(self.application_point.y),
                 z=self.application_point.z,
             ),
@@ -600,19 +548,20 @@ class PushSideways(RepositionAction):
             else:
                 target_end = back_end
 
+        side_length = back_end.x - front_end.x
         if(self.action_type == "side_push_point_contact_r" or 
             self.action_type == "side_push_point_contact_l"):
             target_end = front_end
-            distance_x = front_end.x - Tool.tool_length + self.get_param('distance_from_front')
+            distance_x = front_end.x - Tool.tool_length + self.get_param('percent_distance_from_front')*side_length
         else:
-            distance_x = back_end.x - Tool.tool_length - self.get_param('distance_from_back')
+            distance_x = back_end.x - Tool.tool_length - self.get_param('percent_distance_from_back')*side_length
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
         self.frame = self.bounding_box.pose.header.frame_id
         start_pose = Pose(
             position=Point(
-                x=distance_x - 0.10, # TODO: - self.get_param('pre_application_distance') instead of 0.10
+                x=distance_x - self.get_param('pre_application_distance')
                 y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
                 z=self.centroid.z + self.get_param('application_height_from_center')
             ),
