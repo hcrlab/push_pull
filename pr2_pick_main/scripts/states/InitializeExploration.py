@@ -145,8 +145,8 @@ class InitializeExploration(smach.State):
         self._set_static_tf.wait_for_service()
         self._set_static_tf(transform)
 
-        self._move_torso.wait_for_service()
-        self._move_torso(0.0)
+        #self._move_torso.wait_for_service()
+        #self._move_torso(0.0)
 
         # Take the tool
         rospy.loginfo("Waiting for set grippers service")
