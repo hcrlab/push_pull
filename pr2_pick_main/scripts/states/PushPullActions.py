@@ -465,7 +465,7 @@ class PushAway(RepositionAction):
         if self.action_type == "front_center_push":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.centroid.y
-            application_point.z = self.centroid.z / 2 ## TODO - self.get_param('height_from_center')
+            application_point.z = self.centroid.z / 2 ## TODO - self.get_param('application_height_from_center')
         elif self.action_type == "front_side_push_l":
             application_point.x = self.ends[1].x
             application_point.y = self.ends[1].y - self.get_param('distance_from_side')
@@ -564,14 +564,14 @@ class PushSideways(RepositionAction):
             self.action_type == "side_push_point_contact_l"):
             distance_x =  front_end.x - Tool.tool_length + self.get_param('distance_from_front')
         else:
-            distance_x = back_end.x - Tool.tool_length + self.get_param('distance_from_back')
+            distance_x = back_end.x - Tool.tool_length - self.get_param('distance_from_back')
 
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
         self.frame = self.bounding_box.pose.header.frame_id
         start_pose = Pose(
             position=Point(
-                x=distance_x - 0.10,
+                x=distance_x - 0.10, # TODO: - self.get_param('pre_application_distance') instead of 0.10
                 y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
                 z=self.centroid.z + self.get_param('application_height_from_center')
             ),
