@@ -461,16 +461,36 @@ class PushAway(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        if self.action_type == "front_center_push": 
-            application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0)
+        ## Left push
+        back_end = self.ends[3]
+        front_end = self.ends[1]
+        if(self.ends[3].y < self.ends[1].y):
+            rospy.loginfo("3 < 1")
+            target_end = self.ends[3]
+        else:
+            target_end = self.ends[1]    
+        push_direction_sign = 1
+    else:
+        ## Right push
+        back_end = self.ends[2]
+        front_end = self.ends[0]
+        if(self.ends[2].y < self.ends[0].y):
+            rospy.loginfo("2 < 0")
+            target_end = self.ends[2]
+        else:
+            target_end = self.ends[0]  
+        object_depth = math.abs(self.ends[0].x-self.ends[2].x)
+
+        if self.action_type == "front_center_push":
+            application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.centroid.y
-            application_point.z = self.centroid.z / 2
+            application_point.z = self.centroid.z / 2 ## TODO - self.get_param('height_from_center')
         elif self.action_type == "front_side_push_l":
-            application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0)
-            application_point.y = self.ends[3].y - self.get_param('distance_from_side')
+            application_point.x = self.ends[1].x
+            application_point.y = self.ends[1].y - self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         elif self.action_type == "front_side_push_r":
-            application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0)
+            application_point.x = self.ends[0].x
             application_point.y =  self.ends[0].y + self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         return application_point
