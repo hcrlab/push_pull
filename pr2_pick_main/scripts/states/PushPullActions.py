@@ -561,7 +561,7 @@ class PushSideways(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         start_pose = Pose(
             position=Point(
-                x=distance_x - self.get_param('pre_application_distance')
+                x=distance_x - self.get_param('pre_application_distance'),
                 y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
                 z=self.centroid.z + self.get_param('application_height_from_center')
             ),
