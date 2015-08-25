@@ -125,7 +125,7 @@ class InitializeExploration(smach.State):
     
         # Publish static transform for bin
         shelf_depth = 0.87
-        bottom_row_z = .806
+        bottom_row_z = 0.82 #0.806
         center_column_y = 0.0
 
         bin_translation = Vector3(
