@@ -300,10 +300,10 @@ class RepositionAction(object):
         '''
         Get the corners of the bounding box from the given descriptor.
         return list of corners
-           ends[0]: front corner of first end
-           ends[1]: front corner of second end
-           ends[2]: rear corner of first end
-           ends[3]: rear corner of second end
+           ends[0]: front corner of right end
+           ends[1]: front corner of left end
+           ends[2]: rear corner of right end
+           ends[3]: rear corner of left end
         '''
 
         # First, figure out whether the y-axis points roughly along or opposite
@@ -330,7 +330,7 @@ class RepositionAction(object):
         position = bounding_box.pose.pose.position
         sin_yaw = math.sin(yaw)
         cos_yaw = math.cos(yaw)
-        ends = [
+        corners = [
             Point(
                 x=point.x * cos_yaw - point.y * sin_yaw + position.x,
                 y=point.x * sin_yaw + point.y * cos_yaw + position.y,
@@ -338,6 +338,41 @@ class RepositionAction(object):
             )
             for point in ends_in_item_frame
         ]
+
+        # Reorder the corners so they are always consistent
+        xs = [corners[0].x, corners[1].x, corners[2].x, corners[3].x]
+        ys = [corners[0].y, corners[1].y, corners[2].y, corners[3].y]
+        ys_nomax = list(ys)
+        ys_nomin = list(ys)
+        miny_index = ys.index(min(ys))
+        maxy_index = ys.index(max(ys))
+        ys_nomin.remove(min(ys))
+        ys_nomax.remove(max(ys))
+        miny_index2 = ys.index(min(ys_nomin))
+        maxy_index2 = ys.index(max(ys_nomax))
+
+        ## Now, maxy_index, maxy_index2 are on the left
+        ## and miny_index, miny_index2 are on the right
+        print 'maxy_index', maxy_index
+        print 'maxy_index2', maxy_index2
+        print 'miny_index', miny_index
+        print 'miny_index2', miny_index2
+
+        ends = [None, None, None, None]
+
+        if (xs[maxy_index] < xs[maxy_index2]):
+            ends[0] = corners[maxy_index]
+            ends[2] = corners[maxy_index2]
+        else:
+            ends[2] = corners[maxy_index]
+            ends[0] = corners[maxy_index2]
+
+        if (xs[miny_index] < xs[miny_index2]):
+            ends[1] = corners[miny_index]
+            ends[3] = corners[miny_index2]
+        else:
+            ends[3] = corners[miny_index]
+            ends[1] = corners[miny_index2]
 
         for i in range(4):
             viz.publish_point(
@@ -474,11 +509,11 @@ class PushAway(RepositionAction):
             application_point.y = self.centroid.y
             application_point.z = self.centroid.z / 2 ## TODO - self.get_param('application_height_from_center')
         elif self.action_type == "front_side_push_l":
-            application_point.x = self.ends[1].x
+            application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.ends[1].y - self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         elif self.action_type == "front_side_push_r":
-            application_point.x = self.ends[0].x
+            application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y =  self.ends[0].y + self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         return application_point
@@ -548,28 +583,27 @@ class PushSideways(RepositionAction):
         if(self.action_type == "side_push_point_contact_l" or 
             self.action_type == "side_push_full_contact_l"):
             ## Left push
-            back_end = self.ends[3]
             front_end = self.ends[1]
-            if(self.ends[3].y < self.ends[1].y):
-                rospy.loginfo("3 < 1")
-                target_end = self.ends[3]
-            else:
-                target_end = self.ends[1]    
+            back_end = self.ends[3]
             push_direction_sign = 1
+            if front_end.y < back_end.y:
+                target_end = front_end
+            else:
+                target_end = back_end
         else:
             ## Right push
-            back_end = self.ends[2]
             front_end = self.ends[0]
-            if(self.ends[2].y < self.ends[0].y):
-                rospy.loginfo("2 < 0")
-                target_end = self.ends[2]
-            else:
-                target_end = self.ends[0]  
+            back_end = self.ends[2]
             push_direction_sign = -1
+            if front_end.y > back_end.y:
+                target_end = front_end
+            else:
+                target_end = back_end
 
         if(self.action_type == "side_push_point_contact_r" or 
             self.action_type == "side_push_point_contact_l"):
-            distance_x =  front_end.x - Tool.tool_length + self.get_param('distance_from_front')
+            target_end = front_end
+            distance_x = front_end.x - Tool.tool_length + self.get_param('distance_from_front')
         else:
             distance_x = back_end.x - Tool.tool_length - self.get_param('distance_from_back')
 
@@ -696,16 +730,6 @@ class PullSideways(RepositionAction):
     Parent class for actions that push away on some point of the object.
     Child classes are parameterized by where on the object they're pushing.
     '''
-
-    ## ACTION PARAMETERS
-    param_names = ['pre_application_distance',
-    'distance_from_top',
-    'contact_point_down_offset',
-    'pulling_distance',
-    'contact_point_depth_offset']
-    param_values = [0.05, 0.02, 0.01, 0.08, 0.02]
-    param_mins = [m-0.04 for m in param_values]
-    param_maxs = [m+0.04 for m in param_values]
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
