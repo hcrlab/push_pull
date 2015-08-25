@@ -180,11 +180,10 @@ class ExploreToolActions(smach.State):
         tool.object = remove_object
         self._attached_collision_objects.publish(tool)
         self.add_tool_collision_object()
+        bounding_box = userdata.bounding_box
         self.add_allowable_collision_box(bounding_box)
 
-        bounding_box = userdata.bounding_box
         success_pre_position = self.pre_position_tool()
-
         if not success_pre_position:
             rospy.logwarn("Could not preposition arm for tool use!")
 
