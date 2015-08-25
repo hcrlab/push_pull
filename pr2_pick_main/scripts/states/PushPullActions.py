@@ -461,25 +461,6 @@ class PushAway(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        ## Left push
-        back_end = self.ends[3]
-        front_end = self.ends[1]
-        if(self.ends[3].y < self.ends[1].y):
-            rospy.loginfo("3 < 1")
-            target_end = self.ends[3]
-        else:
-            target_end = self.ends[1]    
-        push_direction_sign = 1
-    else:
-        ## Right push
-        back_end = self.ends[2]
-        front_end = self.ends[0]
-        if(self.ends[2].y < self.ends[0].y):
-            rospy.loginfo("2 < 0")
-            target_end = self.ends[2]
-        else:
-            target_end = self.ends[0]  
-        object_depth = math.abs(self.ends[0].x-self.ends[2].x)
 
         if self.action_type == "front_center_push":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
