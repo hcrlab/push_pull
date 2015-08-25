@@ -462,6 +462,7 @@ class PushAway(RepositionAction):
             application_point.y = self.ends[1].y + self.get_param('percent_distance_from_side')*front_length
             application_point.z = self.centroid.z + self.get_param('percent_height_from_center')*object_height
         elif self.action_type == "front_side_push_r":
+            percent = self.get_param('percent_distance_from_side')
             application_point.x = ((1-percent)*self.ends[0].x + percent*self.ends[1].x)
             application_point.y =  self.ends[0].y - self.get_param('percent_distance_from_side')*front_length
             application_point.z = self.centroid.z + self.get_param('percent_height_from_center')*object_height
