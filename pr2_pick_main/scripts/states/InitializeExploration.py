@@ -148,23 +148,26 @@ class InitializeExploration(smach.State):
         #self._move_torso.wait_for_service()
         #self._move_torso(0.0)
 
-        # Take the tool
-        rospy.loginfo("Waiting for set grippers service")
-        self._set_grippers.wait_for_service()
-        grippers_open = self._set_grippers(open_left=True, open_right=False, effort =-1)
+        debug = True
 
-        ################
-        self.log_message('Please hand me the tool.')
-        self._interface.ask_choice('Press OK when ready to hand tool.', ['OK'])
-        self._interface.display_message('Hand the tool now', duration=3, has_countdown=True)
-        self.log_message('Taking tool.')
-        ################
+        if not debug:
+	        # Take the tool
+	        rospy.loginfo("Waiting for set grippers service")
+	        self._set_grippers.wait_for_service()
+	        grippers_open = self._set_grippers(open_left=True, open_right=False, effort =-1)
 
-        grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)
-        gripper_states = self._get_grippers()
-        if not gripper_states.left_open:
-            rospy.logwarn('Grippers did not close properly, will try closing again.')
-            self._set_grippers(open_left=False, open_right=False, effort=-1)
+	        ################
+	        self.log_message('Please hand me the tool.')
+	        self._interface.ask_choice('Press OK when ready to hand tool.', ['OK'])
+	        self._interface.display_message('Hand the tool now', duration=3, has_countdown=True)
+	        self.log_message('Taking tool.')
+	        ################
+
+	        grippers_closed = self._set_grippers(open_left=False, open_right=False, effort=-1)
+	        gripper_states = self._get_grippers()
+	        if not gripper_states.left_open:
+	            rospy.logwarn('Grippers did not close properly, will try closing again.')
+	            self._set_grippers(open_left=False, open_right=False, effort=-1)
         
         userdata.is_before = True
 
