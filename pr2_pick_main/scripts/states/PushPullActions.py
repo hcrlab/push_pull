@@ -183,7 +183,7 @@ class RepositionAction(object):
         param_log.pre_application_distance = Float32(self.get_param('pre_application_distance'))
         param_log.distance_from_side = Float32(self.get_param('distance_from_side'))
         param_log.percent_distance_from_side = Float32(self.get_param('percent_distance_from_side'))
-        param_log.application_height_from_center = Float32(self.get_param('application_height_from_center'))
+        param_log.percent_height_from_center = Float32(self.get_param('percent_height_from_center'))
         param_log.percent_distance_from_back = Float32(self.get_param('percent_distance_from_back'))
         param_log.percent_distance_from_front = Float32(self.get_param('percent_distance_from_front'))
         param_log.pulling_distance = Float32(self.get_param('pulling_distance'))
@@ -451,19 +451,19 @@ class PushAway(RepositionAction):
     def get_application_point(self):
         application_point = Point(0, 0, 0)
         front_length = self.ends[0].y - self.ends[1].y
-
+        object_height = self.bounding_box.dimensions.z
         if self.action_type == "front_center_push":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.centroid.y
-            application_point.z = self.centroid.z / 2 - self.get_param('application_height_from_center')
+            application_point.z = self.centroid.z / 2 - self.get_param('percent_height_from_center')*object_height
         elif self.action_type == "front_side_push_l":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.ends[1].y - self.get_param('percent_distance_from_side')*front_length
-            application_point.z = self.centroid.z / 2 - self.get_param('application_height_from_center')
+            application_point.z = self.centroid.z / 2 - self.get_param('percent_height_from_center')*object_height
         elif self.action_type == "front_side_push_r":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y =  self.ends[0].y + self.get_param('percent_distance_from_side')*front_length
-            application_point.z = self.centroid.z / 2 - self.get_param('application_height_from_center')
+            application_point.z = self.centroid.z / 2 - self.get_param('percent_height_from_center')*object_height
         return application_point
 
     def build_trajectory(self):
@@ -556,6 +556,8 @@ class PushSideways(RepositionAction):
         else:
             distance_x = back_end.x - Tool.tool_length - self.get_param('percent_distance_from_back')*side_length
 
+        object_height = self.bounding_box.dimensions.z
+
         # construct pre_application pose, application pose, and final pose
         ## be extra careful on edge bins
         self.frame = self.bounding_box.pose.header.frame_id
@@ -563,7 +565,7 @@ class PushSideways(RepositionAction):
             position=Point(
                 x=distance_x - self.get_param('pre_application_distance'),
                 y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
-                z=self.centroid.z + self.get_param('application_height_from_center')
+                z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
             orientation=orientation,
         )
@@ -572,7 +574,7 @@ class PushSideways(RepositionAction):
             position=Point(
                 x=distance_x,
                 y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
-                z=self.centroid.z + self.get_param('application_height_from_center')
+                z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
             orientation=orientation,
         )
@@ -581,7 +583,7 @@ class PushSideways(RepositionAction):
             position=Point(
                 x=distance_x,
                 y=target_end.y - (self.get_param('pushing_distance') * push_direction_sign),
-                z=self.centroid.z + self.get_param('application_height_from_center')
+                z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
             orientation=orientation,
         )
