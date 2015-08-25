@@ -345,7 +345,7 @@ class RepositionAction(object):
                 self.frame,
                 ends[i],
                 0.0, 1.0, 0.5, 0.5,
-                self.pose_id + idx,
+                self.pose_id + i,
                 str(i+1)
             )
 
