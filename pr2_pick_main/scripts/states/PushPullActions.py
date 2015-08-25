@@ -339,6 +339,16 @@ class RepositionAction(object):
             for point in ends_in_item_frame
         ]
 
+        for i in range(4):
+            viz.publish_named_point(
+                self._markers,
+                self.frame,
+                ends[i],
+                0.0, 1.0, 0.5, 0.5,
+                self.pose_id + idx,
+                str(i+1)
+            )
+
         return ends
 
     def build_trajectory(self):
@@ -614,7 +624,7 @@ class PullForward(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        application_point.x = self.centroid.x - self.get_param('contact_point_depth_offset')
+        application_point.x = self.centroid.x + self.get_param('contact_point_depth_offset')
         application_point.y = self.centroid.y
         application_point.z = self.centroid.z + self.bounding_box.dimensions.z / 2.0
         return application_point

@@ -244,6 +244,29 @@ def publish_point(publisher, frame_id, point, r, g, b, a, marker_id):
     publish_bounding_box(publisher, pose, 0.01, 0.01, 0.01, r, g, b, a, marker_id)
 
 
+def publish_named_point(publisher, frame_id, point, r, g, b, a, marker_id, text):
+    ''' Publish text '''
+    marker = Marker()
+    marker.header.frame_id = pose_stamped.header.frame_id
+    marker.header.stamp = rospy.Time().now()
+    marker.ns = MarkerNamespaces.bounding_box
+    marker.id = marker_id*2
+    marker.type = Marker.TEXT_VIEW_FACING
+    marker.action = Marker.ADD
+    marker.pose.position = point
+    marker.pose.orientation = Quaternion(0.0, 0, 0, 0)
+    marker.scale.x = 1
+    marker.scale.y = 1
+    marker.scale.z = 1
+    marker.color.r = r
+    marker.color.g = g
+    marker.color.b = b
+    marker.color.a = a
+    marker.lifetime = rospy.Duration()
+    marker.text = text
+    _publish(publisher, marker)
+    return marker
+
 def publish_pose(publisher, pose_stamped, r, g, b, a, marker_id):
     '''Publishes a marker representing a bounding box.
 
