@@ -381,7 +381,7 @@ class RepositionAction(object):
                 ends[i],
                 0.0, 1.0, 0.5, 0.9,
                 self.pose_id + i,
-                str(i+1)
+                str(i)
             )
 
         return ends
