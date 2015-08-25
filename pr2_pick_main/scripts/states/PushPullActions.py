@@ -143,10 +143,10 @@ class RepositionAction(object):
             action = PushAway(bounding_box, action_type, **services)
 
         # Side push with full surface contact
-        elif(action_type == 'side_push_full_contact_r' or 
-            action_type == 'side_push_full_contact_l' or 
-            action_type == 'side_push_point_contact_r' or 
-            action_type == 'side_push_point_contact_l'):
+        elif(action_type == 'side_push_r' or 
+            action_type == 'side_push_l' or 
+            action_type == 'side_rotate_r' or 
+            action_type == 'side_rotate_l'):
 
             action = PushSideways(bounding_box, action_type, **services)
 
@@ -184,7 +184,7 @@ class RepositionAction(object):
         param_log.distance_from_side = Float32(self.get_param('distance_from_side'))
         param_log.percent_distance_from_side = Float32(self.get_param('percent_distance_from_side'))
         param_log.percent_height_from_center = Float32(self.get_param('percent_height_from_center'))
-        param_log.percent_distance_from_back = Float32(self.get_param('percent_distance_from_back'))
+        param_log.distance_from_back = Float32(self.get_param('distance_from_back'))
         param_log.percent_distance_from_front = Float32(self.get_param('percent_distance_from_front'))
         param_log.pulling_distance = Float32(self.get_param('pulling_distance'))
         param_log.contact_point_depth_offset = Float32(self.get_param('contact_point_depth_offset'))
@@ -455,15 +455,16 @@ class PushAway(RepositionAction):
         if self.action_type == "front_center_push":
             application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
             application_point.y = self.centroid.y
-            application_point.z = self.centroid.z / 2 - self.get_param('percent_height_from_center')*object_height
+            application_point.z = self.centroid.z + self.get_param('percent_height_from_center')*object_height
         elif self.action_type == "front_side_push_l":
-            application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
-            application_point.y = self.ends[1].y - self.get_param('percent_distance_from_side')*front_length
-            application_point.z = self.centroid.z / 2 - self.get_param('percent_height_from_center')*object_height
+            percent = self.get_param('percent_distance_from_side')
+            application_point.x = (percent*self.ends[0].x + (1-percent)*self.ends[1].x)
+            application_point.y = self.ends[1].y + self.get_param('percent_distance_from_side')*front_length
+            application_point.z = self.centroid.z + self.get_param('percent_height_from_center')*object_height
         elif self.action_type == "front_side_push_r":
-            application_point.x = ((self.ends[0].x + self.ends[1].x) * 0.5)
-            application_point.y =  self.ends[0].y + self.get_param('percent_distance_from_side')*front_length
-            application_point.z = self.centroid.z / 2 - self.get_param('percent_height_from_center')*object_height
+            application_point.x = ((1-percent)*self.ends[0].x + percent*self.ends[1].x)
+            application_point.y =  self.ends[0].y - self.get_param('percent_distance_from_side')*front_length
+            application_point.z = self.centroid.z + self.get_param('percent_height_from_center')*object_height
         return application_point
 
     def build_trajectory(self):
@@ -528,33 +529,33 @@ class PushSideways(RepositionAction):
 
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
         
-        if(self.action_type == "side_push_point_contact_l" or 
-            self.action_type == "side_push_full_contact_l"):
+        if(self.action_type == "side_rotate_l" or 
+            self.action_type == "side_push_l"):
             ## Left push
             front_end = self.ends[1]
             back_end = self.ends[3]
             push_direction_sign = 1
             if front_end.y < back_end.y:
-                target_end = front_end
+                target_y = front_end.y
             else:
-                target_end = back_end
+                target_y = back_end.y
         else:
             ## Right push
             front_end = self.ends[0]
             back_end = self.ends[2]
             push_direction_sign = -1
             if front_end.y > back_end.y:
-                target_end = front_end
+                target_y = front_end.y
             else:
-                target_end = back_end
+                target_y = back_end.y
 
         side_length = back_end.x - front_end.x
-        if(self.action_type == "side_push_point_contact_r" or 
-            self.action_type == "side_push_point_contact_l"):
-            target_end = front_end
+        if(self.action_type == "side_rotate_r" or 
+            self.action_type == "side_rotate_l"):
+            target_y = front_end.y
             distance_x = front_end.x - Tool.tool_length + self.get_param('percent_distance_from_front')*side_length
         else:
-            distance_x = back_end.x - Tool.tool_length - self.get_param('percent_distance_from_back')*side_length
+            distance_x = back_end.x - Tool.tool_length + self.get_param('distance_from_back')
 
         object_height = self.bounding_box.dimensions.z
 
@@ -564,7 +565,7 @@ class PushSideways(RepositionAction):
         start_pose = Pose(
             position=Point(
                 x=distance_x - self.get_param('pre_application_distance'),
-                y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
+                y=self.cap_y(target_y + (self.get_param('distance_from_side') * push_direction_sign)),
                 z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
             orientation=orientation,
@@ -573,7 +574,7 @@ class PushSideways(RepositionAction):
         side_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=self.cap_y(target_end.y + (self.get_param('distance_from_side') * push_direction_sign)),
+                y=self.cap_y(target_y + (self.get_param('distance_from_side') * push_direction_sign)),
                 z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
             orientation=orientation,
@@ -582,7 +583,7 @@ class PushSideways(RepositionAction):
         push_pose = Pose(
             position=Point(
                 x=distance_x,
-                y=target_end.y - (self.get_param('pushing_distance') * push_direction_sign),
+                y=target_y - (self.get_param('pushing_distance') * push_direction_sign),
                 z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
             orientation=orientation,
@@ -684,7 +685,7 @@ class PullSideways(RepositionAction):
 
     def get_application_point(self):
         application_point = Point(0, 0, 0)
-        application_point.x = self.centroid.x - self.get_param('contact_point_depth_offset')
+        application_point.x = self.centroid.x + self.get_param('contact_point_depth_offset')
         application_point.y = self.centroid.y
         application_point.z = self.centroid.z + self.bounding_box.dimensions.z / 2.0
         return application_point

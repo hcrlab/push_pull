@@ -3,7 +3,7 @@ std_msgs/Float32 pre_application_distance
 std_msgs/Float32 distance_from_side
 std_msgs/Float32 percent_distance_from_side
 std_msgs/Float32 percent_height_from_center
-std_msgs/Float32 percent_distance_from_back
+std_msgs/Float32 distance_from_back
 std_msgs/Float32 percent_distance_from_front
 std_msgs/Float32 pulling_distance
 std_msgs/Float32 contact_point_depth_offset
