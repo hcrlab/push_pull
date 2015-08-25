@@ -21,7 +21,7 @@ from copy import deepcopy
 
 class Tool(object):
 
-    tool_x_size = 0.14
+    tool_x_size = 0.15
     tool_y_size = 0.01
     tool_z_size = 0.03
 
@@ -462,15 +462,15 @@ class PushAway(RepositionAction):
     def get_application_point(self):
         application_point = Point(0, 0, 0)
         if self.action_type == "front_center_push": 
-            application_point.x = self.centroid.x  
+            application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0)
             application_point.y = self.centroid.y
             application_point.z = self.centroid.z / 2
         elif self.action_type == "front_side_push_l":
-            application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0) + 0.02
+            application_point.x = ((self.centroid.x + self.ends[3].x) / 2.0)
             application_point.y = self.ends[3].y - self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         elif self.action_type == "front_side_push_r":
-            application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0) + 0.02
+            application_point.x = ((self.centroid.x + self.ends[0].x) / 2.0)
             application_point.y =  self.ends[0].y + self.get_param('distance_from_side')
             application_point.z = self.centroid.z / 2
         return application_point
