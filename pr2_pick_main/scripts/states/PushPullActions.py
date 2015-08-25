@@ -340,7 +340,7 @@ class RepositionAction(object):
         ]
 
         for i in range(4):
-            viz.publish_named_point(
+            viz.publish_point(
                 self._markers,
                 self.frame,
                 ends[i],
