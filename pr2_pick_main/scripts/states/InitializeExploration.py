@@ -146,7 +146,7 @@ class InitializeExploration(smach.State):
         self._set_static_tf(transform)
 
         self._move_torso.wait_for_service()
-        self._move_torso(0.15, True)
+        self._move_torso(0.10, True)
 
         # TODO: remove bool; this is just for not having to constantly hand the tool during debugging
         retake_tool = False
