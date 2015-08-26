@@ -148,9 +148,9 @@ class InitializeExploration(smach.State):
         #self._move_torso.wait_for_service()
         #self._move_torso(0.0)
 
-        debug = True
-
-        if not debug:
+        # TODO: remove bool; this is just for not having to constantly hand the tool during debugging
+        retake_tool = False
+        if not retake_tool:
 	        # Take the tool
 	        rospy.loginfo("Waiting for set grippers service")
 	        self._set_grippers.wait_for_service()
