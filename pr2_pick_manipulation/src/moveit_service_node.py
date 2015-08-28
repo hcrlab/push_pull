@@ -8,6 +8,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import geometry_msgs.msg
 import moveit_commander
 import moveit_msgs.msg
+from moveit_msgs.msg import RobotTrajectory
 import rospy
 import sys
 import tf
@@ -32,6 +33,51 @@ class ArmMover:
             'r_arm_controller/joint_trajectory_action', JointTrajectoryAction)
         self._l_joint_traj_action = SimpleActionClient(
             'l_arm_controller/joint_trajectory_action', JointTrajectoryAction)
+
+        self._max_acc = 0.7
+        self._max_vel = 0.7
+
+    def scale_trajectory_speed(self, traj, scale):
+        # Create a new trajectory object
+        new_traj = RobotTrajectory()
+       
+        # Initialize the new trajectory to be the same as the planned trajectory
+        new_traj.joint_trajectory = traj.joint_trajectory
+       
+        # Get the number of joints involved
+        n_joints = len(traj.joint_trajectory.joint_names)
+       
+        # Get the number of points on the trajectory
+        n_points = len(traj.joint_trajectory.points)
+        
+        # Store the trajectory points
+        points = list(traj.joint_trajectory.points)
+       
+        # Cycle through all points and scale the time from start, speed and acceleration
+        for i in range(n_points):
+            point = JointTrajectoryPoint()
+            point.time_from_start = traj.joint_trajectory.points[i].time_from_start / scale
+            point.velocities = list(traj.joint_trajectory.points[i].velocities)
+            point.accelerations = list(traj.joint_trajectory.points[i].accelerations)
+            point.positions = traj.joint_trajectory.points[i].positions
+                         
+            for j in range(n_joints):
+                vel = point.velocities[j] * scale
+                acc = point.accelerations[j] * scale * scale
+                if vel < self._max_vel and acc < self._max_acc:
+                    point.velocities[j] = vel
+                    point.accelerations[j] = acc
+                   
+                rospy.loginfo("Velocity: " + str( point.velocities[j]))
+                rospy.loginfo("Acceleration: " + str( point.accelerations[j]))
+            
+            points[i] = point
+
+        # Assign the modified points to the new trajectory
+        new_traj.joint_trajectory.points = points
+
+        # Return the new trajecotry
+        return new_traj
 
     def move_arm(self, req):
         plan = None
@@ -78,7 +124,8 @@ class ArmMover:
                 plan = group.plan()
 
                 if not req.plan_only:
-                    success = group.go(wait=True)
+                    success = group.execute(self.scale_trajectory_speed(plan, req.speed))
+                    # success = group.go(wait=True)
                 else:
                     if plan.joint_trajectory.points:
                         success = True

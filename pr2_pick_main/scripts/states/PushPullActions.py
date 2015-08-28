@@ -385,7 +385,7 @@ class MoveArmStep(RepositionStep):
     Can parameterize for collision checking (moveit move group) or
     no collision checking (moveit ik).
     '''
-    def __init__(self, hand_pose, frame, collision_checking):
+    def __init__(self, hand_pose, frame, collision_checking, speed=1.0):
         self.hand_pose = hand_pose
         self.frame = frame
         self.collision_checking = collision_checking
@@ -425,14 +425,14 @@ class MoveArmStep(RepositionStep):
             rospy.loginfo("Ik says it's impossible")
 
         success = (moveit_move_arm(
-            pose_stamped, 0.001, 0.01, 5, 'left_arm', False,) and success)
+            pose_stamped, 0.001, 0.01, 5, 'left_arm', False, 0.75) and success)
 
         if not self.collision_checking:
-            rospy.loginfo('Collision checking off, using IK')
 
             if(success == False):
+            	rospy.loginfo('Collision checking off, using IK')
                 success = (move_arm_ik(
-                    	goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM).success and success)
+                    	goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM, duration=6.0).success and success)
 
         return success
 
@@ -618,47 +618,49 @@ class PullForward(RepositionAction):
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
 
-        quaternion = tf.transformations.quaternion_from_euler(math.pi / 2 , 0.0, 0.0)
+        tool_pitch = math.pi / 9
+        quaternion = tf.transformations.quaternion_from_euler(math.pi / 2 , tool_pitch, 0.0)
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
         self.frame = self.bounding_box.pose.header.frame_id
-
+        x_offset = Tool.tool_length * math.cos(tool_pitch)
+	z_offset = Tool.tool_length * math.sin(tool_pitch)
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_distance'),
+                x=self.application_point.x - x_offset - self.get_param('pre_application_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z + self.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top') + z_offset,
             ),
             orientation=orientation,
         )
         above_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length,
+                x=self.application_point.x - x_offset,
                 y=self.application_point.y,
-                z=self.application_point.z + self.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top') + z_offset,
             ),
             orientation=orientation,
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length,
+                x=self.application_point.x - x_offset,
                 y=self.application_point.y,
-                z=self.application_point.z - self.get_param('contact_point_down_offset'),
+                z=self.application_point.z - self.get_param('contact_point_down_offset') + z_offset,
             ),
             orientation=orientation,
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - self.get_param('pulling_distance'),
+                x=self.application_point.x - x_offset - self.get_param('pulling_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z - self.get_param('contact_point_down_offset'),
+                z=self.application_point.z - self.get_param('contact_point_down_offset') + z_offset,
             ),
             orientation=orientation,
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - self.get_param('pulling_distance'),
+                x=self.application_point.x - x_offset - self.get_param('pulling_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z + self.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top') + z_offset,
             ),
             orientation=orientation,
         )
@@ -695,9 +697,12 @@ class PullSideways(RepositionAction):
         '''
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
-        quaternion = tf.transformations.quaternion_from_euler(math.pi / 2 , 0.0, 0.0)
+        tool_pitch = math.pi / 9
+        quaternion = tf.transformations.quaternion_from_euler(math.pi / 2 , tool_pitch, 0.0)
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
         self.frame = self.bounding_box.pose.header.frame_id
+        x_offset = Tool.tool_length * math.cos(tool_pitch)
+	z_offset = Tool.tool_length * math.sin(tool_pitch)
 
         if(self.action_type == "top_sideward_pull_l"):
             ## Left pull
@@ -708,41 +713,41 @@ class PullSideways(RepositionAction):
 
         pre_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length - self.get_param('pre_application_distance'),
+                x=self.application_point.x - x_offset - self.get_param('pre_application_distance'),
                 y=self.application_point.y,
-                z=self.application_point.z + self.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top') + z_offset,
             ),
             orientation=orientation,
         )
         above_application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length,
+                x=self.application_point.x - x_offset,
                 y=self.application_point.y,
-                z=self.application_point.z + self.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top') + z_offset,
             ),
             orientation=orientation,
         )
         application_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length,
+                x=self.application_point.x - x_offset,
                 y=self.application_point.y,
-                z=self.application_point.z - self.get_param('contact_point_down_offset'),
+                z=self.application_point.z - self.get_param('contact_point_down_offset') + z_offset,
             ),
             orientation=orientation,
         )
         pull_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length,
+                x=self.application_point.x - x_offset,
                 y=self.application_point.y + (pull_direction_sign * self.get_param('pulling_distance')),
-                z=self.application_point.z - self.get_param('contact_point_down_offset'),
+                z=self.application_point.z - self.get_param('contact_point_down_offset') + z_offset,
             ),
             orientation=orientation,
         )
         lift_pose = Pose(
             position=Point(
-                x=self.application_point.x - Tool.tool_length,
+                x=self.application_point.x - x_offset,
                 y=self.application_point.y + (pull_direction_sign * self.get_param('pulling_distance')),
-                z=self.application_point.z + self.get_param('distance_from_top'),
+                z=self.application_point.z + self.get_param('distance_from_top') + z_offset,
             ),
             orientation=orientation,
         )

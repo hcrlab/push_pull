@@ -4,5 +4,6 @@ float64 orientation_tolerance
 float64 planning_time
 string group
 bool plan_only
+float64 speed
 ---
 bool success

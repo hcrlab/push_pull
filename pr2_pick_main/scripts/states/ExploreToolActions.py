@@ -165,7 +165,7 @@ class ExploreToolActions(smach.State):
           pre_grasp_pose.pose.orientation.w = 0.0
           success_pre_postition = self._moveit_move_arm(pre_grasp_pose,
                                                   0.005, 0.005, 12, 'left_arm',
-                                                  False).success
+                                                  False, 1.0).success
           return success_pre_postition
 
 
@@ -217,6 +217,7 @@ class ExploreToolActions(smach.State):
                     if not success:
                         self.log_message("Could not execute action.")
 
+                    rospy.sleep(3.0)
                     self.pre_position_tool()
 
                 else:
@@ -238,6 +239,7 @@ class ExploreToolActions(smach.State):
             else:
                 self.log_message("Action complete.")
                 
+            rospy.sleep(3.0)
             self.pre_position_tool()
             self._tuck_arms.wait_for_service()
             tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
