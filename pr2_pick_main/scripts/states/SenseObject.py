@@ -196,6 +196,10 @@ class SenseObject(smach.State):
         bounding_box = BoundingBox()
         bounding_box.pose = box_pose
         bounding_box.dimensions = box_dims
+        # Expand bounding box a little to sit right on the bottom of the shelf
+        z_offset = 0.005
+        bounding_box.pose.pose.position.z = bounding_box.pose.pose.position.z - z_offset/2.0
+        bounding_box.dimensions.z = bounding_box.dimensions.z + z_offset
         # Publish Bounding Box
         marker_bounding_box = viz.publish_bounding_box(self._markers, box_pose, 
                      (box_dims.x), 
