@@ -48,7 +48,7 @@ class RepositionAction(object):
     pose_id = 5340
 
     # identifier for publishing points in the visualization
-    bin_width = 0.35
+    bin_width = 0.40
     bin_depth = 0.42
 
     # keep tool this far away from the bin wall
@@ -226,13 +226,14 @@ class RepositionAction(object):
         ''' Cap the given y value so it's safely inside the bin. '''
 
 
-        rospy.loginfo("Capping value")        
         max_y = (RepositionAction.bin_width / 2.0) - self.bin_wall_tolerance
 
         if value > max_y:
             return max_y
+            rospy.loginfo("Capping value: value greater than max")        
         elif value < -max_y:
             return -max_y
+            rospy.loginfo("Capping value: value less than max")        
         return value
 
     def get_yaw(self, bounding_box):
@@ -530,8 +531,11 @@ class PushSideways(RepositionAction):
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
 
-        rospy.loginfo("Right end: {}".format(self.ends[0]))
-        rospy.loginfo("Left  end: {}".format(self.ends[1]))
+        rospy.loginfo("Right end front: {}".format(self.ends[0]))
+        rospy.loginfo("Left  end front: {}".format(self.ends[1]))
+
+        rospy.loginfo("Right end back: {}".format(self.ends[2]))
+        rospy.loginfo("Left  end back: {}".format(self.ends[3]))
 
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
         
@@ -561,6 +565,7 @@ class PushSideways(RepositionAction):
         if(self.action_type == "side_rotate_r" or 
             self.action_type == "side_rotate_l"):
             target_y = front_end.y
+            rospy.loginfo("Target y changed to: {}".format(target_y))
             distance_x = front_end.x - Tool.tool_length + self.get_param('percent_distance_from_front')*side_length
         else:
             distance_x = back_end.x - Tool.tool_length + self.get_param('distance_from_back')
@@ -596,7 +601,7 @@ class PushSideways(RepositionAction):
             ),
             orientation=orientation,
         )
-
+        rospy.loginfo("Uncapped value: {}".format(target_y + (self.get_param('distance_from_side') * push_direction_sign)))
         rospy.loginfo('Side pose y: {}'.format(side_pose.position.y))
         rospy.loginfo('Push pose y: {}'.format(push_pose.position.y))
 
