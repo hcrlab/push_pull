@@ -227,8 +227,10 @@ class ExploreToolActions(smach.State):
                     return outcomes.TOOL_EXPLORATION_SUCCESS
         
         else:
-
-            tool_action = userdata.current_trial["action"]
+            if userdata.is_plan:
+                tool_action = userdata.tool_action
+            else:
+                tool_action = userdata.current_trial["action"]
             action = RepositionAction.create_action(tool_action,
                 bounding_box, self.services)
             userdata.action_params = action.get_action_param_log()

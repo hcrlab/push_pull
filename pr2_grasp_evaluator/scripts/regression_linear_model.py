@@ -249,27 +249,6 @@ class TrialAnalyser:
         rospy.loginfo("Test y after: {}".format(test_y_after))
         rospy.loginfo("Test yaw after: {}".format(test_yaw_after))
 
-
-        # # Load the faces datasets
-        # data = fetch_olivetti_faces()
-        # targets = data.target
-
-        # data = data.images.reshape((len(data.images), -1))
-        # train = data[targets < 30]
-        # test = data[targets >= 30]  # Test on independent people
-
-        # # Test on a subset of people
-        # n_faces = 5
-        # rng = check_random_state(4)
-        # face_ids = rng.randint(test.shape[0], size=(n_faces, ))
-        # test = test[face_ids, :]
-
-        # n_pixels = data.shape[1]
-        # X_train = train[:, :np.ceil(0.5 * n_pixels)]  # Upper half of the faces
-        # y_train = train[:, np.floor(0.5 * n_pixels):]  # Lower half of the faces
-        # X_test = test[:, :np.ceil(0.5 * n_pixels)]
-        # y_test = test[:, np.floor(0.5 * n_pixels):]
-
         # Fit estimators
         ESTIMATORS = {
             # "Extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
@@ -335,6 +314,66 @@ class TrialAnalyser:
                     (trial.after.boundingbox.dimensions.z),
                     colour[j]["r"], colour[j]["g"], colour[j]["b"], 0.5, j + 30)
 
+    def sanity_check(self):
+        # plot x_diffs
+
+        action = self._x_before.keys()[0]
+
+        train_x_before = self._x_before[action]
+        train_y_before = self._y_before[action]
+        train_yaw_before = self._yaw_before[action]
+
+        train_x_after = self._x_after[action]
+        train_y_after = self._y_after[action]
+        train_yaw_after = self._yaw_after[action]
+
+
+        # rospy.loginfo("Train x before: {}".format(train_x_before))
+        # rospy.loginfo("Train y before: {}".format(train_y_before))
+        # rospy.loginfo("Train yaw before: {}".format(train_yaw_before))
+        # rospy.loginfo("Test x before: {}".format(test_x_before))
+        # rospy.loginfo("Test y before: {}".format(test_y_before))
+        # rospy.loginfo("Test yaw before: {}".format(test_yaw_before))
+        # rospy.loginfo("Test x after: {}".format(test_x_after))
+        # rospy.loginfo("Test y after: {}".format(test_y_after))
+        # rospy.loginfo("Test yaw after: {}".format(test_yaw_after))
+
+        # Fit estimators
+        ESTIMATORS = {
+            # "Extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
+            #                                    random_state=0),
+            # "K-nn": KNeighborsRegressor(),
+            "Linear Regression": LinearRegression(),
+            "Ridge": RidgeCV(),
+            # "Bayesian Ridge": BayesianRidge(),
+            # "Theil-Sen Regressor": TheilSenRegressor(),
+            "Lasso": Lasso(),
+        }
+
+        y_test_predict = dict()
+        for name, estimator in ESTIMATORS.items():
+            estimator.fit(zip(train_x_before, train_y_before, train_yaw_before), zip(train_x_after, train_y_after, train_yaw_after))
+            y_test_predict[name] = estimator.predict(zip(train_x_before, train_y_before, train_yaw_before))
+
+        rospy.loginfo("Predictions: {}".format(y_test_predict))
+        # rospy.loginfo("Pose: {}".format(trial.before.boundingbox.pose))
+
+        err_x = 0
+        err_y = 0
+        err_yaw = 0
+
+
+        for i in range(len(train_x_before)):
+            err_x += math.fabs(train_x_after[i] - y_test_predict["Linear Regression"][i][0])
+            err_y += math.fabs(train_y_after[i]-  y_test_predict["Linear Regression"][i][1])
+            err_yaw += math.fabs(train_yaw_after[i] - y_test_predict["Linear Regression"][i][2])
+
+        rospy.loginfo("Avg x error: {}".format(err_x/len(train_x_before)))
+        rospy.loginfo("Avg y error: {}".format(err_y/len(train_x_before)))
+        rospy.loginfo("Avg yaw error: {}".format(err_yaw/len(train_x_before)))
+
+
+
 
 if __name__ == '__main__':
     rospy.init_node('trial_analyser')
@@ -353,4 +392,4 @@ if __name__ == '__main__':
 
         bag.close()
 
-    ta.estimate()
+    ta.sanity_check()

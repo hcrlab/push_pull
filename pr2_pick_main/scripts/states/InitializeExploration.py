@@ -1,4 +1,5 @@
 
+from pr2_grasp_evaluator import PushPullPlanner
 from pr2_pick_main import handle_service_exceptions
 from pr2_pick_main.web_interface import WebInterface
 from pr2_pick_manipulation.srv import TuckArms
@@ -6,6 +7,7 @@ from pr2_pick_manipulation.srv import MoveHead
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from geometry_msgs.msg import Transform, Quaternion, Vector3
 import outcomes
+import rospack
 import rospy
 import smach
 import tf
@@ -24,7 +26,7 @@ class InitializeExploration(smach.State):
             self,
             outcomes=[outcomes.INITIALIZE_SUCCESS, outcomes.INITIALIZE_FAILURE],
             input_keys=['debug'],
-            output_keys=['start_pose', 'is_before'])
+            output_keys=['start_pose', 'is_before', 'planner'])
 
         self._tts = services['tts']
         self._tuck_arms = services['tuck_arms']
@@ -50,6 +52,14 @@ class InitializeExploration(smach.State):
     def execute(self, userdata):
 
         self._interface.display_message('Starting new session', duration=2)
+
+        planner = PushPullPlanner()
+        rospack = rospkg.RosPack()
+        path_to_training_data = str(rospack.get_path('pr2_grasp_evaluator')) + '/training_data' 
+         
+        planner.train(path_to_training_data)
+
+        userdata.planner = planner
 	
 	    # Publish static transform.
         transform = TransformStamped()

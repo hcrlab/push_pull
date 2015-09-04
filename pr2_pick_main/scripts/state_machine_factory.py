@@ -30,6 +30,7 @@ class StateMachineBuilder(object):
     # slugs to represent different state machines
     EXPLORE = 'explore'
     EXPERIMENT = 'experiment'
+    PLAN = 'plan'
 
     def __init__(self):
         self.state_machine_identifier = StateMachineBuilder.EXPLORE
@@ -46,6 +47,8 @@ class StateMachineBuilder(object):
 
         if self.state_machine_identifier == StateMachineBuilder.EXPLORE:
             build = self.build_sm_for_explore
+        elif self.state_machine_identifier == StateMachineBuilder.PLAN:
+            build = self.build_sm_for_plan
         elif self.state_machine_identifier == StateMachineBuilder.EXPERIMENT:
             build = self.build_sm_for_experiment
         else:
@@ -131,6 +134,58 @@ class StateMachineBuilder(object):
                         outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.ExploreToolActions.name,
                         outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.SenseObject.name,
                         outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
+                    }
+                )
+                smach.StateMachine.add(
+                    states.ExploreToolActions.name,
+                    states.ExploreToolActions(**services),
+                    transitions={
+                        outcomes.TOOL_EXPLORATION_SUCCESS: states.SenseObject.name,
+                        outcomes.TOOL_EXPLORATION_FAILURE: states.SenseObject.name,
+                    }
+                )
+           
+            return sm
+    def build_sm_for_plan(self, **services):
+            ''' Test state machine for exploring the different parameters '''
+
+            sm = smach.StateMachine(outcomes=[
+                outcomes.PLAN_SUCCESS,
+                outcomes.PLAN_FAILURE
+            ])
+
+            with sm:
+                smach.StateMachine.add(
+                    states.InitializeExploration.name,
+                    states.InitializeExploration(**services),
+                    transitions={
+                        outcomes.INITIALIZE_SUCCESS: states.SenseObject.name,
+                        outcomes.INITIALIZE_FAILURE: outcomes.PLAN_FAILURE
+                    }
+                )
+                smach.StateMachine.add(
+                    states.SenseObject.name,
+                    states.SenseObject(**services),
+                    transitions={
+                        outcomes.SENSE_OBJECT_BEFORE_SUCCESS: states.CreatePlan.name,
+                        outcomes.SENSE_OBJECT_AFTER_SUCCESS: states.CreatePlan.name,
+                        outcomes.SENSE_OBJECT_FAILURE: states.InitializeExploration.name,
+                    }
+                )
+                smach.StateMachine.add(
+                    states.CreatePlan.name,
+                    states.CreatePlan(**services),
+                    transitions={
+                        outcomes.CREATE_PLAN_TOOL: states.ExploreToolActions.name,
+                        outcomes.CREATE_PLAN_GRASP: states.ExecuteGrasp.name,
+                    }
+                )
+                smach.StateMachine.add(
+                    states.ExecuteGrasp.name,
+                    states.ExecuteGrasp(**services),
+                    transitions={
+                        outcomes.EXECUTE_GRASP_SUCCESS: states.SenseObject.name,
+                        outcomes.EXECUTE_GRASP_FAILURE: states.InitializeExploration.name,
                     }
                 )
                 smach.StateMachine.add(

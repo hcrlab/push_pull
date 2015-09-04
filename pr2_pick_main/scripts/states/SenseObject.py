@@ -92,7 +92,7 @@ class SenseObject(smach.State):
         move_head_success = self._move_head(0, 0, 0, 'bin_K')
       
         if userdata.is_before:
-            if not userdata.is_explore:
+            if not userdata.is_explore and not userdata.is_plan:
                 self.log_message('Starting trial ' + str(userdata.current_trial_num) 
                     + '. Please prepare object and press Ready.')
                 item_name = userdata.current_trial["item_name"]
@@ -215,7 +215,7 @@ class SenseObject(smach.State):
         if userdata.is_before:
             userdata.before_record = copy.copy(self.bag_data)
         else:
-            if not userdata.is_explore:
+            if not userdata.is_explore and not userdata.is_plan:
                 rospack = rospkg.RosPack()
                 item_name = userdata.current_trial["item_name"]
                 orientation = userdata.current_trial["orientation"]
@@ -255,7 +255,8 @@ class SenseObject(smach.State):
             userdata.is_before = False
             return outcomes.SENSE_OBJECT_BEFORE_SUCCESS
         else:
-            userdata.is_before = True
+            if not userdata.is_plan:
+                userdata.is_before = True
             self.log_message('Trial ' + str(userdata.current_trial_num) + ' complete.')
             rospy.sleep(2)
             return outcomes.SENSE_OBJECT_AFTER_SUCCESS
