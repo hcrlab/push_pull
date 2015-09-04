@@ -5,6 +5,7 @@ from pr2_pick_manipulation.srv import TuckArms
 from pr2_pick_manipulation.srv import MoveHead
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from geometry_msgs.msg import Transform, Quaternion, Vector3
+import moveit_commander
 import outcomes
 import rospy
 import smach
@@ -45,6 +46,51 @@ class InitializeExploration(smach.State):
         rospy.loginfo(message)
         self._tts.publish(message)
         self._interface.display_message(message)
+
+    def add_shelf(self):
+        rospy.loginfo("Adding shelf!")
+        scene = moveit_commander.PlanningSceneInterface()
+
+        for i in range(10):
+            scene.remove_world_object("bbox")
+            scene.remove_world_object("shelf1")
+            scene.remove_world_object("shelf4")
+            scene.remove_world_object("shelf2")
+            scene.remove_world_object("shelf3")
+
+        wall_pose1 = PoseStamped()
+        wall_pose1.header.frame_id = "base_footprint"
+        wall_pose1.pose.position.x = 0.97
+        wall_pose1.pose.position.y = 0.025 - 0.2
+        wall_pose1.pose.position.z = 0.97
+
+        wall_pose2 = PoseStamped()
+        wall_pose2.header.frame_id = "base_footprint"
+        wall_pose2.pose.position.x = 0.97
+        wall_pose2.pose.position.y = 0.385 - 0.2
+        wall_pose2.pose.position.z = 0.97
+
+        wall_pose3 = PoseStamped()
+        wall_pose3.header.frame_id = "base_footprint"
+        wall_pose3.pose.position.x = 0.97
+        wall_pose3.pose.position.y = 0.20 - 0.2
+        wall_pose3.pose.position.z = 1.16
+        
+        wall_pose4 = PoseStamped()
+        wall_pose4.header.frame_id = "base_footprint"
+        wall_pose4.pose.position.x = 0.97
+        wall_pose4.pose.position.y = 0.20 - 0.2
+        wall_pose4.pose.position.z = 0.79
+
+        rate = rospy.Rate(1)
+        for i in range(5):
+            #scene.add_box("table", table_pose, (0.38, 0.38, 0.78))
+            scene.add_box("shelf1", wall_pose1, (0.38, 0.015, 0.38 ))
+            scene.add_box("shelf2", wall_pose2, (0.38, 0.015, 0.38 ))
+            scene.add_box("shelf3", wall_pose3, (0.38, 0.38, 0.015 ))
+            scene.add_box("shelf4", wall_pose4, (0.38,0.38,0.015))
+            rospy.sleep(1)
+            rate.sleep()
 
     @handle_service_exceptions(outcomes.INITIALIZE_FAILURE)
     def execute(self, userdata):
@@ -147,6 +193,8 @@ class InitializeExploration(smach.State):
 
         self._move_torso.wait_for_service()
         self._move_torso(0.15, True)
+
+        self.add_shelf()
 
         # TODO: remove bool; this is just for not having to constantly hand the tool during debugging
         retake_tool = False

@@ -48,7 +48,7 @@ class RepositionAction(object):
     pose_id = 5340
 
     # identifier for publishing points in the visualization
-    bin_width = 0.27
+    bin_width = 0.35
     bin_depth = 0.42
 
     # keep tool this far away from the bin wall
@@ -224,7 +224,9 @@ class RepositionAction(object):
 
     def cap_y(self, value):
         ''' Cap the given y value so it's safely inside the bin. '''
-        
+
+
+        rospy.loginfo("Capping value")        
         max_y = (RepositionAction.bin_width / 2.0) - self.bin_wall_tolerance
 
         if value > max_y:
@@ -430,9 +432,9 @@ class MoveArmStep(RepositionStep):
         if not self.collision_checking:
 
             if(success == False):
-            	rospy.loginfo('Collision checking off, using IK')
+                rospy.loginfo('Collision checking off, using IK')
                 success = (move_arm_ik(
-                    	goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM, duration=6.0).success and success)
+                        goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM, duration=6.0).success and success)
 
         return success
 
@@ -528,6 +530,9 @@ class PushSideways(RepositionAction):
         Construct waypoints for wrist_roll_link from pre/application/post points
         '''
 
+        rospy.loginfo("Right end: {}".format(self.ends[0]))
+        rospy.loginfo("Left  end: {}".format(self.ends[1]))
+
         orientation = Quaternion(1.0, 0.0, 0.0, 0.0)
         
         if(self.action_type == "side_rotate_l" or 
@@ -549,6 +554,8 @@ class PushSideways(RepositionAction):
                 target_y = front_end.y
             else:
                 target_y = back_end.y
+
+        rospy.loginfo("Target y: {}".format(target_y))
 
         side_length = back_end.x - front_end.x
         if(self.action_type == "side_rotate_r" or 
@@ -590,6 +597,9 @@ class PushSideways(RepositionAction):
             orientation=orientation,
         )
 
+        rospy.loginfo('Side pose y: {}'.format(side_pose.position.y))
+        rospy.loginfo('Push pose y: {}'.format(push_pose.position.y))
+
         # for movement
         self.steps = [
             MoveArmStep(start_pose, self.frame, False),
@@ -623,7 +633,7 @@ class PullForward(RepositionAction):
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
         self.frame = self.bounding_box.pose.header.frame_id
         x_offset = Tool.tool_length * math.cos(tool_pitch)
-	z_offset = Tool.tool_length * math.sin(tool_pitch)
+        z_offset = Tool.tool_length * math.sin(tool_pitch)
         pre_application_pose = Pose(
             position=Point(
                 x=self.application_point.x - x_offset - self.get_param('pre_application_distance'),
@@ -702,7 +712,7 @@ class PullSideways(RepositionAction):
         orientation = Quaternion(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
         self.frame = self.bounding_box.pose.header.frame_id
         x_offset = Tool.tool_length * math.cos(tool_pitch)
-	z_offset = Tool.tool_length * math.sin(tool_pitch)
+        z_offset = Tool.tool_length * math.sin(tool_pitch)
 
         if(self.action_type == "top_sideward_pull_l"):
             ## Left pull
