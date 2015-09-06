@@ -276,33 +276,33 @@ class GraspEvaluator:
         for i in range(10):
             scene.remove_world_object("bbox")
             scene.remove_world_object("shelf1")
-            scene.remove_world_object("shelf")
+            scene.remove_world_object("shelf4")
             scene.remove_world_object("shelf2")
             scene.remove_world_object("shelf3")
 
         wall_pose1 = PoseStamped()
         wall_pose1.header.frame_id = "base_footprint"
-        wall_pose1.pose.position.x = 0.9
+        wall_pose1.pose.position.x = 0.97
         wall_pose1.pose.position.y = 0.025 - 0.2
-        wall_pose1.pose.position.z = 0.94
+        wall_pose1.pose.position.z = 0.97
 
         wall_pose2 = PoseStamped()
         wall_pose2.header.frame_id = "base_footprint"
-        wall_pose2.pose.position.x = 0.9
+        wall_pose2.pose.position.x = 0.97
         wall_pose2.pose.position.y = 0.385 - 0.2
-        wall_pose2.pose.position.z = 0.94
+        wall_pose2.pose.position.z = 0.97
 
         wall_pose3 = PoseStamped()
         wall_pose3.header.frame_id = "base_footprint"
-        wall_pose3.pose.position.x = 0.9
+        wall_pose3.pose.position.x = 0.97
         wall_pose3.pose.position.y = 0.20 - 0.2
-        wall_pose3.pose.position.z = 1.14
+        wall_pose3.pose.position.z = 1.16
         
         wall_pose4 = PoseStamped()
         wall_pose4.header.frame_id = "base_footprint"
-        wall_pose4.pose.position.x = 0.9
+        wall_pose4.pose.position.x = 0.97
         wall_pose4.pose.position.y = 0.20 - 0.2
-        wall_pose4.pose.position.z = 0.76
+        wall_pose4.pose.position.z = 0.79
 
         rate = rospy.Rate(1)
         for i in range(5):
@@ -465,7 +465,7 @@ class GraspEvaluator:
             y_offset = 0.005
 
             gripper = GripperBox()
-            min_x = 0.0
+            min_x = -0.02
             max_x = self.dist_to_fingertips
             min_y = -1 * self.gripper_palm_width/2 + y_offset
             max_y = self.gripper_palm_width/2 + y_offset
@@ -557,7 +557,7 @@ class GraspEvaluator:
                 publish_gripper(self.im_server, grasp.grasp_pose, 'grasp_target')
                     # Test if grasp is going to hit the shelf
             success_grasp = self.moveit_move_arm(grasp.grasp_pose,
-                                                0.005, 0.005, 6, 'left_arm',
+                                                0.005, 0.005, 6, 'right_arm',
                                                 True, 1.0).success  
             if success_grasp:
                 filtered_before.append(grasp)
@@ -572,7 +572,7 @@ class GraspEvaluator:
                 publish_gripper(self.im_server, grasp.grasp_pose, 'grasp_target')
                     # Test if grasp is going to hit the shelf
             success_grasp = self.moveit_move_arm(grasp.grasp_pose,
-                                                0.005, 0.005, 6, 'left_arm',
+                                                0.005, 0.005, 6, 'right_arm',
                                                 True, 1.0).success  
             if success_grasp:
                 filtered_after.append(grasp)

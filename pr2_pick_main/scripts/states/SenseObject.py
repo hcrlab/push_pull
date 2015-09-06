@@ -212,7 +212,7 @@ class SenseObject(smach.State):
         userdata.bounding_box = bounding_box
         self.bag_data.is_graspable = False
 
-        if userdata.is_before:
+        if userdata.is_before or userdata.is_plan:
             userdata.before_record = copy.copy(self.bag_data)
         else:
             if not userdata.is_explore and not userdata.is_plan:

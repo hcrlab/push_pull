@@ -56,8 +56,8 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
 from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 
-class TrialAnalyser:
-    def __init__(self):
+class Regressor:
+    def __init__(self, path):
         self._x_before = {}
         self._y_before = {}
         self._yaw_before = {}
@@ -65,6 +65,52 @@ class TrialAnalyser:
         self._y_after = {}
         self._yaw_after = {}
         self.markers = rospy.Publisher('pr2_pick_visualization', Marker)
+        self._path = path
+
+        self.ESTIMATORS = {
+            # "Extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
+            #                                    random_state=0),
+            # "K-nn": KNeighborsRegressor(),
+            "Linear Regression": LinearRegression(),
+            # "Ridge": RidgeCV(), # Works
+            # "Bayesian Ridge": BayesianRidge(),
+            # "Theil-Sen Regressor": TheilSenRegressor(),
+            # "Lasso": Lasso(), # Works
+        }
+
+        self._n_actions = 10
+
+        self._max_depth = 3
+
+        self.estimators = {}
+
+    def train(self):
+        file_list = glob.glob(self._path + '/*.bag')
+    
+        for file_name in file_list:
+            if not file_name[-13:] == 'evaluated.bag':
+                continue
+            # rospy.loginfo("Current file: " + file_name)
+            bag = rosbag.Bag(file_name)
+            for topic, trial_msg, t in bag.read_messages():
+                ta.get_bounding_box_diff(trial_msg)
+
+            bag.close()
+
+        for action in self._x_before.keys():
+
+            self.estimators[action] = LinearRegression()
+
+            train_x_before = self._x_before[action]
+            train_y_before = self._y_before[action]
+            train_yaw_before = self._yaw_before[action]
+
+            train_x_after = self._x_after[action]
+            train_y_after = self._y_after[action]
+            train_yaw_after = self._yaw_after[action]
+
+            self.estimators[action].fit(zip(train_x_before, train_y_before, train_yaw_before), zip(train_x_after, train_y_after, train_yaw_after))
+
 
     def get_bounding_box_diff(self, trial):
         action = trial.params.action.data
@@ -376,20 +422,12 @@ class TrialAnalyser:
 
 
 if __name__ == '__main__':
+
     rospy.init_node('trial_analyser')
-
-    ta = TrialAnalyser()
-
     path = raw_input("Please enter the path to folder with the bag files: ")
-    file_list = glob.glob( path + '/*.bag')
-    for file_name in file_list:
-        if not file_name[-13:] == 'evaluated.bag':
-            continue
-        # rospy.loginfo("Current file: " + file_name)
-        bag = rosbag.Bag(file_name)
-        for topic, trial_msg, t in bag.read_messages():
-            ta.get_bounding_box_diff(trial_msg)
 
-        bag.close()
+    ta = Regressor(path)
+
+    
 
     ta.sanity_check()
