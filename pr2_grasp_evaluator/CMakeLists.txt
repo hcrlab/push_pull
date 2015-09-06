@@ -7,7 +7,9 @@ project(pr2_grasp_evaluator)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
+  std_msgs
   message_generation
+  pcl_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -51,10 +53,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#    FILES
-#    ReturnJointStates.srv
-# )
+add_service_files(
+   FILES
+   TransformPointCloud.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -64,10 +66,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#    DEPENDENCIES
-#    sensor_msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   sensor_msgs
+   std_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -102,16 +105,17 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-# add_executable(joint_states_listener_node src/joint_states_listener_node.cpp)
+add_executable(transform_point_cloud src/transform_point_cloud.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(joint_states_listener_node joint_states_listener_generate_messages_cpp)
+add_dependencies(transform_point_cloud pr2_grasp_evaluator_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(joint_states_listener_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(transform_point_cloud
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
 
 #############
 ## Install ##
