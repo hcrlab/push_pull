@@ -146,7 +146,7 @@ class GraspEvaluator:
         goal = GraspPlanningGoal()
         goal.target.reference_frame_id = frame_id
         goal.target.cluster = cluster
-        goal.arm_name = "left_arm"
+        goal.arm_name = "right_arm"
         action_name = "plan_point_cluster_grasp"
         rospy.loginfo("waiting for plan_point_cluster_grasp action")
         client = actionlib.SimpleActionClient(action_name, GraspPlanningAction)
@@ -248,7 +248,7 @@ class GraspEvaluator:
         pre_grasp_pose.pose.orientation.w = 0.0
 
         success_pre_grasp = self.moveit_move_arm(pre_grasp_pose, 
-                                              0.005, 0.005, 12, 'left_arm',
+                                              0.005, 0.005, 12, 'right_arm',
                                               False, 1.0).success
     def add_shelf(self):
         rospy.loginfo("Adding shelf!")
@@ -557,7 +557,7 @@ class GraspEvaluator:
                 publish_gripper(self.im_server, grasp.grasp_pose, 'grasp_target')
                     # Test if grasp is going to hit the shelf
             success_grasp = self.moveit_move_arm(grasp.grasp_pose,
-                                                0.005, 0.005, 6, 'left_arm',
+                                                0.005, 0.005, 6, 'right_arm',
                                                 True, 1.0).success  
             if success_grasp:
                 filtered_before.append(grasp)
@@ -572,7 +572,7 @@ class GraspEvaluator:
                 publish_gripper(self.im_server, grasp.grasp_pose, 'grasp_target')
                     # Test if grasp is going to hit the shelf
             success_grasp = self.moveit_move_arm(grasp.grasp_pose,
-                                                0.005, 0.005, 6, 'left_arm',
+                                                0.005, 0.005, 6, 'right_arm',
                                                 True, 1.0).success  
             if success_grasp:
                 filtered_after.append(grasp)

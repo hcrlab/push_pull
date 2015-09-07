@@ -34,6 +34,7 @@ from pr2_pick_contest.msg import Trial, Record
 from pr2_pick_contest.srv import GetItems, SetItems, GetTargetItems
 from pr2_pick_contest.srv import LookupItem
 from pr2_grasp_evaluator import Regressor
+from pr2_grasp_evaluator.srv import TransformPointCloud, TransformPointCloudRequest
 from pr2_pick_manipulation.srv import DriveAngular, DriveLinear, \
     DriveToPose, GetPose, MoveArm, MoveHead, MoveTorso, SetGrippers, \
     TuckArms, GetGrippers, MoveArmIk
@@ -71,6 +72,22 @@ class PushPullPlanner:
     def __init__(self):
         self.regressor = None
         self.max_depth = 3
+        self.tf_listener = tf.TransformListener()
+        self.set_static_tf = rospy.ServiceProxy('perception/set_static_transform',
+                                            SetStaticTransform)
+        self.delete_static_tf = rospy.ServiceProxy('perception/delete_static_transform',
+                                             DeleteStaticTransform)
+        self.transform_point_cloud_service = rospy.ServiceProxy('transform_point_cloud', TransformPointCloud)
+        self.actions = ["front_center_push",
+                        "front_side_push_r",
+                        "front_side_push_l",
+                        "side_push_r",
+                        "side_push_l",
+                        "side_rotate_r",
+                        "side_rotate_l",
+                        "top_pull",
+                        "top_sideward_pull_r",
+                        "top_sideward_pull_l"]
 
     def train(self, path_to_data):
         self.regressor = Regressor(path_to_data)
@@ -87,33 +104,48 @@ class PushPullPlanner:
                 break
         return count
 
-    def transform_point_cloud(self, point_cloud, x, y, yaw):
-        #rospy.loginfo("In finding points!")       
-        points = point_cloud.read_points(
-            request.cluster.pointcloud,
-            field_names=['x', 'y', 'z'],
-            skip_nans=True,
-        )
+    def transform_point_cloud(self, point_cloud, pose, x, y, yaw):
+        # Make tf frame at original bounding box origin
+        transform = TransformStamped()
+        transform.header.frame_id = 'bin_K'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation = copy.deepcopy(pose.pose.position)
+        transform.transform.rotation = copy.deepcopy(pose.pose.orientation)
+        transform.child_frame_id = 'bounding_box'
 
-        num_points = [0] * len(request.boxes)
+        self.set_static_tf.wait_for_service()
+    
+        self.set_static_tf(transform)
 
-        start = datetime.datetime.now()
+        # tranform points into that frame
+        self.transform_point_cloud(point_cloud, 'bounding_box')
 
-        for x, y, z in points:
+        # Move tf frame to new bounding box origin
+        self._delete_static_tf.wait_for_service()
+        req = DeleteStaticTransformRequest()
+        req.parent_frame = "bin_K"
+        req.child_frame = "bounding_box"
+        self._delete_static_tf(req)
 
-            # Transform point into frame of bounding box
-            point = PointStamped(
-                point=Point(x=x, y=y, z=z),
-                header=Header(
-                    frame_id=request.cluster.header.frame_id,
-                    stamp=rospy.Time(0),
-                )
-            )
+        transform = TransformStamped()
+        transform.header.frame_id = 'bin_K'
+        transform.header.stamp = rospy.Time.now()
+        transform.transform.translation.x = x
+        transform.transform.translation.y = y
+        transform.transform.translation.z = pose.pose.position.z
 
+        q = tf.transformations.quaternion_from_euler(0, 0, yaw)
+        #type(pose) = geometry_msgs.msg.Pose
+        transform.transform.rotation.x = quaternion[0]
+        transform.transform.rotation.y = quaternion[1]
+        transform.transform.rotation.z = quaternion[2]
+        transform.transform.rotation.w = quaternion[3]
 
-            transformed_point = self._tf_listener.transformPoint(request.frame_id,
-                                                                point)
-            
+        transform.child_frame_id = 'bounding_box'
+
+        self.set_static_tf.wait_for_service()
+    
+        self.set_static_tf(transform)
 
 
     def generate_plans(self, bounding_box, point_cloud):
@@ -123,6 +155,8 @@ class PushPullPlanner:
         queue = []
         # push the first path into the queue
         tree = State(bounding_box, point_cloud)
+        self.grasp_evaluator.move_arms_to_side()
+        self.grasp_evaluator.set_start_pose()
         grasps = self.grasp_evaluator.get_grasps(point_cloud)
         tree.add_grasps(grasps)
         queue.append([tree])
@@ -134,7 +168,7 @@ class PushPullPlanner:
             # path found
 
             for action in self.actions:
-                x, y, yaw, l, w, h = self.regressor.predict(action, node.bounding_box)
+                x, y, yaw, x_dim, y_dim, z_dim = self.regressor.predict(action, node.bounding_box)
                 x_diff = x - node.bounding_box.pose.pose.position.x
                 y_diff = y - node.bounding_box.pose.pose.position.y
                 quaternion = (
@@ -149,6 +183,9 @@ class PushPullPlanner:
                 new_bounding_box = copy.deepcopy(node.bounding_box)
                 new_bounding_box.pose.position.x = x
                 new_bounding_box.pose.position.y = y
+                new_bounding_box.dimensions.x = x_dim
+                new_bounding_box.dimensions.y = y_dim
+                new_bounding_box.dimensions.z = z_dim
 
                 q = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
                 #type(pose) = geometry_msgs.msg.Pose
@@ -157,7 +194,7 @@ class PushPullPlanner:
                 new_bounding_box.pose.pose.orientation.z = quaternion[2]
                 new_bounding_box.pose.pose.orientation.w = quaternion[3]
 
-                new_point_cloud = self.transform_point_cloud(node.point_cloud, x_diff, y_diff, yaw_diff)
+                new_point_cloud = self.transform_point_cloud(node.point_cloud, node.bounding_box.pose, x, y, yaw)
 
                 temp = State(copy.deepcopy(new_bounding_box), copy.deepcopy(new_point_cloud))
 

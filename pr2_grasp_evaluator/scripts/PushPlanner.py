@@ -47,16 +47,7 @@ from pr2_pick_main import publish_gripper, publish_bounding_box, publish_cluster
 from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 
-class GripperBox:
-    corners = []
-    # min_x = None
-    # max_x = None
-    # min_y = None
-    # max_y = None
-    # min_z = None
-    # max_z = None
-
-class GraspEvaluator:
+class PushPlanner:
     def __init__(self):
 
         self.max_x_grasp_threshold = 0.9
@@ -142,12 +133,11 @@ class GraspEvaluator:
         # approx height of pads of fingertips
         self.gripper_finger_height = 0.03
 
-
     def call_plan_point_cluster_grasp_action(self, cluster, frame_id):
         goal = GraspPlanningGoal()
         goal.target.reference_frame_id = frame_id
         goal.target.cluster = cluster
-        goal.arm_name = "right_arm"
+        goal.arm_name = "left_arm"
         action_name = "plan_point_cluster_grasp"
         rospy.loginfo("waiting for plan_point_cluster_grasp action")
         client = actionlib.SimpleActionClient(action_name, GraspPlanningAction)
@@ -184,9 +174,9 @@ class GraspEvaluator:
             return 0
         return 1
 
-    def get_potential_grasps(self, point_cloud):
+    def get_potential_grasps(self, trial):
         self.convert_pcl_service.wait_for_service()
-        pc2_before = point_cloud
+        pc2_before = trial.before.pointcloud2
         # TODO: make sure the frame_id gets set when this is saved in the Record msg
         frame_id = 'bin_K' #pc2_before.header.frame_id
         points = pc2.read_points(pc2_before, skip_nans=True)
@@ -201,8 +191,37 @@ class GraspEvaluator:
         
         # Set params for grasp planner
         self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
-        self.grasps = self.call_plan_point_cluster_grasp_action(pc_before,frame_id)
-        rospy.loginfo("Number of grasps generated for before: " + str(len(self.grasps)))
+        self.grasps_before = self.call_plan_point_cluster_grasp_action(pc_before,frame_id)
+        rospy.loginfo("Number of grasps generated for before: " + str(len(self.grasps_before)))
+
+        pc2_after = trial.after.pointcloud2
+        frame_id = 'bin_K' #pc2_after.header.frame_id
+        points = pc2.read_points(pc2_after, skip_nans=True)
+        point_list = [Point(x=x, y=y, z=z) for x, y, z, rgb in points]
+        if len(point_list) == 0:
+            rospy.logwarn('[SenseBin]: Cluster with 0 points returned!')
+
+        publish_cluster(self.markers, point_list, frame_id, 'experiment', 1)
+
+        pc_after = self.convert_pcl_service(pc2_after).pointcloud
+        pc_after.header.frame_id = frame_id
+        
+        # Set params for grasp planner
+        self.call_set_params(overhead_grasps_only = False, side_grasps_only = False, include_high_point_grasps = False, pregrasp_just_outside_box = True, backoff_depth_steps = 1)
+        self.grasps_after = self.call_plan_point_cluster_grasp_action(pc_after,frame_id)
+        rospy.loginfo("Number of grasps generated for after: " + str(len(self.grasps_after)))
+
+        publish_bounding_box(self.markers, trial.before.boundingbox.pose, 
+                (trial.before.boundingbox.dimensions.x), 
+                (trial.before.boundingbox.dimensions.y), 
+                (trial.before.boundingbox.dimensions.z),
+                0.0, 1.0, 0.0, 0.5, 20)
+
+        publish_bounding_box(self.markers, trial.after.boundingbox.pose, 
+                (trial.after.boundingbox.dimensions.x), 
+                (trial.after.boundingbox.dimensions.y), 
+                (trial.after.boundingbox.dimensions.z),
+                1.0, 0.0, 0.0, 0.5, 21)
 
     def set_start_pose(self):
 
@@ -220,7 +239,7 @@ class GraspEvaluator:
         pre_grasp_pose.pose.orientation.w = 0.0
 
         success_pre_grasp = self.moveit_move_arm(pre_grasp_pose, 
-                                              0.005, 0.005, 12, 'right_arm',
+                                              0.005, 0.005, 12, 'left_arm',
                                               False, 1.0).success
     def add_shelf(self):
         rospy.loginfo("Adding shelf!")
@@ -248,33 +267,33 @@ class GraspEvaluator:
         for i in range(10):
             scene.remove_world_object("bbox")
             scene.remove_world_object("shelf1")
-            scene.remove_world_object("shelf4")
+            scene.remove_world_object("shelf")
             scene.remove_world_object("shelf2")
             scene.remove_world_object("shelf3")
 
         wall_pose1 = PoseStamped()
         wall_pose1.header.frame_id = "base_footprint"
-        wall_pose1.pose.position.x = 0.97
+        wall_pose1.pose.position.x = 0.9
         wall_pose1.pose.position.y = 0.025 - 0.2
-        wall_pose1.pose.position.z = 0.97
+        wall_pose1.pose.position.z = 0.94
 
         wall_pose2 = PoseStamped()
         wall_pose2.header.frame_id = "base_footprint"
-        wall_pose2.pose.position.x = 0.97
+        wall_pose2.pose.position.x = 0.9
         wall_pose2.pose.position.y = 0.385 - 0.2
-        wall_pose2.pose.position.z = 0.97
+        wall_pose2.pose.position.z = 0.94
 
         wall_pose3 = PoseStamped()
         wall_pose3.header.frame_id = "base_footprint"
-        wall_pose3.pose.position.x = 0.97
+        wall_pose3.pose.position.x = 0.9
         wall_pose3.pose.position.y = 0.20 - 0.2
-        wall_pose3.pose.position.z = 1.16
+        wall_pose3.pose.position.z = 1.14
         
         wall_pose4 = PoseStamped()
         wall_pose4.header.frame_id = "base_footprint"
-        wall_pose4.pose.position.x = 0.97
+        wall_pose4.pose.position.x = 0.9
         wall_pose4.pose.position.y = 0.20 - 0.2
-        wall_pose4.pose.position.z = 0.79
+        wall_pose4.pose.position.z = 0.76
 
         rate = rospy.Rate(1)
         for i in range(5):
@@ -354,8 +373,8 @@ class GraspEvaluator:
 
     def remove_outlier_grasps(self):
         rospy.loginfo("Removing outliers")
-        filtered = []
-        for grasp in self.grasps:
+        filtered_before = []
+        for grasp in self.grasps_before:
 
             grasp.grasp_pose.header.stamp = rospy.Time(0)
 
@@ -379,14 +398,44 @@ class GraspEvaluator:
                 rospy.loginfo("Removing grasp")
                 continue
 
-            filtered.append(grasp)
+            filtered_before.append(grasp)
 
-        self.grasps = filtered
+        self.grasps_before = filtered_before
+
+        filtered_after = []
+        for grasp in self.grasps_after:
+            grasp.grasp_pose.header.stamp = rospy.Time(0)
+
+            self.tf_listener.waitForTransform('base_footprint', grasp.grasp_pose.header.frame_id, rospy.Time(0), rospy.Duration(15.0))
+
+            grasp_pose = self.tf_listener.transformPose('base_footprint',
+                                                                grasp.grasp_pose)
+            if grasp_pose.pose.position.x > self.max_x_grasp_threshold:
+                rospy.loginfo("Removing grasp")
+                continue
+            elif grasp_pose.pose.position.y > self.max_y_grasp_threshold:
+                rospy.loginfo("Removing grasp")
+                continue
+            elif grasp_pose.pose.position.y < self.min_y_grasp_threshold:
+                rospy.loginfo("Removing grasp")
+                continue
+            elif grasp_pose.pose.position.z > self.max_z_grasp_threshold:
+                rospy.loginfo("Removing grasp")
+                continue
+            elif grasp_pose.pose.position.z < self.min_z_grasp_threshold:
+                rospy.loginfo("Removing grasp")
+                continue
+
+            filtered_after.append(grasp)
+            
+        self.grasps_after = filtered_after
 
     def remove_shelf_intersections(self):
         rospy.loginfo("Removing grasps that intersect with shelf")
-        rospy.loginfo("Number before grasps left: {}".format(len(self.grasps)))
-        self.grasps = self.find_shelf_intersections(self.grasps)
+        rospy.loginfo("Number before grasps left: {}".format(len(self.grasps_before)))
+        rospy.loginfo("Number after grasps left: {}".format(len(self.grasps_after)))
+        self.grasps_before = self.find_shelf_intersections(self.grasps_before)
+        self.grasps_after = self.find_shelf_intersections(self.grasps_after)
 
     def find_shelf_intersections(self, grasps):
         filtered = []
@@ -407,7 +456,7 @@ class GraspEvaluator:
             y_offset = 0.005
 
             gripper = GripperBox()
-            min_x = -0.02
+            min_x = 0.0
             max_x = self.dist_to_fingertips
             min_y = -1 * self.gripper_palm_width/2 + y_offset
             max_y = self.gripper_palm_width/2 + y_offset
@@ -489,22 +538,39 @@ class GraspEvaluator:
 
     def remove_unreachable(self):
         rospy.loginfo("Removing unreachable grasps")
-        rospy.loginfo("Number before grasps left: {}".format(len(self.grasps)))
+        rospy.loginfo("Number before grasps left: {}".format(len(self.grasps_before)))
+        rospy.loginfo("Number after grasps left: {}".format(len(self.grasps_after)))
 
-        filtered = []
-        for grasp in self.grasps:
+        filtered_before = []
+        for grasp in self.grasps_before:
             #self.set_start_pose()
             for i in range(10):     
                 publish_gripper(self.im_server, grasp.grasp_pose, 'grasp_target')
                     # Test if grasp is going to hit the shelf
             success_grasp = self.moveit_move_arm(grasp.grasp_pose,
-                                                0.005, 0.005, 6, 'right_arm',
+                                                0.005, 0.005, 6, 'left_arm',
                                                 True, 1.0).success  
             if success_grasp:
-                filtered.append(grasp)
+                filtered_before.append(grasp)
             else:
                 rospy.loginfo("Removing grasp")
-        self.grasps = filtered
+        self.grasps_before = filtered_before
+
+        filtered_after = []
+        for grasp in self.grasps_after:
+            #self.set_start_pose()
+            for i in range(10):     
+                publish_gripper(self.im_server, grasp.grasp_pose, 'grasp_target')
+                    # Test if grasp is going to hit the shelf
+            success_grasp = self.moveit_move_arm(grasp.grasp_pose,
+                                                0.005, 0.005, 6, 'left_arm',
+                                                True, 1.0).success  
+            if success_grasp:
+                filtered_after.append(grasp)
+            else:
+                rospy.loginfo("Removing grasp")
+        
+        self.grasps_after = filtered_after
 
     def move_arms_to_side(self):
 
@@ -538,7 +604,7 @@ class GraspEvaluator:
             
 
         self.moveit_move_arm(posestamped,
-                                                0.005, 0.005, 12, 'right_arm',
+                                                0.005, 0.005, 12, 'left_arm',
                                                 False, 1.0).success 
 
         pose_target = Pose()
@@ -561,15 +627,117 @@ class GraspEvaluator:
         self.moveit_move_arm(posestamped,
                                                 0.005, 0.005, 12, 'right_arm',
                                                 False, 1.0).success
+    def get_grasps_before(self):
+        return self.grasps_before
 
-    def get_grasps(self, pointcloud):
-        # self.add_shelf()
-        self.get_potential_grasps(trial_msg)
-        # Get Rid of ones that are outside the bounds of the shelf (in y,z direction mostly)
-        self.remove_outlier_grasps()
-        # Remove grasps that intersect with the shelf.
-        self.remove_shelf_intersections()
-        # Remove non-reachable
-        self.remove_unreachable()
-        return self.grasps
+    def get_grasps_after(self):
+        return self.grasps_after 
 
+
+if __name__ == '__main__':
+    rospy.init_node('grasp_evaluator_node')
+
+    ge = GraspEvaluator()
+    ge.move_arms_to_side()
+    ge.add_shelf()
+    ge.set_start_pose()
+    path = raw_input("Please enter the path to folder with the bag files: ")
+    file_list = glob.glob( path + '/*.bag')
+    for file_name in file_list:
+        if file_name[-13:] == 'evaluated.bag':
+            continue
+        rospy.loginfo("Current file: " + file_name)
+        bag = rosbag.Bag(file_name)
+        for topic, trial_msg, t in bag.read_messages():
+            # Use Grasp Planner to Generate Many Potential Grasps
+            ge.get_potential_grasps(trial_msg)
+            # Get Rid of ones that are outside the bounds of the shelf (in y,z direction mostly)
+            ge.remove_outlier_grasps()
+            # Remove grasps that intersect with the shelf.
+            ge.remove_shelf_intersections()
+            # Remove non-reachable
+            ge.remove_unreachable()
+
+            evaluated_bag = rosbag.Bag(file_name[:-4] + '_evaluated.bag' , 'w')
+            trial_msg.before.grasps = ge.grasps_before
+            if len(ge.grasps_before) > 0:
+                trial_msg.before.is_graspable = True
+            else:
+                trial_msg.before.is_graspable = False
+            trial_msg.after.grasps = ge.grasps_after
+            if len(ge.grasps_after) > 0:
+                trial_msg.after.is_graspable = True
+            else:
+                trial_msg.after.is_graspable = False
+            trial_msg.after.grasps = ge.grasps_after
+            evaluated_bag.write('trial', trial_msg)
+            evaluated_bag.close()
+
+        bag.close()
+    # rospy.spin()
+
+
+
+# graph is in adjacent list representation
+graph = {
+        '1': ['2', '3', '4'],
+        '2': ['5', '6'],
+        '5': ['9', '10'],
+        '4': ['7', '8'],
+        '7': ['11', '12']
+        }
+
+def get_depth(tree):
+    count = 1
+    current_node = tree
+    while True:
+        if current_node.get_children():
+            count +=1
+            current_node = current_node.get_children()[0]
+        else:
+            break
+    return count
+
+
+class Node(object):
+    def __init__(self):
+        self.children = []
+
+    def add_child(self, obj):
+        self.children.append(obj)
+
+    def get_children(self):
+        return self.children
+
+
+if __name__ == '__main__':
+
+    # maintain a queue of paths
+    queue = []
+    # push the first path into the queue
+    tree = Node()
+    queue.append([tree])
+    while queue:
+        # get the first path from the queue
+        path = queue.pop(0)
+        # get the last node from the path
+        node = path[-1]
+        # path found
+
+        for i in range(3):
+            temp = Node()
+            node.add_child(temp)
+
+        if get_depth(tree) > 3:
+            break
+
+        # enumerate all adjacent nodes, construct a new path and push it into the queue
+        for child in node.get_children():
+            new_path = list(path)
+            new_path.append(child)
+            queue.append(new_path)
+
+    print tree
+    print "Length: " + str(len(tree.get_children()[2].get_children()))
+    print "Length: " + str(len(tree.get_children()[2].get_children()[2].get_children()))
+    
