@@ -48,7 +48,7 @@ class RepositionAction(object):
     pose_id = 5340
 
     # identifier for publishing points in the visualization
-    bin_width = 0.40
+    bin_width = 0.38
     bin_depth = 0.42
 
     # keep tool this far away from the bin wall
@@ -234,6 +234,17 @@ class RepositionAction(object):
         elif value < -max_y:
             return -max_y
             rospy.loginfo("Capping value: value less than max")        
+        return value
+
+    def cap_x(self, value):
+        ''' Cap the given x value so it's reachable. '''
+
+
+        min_x = -0.31
+
+        if value < min_x:
+            rospy.loginfo("Capping x value: value less than min")        
+            return min_x
         return value
 
     def get_yaw(self, bounding_box):
@@ -433,9 +444,12 @@ class MoveArmStep(RepositionStep):
         if not self.collision_checking:
 
             if(success == False):
-                rospy.loginfo('Collision checking off, using IK')
-                success = (move_arm_ik(
-                        goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM, duration=6.0).success and success)
+                #rospy.loginfo('Collision checking off, using IK')
+                #success = (move_arm_ik(
+                #        goal=pose_stamped, arm=MoveArmIkRequest().LEFT_ARM, duration=6.0).success and success)
+             success = (moveit_move_arm(
+                        pose_stamped, 0.01, 0.1, 5, 'left_arm', False, 0.75) and success)
+
 
         return success
 
@@ -577,7 +591,7 @@ class PushSideways(RepositionAction):
         self.frame = self.bounding_box.pose.header.frame_id
         start_pose = Pose(
             position=Point(
-                x=distance_x - self.get_param('pre_application_distance'),
+                x=self.cap_x(distance_x - self.get_param('pre_application_distance')),
                 y=self.cap_y(target_y + (self.get_param('distance_from_side') * push_direction_sign)),
                 z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
@@ -586,7 +600,7 @@ class PushSideways(RepositionAction):
 
         side_pose = Pose(
             position=Point(
-                x=distance_x,
+                x=self.cap_x(distance_x),
                 y=self.cap_y(target_y + (self.get_param('distance_from_side') * push_direction_sign)),
                 z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),
@@ -595,7 +609,7 @@ class PushSideways(RepositionAction):
 
         push_pose = Pose(
             position=Point(
-                x=distance_x,
+                x=self.cap_x(distance_x),
                 y=target_y - (self.get_param('pushing_distance') * push_direction_sign),
                 z=self.centroid.z + self.get_param('percent_height_from_center')*object_height
             ),

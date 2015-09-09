@@ -168,6 +168,27 @@ class ExploreToolActions(smach.State):
                                                   False, 1.0).success
           return success_pre_postition
 
+    def move_arm_to_side(self):
+        pose_target = Pose()
+        quaternion = tf.transformations.quaternion_from_euler(-2.119,1.357,1.969)
+
+        pose_target.orientation.x = 1.0
+        pose_target.orientation.y = 0.0
+        pose_target.orientation.z = 0.0
+        pose_target.orientation.w = 0.0
+        pose_target.position.x = -0.38
+        pose_target.position.y = 0.30
+        pose_target.position.z = 0.15
+
+        posestamped = PoseStamped()
+        posestamped.pose = pose_target
+        posestamped.header.frame_id = 'bin_K'
+
+
+        self._moveit_move_arm(posestamped,
+                                                0.005, 0.005, 12, 'left_arm',
+                                                False, 1.0).success
+
 
     @handle_service_exceptions(outcomes.TOOL_EXPLORATION_FAILURE)
     def execute(self, userdata):
@@ -241,6 +262,8 @@ class ExploreToolActions(smach.State):
                 
             rospy.sleep(3.0)
             self.pre_position_tool()
-            self._tuck_arms.wait_for_service()
-            tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+            #self._tuck_arms.wait_for_service()
+            #tuck_success = self._tuck_arms(tuck_left=False, tuck_right=False)
+
+            self.move_arm_to_side()
             return outcomes.TOOL_EXPLORATION_SUCCESS

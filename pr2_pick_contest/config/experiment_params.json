@@ -17,6 +17,22 @@
         "top_sideward_pull_l"]
     },
     {
+    "item_name": "paper_mate_12_count_mirado_black_warrior",
+    "positions": [0, 1, 2, 3],
+    "orientations" : [0, 1, 2],
+    "actions" : [
+        "front_center_push",
+        "front_side_push_r",
+        "front_side_push_l",
+        "side_push_r",
+        "side_push_l",
+        "side_rotate_r",
+        "side_rotate_l",
+        "top_pull",
+        "top_sideward_pull_r",
+        "top_sideward_pull_l"]
+   },
+   {
     "item_name": "mark_twain_huckleberry_finn",
     "positions": [0, 1, 2, 3],
     "orientations" : [0, 1, 2],
@@ -34,22 +50,6 @@
     },
     {
     "item_name": "feline_greenies_dental_treats",
-    "positions": [0, 1, 2, 3],
-    "orientations" : [0, 1, 2],
-    "actions" : [
-        "front_center_push",
-        "front_side_push_r",
-        "front_side_push_l",
-        "side_push_r",
-        "side_push_l",
-        "side_rotate_r",
-        "side_rotate_l",
-        "top_pull",
-        "top_sideward_pull_r",
-        "top_sideward_pull_l"]
-    },
-    {
-    "item_name": "paper_mate_12_count_mirado_black_warrior",
     "positions": [0, 1, 2, 3],
     "orientations" : [0, 1, 2],
     "actions" : [
