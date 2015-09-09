@@ -4,3 +4,4 @@ from .visualization import MarkerNamespaces
 from .visualization import publish_bounding_box 
 from .visualization import publish_gripper
 from .visualization import publish_cluster
+from .visualization import publish_point

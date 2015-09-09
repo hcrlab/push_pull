@@ -47,6 +47,10 @@ class TrialAnalyser:
         self._x_diffs = {}
         self._y_diffs = {}
         self._yaw_diffs = {}
+        self._graspable_before = []
+        self._graspable_after = []
+        self._increased_grasps = []
+
 
     def get_bounding_box_diff(self, trial):
         action = trial.params.action.data
@@ -85,10 +89,6 @@ class TrialAnalyser:
         rospy.loginfo("Before yaw: {}".format(yaw_before*180/math.pi))
         rospy.loginfo("After: {}".format(after_box))
         rospy.loginfo("After yaw: {}".format(yaw_after*180/math.pi))
-
-
-
-
 
         if (math.fabs(after_box.dimensions.x - before_box.dimensions.x) > 0.02) and (math.fabs(after_box.dimensions.y - before_box.dimensions.y) > 0.02):
             rospy.loginfo("Wrong axes")
@@ -186,6 +186,35 @@ class TrialAnalyser:
 
         plt.show()
 
+    def get_num_grasps(self, trial_msg):
+        if len(trial_msg.before.grasps)  > 0:
+            self._graspable_before.append(trial_msg)
+        if len(trial_msg.after.grasps) > 0:
+            self._graspable_after.append(trial_msg)
+        if len(trial_msg.after.grasps) > len(trial_msg.before.grasps):
+            self._increased_grasps.append(trial_msg)
+
+    def get_configuration_info(self, msgs):
+        data_string = " "
+        for trial_msg in msgs:
+            data_string = data_string + "\n Item: {}, \t Position: {}, \t Orientation: {}, \t Action: {}".format(trial_msg.params.item_name.data,
+                                                                                                                 trial_msg.params.position.data,
+                                                                                                                 trial_msg.params.orientation.data,
+                                                                                                                 trial_msg.params.action.data)
+        return data_string
+
+    def print_info(self):
+        rospy.loginfo("Initially graspable trials: {}, {}".format(len(self._graspable_before), self.get_configuration_info(self._graspable_before)))
+        rospy.loginfo("Trials graspable after: {}, {}".format(len(self._graspable_after), self.get_configuration_info(self._graspable_after)))
+        self._became_graspable = []
+        for item in self._graspable_after:
+            if not item in self._graspable_before:
+                self._became_graspable.append(item)
+        rospy.loginfo("Not graspable before, graspable after: {}, {}".format(len(self._became_graspable), self.get_configuration_info(self._became_graspable)))
+        rospy.loginfo("Increased number grasps after action: {}, {}".format(len(self._increased_grasps), self.get_configuration_info(self._increased_grasps)))
+
+
+
 
 if __name__ == '__main__':
     rospy.init_node('trial_analyser')
@@ -194,15 +223,20 @@ if __name__ == '__main__':
 
     path = raw_input("Please enter the path to folder with the bag files: ")
     file_list = glob.glob( path + '/*.bag')
+    ta.total_num_trials = 0
     for file_name in file_list:
-        if file_name[-13:] == 'evaluated.bag':
+        if file_name[-13:] != 'evaluated.bag':
             continue
         # rospy.loginfo("Current file: " + file_name)
         bag = rosbag.Bag(file_name)
         for topic, trial_msg, t in bag.read_messages():
+            ta.total_num_trials+=1
             ta.get_bounding_box_diff(trial_msg)
+            ta.get_num_grasps(trial_msg)
 
         bag.close()
 
+
+    ta.print_info()
     ta.plot()
     # rospy.spin()

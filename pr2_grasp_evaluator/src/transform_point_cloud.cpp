@@ -73,14 +73,14 @@ public:
 
     tf::TransformListener tf_listener;
     tf::StampedTransform transform;
-    ROS_INFO("Waiting for transform /bin_K -> %s", req.frame_id.c_str());
-    tf_listener.waitForTransform(req.frame_id, "/bin_K", ros::Time(0), ros::Duration(10.0));
+    ROS_INFO("Waiting for transform");
+    tf_listener.waitForTransform(req.new_frame_id, req.prev_frame_id, ros::Time(0), ros::Duration(10.0));
     ROS_INFO("... done waiting.");
-    tf_listener.lookupTransform(req.frame_id, "/bin_K", ros::Time(0), transform);
+    tf_listener.lookupTransform(req.new_frame_id, req.prev_frame_id, ros::Time(0), transform);
     ROS_INFO("Transforming point cloud...");
     std::cout << transform.getRotation();
     std::cout << transform.getOrigin();
-    pcl_ros::transformPointCloud(req.frame_id, transform, req.point_cloud, resp.point_cloud);
+    pcl_ros::transformPointCloud(req.new_frame_id, transform, req.point_cloud, resp.point_cloud);
     return true;
   }
   ros::NodeHandle getNH(){

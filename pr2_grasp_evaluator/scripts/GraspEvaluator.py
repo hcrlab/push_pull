@@ -43,7 +43,7 @@ from pr2_pick_perception.srv import CropShelf, CropShelfResponse, \
 from pr2_pick_perception.srv import CountPointsInBox
 from pr2_pick_perception.srv import SegmentItems
 from pr2_pick_main import IdTable
-from pr2_pick_main import publish_gripper, publish_bounding_box, publish_cluster
+from pr2_pick_main import publish_gripper, publish_bounding_box, publish_cluster, publish_point
 from pr2_gripper_grasp_planner_cluster.srv import SetPointClusterGraspParams, SetPointClusterGraspParamsRequest
 from object_recognition_clusters.srv import FindClusterBoundingBox, FindClusterBoundingBoxRequest
 
@@ -57,13 +57,13 @@ class GripperBox:
     # max_z = None
 
 class GraspEvaluator:
-    def __init__(self):
+    def __init__(self, plan=False):
 
-        self.max_x_grasp_threshold = 0.9
-        self.max_y_grasp_threshold = 0.185
-        self.max_z_grasp_threshold = 1.14
-        self.min_y_grasp_threshold = -0.185
-        self.min_z_grasp_threshold = 0.76
+        self.max_x_grasp_threshold = 1.16
+        self.max_y_grasp_threshold = 0.19
+        self.max_z_grasp_threshold = 1.16
+        self.min_y_grasp_threshold = -0.19
+        self.min_z_grasp_threshold = 0.79
 
         self.move_torso = rospy.ServiceProxy('torso_service', MoveTorso)
         self.move_head = rospy.ServiceProxy('move_head_service', MoveHead)
@@ -134,13 +134,15 @@ class GraspEvaluator:
         # approximate distance from palm frame origin to palm surface
         self.dist_to_palm = 0.12
         # approximate distance from palm frame origin to fingertip with gripper closed
-        self.dist_to_fingertips = 0.21
+        self.dist_to_fingertips = 0.22
 
         # approx dist between fingers when gripper open
         self.gripper_palm_width = 0.08
 
         # approx height of pads of fingertips
         self.gripper_finger_height = 0.03
+
+        self.plan = plan
 
 
     def call_plan_point_cluster_grasp_action(self, cluster, frame_id):
@@ -283,6 +285,7 @@ class GraspEvaluator:
             scene.add_box("shelf2", wall_pose2, (0.38, 0.015, 0.38 ))
             scene.add_box("shelf3", wall_pose3, (0.38, 0.38, 0.015 ))
             scene.add_box("shelf4", wall_pose4, (0.38,0.38,0.015))
+
             rospy.sleep(1)
             rate.sleep()
 
@@ -402,12 +405,12 @@ class GraspEvaluator:
             transform.child_frame_id = 'grasp'
             self.set_static_tf.wait_for_service()
             self.set_static_tf(transform)
-            rospy.sleep(0.25)
+            
 
             y_offset = 0.005
 
             gripper = GripperBox()
-            min_x = -0.02
+            min_x = -0.04
             max_x = self.dist_to_fingertips
             min_y = -1 * self.gripper_palm_width/2 + y_offset
             max_y = self.gripper_palm_width/2 + y_offset
@@ -418,16 +421,24 @@ class GraspEvaluator:
             y_bounds = [min_y, max_y]
             z_bounds = [min_z, max_z]
 
+            rospy.loginfo("_______________")
+            rospy.loginfo("NEW BOX")
+            rospy.loginfo("_______________")
+            
+
             all_bounds = [x_bounds, y_bounds, z_bounds]
             for bounds in itertools.product(*all_bounds):
                 corner = PointStamped()
-                corner.header.frame_id = grasp_pose.header.frame_id
+                corner.header.frame_id = 'grasp'
                 corner.point.x = bounds[0]
                 corner.point.y = bounds[1]
                 corner.point.z = bounds[2]
-                corner_base_footprint = self.tf_listener.transformPoint('base_footprint',
-                                                                        corner)
-                gripper.corners.append(copy.deepcopy(corner_base_footprint))
+
+                rospy.loginfo("corners: x: {}, y: {}, z: {}".format(corner.point.x, corner.point.y, corner.point.z))
+                
+                # publish_point(self.markers, 'grasp', corner.point, 1.0, 0.0, 0.0, 0.5, 0, text=None)
+
+                gripper.corners.append(copy.deepcopy(corner))
             
             palm_pose = PoseStamped()
             palm_pose.header.frame_id = 'grasp'
@@ -437,6 +448,7 @@ class GraspEvaluator:
                              (max_y - min_y) / 2
             palm_pose.pose.position.z = min_z +\
                              (max_z - min_z) / 2
+            
 
             publish_bounding_box(self.markers, palm_pose, 
                 (max_x - min_x), 
@@ -446,44 +458,51 @@ class GraspEvaluator:
 
             add = True
 
-            for corner in gripper.corners:
+            rospy.loginfo("Palm pose: {}".format(grasp_pose))
+            self.tf_listener.waitForTransform('base_footprint', 'grasp', rospy.Time.now(), rospy.Duration(15.0))
+            
+            for idx, corner1 in enumerate(gripper.corners):
+                self.tf_listener.waitForTransform('base_footprint', 'grasp', rospy.Time(0), rospy.Duration(15.0))
+                corner = self.tf_listener.transformPoint('base_footprint',
+                                                                        corner1)
                 # Check intersection with right shelf wall
-                if (corner.point.x > 0.71) and (corner.point.y < -0.185) and (corner.point.z > 0.78) and (corner.point.z < 1.14):
-                    rospy.loginfo("Removing grasp because (corner.point.x > 0.71) and (corner.point.y < 0.025) and (corner.point.z > 0.78) and (corner.point.z < 1.14)")
-                    rospy.loginfo("Corner: {}".format(corner))
+                if (corner.point.x > 0.78) and (corner.point.y < -0.185) and (corner.point.z > 0.78) and (corner.point.z < 1.14):
+                    rospy.loginfo("Removing grasp because (corner.point.x > 0.78) and (corner.point.y < -0.185) and (corner.point.z > 0.78) and (corner.point.z < 1.14)")
+                    # rospy.loginfo("Corner: {}".format(corner))
                     add = False
-                    #rospy.sleep(10.0)
+                    # rospy.sleep(5.0)
                     break 
                 # Check intersection with left shelf wall
-                elif (corner.point.x > 0.71) and (corner.point.y > 0.185) and (corner.point.z > 0.78) and (corner.point.z < 1.14):
-                    rospy.loginfo("Removing grasp because (corner.point.x > 0.71) and (corner.point.y > 0.385) and (corner.point.z > 0.78) and (corner.point.z < 1.14)")
-                    rospy.loginfo("Corner: {}".format(corner))
+                elif (corner.point.x > 0.78) and (corner.point.y > 0.185) and (corner.point.z > 0.78) and (corner.point.z < 1.14):
+                    rospy.loginfo("Removing grasp because (corner.point.x > 0.78) and (corner.point.y > 0.185) and (corner.point.z > 0.78) and (corner.point.z < 1.14)")
+                    # rospy.loginfo("Corner: {}".format(corner))
                     add = False
-                    #rospy.sleep(10.0)
+                    # rospy.sleep(5.0)
                     break
                 # Check intersection with bottom shelf wall
-                elif (corner.point.x > 0.71) and (corner.point.z < 0.78):
-                    rospy.loginfo("Removing grasp because (corner.point.x > 0.71) and (corner.point.z < 0.78)")
-                    rospy.loginfo("Corner: {}".format(corner))
+                elif (corner.point.x > 0.78) and (corner.point.z < 0.78):
+                    rospy.loginfo("Removing grasp because (corner.point.x > 0.78) and (corner.point.z < 0.78)")
+                    # rospy.loginfo("Corner: {}".format(corner))
                     add = False
-                    #rospy.sleep(10.0)
+                    # rospy.sleep(5.0)
                     break
                 # Check intersection with top shelf wall
-                elif (corner.point.x > 0.71) and (corner.point.z > 1.14):
-                    rospy.loginfo("Removing grasp because (corner.point.x > 0.71) and (corner.point.z > 1.14)")
-                    rospy.loginfo("Corner: {}".format(corner))
+                elif (corner.point.x > 0.78) and (corner.point.z > 1.14):
+                    rospy.loginfo("Removing grasp because (corner.point.x > 0.78) and (corner.point.z > 1.14)")
+                    # rospy.loginfo("Corner: {}".format(corner))
                     add = False
-                    #rospy.sleep(10.0)
+                    # rospy.sleep(5.0)
                     break
                 # else:
                 #     rospy.loginfo("Not removing grasp")
                 #     rospy.loginfo("Corner: {}".format(corner))
-                #     #rospy.sleep(10.0)
-                #     filtered.append(grasp)
-                #     break
+                #     rospy.sleep(5.0)
+                    
 
             if add:
                 filtered.append(grasp)
+
+            # rospy.sleep(15)
 
         return filtered
 
@@ -498,7 +517,7 @@ class GraspEvaluator:
                 publish_gripper(self.im_server, grasp.grasp_pose, 'grasp_target')
                     # Test if grasp is going to hit the shelf
             success_grasp = self.moveit_move_arm(grasp.grasp_pose,
-                                                0.005, 0.005, 6, 'right_arm',
+                                                0.005, 0.005, 1.0, 'right_arm',
                                                 True, 1.0).success  
             if success_grasp:
                 filtered.append(grasp)
@@ -513,12 +532,12 @@ class GraspEvaluator:
         scene = moveit_commander.PlanningSceneInterface()
         
 
-        for i in range(10):
-            scene.remove_world_object("bbox")
-            scene.remove_world_object("shelf1")
-            scene.remove_world_object("shelf")
-            scene.remove_world_object("shelf2")
-            scene.remove_world_object("shelf3")
+        # for i in range(10):
+        #     scene.remove_world_object("bbox")
+        #     scene.remove_world_object("shelf1")
+        #     scene.remove_world_object("shelf")
+        #     scene.remove_world_object("shelf2")
+        #     scene.remove_world_object("shelf3")
 
 
         pose_target = Pose()
@@ -538,7 +557,7 @@ class GraspEvaluator:
             
 
         self.moveit_move_arm(posestamped,
-                                                0.005, 0.005, 12, 'right_arm',
+                                                0.005, 0.005, 12, 'left_arm',
                                                 False, 1.0).success 
 
         pose_target = Pose()
@@ -564,12 +583,47 @@ class GraspEvaluator:
 
     def get_grasps(self, pointcloud):
         # self.add_shelf()
-        self.get_potential_grasps(trial_msg)
+        self.get_potential_grasps(pointcloud)
         # Get Rid of ones that are outside the bounds of the shelf (in y,z direction mostly)
         self.remove_outlier_grasps()
         # Remove grasps that intersect with the shelf.
         self.remove_shelf_intersections()
         # Remove non-reachable
-        self.remove_unreachable()
+        if self.plan:
+            self.remove_unreachable()
         return self.grasps
 
+if __name__ == '__main__':
+    rospy.init_node('grasp_evaluator_node')
+
+    ge = GraspEvaluator()
+    ge.move_arms_to_side()
+    ge.add_shelf()
+    ge.set_start_pose()
+    path = raw_input("Please enter the path to folder with the bag files: ")
+    file_list = glob.glob( path + '/*.bag')
+    for file_name in file_list:
+        if file_name[-13:] == 'evaluated.bag':
+            continue
+        rospy.loginfo("Current file: " + file_name)
+        bag = rosbag.Bag(file_name)
+        for topic, trial_msg, t in bag.read_messages():
+            # Use Grasp Planner to Generate Many Potential Grasps
+            
+
+            evaluated_bag = rosbag.Bag(file_name[:-4] + '_evaluated.bag' , 'w')
+            trial_msg.before.grasps = ge.get_grasps(trial_msg.before.pointcloud2)
+            if len(trial_msg.before.grasps) > 0:
+                trial_msg.before.is_graspable = True
+            else:
+                trial_msg.before.is_graspable = False
+            trial_msg.after.grasps = ge.get_grasps(trial_msg.after.pointcloud2)
+            if len(trial_msg.after.grasps) > 0:
+                trial_msg.after.is_graspable = True
+            else:
+                trial_msg.after.is_graspable = False
+            evaluated_bag.write('trial', trial_msg)
+            evaluated_bag.close()
+
+        bag.close()
+    # rospy.spin()

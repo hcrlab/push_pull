@@ -673,7 +673,6 @@ if __name__ == '__main__':
                 trial_msg.after.is_graspable = True
             else:
                 trial_msg.after.is_graspable = False
-            trial_msg.after.grasps = ge.grasps_after
             evaluated_bag.write('trial', trial_msg)
             evaluated_bag.close()
 

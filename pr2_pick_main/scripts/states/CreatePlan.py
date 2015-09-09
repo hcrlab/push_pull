@@ -50,19 +50,24 @@ class CreatePlan(smach.State):
             'target_cluster', 'current_trial_num', 'planner'],
             output_keys=['tool_action', 'grasps'])
 
-    def choose_action(self, state_tree):
-        return action
+    # def choose_action(self, state_tree):
+    #     return action
 
 
     # @handle_service_exceptions(outcomes.MOVE_OBJECT_FAILURE)
     def execute(self, userdata):
         planner = userdata.planner
         state_tree = planner.generate_plan(userdata.before_record.bounding_box, userdata.before_record.pointcloud2)
-        action = self.choose_action(state_tree)
+        action = planner.choose_action(state_tree)
+        if action is None:
+            rospy.loginfo("No action found")
+            action = "front_center_push"
         if isinstance(action, (int, long)):
+            rospy.loginfo("Tool action: {}".format(action))
             userdata.tool_action = action
             return outcomes.CREATE_PLAN_TOOL
         else:
+            rospy.loginfo("Grasps found: {}".format(len(action)))
             userdata.grasps = action
             return outcomes.CREATE_PLAN_GRASP
 

@@ -1,4 +1,5 @@
 sensor_msgs/PointCloud2 point_cloud
-string frame_id
+string prev_frame_id
+string new_frame_id
 ---
 sensor_msgs/PointCloud2 point_cloud

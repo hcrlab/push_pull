@@ -19,3 +19,6 @@ from .UpdatePlanExperiment import UpdatePlanExperiment
 from .InitializeExploration import InitializeExploration
 from .SenseObject import SenseObject
 from .ExploreToolActions import ExploreToolActions
+from .CreatePlan import CreatePlan
+from .ExecuteGrasp import ExecuteGrasp
+

@@ -102,20 +102,26 @@ class Regressor:
             self._x_after[action] = []
             self._y_after[action] = []
             self._yaw_after[action] = []
+            self._x_dim_before[action] = []
+            self._x_dim_after[action] = []            
+            self._y_dim_before[action] = []
+            self._y_dim_after[action] = []            
+            self._z_dim_before[action] = []
+            self._z_dim_after[action] = []
 
         before_box = trial.before.boundingbox
         after_box = trial.after.boundingbox
 
         self._x_after[action].append(after_box.pose.pose.position.x)
         self._x_before[action].append(before_box.pose.pose.position.x)
+        self._y_after[action].append(after_box.pose.pose.position.y)
+        self._y_before[action].append(before_box.pose.pose.position.y)
         self._x_dim_before[action].append(before_box.dimensions.x)
         self._x_dim_after[action].append(after_box.dimensions.x)
         self._y_dim_before[action].append(before_box.dimensions.y)
         self._y_dim_after[action].append(after_box.dimensions.y)
         self._z_dim_before[action].append(before_box.dimensions.z)
         self._z_dim_after[action].append(after_box.dimensions.z)
-        self._y_after[action].append(after_box.pose.pose.position.y)
-        self._y_before[action].append(before_box.pose.pose.position.y)
 
         q_before = (
             before_box.pose.pose.orientation.x,
@@ -254,7 +260,7 @@ class Regressor:
             # rospy.loginfo("Current file: " + file_name)
             bag = rosbag.Bag(file_name)
             for topic, trial_msg, t in bag.read_messages():
-                ta.get_bounding_box_diff(trial_msg)
+                self.get_bounding_box_diff(trial_msg)
 
             bag.close()
 
@@ -455,10 +461,10 @@ class Regressor:
         test_y = [bounding_box.pose.pose.position.y]
 
         quaternion = (
-            bounding_box.pose.orientation.x,
-            bounding_box.pose.orientation.y,
-            bounding_box.pose.orientation.z,
-            bounding_box.pose.orientation.w)
+            bounding_box.pose.pose.orientation.x,
+            bounding_box.pose.pose.orientation.y,
+            bounding_box.pose.pose.orientation.z,
+            bounding_box.pose.pose.orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
 
         yaw = euler[2]
@@ -468,16 +474,6 @@ class Regressor:
         test_x_dim = [bounding_box.dimensions.x]
         test_y_dim = [bounding_box.dimensions.y]
         test_z_dim = [bounding_box.dimensions.z]
-
-        rospy.loginfo("Train x before: {}".format(train_x_before))
-        rospy.loginfo("Train y before: {}".format(train_y_before))
-        rospy.loginfo("Train yaw before: {}".format(train_yaw_before))
-        rospy.loginfo("Test x before: {}".format(test_x_before))
-        rospy.loginfo("Test y before: {}".format(test_y_before))
-        rospy.loginfo("Test yaw before: {}".format(test_yaw_before))
-        rospy.loginfo("Test x after: {}".format(test_x_after))
-        rospy.loginfo("Test y after: {}".format(test_y_after))
-        rospy.loginfo("Test yaw after: {}".format(test_yaw_after))
 
         # Fit estimators
         ESTIMATORS = {
@@ -491,33 +487,32 @@ class Regressor:
             "Lasso": Lasso(),
         }
 
-        y_test_predict = dict()
+        # y_test_predict = dict()
         
         estimator = self.estimators[action]
         y_test_predict = estimator.predict(zip(test_x, test_y, test_yaw, test_x_dim, test_y_dim, test_z_dim))
 
         rospy.loginfo("Predictions: {}".format(y_test_predict))
-        rospy.loginfo("Pose: {}".format(trial.before.boundingbox.pose))
+        rospy.loginfo("Pose: {}".format(bounding_box.pose))
 
         # First publish original bounding box
 
-        publish_bounding_box(self.markers, trial.before.boundingbox.pose, 
-                (trial.before.boundingbox.dimensions.x), 
-                (trial.before.boundingbox.dimensions.y), 
-                (trial.before.boundingbox.dimensions.z),
+        publish_bounding_box(self.markers, bounding_box.pose, 
+                (bounding_box.dimensions.x), 
+                (bounding_box.dimensions.y), 
+                (bounding_box.dimensions.z),
                 1.0, 1.0, 0.0, 0.5, 20)
 
         # And true result
 
-        publish_bounding_box(self.markers, trial.after.boundingbox.pose, 
-                (trial.after.boundingbox.dimensions.x), 
-                (trial.after.boundingbox.dimensions.y), 
-                (trial.after.boundingbox.dimensions.z),
-                0.0, 1.0, 0.0, 0.5, 21)
+        # publish_bounding_box(self.markers, bounding_box.pose, 
+        #         (bounding_box.dimensions.x), 
+        #         (bounding_box.dimensions.y), 
+        #         (bounding_box.dimensions.z),
+        #         0.0, 1.0, 0.0, 0.5, 21)
 
         # Now one for each estimator
         colour = {"r": 1.0, "g": 0.0, "b": 0.0}
-        
 
 
         x = y_test_predict[0][0]
@@ -529,7 +524,7 @@ class Regressor:
         pose.header.frame_id = "bin_K"
         pose.pose.position.x = x
         pose.pose.position.y = y
-        pose.pose.position.z = trial.before.boundingbox.pose.pose.position.z
+        pose.pose.position.z = bounding_box.pose.pose.position.z
 
 
         quaternion = tf.transformations.quaternion_from_euler(0, 0, yaw)
@@ -540,12 +535,12 @@ class Regressor:
         pose.pose.orientation.w = quaternion[3]
 
         publish_bounding_box(self.markers, pose, 
-            (trial.after.boundingbox.dimensions.x), 
-            (trial.after.boundingbox.dimensions.y), 
-            (trial.after.boundingbox.dimensions.z),
-            colour["r"], colour["g"], colour["b"], 0.5, j + 30)
+            (y_test_predict[0][3]), 
+            (y_test_predict[0][4]), 
+            (y_test_predict[0][5]),
+            colour["r"], colour["g"], colour["b"], 0.5, 30)
 
-        return 
+        return x, y, yaw, y_test_predict[0][3], y_test_predict[0][4], y_test_predict[0][5]
 
 
 if __name__ == '__main__':
